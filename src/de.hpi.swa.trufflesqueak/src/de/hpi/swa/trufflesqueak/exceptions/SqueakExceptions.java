@@ -26,6 +26,7 @@ import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.DebugUtils;
 
+@SuppressWarnings("truffle-abstract-export")
 public final class SqueakExceptions {
 
     @SuppressWarnings("static-method")
@@ -55,11 +56,13 @@ public final class SqueakExceptions {
         }
 
         @ExportMessage
+        @SuppressWarnings("deprecation")
         protected final boolean hasLanguage() {
             return true;
         }
 
         @ExportMessage
+        @SuppressWarnings("deprecation")
         protected final Class<? extends TruffleLanguage<?>> getLanguage() {
             return SqueakLanguage.class;
         }

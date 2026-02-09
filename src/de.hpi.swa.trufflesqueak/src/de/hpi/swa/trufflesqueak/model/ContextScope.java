@@ -27,7 +27,7 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 
 @ExportLibrary(InteropLibrary.class)
-@SuppressWarnings("static-method")
+@SuppressWarnings({"static-method", "truffle-abstract-export"})
 public final class ContextScope implements TruffleObject {
     private static final String SENDER = "sender";
     private static final String PC = "pc";
@@ -44,11 +44,13 @@ public final class ContextScope implements TruffleObject {
     }
 
     @ExportMessage
+    @SuppressWarnings("deprecation")
     protected boolean hasLanguage() {
         return true;
     }
 
     @ExportMessage
+    @SuppressWarnings("deprecation")
     protected Class<? extends TruffleLanguage<?>> getLanguage() {
         return SqueakLanguage.class;
     }

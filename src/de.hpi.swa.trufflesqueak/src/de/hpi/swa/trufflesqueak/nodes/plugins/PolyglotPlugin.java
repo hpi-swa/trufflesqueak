@@ -1560,6 +1560,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveHasLanguage")
     protected abstract static class PrimHasLanguageNode extends AbstractPrimitiveNode implements Primitive1 {
         @Specialization
+        @SuppressWarnings("deprecation")
         protected static final boolean hasLanguage(@SuppressWarnings("unused") final Object receiver, final Object object,
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
             return lib.hasLanguage(object);
@@ -1570,6 +1571,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveGetLanguage")
     protected abstract static class PrimGetLanguageNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "lib.hasLanguage(object)")
+        @SuppressWarnings("deprecation")
         protected static final Class<? extends TruffleLanguage<?>> getLanguage(@SuppressWarnings("unused") final Object receiver, final Object object,
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
             try {
@@ -1584,6 +1586,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveGetLanguageInfo")
     protected abstract static class PrimGetLanguageInfoNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "lib.hasLanguage(object)")
+        @SuppressWarnings("deprecation")
         protected static final Object getLanguage(@SuppressWarnings("unused") final Object receiver, final Object object,
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
             try {
@@ -2167,6 +2170,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveIsHostFunction")
     protected abstract static class PrimIsHostFunctionNode extends AbstractPrimitiveNode implements Primitive1 {
         @Specialization
+        @SuppressWarnings("deprecation")
         protected final boolean doIsHostFunction(@SuppressWarnings("unused") final Object receiver, final Object object) {
             return BooleanObject.wrap(getContext().env.isHostFunction(object));
         }
@@ -2176,6 +2180,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveIsHostObject")
     protected abstract static class PrimIsHostObjectNode extends AbstractPrimitiveNode implements Primitive1 {
         @Specialization
+        @SuppressWarnings("deprecation")
         protected final boolean doIsHostObject(@SuppressWarnings("unused") final Object receiver, final Object object) {
             return BooleanObject.wrap(getContext().env.isHostObject(object));
         }
@@ -2185,6 +2190,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveIsHostSymbol")
     protected abstract static class PrimIsHostSymbolNode extends AbstractPrimitiveNode implements Primitive1 {
         @Specialization
+        @SuppressWarnings("deprecation")
         protected final boolean doIsHostSymbol(@SuppressWarnings("unused") final Object receiver, final Object object) {
             return BooleanObject.wrap(getContext().env.isHostSymbol(object));
         }
@@ -2228,6 +2234,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveToHostObject")
     protected abstract static class PrimToHostObjectNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "getContext().env.isHostObject(value)")
+        @SuppressWarnings("deprecation")
         protected final Object toHost(@SuppressWarnings("unused") final Object receiver, final Object value) {
             return getContext().env.asHostObject(value);
         }

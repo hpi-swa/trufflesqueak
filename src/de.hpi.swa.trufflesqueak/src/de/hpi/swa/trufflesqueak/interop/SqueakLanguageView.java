@@ -27,7 +27,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0Node.DispatchDirect0Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.LookupClassGuard;
 
-@SuppressWarnings("static-method")
+@SuppressWarnings({"static-method", "truffle-abstract-export"})
 @ExportLibrary(value = InteropLibrary.class, delegateTo = "delegate")
 public final class SqueakLanguageView implements TruffleObject {
     protected final Object delegate;
@@ -37,11 +37,13 @@ public final class SqueakLanguageView implements TruffleObject {
     }
 
     @ExportMessage
+    @SuppressWarnings("deprecation")
     protected boolean hasLanguage() {
         return true;
     }
 
     @ExportMessage
+    @SuppressWarnings("deprecation")
     protected Class<? extends TruffleLanguage<?>> getLanguage() {
         return SqueakLanguage.class;
     }
@@ -85,6 +87,7 @@ public final class SqueakLanguageView implements TruffleObject {
     /*
      * Language views are intended to be used only for primitives and other language values.
      */
+    @SuppressWarnings("deprecation")
     private static boolean isPrimitiveOrFromOtherLanguage(final Object value) {
         final InteropLibrary interop = InteropLibrary.getFactory().getUncached(value);
         try {

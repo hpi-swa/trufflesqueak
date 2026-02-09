@@ -186,6 +186,7 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     protected String[] getDefaultLanguages() {
         return EMPTY_STRING_ARRAY; // Allow all languages (same effect of `--polyglot`)
     }

@@ -67,7 +67,7 @@ import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.ReflectionUtils;
 
-@SuppressWarnings("static-method")
+@SuppressWarnings({"static-method", "truffle-abstract-export"})
 @ExportLibrary(InteropLibrary.class)
 public final class JavaObjectWrapper implements TruffleObject {
     static final int LIMIT = 2;
@@ -881,11 +881,13 @@ public final class JavaObjectWrapper implements TruffleObject {
     }
 
     @ExportMessage
+    @SuppressWarnings("deprecation")
     boolean hasLanguage() {
         return true;
     }
 
     @ExportMessage
+    @SuppressWarnings("deprecation")
     Class<? extends TruffleLanguage<?>> getLanguage() {
         if (hostLanguage == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
