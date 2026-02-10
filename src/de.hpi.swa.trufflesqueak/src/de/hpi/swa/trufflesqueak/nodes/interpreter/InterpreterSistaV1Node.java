@@ -11,6 +11,8 @@ import static de.hpi.swa.trufflesqueak.util.UnsafeUtils.uncheckedCast;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.EarlyEscapeAnalysis;
+import com.oracle.truffle.api.CompilerDirectives.EarlyInline;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.HostCompilerDirectives;
 import com.oracle.truffle.api.HostCompilerDirectives.BytecodeInterpreterFetchOpcode;
@@ -20,6 +22,7 @@ import com.oracle.truffle.api.HostCompilerDirectives.BytecodeInterpreterHandlerC
 import com.oracle.truffle.api.HostCompilerDirectives.BytecodeInterpreterSwitch;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.BytecodeOSRNode;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.CountingConditionProfile;
@@ -85,6 +88,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         int counter;
 //        final LoopCounter loopCounter;
 
+        @EarlyInline
         State(int sp) {
             this.sp = sp;
             this.extBA = 0;
@@ -367,6 +371,8 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             @Argument(nonNull = true),  // frame
             @Argument(nonNull = true)  // bc
     })
+    @EarlyEscapeAnalysis
+    @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.MERGE_EXPLODE)
     public Object execute(final VirtualFrame frame, final int startPC, final int startSP) {
         assert isBlock == FrameAccess.hasClosure(frame);
 
