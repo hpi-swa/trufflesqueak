@@ -216,7 +216,6 @@ public final class JavaObjectWrapper implements TruffleObject {
         }
     }
 
-    @CompilationFinal private static Class<? extends TruffleLanguage<?>> hostLanguage;
     private final Object wrappedObject;
 
     private JavaObjectWrapper(final Object object) {
@@ -881,22 +880,13 @@ public final class JavaObjectWrapper implements TruffleObject {
     }
 
     @ExportMessage
-    boolean hasLanguage() {
+    boolean hasLanguageId() {
         return true;
     }
 
     @ExportMessage
-    Class<? extends TruffleLanguage<?>> getLanguage() {
-        if (hostLanguage == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            try {
-                final Object hostObject = SqueakImageContext.getSlow().env.asGuestValue(Truffle.getRuntime());
-                hostLanguage = InteropLibrary.getUncached().getLanguage(hostObject);
-            } catch (final UnsupportedMessageException e) {
-                LogUtils.INTEROP.warning(e.toString());
-            }
-        }
-        return hostLanguage;
+    String getLanguageId() {
+        return "java";
     }
 
     // Helpers

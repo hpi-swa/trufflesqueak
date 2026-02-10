@@ -34,6 +34,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLogger;
 
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectGraphOperations;
 
@@ -256,9 +257,23 @@ public final class MiscUtils {
     }
 
     @TruffleBoundary
-    public static void printResourceSummary() {
+    public static void printResourceSummary(final SqueakImageContext image) {
         final TruffleLogger log = LogUtils.MAIN;
         log.info("# Resource Summary");
+
+        final String javaVersion = System.getProperty("java.version");
+        final String fullVersion = System.getProperty("org.graalvm.version",
+                        System.getProperty("graalvm.version", "N/A"));
+        String truffleVersion = image.env.getClass().getPackage().getImplementationVersion();
+        if (truffleVersion == null) {
+            truffleVersion = "Development Build";
+        }
+        // Use the logger's built-in formatting for all lines
+        log.info("- Java version:    %s".formatted(javaVersion));
+        log.info("- GraalVM version: %s".formatted(fullVersion));
+        log.info("- Truffle version: %s".formatted(truffleVersion));
+        log.info("");
+
         final double totalProcessTimeSeconds = millisToSeconds(System.currentTimeMillis() - ManagementFactory.getRuntimeMXBean().getStartTime());
         final long processCPUTime = ((com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean()).getProcessCpuTime();
         log.info("- Total process time: %ss | CPU load: %.2f".formatted(totalProcessTimeSeconds, nanosToSeconds(processCPUTime) / totalProcessTimeSeconds));

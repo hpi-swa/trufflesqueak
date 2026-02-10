@@ -143,7 +143,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
                         return callNode.call(method.getCallTarget(), FrameAccess.newWith(NilObject.SINGLETON, null, receiver, arguments));
                     }
                 } else {
-                    LogUtils.INTEROP.warning(() -> "InteropSend failed for " + selector + ". Lookup result: " + methodObject);
+                    LogUtils.INTEROP.warning(() -> "InteropSend failed for " + selector + " sent to " + receiverClass + ". Lookup result: " + methodObject);
                 }
             }
             CompilerDirectives.transferToInterpreter();
