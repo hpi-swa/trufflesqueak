@@ -6,6 +6,7 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.interpreter;
 
+import static com.oracle.truffle.api.HostCompilerDirectives.BytecodeInterpreterHandlerConfig.Argument.ExpansionKind.MATERIALIZED;
 import static com.oracle.truffle.api.HostCompilerDirectives.BytecodeInterpreterHandlerConfig.Argument.ExpansionKind.VIRTUAL;
 import static de.hpi.swa.trufflesqueak.util.UnsafeUtils.uncheckedCast;
 
@@ -372,7 +373,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     @Argument(nonNull = true), // Denotes `this' pointer
                     @Argument(returnValue = true),  // pc
                     @Argument(expand = VIRTUAL),    // state
-                    @Argument(nonNull = true),  // frame
+                    @Argument(expand = MATERIALIZED, nonNull = true),  // frame
                     @Argument(nonNull = true)  // bc
     })
     @EarlyEscapeAnalysis
@@ -1120,6 +1121,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     final byte[] bc) {
         final int param = getByte(bc, pc + 1);
         final int arraySize = param & 127;
+        CompilerAsserts.partialEvaluationConstant(arraySize);
         final Object[] values;
         if (param < 0) {
             values = popN(frame, state.sp, arraySize);
@@ -1171,6 +1173,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         CompilerAsserts.partialEvaluationConstant(block);
         final byte byteB = getByte(bc, pc + 2);
         final int numCopied = Byte.toUnsignedInt(byteB) & 63;
+        CompilerAsserts.partialEvaluationConstant(numCopied);
         final Object[] copiedValues = popN(frame, state.sp, numCopied);
         state.sp -= numCopied;
         final boolean ignoreContext = (byteB & 0x40) != 0;
@@ -1192,6 +1195,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     final byte[] bc) {
         final int byteA = getUnsignedInt(bc, pc + 1);
         final int numCopied = (byteA >> 3 & 0x7) + (state.getExtA() >> 4) * 8;
+        CompilerAsserts.partialEvaluationConstant(numCopied);
         final Object[] copiedValues = popN(frame, state.sp, numCopied);
         state.sp -= numCopied;
         push(frame, state.sp++, createBlockClosure(frame, uncheckedCast(data[pc], CompiledCodeObject.class), copiedValues, getOrCreateContext(frame, pc)));
@@ -1887,6 +1891,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         int nextPC = pc + 2;
         final int byte1 = getUnsignedInt(bc, pc + 1);
         final int numArgs = (byte1 & 7) + (state.getExtB() << 3);
+        CompilerAsserts.partialEvaluationConstant(numArgs);
         final Object[] arguments = popN(frame, state.sp, numArgs);
         state.sp -= numArgs;
         final Object receiver = popReceiver(frame, --state.sp);
@@ -1918,6 +1923,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         }
         final int byte1 = getUnsignedInt(bc, pc + 1);
         final int numArgs = (byte1 & 7) + (extBValue << 3);
+        CompilerAsserts.partialEvaluationConstant(numArgs);
         final ClassObject lookupClass = isDirected ? ((ClassObject) pop(frame, --state.sp)).getResolvedSuperclass() : null;
         final Object[] arguments = popN(frame, state.sp, numArgs);
         state.sp -= numArgs;
