@@ -267,6 +267,10 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         if (loopCounter > 0) {
             LoopNode.reportLoopCount(this, loopCounter);
         }
+        return handleReturn(frame, currentPC, pc, sp, result);
+    }
+
+    protected final Object handleReturn(final VirtualFrame frame, final int currentPC, final int pc, final int sp, final Object result) {
         if (isBlock) {
             return handleBlockReturn(frame, currentPC, pc, sp, result);
         } else {
@@ -278,6 +282,10 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         if (loopCounter > 0) {
             LoopNode.reportLoopCount(this, loopCounter);
         }
+        return handleNormalReturn(frame, currentPC, result);
+    }
+
+    protected final Object handleReturnFromBlock(final VirtualFrame frame, final int currentPC, final Object result) {
         return handleNormalReturn(frame, currentPC, result);
     }
 
