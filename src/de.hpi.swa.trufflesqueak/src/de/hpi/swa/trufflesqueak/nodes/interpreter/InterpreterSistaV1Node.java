@@ -92,14 +92,17 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             this.extBA = 0;
         }
 
+        @EarlyInline
         int getExtB() {
             return (int) (extBA >> 32);
         }
 
+        @EarlyInline
         int getExtA() {
             return (int) extBA;
         }
 
+        @EarlyInline
         void resetExtensions() {
             this.extBA = 0;
         }
@@ -117,6 +120,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final LoopCounter loopCounter;
         int interpreterLoopCounter;
 
+        @EarlyInline
         private void reportLoopCountOnReturn(final Node source) {
             if (CompilerDirectives.hasNextTier()) {
                 int backEdgeCount = CompilerDirectives.inInterpreter() ? interpreterLoopCounter : loopCounter.value;
@@ -388,6 +392,8 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         int pc = startPC;
         final State state = new State(code.getBytes(), loopCounter, interpreterLoopCounter);
         final VirtualState virtualState = new VirtualState(startSP);
+
+        hoistState(state.interpreterLoopCounter, virtualState.sp);
 
         Object returnValue = null;
         try {
@@ -874,6 +880,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         OSRException(Object osrResult) {
             this.osrResult = osrResult;
         }
+    }
+
+    @CompilerDirectives.TruffleBoundary(allowInlining = true)
+    private void hoistState(int i1, int i2) {
+        // required
     }
 
     @SuppressWarnings({"unused", "static-method"})
