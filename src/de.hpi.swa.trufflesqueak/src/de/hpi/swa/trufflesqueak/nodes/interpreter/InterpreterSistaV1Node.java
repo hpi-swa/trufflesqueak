@@ -82,7 +82,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     }
 
     @ValueType
-    public static final class State {
+    public static final class VirtualState {
         int sp;
         long extBA;
 // Object returnValue;
@@ -90,7 +90,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
 // final LoopCounter loopCounter;
 
         @EarlyInline
-        State(final int sp) {
+        VirtualState(final int sp) {
             this.sp = sp;
             this.extBA = 0;
 // this.returnValue = null;
@@ -372,7 +372,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @BytecodeInterpreterHandlerConfig(maximumOperationCode = BC.STORE_AND_POP_REMOTE_TEMP_LONG, arguments = {
                     @Argument(nonNull = true), // Denotes `this' pointer
                     @Argument(returnValue = true),  // pc
-                    @Argument(expand = VIRTUAL),    // state
+                    @Argument(expand = VIRTUAL),    // virtualState
                     @Argument(expand = MATERIALIZED, nonNull = true),  // frame
                     @Argument(nonNull = true)  // bc
     })
@@ -394,11 +394,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             }
 
             int pc = startPC;
-            final State state = new State(startSP);
+            final VirtualState virtualState = new VirtualState(startSP);
 
             Object returnValue = null;
             while (pc != LOCAL_RETURN_PC) {
-                switch (HostCompilerDirectives.markThreadedSwitch(nextOpcode(pc, state, frame, bc))) {
+                switch (HostCompilerDirectives.markThreadedSwitch(nextOpcode(pc, virtualState, frame, bc))) {
                     /* 1 byte bytecodes */
                     case BC.PUSH_RCVR_VAR_0:
                     case BC.PUSH_RCVR_VAR_1:
@@ -416,7 +416,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     case BC.PUSH_RCVR_VAR_D:
                     case BC.PUSH_RCVR_VAR_E:
                     case BC.PUSH_RCVR_VAR_F:
-                        pc = handlePushReceiverVariable(pc, state, frame, bc);
+                        pc = handlePushReceiverVariable(pc, virtualState, frame, bc);
                         break;
 
                     case BC.PUSH_LIT_VAR_0:
@@ -435,7 +435,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     case BC.PUSH_LIT_VAR_D:
                     case BC.PUSH_LIT_VAR_E:
                     case BC.PUSH_LIT_VAR_F:
-                        pc = handlePushLiteralVariable(pc, state, frame, bc);
+                        pc = handlePushLiteralVariable(pc, virtualState, frame, bc);
                         break;
 
                     case BC.PUSH_LIT_CONST_00:
@@ -470,7 +470,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     case BC.PUSH_LIT_CONST_1D:
                     case BC.PUSH_LIT_CONST_1E:
                     case BC.PUSH_LIT_CONST_1F:
-                        pc = handlePushLiteralConstant(pc, state, frame, bc);
+                        pc = handlePushLiteralConstant(pc, virtualState, frame, bc);
                         break;
 
                     case BC.PUSH_TEMP_VAR_0:
@@ -485,130 +485,130 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     case BC.PUSH_TEMP_VAR_9:
                     case BC.PUSH_TEMP_VAR_A:
                     case BC.PUSH_TEMP_VAR_B:
-                        pc = handlePushTemporaryVariable(pc, state, frame, bc);
+                        pc = handlePushTemporaryVariable(pc, virtualState, frame, bc);
                         break;
 
                     case BC.PUSH_RECEIVER: {
-                        pc = handlePushReceiver(pc, state, frame, bc);
+                        pc = handlePushReceiver(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.PUSH_CONSTANT_TRUE: {
-                        pc = handlePushConstantTrue(pc, state, frame, bc);
+                        pc = handlePushConstantTrue(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.PUSH_CONSTANT_FALSE: {
-                        pc = handlePushConstantFalse(pc, state, frame, bc);
+                        pc = handlePushConstantFalse(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.PUSH_CONSTANT_NIL: {
-                        pc = handlePushConstantNil(pc, state, frame, bc);
+                        pc = handlePushConstantNil(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.PUSH_CONSTANT_ZERO: {
-                        pc = handlePushConstantZero(pc, state, frame, bc);
+                        pc = handlePushConstantZero(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.PUSH_CONSTANT_ONE: {
-                        pc = handlePushConstantOne(pc, state, frame, bc);
+                        pc = handlePushConstantOne(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.EXT_PUSH_PSEUDO_VARIABLE: {
-                        pc = handlePushPseudoVariable(pc, state, frame, bc);
+                        pc = handlePushPseudoVariable(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.DUPLICATE_TOP: {
-                        pc = handleDuplicateTop(pc, state, frame, bc);
+                        pc = handleDuplicateTop(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.RETURN_RECEIVER: {
-                        returnValue = handleReturn(frame, pc, pc + 1, state.sp, FrameAccess.getReceiver(frame), state.getProfileCount());
+                        returnValue = handleReturn(frame, pc, pc + 1, virtualState.sp, FrameAccess.getReceiver(frame), virtualState.getProfileCount());
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_TRUE: {
-                        returnValue = handleReturn(frame, pc, pc + 1, state.sp, BooleanObject.TRUE, state.getProfileCount());
+                        returnValue = handleReturn(frame, pc, pc + 1, virtualState.sp, BooleanObject.TRUE, virtualState.getProfileCount());
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_FALSE: {
-                        returnValue = handleReturn(frame, pc, pc + 1, state.sp, BooleanObject.FALSE, state.getProfileCount());
+                        returnValue = handleReturn(frame, pc, pc + 1, virtualState.sp, BooleanObject.FALSE, virtualState.getProfileCount());
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_NIL: {
-                        returnValue = handleReturn(frame, pc, pc + 1, state.sp, NilObject.SINGLETON, state.getProfileCount());
+                        returnValue = handleReturn(frame, pc, pc + 1, virtualState.sp, NilObject.SINGLETON, virtualState.getProfileCount());
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_TOP_FROM_METHOD: {
-                        returnValue = handleReturn(frame, pc, pc + 1, state.sp, top(frame, state.sp), state.getProfileCount());
+                        returnValue = handleReturn(frame, pc, pc + 1, virtualState.sp, top(frame, virtualState.sp), virtualState.getProfileCount());
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_NIL_FROM_BLOCK: {
-                        returnValue = handleReturnFromBlock(frame, pc, NilObject.SINGLETON, state.getProfileCount());
+                        returnValue = handleReturnFromBlock(frame, pc, NilObject.SINGLETON, virtualState.getProfileCount());
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_TOP_FROM_BLOCK: {
-                        returnValue = handleReturnFromBlock(frame, pc, top(frame, state.sp), state.getProfileCount());
+                        returnValue = handleReturnFromBlock(frame, pc, top(frame, virtualState.sp), virtualState.getProfileCount());
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.EXT_NOP: {
-                        pc = handleNoOperation(pc, state, frame, bc);
+                        pc = handleNoOperation(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.BYTECODE_PRIM_ADD: {
-                        pc = handlePrimitiveAdd(pc, state, frame, bc);
+                        pc = handlePrimitiveAdd(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.BYTECODE_PRIM_SUBTRACT: {
-                        pc = handlePrimitiveSubtract(pc, state, frame, bc);
+                        pc = handlePrimitiveSubtract(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.BYTECODE_PRIM_LESS_THAN: {
-                        pc = handlePrimitiveLessThan(pc, state, frame, bc);
+                        pc = handlePrimitiveLessThan(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.BYTECODE_PRIM_GREATER_THAN: {
-                        pc = handlePrimitiveGreaterThan(pc, state, frame, bc);
+                        pc = handlePrimitiveGreaterThan(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.BYTECODE_PRIM_LESS_OR_EQUAL: {
-                        pc = handlePrimitiveLessOrEqual(pc, state, frame, bc);
+                        pc = handlePrimitiveLessOrEqual(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.BYTECODE_PRIM_GREATER_OR_EQUAL: {
-                        pc = handlePrimitiveGreaterOrEqual(pc, state, frame, bc);
+                        pc = handlePrimitiveGreaterOrEqual(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.BYTECODE_PRIM_EQUAL: {
-                        pc = handlePrimitiveEqual(pc, state, frame, bc);
+                        pc = handlePrimitiveEqual(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.BYTECODE_PRIM_NOT_EQUAL: {
-                        pc = handlePrimitiveNotEqual(pc, state, frame, bc);
+                        pc = handlePrimitiveNotEqual(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.BYTECODE_PRIM_BIT_AND: {
-                        pc = handlePrimitiveBitAnd(pc, state, frame, bc);
+                        pc = handlePrimitiveBitAnd(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.BYTECODE_PRIM_BIT_OR: {
-                        pc = handlePrimitiveBitOr(pc, state, frame, bc);
+                        pc = handlePrimitiveBitOr(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.BYTECODE_PRIM_IDENTICAL: {
-                        pc = handlePrimitiveIdentical(pc, state, frame, bc);
+                        pc = handlePrimitiveIdentical(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.BYTECODE_PRIM_CLASS: {
-                        pc = handlePrimitiveClass(pc, state, frame, bc);
+                        pc = handlePrimitiveClass(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.BYTECODE_PRIM_NOT_IDENTICAL: {
-                        pc = handlePrimitiveNotIdentical(pc, state, frame, bc);
+                        pc = handlePrimitiveNotIdentical(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.BYTECODE_PRIM_SIZE:
@@ -634,7 +634,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     case BC.SEND_LIT_SEL0_D:
                     case BC.SEND_LIT_SEL0_E:
                     case BC.SEND_LIT_SEL0_F:
-                        pc = handleSend0(pc, state, frame, bc);
+                        pc = handleSend0(pc, virtualState, frame, bc);
                         break;
 
                     case BC.BYTECODE_PRIM_MULTIPLY:
@@ -664,7 +664,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     case BC.SEND_LIT_SEL1_D:
                     case BC.SEND_LIT_SEL1_E:
                     case BC.SEND_LIT_SEL1_F:
-                        pc = handleSend1(pc, state, frame, bc);
+                        pc = handleSend1(pc, virtualState, frame, bc);
                         break;
 
                     case BC.BYTECODE_PRIM_AT_PUT:
@@ -684,7 +684,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     case BC.SEND_LIT_SEL2_D:
                     case BC.SEND_LIT_SEL2_E:
                     case BC.SEND_LIT_SEL2_F:
-                        pc = handleSend2(pc, state, frame, bc);
+                        pc = handleSend2(pc, virtualState, frame, bc);
                         break;
 
                     case BC.SHORT_UJUMP_0:
@@ -695,7 +695,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     case BC.SHORT_UJUMP_5:
                     case BC.SHORT_UJUMP_6:
                     case BC.SHORT_UJUMP_7:
-                        pc = handleShortUnconditionalJump(pc, state, frame, bc);
+                        pc = handleShortUnconditionalJump(pc, virtualState, frame, bc);
                         break;
 
                     case BC.SHORT_CJUMP_TRUE_0:
@@ -706,7 +706,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     case BC.SHORT_CJUMP_TRUE_5:
                     case BC.SHORT_CJUMP_TRUE_6:
                     case BC.SHORT_CJUMP_TRUE_7:
-                        pc = handleShortConditionalJumpTrue(pc, state, frame, bc);
+                        pc = handleShortConditionalJumpTrue(pc, virtualState, frame, bc);
                         break;
 
                     case BC.SHORT_CJUMP_FALSE_0:
@@ -717,7 +717,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     case BC.SHORT_CJUMP_FALSE_5:
                     case BC.SHORT_CJUMP_FALSE_6:
                     case BC.SHORT_CJUMP_FALSE_7:
-                        pc = handleShortConditionalJumpFalse(pc, state, frame, bc);
+                        pc = handleShortConditionalJumpFalse(pc, virtualState, frame, bc);
                         break;
 
                     case BC.POP_INTO_RCVR_VAR_0:
@@ -728,7 +728,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     case BC.POP_INTO_RCVR_VAR_5:
                     case BC.POP_INTO_RCVR_VAR_6:
                     case BC.POP_INTO_RCVR_VAR_7:
-                        pc = handlePopIntoReceiverVariable(pc, state, frame, bc);
+                        pc = handlePopIntoReceiverVariable(pc, virtualState, frame, bc);
                         break;
 
                     case BC.POP_INTO_TEMP_VAR_0:
@@ -739,117 +739,117 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     case BC.POP_INTO_TEMP_VAR_5:
                     case BC.POP_INTO_TEMP_VAR_6:
                     case BC.POP_INTO_TEMP_VAR_7:
-                        pc = handlePopIntoTemporaryVariable(pc, state, frame, bc);
+                        pc = handlePopIntoTemporaryVariable(pc, virtualState, frame, bc);
                         break;
 
                     case BC.POP_STACK: {
-                        pc = handlePopStack(pc, state, frame, bc);
+                        pc = handlePopStack(pc, virtualState, frame, bc);
                         break;
                     }
                     /* 2 byte bytecodes */
                     case BC.EXT_A: {
-                        pc = handleExtA(pc, state, frame, bc);
+                        pc = handleExtA(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.EXT_B: {
-                        pc = handleExtB(pc, state, frame, bc);
+                        pc = handleExtB(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.EXT_PUSH_RECEIVER_VARIABLE: {
-                        pc = handleExtendedPushReceiverVariable(pc, state, frame, bc);
+                        pc = handleExtendedPushReceiverVariable(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.EXT_PUSH_LITERAL_VARIABLE: {
-                        pc = handleExtendedPushLiteralVariable(pc, state, frame, bc);
+                        pc = handleExtendedPushLiteralVariable(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.EXT_PUSH_LITERAL: {
-                        pc = handleExtendedPushLiteralConstant(pc, state, frame, bc);
+                        pc = handleExtendedPushLiteralConstant(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.LONG_PUSH_TEMPORARY_VARIABLE: {
-                        pc = handleLongPushTemporaryVariable(pc, state, frame, bc);
+                        pc = handleLongPushTemporaryVariable(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.PUSH_NEW_ARRAY: {
-                        pc = handlePushNewArray(pc, state, frame, bc);
+                        pc = handlePushNewArray(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.EXT_PUSH_INTEGER: {
-                        pc = handleExtendedPushInteger(pc, state, frame, bc);
+                        pc = handleExtendedPushInteger(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.EXT_PUSH_CHARACTER: {
-                        pc = handleExtendedPushCharacter(pc, state, frame, bc);
+                        pc = handleExtendedPushCharacter(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.EXT_SEND: {
-                        pc = handleExtendedSend(pc, state, frame, bc);
+                        pc = handleExtendedSend(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.EXT_SEND_SUPER: {
-                        pc = handleExtendedSuperSend(pc, state, frame, bc);
+                        pc = handleExtendedSuperSend(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.EXT_UNCONDITIONAL_JUMP: {
-                        pc = handleExtendedUnconditionalJump(pc, state, frame, bc);
+                        pc = handleExtendedUnconditionalJump(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.EXT_JUMP_IF_TRUE: {
-                        pc = handleExtendedConditionalJumpTrue(pc, state, frame, bc);
+                        pc = handleExtendedConditionalJumpTrue(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.EXT_JUMP_IF_FALSE: {
-                        pc = handleExtendedConditionalJumpFalse(pc, state, frame, bc);
+                        pc = handleExtendedConditionalJumpFalse(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.EXT_STORE_AND_POP_RECEIVER_VARIABLE: {
-                        pc = handleExtendedStoreAndPopReceiverVariable(pc, state, frame, bc);
+                        pc = handleExtendedStoreAndPopReceiverVariable(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.EXT_STORE_AND_POP_LITERAL_VARIABLE: {
-                        pc = handleExtendedStoreAndPopLiteralVariable(pc, state, frame, bc);
+                        pc = handleExtendedStoreAndPopLiteralVariable(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.LONG_STORE_AND_POP_TEMPORARY_VARIABLE: {
-                        pc = handleLongStoreAndPopTemporaryVariable(pc, state, frame, bc);
+                        pc = handleLongStoreAndPopTemporaryVariable(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.EXT_STORE_RECEIVER_VARIABLE: {
-                        pc = handleExtendedStoreReceiverVariable(pc, state, frame, bc);
+                        pc = handleExtendedStoreReceiverVariable(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.EXT_STORE_LITERAL_VARIABLE: {
-                        pc = handleExtendedStoreLiteralVariable(pc, state, frame, bc);
+                        pc = handleExtendedStoreLiteralVariable(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.LONG_STORE_TEMPORARY_VARIABLE: {
-                        pc = handleLongStoreTemporaryVariable(pc, state, frame, bc);
+                        pc = handleLongStoreTemporaryVariable(pc, virtualState, frame, bc);
                         break;
                     }
                     /* 3 byte bytecodes */
                     case BC.CALL_PRIMITIVE: {
-                        pc = handleCallPrimitive(pc, state, frame, bc);
+                        pc = handleCallPrimitive(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.EXT_PUSH_FULL_CLOSURE: {
-                        pc = handleExtendedPushFullClosure(pc, state, frame, bc);
+                        pc = handleExtendedPushFullClosure(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.EXT_PUSH_CLOSURE: {
-                        pc = handleExtendedPushClosure(pc, state, frame, bc);
+                        pc = handleExtendedPushClosure(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.PUSH_REMOTE_TEMP_LONG: {
-                        pc = handleLongPushRemoteTemporaryVariable(pc, state, frame, bc);
+                        pc = handleLongPushRemoteTemporaryVariable(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.STORE_REMOTE_TEMP_LONG: {
-                        pc = handleLongStoreRemoteTemporaryVariable(pc, state, frame, bc);
+                        pc = handleLongStoreRemoteTemporaryVariable(pc, virtualState, frame, bc);
                         break;
                     }
                     case BC.STORE_AND_POP_REMOTE_TEMP_LONG: {
-                        pc = handleLongStoreAndPopRemoteTemporaryVariable(pc, state, frame, bc);
+                        pc = handleLongStoreAndPopRemoteTemporaryVariable(pc, virtualState, frame, bc);
                         break;
                     }
                     default: {
@@ -879,7 +879,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @BytecodeInterpreterFetchOpcode
     public int nextOpcode(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
         return getUnsignedInt(bc, pc);
@@ -897,12 +897,12 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handlePushReceiverVariable(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-// externalizePCAndSP(frame, state.pc, state.sp); // for ContextObject access
+// externalizePCAndSP(frame, virtualState.pc, virtualState.sp); // for ContextObject access
         final int index = getUnsignedInt(bc, pc) & 0x0F;
-        pushFollowed(frame, pc, state.sp++, uncheckedCast(data[pc], SqueakObjectAt0NodeGen.class).execute(this, FrameAccess.getReceiver(frame), index));
+        pushFollowed(frame, pc, virtualState.sp++, uncheckedCast(data[pc], SqueakObjectAt0NodeGen.class).execute(this, FrameAccess.getReceiver(frame), index));
         return pc + 1;
     }
 
@@ -914,11 +914,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handlePushLiteralVariable(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
         final int index = getUnsignedInt(bc, pc) & 0x0F;
-        push(frame, state.sp++, readLiteralVariable(pc, index));
+        push(frame, virtualState.sp++, readLiteralVariable(pc, index));
         return pc + 1;
     }
 
@@ -934,11 +934,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handlePushLiteralConstant(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
         final int index = getUnsignedInt(bc, pc) & 0x1F;
-        push(frame, state.sp++, getAndResolveLiteral(pc, index));
+        push(frame, virtualState.sp++, getAndResolveLiteral(pc, index));
         return pc + 1;
     }
 
@@ -949,11 +949,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handlePushTemporaryVariable(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
         final int index = getUnsignedInt(bc, pc) & 0x0F;
-        pushFollowed(frame, pc, state.sp++, getTemp(frame, index));
+        pushFollowed(frame, pc, virtualState.sp++, getTemp(frame, index));
         return pc + 1;
     }
 
@@ -962,10 +962,10 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handlePushReceiver(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        pushFollowed(frame, pc, state.sp++, FrameAccess.getReceiver(frame));
+        pushFollowed(frame, pc, virtualState.sp++, FrameAccess.getReceiver(frame));
         return pc + 1;
     }
 
@@ -974,10 +974,10 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handlePushConstantTrue(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        push(frame, state.sp++, BooleanObject.TRUE);
+        push(frame, virtualState.sp++, BooleanObject.TRUE);
         return pc + 1;
     }
 
@@ -986,10 +986,10 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handlePushConstantFalse(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        push(frame, state.sp++, BooleanObject.FALSE);
+        push(frame, virtualState.sp++, BooleanObject.FALSE);
         return pc + 1;
     }
 
@@ -998,10 +998,10 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handlePushConstantNil(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        push(frame, state.sp++, NilObject.SINGLETON);
+        push(frame, virtualState.sp++, NilObject.SINGLETON);
         return pc + 1;
     }
 
@@ -1010,10 +1010,10 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handlePushConstantZero(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        push(frame, state.sp++, 0L);
+        push(frame, virtualState.sp++, 0L);
         return pc + 1;
     }
 
@@ -1022,10 +1022,10 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handlePushConstantOne(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        push(frame, state.sp++, 1L);
+        push(frame, virtualState.sp++, 1L);
         return pc + 1;
     }
 
@@ -1034,15 +1034,15 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handlePushPseudoVariable(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        if (state.getExtB() == 0) {
-            push(frame, state.sp++, getOrCreateContext(frame, pc));
+        if (virtualState.getExtB() == 0) {
+            push(frame, virtualState.sp++, getOrCreateContext(frame, pc));
         } else {
             throw unknownBytecode(pc, getByte(bc, pc));
         }
-        state.resetExtensions();
+        virtualState.resetExtensions();
         return pc + 1;
     }
 
@@ -1051,11 +1051,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleDuplicateTop(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        pushFollowed(frame, pc, state.sp, top(frame, state.sp));
-        state.sp++;
+        pushFollowed(frame, pc, virtualState.sp, top(frame, virtualState.sp));
+        virtualState.sp++;
         return pc + 1;
     }
 
@@ -1064,12 +1064,12 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleExtendedPushReceiverVariable(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        pushFollowed(frame, pc, state.sp++,
-                        uncheckedCast(data[pc], SqueakObjectAt0NodeGen.class).execute(this, FrameAccess.getReceiver(frame), getByteExtended(bc, pc + 1, state.getExtA())));
-        state.resetExtensions();
+        pushFollowed(frame, pc, virtualState.sp++,
+                        uncheckedCast(data[pc], SqueakObjectAt0NodeGen.class).execute(this, FrameAccess.getReceiver(frame), getByteExtended(bc, pc + 1, virtualState.getExtA())));
+        virtualState.resetExtensions();
         return pc + 2;
     }
 
@@ -1078,11 +1078,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleExtendedPushLiteralVariable(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        push(frame, state.sp++, readLiteralVariable(pc, getByteExtended(bc, pc + 1, state.getExtA())));
-        state.resetExtensions();
+        push(frame, virtualState.sp++, readLiteralVariable(pc, getByteExtended(bc, pc + 1, virtualState.getExtA())));
+        virtualState.resetExtensions();
         return pc + 2;
     }
 
@@ -1091,11 +1091,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleExtendedPushLiteralConstant(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        push(frame, state.sp++, getAndResolveLiteral(pc, getByteExtended(bc, pc + 1, state.getExtA())));
-        state.resetExtensions();
+        push(frame, virtualState.sp++, getAndResolveLiteral(pc, getByteExtended(bc, pc + 1, virtualState.getExtA())));
+        virtualState.resetExtensions();
         return pc + 2;
     }
 
@@ -1104,10 +1104,10 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleLongPushTemporaryVariable(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        pushFollowed(frame, pc, state.sp++, getTemp(frame, getUnsignedInt(bc, pc + 1)));
+        pushFollowed(frame, pc, virtualState.sp++, getTemp(frame, getUnsignedInt(bc, pc + 1)));
         return pc + 2;
     }
 
@@ -1116,7 +1116,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handlePushNewArray(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
         final int param = getByte(bc, pc + 1);
@@ -1124,12 +1124,12 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         CompilerAsserts.partialEvaluationConstant(arraySize);
         final Object[] values;
         if (param < 0) {
-            values = popN(frame, state.sp, arraySize);
-            state.sp -= arraySize;
+            values = popN(frame, virtualState.sp, arraySize);
+            virtualState.sp -= arraySize;
         } else {
             values = ArrayUtils.withAll(arraySize, NilObject.SINGLETON);
         }
-        push(frame, state.sp++, ArrayObject.createWithStorage(getContext().arrayClass, values));
+        push(frame, virtualState.sp++, ArrayObject.createWithStorage(getContext().arrayClass, values));
         return pc + 2;
     }
 
@@ -1138,11 +1138,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleExtendedPushInteger(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        push(frame, state.sp++, (long) getByteExtended(bc, pc + 1, state.getExtB()));
-        state.resetExtensions();
+        push(frame, virtualState.sp++, (long) getByteExtended(bc, pc + 1, virtualState.getExtB()));
+        virtualState.resetExtensions();
         return pc + 2;
     }
 
@@ -1151,11 +1151,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleExtendedPushCharacter(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        push(frame, state.sp++, CharacterObject.valueOf(getByteExtended(bc, pc + 1, state.getExtA())));
-        state.resetExtensions();
+        push(frame, virtualState.sp++, CharacterObject.valueOf(getByteExtended(bc, pc + 1, virtualState.getExtA())));
+        virtualState.resetExtensions();
         return pc + 2;
     }
 
@@ -1164,24 +1164,24 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleExtendedPushFullClosure(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        final int literalIndex = getByteExtended(bc, pc + 1, state.getExtA());
+        final int literalIndex = getByteExtended(bc, pc + 1, virtualState.getExtA());
         final CompiledCodeObject block = (CompiledCodeObject) code.getLiteral(literalIndex);
         assert block.assertNotForwarded();
         CompilerAsserts.partialEvaluationConstant(block);
         final byte byteB = getByte(bc, pc + 2);
         final int numCopied = Byte.toUnsignedInt(byteB) & 63;
         CompilerAsserts.partialEvaluationConstant(numCopied);
-        final Object[] copiedValues = popN(frame, state.sp, numCopied);
-        state.sp -= numCopied;
+        final Object[] copiedValues = popN(frame, virtualState.sp, numCopied);
+        virtualState.sp -= numCopied;
         final boolean ignoreContext = (byteB & 0x40) != 0;
         final boolean receiverOnStack = (byteB & 0x80) != 0;
         final ContextObject outerContext = ignoreContext ? null : getOrCreateContext(frame, pc);
-        final Object receiver = receiverOnStack ? pop(frame, --state.sp) : FrameAccess.getReceiver(frame);
-        push(frame, state.sp++, new BlockClosureObject(false, block, block.getNumArgs(), copiedValues, receiver, outerContext));
-        state.resetExtensions();
+        final Object receiver = receiverOnStack ? pop(frame, --virtualState.sp) : FrameAccess.getReceiver(frame);
+        push(frame, virtualState.sp++, new BlockClosureObject(false, block, block.getNumArgs(), copiedValues, receiver, outerContext));
+        virtualState.resetExtensions();
         return pc + 3;
     }
 
@@ -1190,17 +1190,17 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleExtendedPushClosure(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
         final int byteA = getUnsignedInt(bc, pc + 1);
-        final int numCopied = (byteA >> 3 & 0x7) + (state.getExtA() >> 4) * 8;
+        final int numCopied = (byteA >> 3 & 0x7) + (virtualState.getExtA() >> 4) * 8;
         CompilerAsserts.partialEvaluationConstant(numCopied);
-        final Object[] copiedValues = popN(frame, state.sp, numCopied);
-        state.sp -= numCopied;
-        push(frame, state.sp++, createBlockClosure(frame, uncheckedCast(data[pc], CompiledCodeObject.class), copiedValues, getOrCreateContext(frame, pc)));
-        final int blockSize = getByteExtended(bc, pc + 2, state.getExtB());
-        state.resetExtensions();
+        final Object[] copiedValues = popN(frame, virtualState.sp, numCopied);
+        virtualState.sp -= numCopied;
+        push(frame, virtualState.sp++, createBlockClosure(frame, uncheckedCast(data[pc], CompiledCodeObject.class), copiedValues, getOrCreateContext(frame, pc)));
+        final int blockSize = getByteExtended(bc, pc + 2, virtualState.getExtB());
+        virtualState.resetExtensions();
         return pc + 3 + blockSize;
     }
 
@@ -1209,12 +1209,12 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleLongPushRemoteTemporaryVariable(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
         final int remoteTempIndex = getUnsignedInt(bc, pc + 1);
         final int tempVectorIndex = getUnsignedInt(bc, pc + 2);
-        pushFollowed(frame, pc, state.sp++, uncheckedCast(data[pc], SqueakObjectAt0NodeGen.class).execute(this, getTemp(frame, tempVectorIndex), remoteTempIndex));
+        pushFollowed(frame, pc, virtualState.sp++, uncheckedCast(data[pc], SqueakObjectAt0NodeGen.class).execute(this, getTemp(frame, tempVectorIndex), remoteTempIndex));
         return pc + 3;
     }
 
@@ -1228,11 +1228,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handlePopIntoReceiverVariable(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
         final int index = getUnsignedInt(bc, pc) & 0x07;
-        uncheckedCast(data[pc], SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), index, pop(frame, --state.sp));
+        uncheckedCast(data[pc], SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), index, pop(frame, --virtualState.sp));
         return pc + 1;
     }
 
@@ -1242,11 +1242,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handlePopIntoTemporaryVariable(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
         final int index = getUnsignedInt(bc, pc) & 0x07;
-        setStackValue(frame, index, pop(frame, --state.sp));
+        setStackValue(frame, index, pop(frame, --virtualState.sp));
         return pc + 1;
     }
 
@@ -1255,10 +1255,10 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handlePopStack(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        pop(frame, --state.sp);
+        pop(frame, --virtualState.sp);
         return pc + 1;
     }
 
@@ -1271,12 +1271,12 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleExtendedStoreAndPopReceiverVariable(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        final int index = getByteExtended(bc, pc + 1, state.getExtA());
-        uncheckedCast(data[pc], SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), index, pop(frame, --state.sp));
-        state.resetExtensions();
+        final int index = getByteExtended(bc, pc + 1, virtualState.getExtA());
+        uncheckedCast(data[pc], SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), index, pop(frame, --virtualState.sp));
+        virtualState.resetExtensions();
         return pc + 2;
     }
 
@@ -1285,12 +1285,12 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleExtendedStoreAndPopLiteralVariable(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        final int index = getByteExtended(bc, pc + 1, state.getExtA());
-        uncheckedCast(data[pc], SqueakObjectAtPut0Node.class).execute(this, getAndResolveLiteral(pc, index), ASSOCIATION.VALUE, pop(frame, --state.sp));
-        state.resetExtensions();
+        final int index = getByteExtended(bc, pc + 1, virtualState.getExtA());
+        uncheckedCast(data[pc], SqueakObjectAtPut0Node.class).execute(this, getAndResolveLiteral(pc, index), ASSOCIATION.VALUE, pop(frame, --virtualState.sp));
+        virtualState.resetExtensions();
         return pc + 2;
     }
 
@@ -1299,10 +1299,10 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleLongStoreAndPopTemporaryVariable(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        setStackValue(frame, getUnsignedInt(bc, pc + 1), pop(frame, --state.sp));
+        setStackValue(frame, getUnsignedInt(bc, pc + 1), pop(frame, --virtualState.sp));
         return pc + 2;
     }
 
@@ -1311,12 +1311,12 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleExtendedStoreReceiverVariable(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        final int index = getByteExtended(bc, pc + 1, state.getExtA());
-        uncheckedCast(data[pc], SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), index, top(frame, state.sp));
-        state.resetExtensions();
+        final int index = getByteExtended(bc, pc + 1, virtualState.getExtA());
+        uncheckedCast(data[pc], SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), index, top(frame, virtualState.sp));
+        virtualState.resetExtensions();
         return pc + 2;
     }
 
@@ -1325,12 +1325,12 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleExtendedStoreLiteralVariable(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        final int index = getByteExtended(bc, pc + 1, state.getExtA());
-        uncheckedCast(data[pc], SqueakObjectAtPut0Node.class).execute(this, getAndResolveLiteral(pc, index), ASSOCIATION.VALUE, top(frame, state.sp));
-        state.resetExtensions();
+        final int index = getByteExtended(bc, pc + 1, virtualState.getExtA());
+        uncheckedCast(data[pc], SqueakObjectAtPut0Node.class).execute(this, getAndResolveLiteral(pc, index), ASSOCIATION.VALUE, top(frame, virtualState.sp));
+        virtualState.resetExtensions();
         return pc + 2;
     }
 
@@ -1339,10 +1339,10 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleLongStoreTemporaryVariable(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        setStackValue(frame, getUnsignedInt(bc, pc + 1), top(frame, state.sp));
+        setStackValue(frame, getUnsignedInt(bc, pc + 1), top(frame, virtualState.sp));
         return pc + 2;
     }
 
@@ -1351,12 +1351,12 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleLongStoreRemoteTemporaryVariable(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
         final int remoteTempIndex = getUnsignedInt(bc, pc + 1);
         final int tempVectorIndex = getUnsignedInt(bc, pc + 2);
-        uncheckedCast(data[pc], SqueakObjectAtPut0Node.class).execute(this, getTemp(frame, tempVectorIndex), remoteTempIndex, top(frame, state.sp));
+        uncheckedCast(data[pc], SqueakObjectAtPut0Node.class).execute(this, getTemp(frame, tempVectorIndex), remoteTempIndex, top(frame, virtualState.sp));
         return pc + 3;
     }
 
@@ -1365,12 +1365,12 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleLongStoreAndPopRemoteTemporaryVariable(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
         final int remoteTempIndex = getUnsignedInt(bc, pc + 1);
         final int tempVectorIndex = getUnsignedInt(bc, pc + 2);
-        uncheckedCast(data[pc], SqueakObjectAtPut0Node.class).execute(this, getTemp(frame, tempVectorIndex), remoteTempIndex, pop(frame, --state.sp));
+        uncheckedCast(data[pc], SqueakObjectAtPut0Node.class).execute(this, getTemp(frame, tempVectorIndex), remoteTempIndex, pop(frame, --virtualState.sp));
         return pc + 3;
     }
 
@@ -1383,11 +1383,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleReturnReceiver(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        // state.returnValue = handleReturn(frame, pc, pc + 1, state.sp,
-        // FrameAccess.getReceiver(frame), state.getProfileCount());
+        // virtualState.returnValue = handleReturn(frame, pc, pc + 1, virtualState.sp,
+        // FrameAccess.getReceiver(frame), virtualState.getProfileCount());
         return LOCAL_RETURN_PC;
     }
 
@@ -1396,11 +1396,12 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleReturnTrue(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        // state.returnValue = handleReturn(frame, pc, pc + 1, state.sp, BooleanObject.TRUE,
-        // state.getProfileCount());
+        // virtualState.returnValue = handleReturn(frame, pc, pc + 1, virtualState.sp,
+        // BooleanObject.TRUE,
+        // virtualState.getProfileCount());
         return LOCAL_RETURN_PC;
     }
 
@@ -1409,11 +1410,12 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleReturnFalse(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        // state.returnValue = handleReturn(frame, pc, pc + 1, state.sp, BooleanObject.FALSE,
-        // state.getProfileCount());
+        // virtualState.returnValue = handleReturn(frame, pc, pc + 1, virtualState.sp,
+        // BooleanObject.FALSE,
+        // virtualState.getProfileCount());
         return LOCAL_RETURN_PC;
     }
 
@@ -1422,11 +1424,12 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleReturnNil(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        // state.returnValue = handleReturn(frame, pc, pc + 1, state.sp, NilObject.SINGLETON,
-        // state.getProfileCount());
+        // virtualState.returnValue = handleReturn(frame, pc, pc + 1, virtualState.sp,
+        // NilObject.SINGLETON,
+        // virtualState.getProfileCount());
         return LOCAL_RETURN_PC;
     }
 
@@ -1435,11 +1438,12 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleReturnTopFromMethod(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        // state.returnValue = handleReturn(frame, pc, pc + 1, state.sp, top(frame, state.sp),
-        // state.getProfileCount());
+        // virtualState.returnValue = handleReturn(frame, pc, pc + 1, virtualState.sp, top(frame,
+        // virtualState.sp),
+        // virtualState.getProfileCount());
         return LOCAL_RETURN_PC;
     }
 
@@ -1448,11 +1452,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleReturnNilFromBlock(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        // state.returnValue = handleReturnFromBlock(frame, pc, NilObject.SINGLETON,
-        // state.getProfileCount());
+        // virtualState.returnValue = handleReturnFromBlock(frame, pc, NilObject.SINGLETON,
+        // virtualState.getProfileCount());
         return LOCAL_RETURN_PC;
     }
 
@@ -1461,11 +1465,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleReturnTopFromBlock(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        // state.returnValue = handleReturnFromBlock(frame, pc, top(frame, state.sp),
-        // state.getProfileCount());
+        // virtualState.returnValue = handleReturnFromBlock(frame, pc, top(frame, virtualState.sp),
+        // virtualState.getProfileCount());
         return LOCAL_RETURN_PC;
     }
 
@@ -1478,11 +1482,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handlePrimitiveAdd(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        final Object arg = pop(frame, --state.sp);
-        final Object receiver = popReceiver(frame, --state.sp);
+        final Object arg = pop(frame, --virtualState.sp);
+        final Object receiver = popReceiver(frame, --virtualState.sp);
         final byte profile = profiles[pc];
         int nextPC = pc + 1;
         final Object result;
@@ -1502,11 +1506,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             result = PrimSmallFloatAddNode.doDouble(lhs, rhs);
         } else {
             enter(pc, profile, BRANCH1);
-            externalizePCAndSP(frame, nextPC, state.sp);
+            externalizePCAndSP(frame, nextPC, virtualState.sp);
             result = send(frame, pc, receiver, arg);
             nextPC = internalizePC(frame, nextPC);
         }
-        push(frame, state.sp++, result);
+        push(frame, virtualState.sp++, result);
         return nextPC;
     }
 
@@ -1515,11 +1519,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handlePrimitiveSubtract(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        final Object arg = pop(frame, --state.sp);
-        final Object receiver = popReceiver(frame, --state.sp);
+        final Object arg = pop(frame, --virtualState.sp);
+        final Object receiver = popReceiver(frame, --virtualState.sp);
         final byte profile = profiles[pc];
         int nextPC = pc + 1;
         final Object result;
@@ -1539,11 +1543,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             result = PrimSmallFloatSubtractNode.doDouble(lhs, rhs);
         } else {
             enter(pc, profile, BRANCH1);
-            externalizePCAndSP(frame, nextPC, state.sp);
+            externalizePCAndSP(frame, nextPC, virtualState.sp);
             result = send(frame, pc, receiver, arg);
             nextPC = internalizePC(frame, nextPC);
         }
-        push(frame, state.sp++, result);
+        push(frame, virtualState.sp++, result);
         return nextPC;
     }
 
@@ -1552,11 +1556,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handlePrimitiveLessThan(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        final Object arg = pop(frame, --state.sp);
-        final Object receiver = popReceiver(frame, --state.sp);
+        final Object arg = pop(frame, --virtualState.sp);
+        final Object receiver = popReceiver(frame, --virtualState.sp);
         final byte profile = profiles[pc];
         int nextPC = pc + 1;
         final Object result;
@@ -1568,11 +1572,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             result = PrimSmallFloatLessThanNode.doDouble(lhs, rhs);
         } else {
             enter(pc, profile, BRANCH1);
-            externalizePCAndSP(frame, nextPC, state.sp);
+            externalizePCAndSP(frame, nextPC, virtualState.sp);
             result = send(frame, pc, receiver, arg);
             nextPC = internalizePC(frame, nextPC);
         }
-        push(frame, state.sp++, result);
+        push(frame, virtualState.sp++, result);
         return nextPC;
     }
 
@@ -1581,11 +1585,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handlePrimitiveGreaterThan(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        final Object arg = pop(frame, --state.sp);
-        final Object receiver = popReceiver(frame, --state.sp);
+        final Object arg = pop(frame, --virtualState.sp);
+        final Object receiver = popReceiver(frame, --virtualState.sp);
         final byte profile = profiles[pc];
         int nextPC = pc + 1;
         final Object result;
@@ -1597,11 +1601,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             result = PrimSmallFloatGreaterThanNode.doDouble(lhs, rhs);
         } else {
             enter(pc, profile, BRANCH1);
-            externalizePCAndSP(frame, nextPC, state.sp);
+            externalizePCAndSP(frame, nextPC, virtualState.sp);
             result = send(frame, pc, receiver, arg);
             nextPC = internalizePC(frame, nextPC);
         }
-        push(frame, state.sp++, result);
+        push(frame, virtualState.sp++, result);
         return nextPC;
     }
 
@@ -1610,11 +1614,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handlePrimitiveLessOrEqual(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        final Object arg = pop(frame, --state.sp);
-        final Object receiver = popReceiver(frame, --state.sp);
+        final Object arg = pop(frame, --virtualState.sp);
+        final Object receiver = popReceiver(frame, --virtualState.sp);
         final byte profile = profiles[pc];
         int nextPC = pc + 1;
         final Object result;
@@ -1626,11 +1630,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             result = PrimSmallFloatLessOrEqualNode.doDouble(lhs, rhs);
         } else {
             enter(pc, profile, BRANCH1);
-            externalizePCAndSP(frame, nextPC, state.sp);
+            externalizePCAndSP(frame, nextPC, virtualState.sp);
             result = send(frame, pc, receiver, arg);
             nextPC = internalizePC(frame, nextPC);
         }
-        push(frame, state.sp++, result);
+        push(frame, virtualState.sp++, result);
         return nextPC;
     }
 
@@ -1639,11 +1643,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handlePrimitiveGreaterOrEqual(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        final Object arg = pop(frame, --state.sp);
-        final Object receiver = popReceiver(frame, --state.sp);
+        final Object arg = pop(frame, --virtualState.sp);
+        final Object receiver = popReceiver(frame, --virtualState.sp);
         final byte profile = profiles[pc];
         int nextPC = pc + 1;
         final Object result;
@@ -1655,11 +1659,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             result = PrimSmallFloatGreaterOrEqualNode.doDouble(lhs, rhs);
         } else {
             enter(pc, profile, BRANCH1);
-            externalizePCAndSP(frame, nextPC, state.sp);
+            externalizePCAndSP(frame, nextPC, virtualState.sp);
             result = send(frame, pc, receiver, arg);
             nextPC = internalizePC(frame, nextPC);
         }
-        push(frame, state.sp++, result);
+        push(frame, virtualState.sp++, result);
         return nextPC;
     }
 
@@ -1668,11 +1672,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handlePrimitiveEqual(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        final Object arg = pop(frame, --state.sp);
-        final Object receiver = popReceiver(frame, --state.sp);
+        final Object arg = pop(frame, --virtualState.sp);
+        final Object receiver = popReceiver(frame, --virtualState.sp);
         final byte profile = profiles[pc];
         int nextPC = pc + 1;
         final Object result;
@@ -1684,11 +1688,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             result = PrimSmallFloatEqualNode.doDouble(lhs, rhs);
         } else {
             enter(pc, profile, BRANCH1);
-            externalizePCAndSP(frame, nextPC, state.sp);
+            externalizePCAndSP(frame, nextPC, virtualState.sp);
             result = send(frame, pc, receiver, arg);
             nextPC = internalizePC(frame, nextPC);
         }
-        push(frame, state.sp++, result);
+        push(frame, virtualState.sp++, result);
         return nextPC;
     }
 
@@ -1697,11 +1701,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handlePrimitiveNotEqual(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        final Object arg = pop(frame, --state.sp);
-        final Object receiver = popReceiver(frame, --state.sp);
+        final Object arg = pop(frame, --virtualState.sp);
+        final Object receiver = popReceiver(frame, --virtualState.sp);
         final byte profile = profiles[pc];
         int nextPC = pc + 1;
         final Object result;
@@ -1713,11 +1717,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             result = PrimSmallFloatNotEqualNode.doDouble(lhs, rhs);
         } else {
             enter(pc, profile, BRANCH1);
-            externalizePCAndSP(frame, nextPC, state.sp);
+            externalizePCAndSP(frame, nextPC, virtualState.sp);
             result = send(frame, pc, receiver, arg);
             nextPC = internalizePC(frame, nextPC);
         }
-        push(frame, state.sp++, result);
+        push(frame, virtualState.sp++, result);
         return nextPC;
     }
 
@@ -1726,11 +1730,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handlePrimitiveBitAnd(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        final Object arg = pop(frame, --state.sp);
-        final Object receiver = popReceiver(frame, --state.sp);
+        final Object arg = pop(frame, --virtualState.sp);
+        final Object receiver = popReceiver(frame, --virtualState.sp);
         final byte profile = profiles[pc];
         int nextPC = pc + 1;
         final Object result;
@@ -1739,11 +1743,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             result = PrimBitAndNode.doLong(lhs, rhs);
         } else {
             enter(pc, profile, BRANCH1);
-            externalizePCAndSP(frame, nextPC, state.sp);
+            externalizePCAndSP(frame, nextPC, virtualState.sp);
             result = send(frame, pc, receiver, arg);
             nextPC = internalizePC(frame, nextPC);
         }
-        push(frame, state.sp++, result);
+        push(frame, virtualState.sp++, result);
         return nextPC;
     }
 
@@ -1752,11 +1756,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handlePrimitiveBitOr(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        final Object arg = pop(frame, --state.sp);
-        final Object receiver = popReceiver(frame, --state.sp);
+        final Object arg = pop(frame, --virtualState.sp);
+        final Object receiver = popReceiver(frame, --virtualState.sp);
         final byte profile = profiles[pc];
         int nextPC = pc + 1;
         final Object result;
@@ -1765,11 +1769,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             result = PrimBitOrNode.doLong(lhs, rhs);
         } else {
             enter(pc, profile, BRANCH1);
-            externalizePCAndSP(frame, nextPC, state.sp);
+            externalizePCAndSP(frame, nextPC, virtualState.sp);
             result = send(frame, pc, receiver, arg);
             nextPC = internalizePC(frame, nextPC);
         }
-        push(frame, state.sp++, result);
+        push(frame, virtualState.sp++, result);
         return nextPC;
     }
 
@@ -1778,12 +1782,12 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handlePrimitiveIdentical(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        final Object arg = pop(frame, --state.sp);
-        final Object receiver = popReceiver(frame, --state.sp);
-        push(frame, state.sp++, uncheckedCast(data[pc], SqueakObjectIdentityNodeGen.class).execute(this, receiver, arg));
+        final Object arg = pop(frame, --virtualState.sp);
+        final Object receiver = popReceiver(frame, --virtualState.sp);
+        push(frame, virtualState.sp++, uncheckedCast(data[pc], SqueakObjectIdentityNodeGen.class).execute(this, receiver, arg));
         return pc + 1;
     }
 
@@ -1792,11 +1796,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handlePrimitiveClass(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        final Object receiver = popReceiver(frame, --state.sp);
-        push(frame, state.sp++, uncheckedCast(data[pc], SqueakObjectClassNodeGen.class).executeLookup(this, receiver));
+        final Object receiver = popReceiver(frame, --virtualState.sp);
+        push(frame, virtualState.sp++, uncheckedCast(data[pc], SqueakObjectClassNodeGen.class).executeLookup(this, receiver));
         return pc + 1;
     }
 
@@ -1805,12 +1809,12 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handlePrimitiveNotIdentical(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        final Object arg = pop(frame, --state.sp);
-        final Object receiver = popReceiver(frame, --state.sp);
-        push(frame, state.sp++, !uncheckedCast(data[pc], SqueakObjectIdentityNodeGen.class).execute(this, receiver, arg));
+        final Object arg = pop(frame, --virtualState.sp);
+        final Object receiver = popReceiver(frame, --virtualState.sp);
+        push(frame, virtualState.sp++, !uncheckedCast(data[pc], SqueakObjectIdentityNodeGen.class).execute(this, receiver, arg));
         return pc + 1;
     }
 
@@ -1824,13 +1828,13 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleSend0(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
         int nextPC = pc + 1;
-        final Object receiver = popReceiver(frame, --state.sp);
-        externalizePCAndSP(frame, nextPC, state.sp);
-        push(frame, state.sp++, send(frame, pc, receiver));
+        final Object receiver = popReceiver(frame, --virtualState.sp);
+        externalizePCAndSP(frame, nextPC, virtualState.sp);
+        push(frame, virtualState.sp++, send(frame, pc, receiver));
         nextPC = internalizePC(frame, nextPC);
         return nextPC;
     }
@@ -1846,14 +1850,14 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleSend1(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
         int nextPC = pc + 1;
-        final Object arg = pop(frame, --state.sp);
-        final Object receiver = popReceiver(frame, --state.sp);
-        externalizePCAndSP(frame, nextPC, state.sp);
-        push(frame, state.sp++, send(frame, pc, receiver, arg));
+        final Object arg = pop(frame, --virtualState.sp);
+        final Object receiver = popReceiver(frame, --virtualState.sp);
+        externalizePCAndSP(frame, nextPC, virtualState.sp);
+        push(frame, virtualState.sp++, send(frame, pc, receiver, arg));
         nextPC = internalizePC(frame, nextPC);
         return nextPC;
     }
@@ -1867,15 +1871,15 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleSend2(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
         int nextPC = pc + 1;
-        final Object arg2 = pop(frame, --state.sp);
-        final Object arg1 = pop(frame, --state.sp);
-        final Object receiver = popReceiver(frame, --state.sp);
-        externalizePCAndSP(frame, nextPC, state.sp);
-        push(frame, state.sp++, send(frame, pc, receiver, arg1, arg2));
+        final Object arg2 = pop(frame, --virtualState.sp);
+        final Object arg1 = pop(frame, --virtualState.sp);
+        final Object receiver = popReceiver(frame, --virtualState.sp);
+        externalizePCAndSP(frame, nextPC, virtualState.sp);
+        push(frame, virtualState.sp++, send(frame, pc, receiver, arg1, arg2));
         nextPC = internalizePC(frame, nextPC);
         return nextPC;
     }
@@ -1885,20 +1889,20 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleExtendedSend(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
         int nextPC = pc + 2;
         final int byte1 = getUnsignedInt(bc, pc + 1);
-        final int numArgs = (byte1 & 7) + (state.getExtB() << 3);
+        final int numArgs = (byte1 & 7) + (virtualState.getExtB() << 3);
         CompilerAsserts.partialEvaluationConstant(numArgs);
-        final Object[] arguments = popN(frame, state.sp, numArgs);
-        state.sp -= numArgs;
-        final Object receiver = popReceiver(frame, --state.sp);
-        externalizePCAndSP(frame, nextPC, state.sp);
-        push(frame, state.sp++, sendNary(frame, pc, receiver, arguments));
+        final Object[] arguments = popN(frame, virtualState.sp, numArgs);
+        virtualState.sp -= numArgs;
+        final Object receiver = popReceiver(frame, --virtualState.sp);
+        externalizePCAndSP(frame, nextPC, virtualState.sp);
+        push(frame, virtualState.sp++, sendNary(frame, pc, receiver, arguments));
         nextPC = internalizePC(frame, nextPC);
-        state.resetExtensions();
+        virtualState.resetExtensions();
         return nextPC;
     }
 
@@ -1907,12 +1911,12 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleExtendedSuperSend(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
         int nextPC = pc + 2;
         final boolean isDirected;
-        final int extB = state.getExtB();
+        final int extB = virtualState.getExtB();
         final int extBValue;
         if (extB >= 64) {
             isDirected = true;
@@ -1924,15 +1928,15 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final int byte1 = getUnsignedInt(bc, pc + 1);
         final int numArgs = (byte1 & 7) + (extBValue << 3);
         CompilerAsserts.partialEvaluationConstant(numArgs);
-        final ClassObject lookupClass = isDirected ? ((ClassObject) pop(frame, --state.sp)).getResolvedSuperclass() : null;
-        final Object[] arguments = popN(frame, state.sp, numArgs);
-        state.sp -= numArgs;
-        final Object receiver = popReceiver(frame, --state.sp);
-        externalizePCAndSP(frame, nextPC, state.sp);
+        final ClassObject lookupClass = isDirected ? ((ClassObject) pop(frame, --virtualState.sp)).getResolvedSuperclass() : null;
+        final Object[] arguments = popN(frame, virtualState.sp, numArgs);
+        virtualState.sp -= numArgs;
+        final Object receiver = popReceiver(frame, --virtualState.sp);
+        externalizePCAndSP(frame, nextPC, virtualState.sp);
         CompilerAsserts.partialEvaluationConstant(isDirected);
-        pushFollowed(frame, pc, state.sp++, sendSuper(frame, isDirected, pc, lookupClass, receiver, arguments));
+        pushFollowed(frame, pc, virtualState.sp++, sendSuper(frame, isDirected, pc, lookupClass, receiver, arguments));
         nextPC = internalizePC(frame, nextPC);
-        state.resetExtensions();
+        virtualState.resetExtensions();
         return nextPC;
     }
 
@@ -1946,28 +1950,28 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleShortUnconditionalJump(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
         final int offset = calculateShortOffset(getUnsignedInt(bc, pc));
         final int nextPC = pc + 1 + offset;
         if (offset < 0) {
             if (CompilerDirectives.hasNextTier()) {
-                final int counter = state.incrementProfileCount();
+                final int counter = virtualState.incrementProfileCount();
                 if (CompilerDirectives.injectBranchProbability(LoopCounter.CHECK_LOOP_PROBABILITY, counter >= LoopCounter.CHECK_LOOP_STRIDE)) {
                     LoopNode.reportLoopCount(this, counter);
                     if (CompilerDirectives.inInterpreter() && !isBlock && BytecodeOSRNode.pollOSRBackEdge(this, counter)) {
-                        final Object osrReturnValue = BytecodeOSRNode.tryOSR(this, ((state.sp & 0xFF) << 16) | nextPC, null, null, frame);
+                        final Object osrReturnValue = BytecodeOSRNode.tryOSR(this, ((virtualState.sp & 0xFF) << 16) | nextPC, null, null, frame);
                         if (osrReturnValue != null) {
                             assert !FrameAccess.hasModifiedSender(frame);
                             FrameAccess.terminateFrame(frame);
                             throw new OSRException(osrReturnValue);
                         }
                     }
-                    state.resetProfileCount();
+                    virtualState.resetProfileCount();
                 }
 // if (CompilerDirectives.inCompiledCode()) {
-// state.resetProfileCount();
+// virtualState.resetProfileCount();
 // }
             }
             if (data[pc] instanceof final CheckForInterruptsInLoopNode checkForInterruptsNode) {
@@ -1983,11 +1987,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleShortConditionalJumpTrue(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
         int nextPC = pc + 1;
-        final Object stackValue = pop(frame, --state.sp);
+        final Object stackValue = pop(frame, --virtualState.sp);
         if (stackValue instanceof final Boolean condition) {
             if (uncheckedCast(data[pc], CountingConditionProfile.class).profile(condition)) {
                 nextPC += calculateShortOffset(getUnsignedInt(bc, pc));
@@ -2004,11 +2008,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleShortConditionalJumpFalse(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
         int nextPC = pc + 1;
-        final Object stackValue = pop(frame, --state.sp);
+        final Object stackValue = pop(frame, --virtualState.sp);
         if (stackValue instanceof final Boolean condition) {
             if (uncheckedCast(data[pc], CountingConditionProfile.class).profile(!condition)) {
                 nextPC += calculateShortOffset(getUnsignedInt(bc, pc));
@@ -2024,25 +2028,25 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleExtendedUnconditionalJump(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        final int offset = calculateLongExtendedOffset(getByte(bc, pc + 1), state.getExtB());
+        final int offset = calculateLongExtendedOffset(getByte(bc, pc + 1), virtualState.getExtB());
         final int nextPC = pc + 2 + offset;
         if (offset < 0) {
             if (CompilerDirectives.hasNextTier()) {
-                final int counter = state.incrementProfileCount();
+                final int counter = virtualState.incrementProfileCount();
                 if (CompilerDirectives.injectBranchProbability(LoopCounter.CHECK_LOOP_PROBABILITY, counter >= LoopCounter.CHECK_LOOP_STRIDE)) {
                     LoopNode.reportLoopCount(this, counter);
                     if (CompilerDirectives.inInterpreter() && !isBlock && BytecodeOSRNode.pollOSRBackEdge(this, counter)) {
-                        final Object osrReturnValue = BytecodeOSRNode.tryOSR(this, ((state.sp & 0xFF) << 16) | nextPC, null, null, frame);
+                        final Object osrReturnValue = BytecodeOSRNode.tryOSR(this, ((virtualState.sp & 0xFF) << 16) | nextPC, null, null, frame);
                         if (osrReturnValue != null) {
                             assert !FrameAccess.hasModifiedSender(frame);
                             FrameAccess.terminateFrame(frame);
                             throw new OSRException(osrReturnValue);
                         }
                     }
-                    state.resetProfileCount();
+                    virtualState.resetProfileCount();
                 }
 // if (CompilerDirectives.inCompiledCode()) {
 // counter = 0;
@@ -2052,7 +2056,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                 checkForInterruptsNode.execute(frame, nextPC);
             }
         }
-        state.resetExtensions();
+        virtualState.resetExtensions();
         return nextPC;
     }
 
@@ -2061,11 +2065,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleExtendedConditionalJumpTrue(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        final Object stackValue = pop(frame, --state.sp);
-        final int offset = getByteExtended(bc, pc + 1, state.getExtB());
+        final Object stackValue = pop(frame, --virtualState.sp);
+        final int offset = getByteExtended(bc, pc + 1, virtualState.getExtB());
         int nextPC = pc + 2;
         if (stackValue instanceof final Boolean condition) {
             if (uncheckedCast(data[pc], CountingConditionProfile.class).profile(condition)) {
@@ -2074,7 +2078,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         } else {
             sendMustBeBooleanInInterpreter(frame, nextPC, stackValue);
         }
-        state.resetExtensions();
+        virtualState.resetExtensions();
         return nextPC;
     }
 
@@ -2083,11 +2087,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleExtendedConditionalJumpFalse(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        final Object stackValue = pop(frame, --state.sp);
-        final int offset = getByteExtended(bc, pc + 1, state.getExtB());
+        final Object stackValue = pop(frame, --virtualState.sp);
+        final int offset = getByteExtended(bc, pc + 1, virtualState.getExtB());
         int nextPC = pc + 2;
         if (stackValue instanceof final Boolean condition) {
             if (uncheckedCast(data[pc], CountingConditionProfile.class).profile(!condition)) {
@@ -2096,7 +2100,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         } else {
             sendMustBeBooleanInInterpreter(frame, nextPC, stackValue);
         }
-        state.resetExtensions();
+        virtualState.resetExtensions();
         return nextPC;
     }
 
@@ -2109,10 +2113,10 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleNoOperation(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        state.resetExtensions();
+        virtualState.resetExtensions();
         return pc + 1;
     }
 
@@ -2121,12 +2125,12 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleExtA(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
-        final int extA = state.getExtA();
+        final int extA = virtualState.getExtA();
         final int newExtA = (extA << 8) | getUnsignedInt(bc, pc + 1);
-        state.extBA = (state.extBA & 0xFFFFFFFF00000000L) | Integer.toUnsignedLong(newExtA);
+        virtualState.extBA = (virtualState.extBA & 0xFFFFFFFF00000000L) | Integer.toUnsignedLong(newExtA);
         return pc + 2;
     }
 
@@ -2135,7 +2139,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleExtB(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
         // {editor-fold desc="BC_EXT_B_LOGIC"}
@@ -2152,7 +2156,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
          * extB and relying on the next byte to shift that byte out of the register.
          */
         // {/editor-fold}
-        final int extB = state.getExtB();
+        final int extB = virtualState.getExtB();
         final int newExtB;
         if (extB == 0) {
             /* leading byte is signed */
@@ -2164,7 +2168,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             final int byteValue = getUnsignedInt(bc, pc + 1);
             newExtB = (extB << 8) | byteValue;
         }
-        state.extBA = ((long) newExtB << 32) | (state.extBA & 0xFFFFFFFFL);
+        virtualState.extBA = ((long) newExtB << 32) | (virtualState.extBA & 0xFFFFFFFFL);
         return pc + 2;
     }
 
@@ -2173,13 +2177,13 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     public int handleCallPrimitive(
                     final int pc,
-                    final State state,
+                    final VirtualState virtualState,
                     final VirtualFrame frame,
                     final byte[] bc) {
         if (getUnsignedInt(bc, pc + 3) == BC.LONG_STORE_TEMPORARY_VARIABLE) {
-            assert state.sp > 0;
+            assert virtualState.sp > 0;
             // ToDo: should this push instead of setting the top of the stack
-            setStackValue(frame, state.sp - 1, getErrorObject());
+            setStackValue(frame, virtualState.sp - 1, getErrorObject());
         }
         return pc + 3;
     }
