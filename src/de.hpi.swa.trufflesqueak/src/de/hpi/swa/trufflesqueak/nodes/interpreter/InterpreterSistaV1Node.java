@@ -116,16 +116,16 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             this.interpreterLoopCounter = interpreterLoopCounter;
         }
 
-        @CompilerDirectives.CompilationFinal(dimensions = 1) final byte[] bytecode;
+        final byte[] bytecode;
         final LoopCounter loopCounter;
         int interpreterLoopCounter;
 
         @EarlyInline
         private void reportLoopCountOnReturn(final Node source) {
             if (CompilerDirectives.hasNextTier()) {
-                int backEdgeCount = CompilerDirectives.inInterpreter() ? interpreterLoopCounter : loopCounter.value;
-                if (backEdgeCount > 0) {
-                    LoopNode.reportLoopCount(source, backEdgeCount);
+                int count = CompilerDirectives.inInterpreter() ? interpreterLoopCounter : loopCounter.value;
+                if (count > 0) {
+                    LoopNode.reportLoopCount(source, count);
                 }
             }
         }
