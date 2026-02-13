@@ -889,6 +889,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
 
     @SuppressWarnings({"unused", "static-method"})
     @BytecodeInterpreterFetchOpcode
+    @EarlyInline
     private int nextOpcode(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
         return getUnsignedInt(state.bytecode, pc);
     }
@@ -1124,6 +1125,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         virtualState.sp -= numCopied;
         push(frame, virtualState.sp++, createBlockClosure(frame, uncheckedCast(data[pc], CompiledCodeObject.class), copiedValues, getOrCreateContext(frame, pc)));
         final int blockSize = getByteExtended(state.bytecode, pc + 2, virtualState.getExtB());
+        CompilerAsserts.partialEvaluationConstant(blockSize);
         virtualState.resetExtensions();
         return pc + 3 + blockSize;
     }
