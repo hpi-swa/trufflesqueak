@@ -11,7 +11,6 @@ import static de.hpi.swa.trufflesqueak.util.UnsafeUtils.uncheckedCast;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.CompilerDirectives.EarlyInline;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.HostCompilerDirectives.InliningCutoff;
 import com.oracle.truffle.api.frame.Frame;
@@ -256,12 +255,10 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
      * Bytecode
      */
 
-    @EarlyInline
     protected static final byte getByte(final byte[] bc, final int pc) {
         return UnsafeUtils.getByte(bc, pc);
     }
 
-    @EarlyInline
     protected static final int getUnsignedInt(final byte[] bc, final int pc) {
         return Byte.toUnsignedInt(getByte(bc, pc));
     }
@@ -273,7 +270,6 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         return handleReturn(frame, currentPC, pc, sp, result);
     }
 
-    @EarlyInline
     protected final Object handleReturn(final VirtualFrame frame, final int currentPC, final int pc, final int sp, final Object result) {
         if (isBlock) {
             return handleBlockReturn(frame, currentPC, pc, sp, result);
@@ -289,12 +285,10 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         return handleNormalReturn(frame, currentPC, result);
     }
 
-    @EarlyInline
     protected final Object handleReturnFromBlock(final VirtualFrame frame, final int currentPC, final Object result) {
         return handleNormalReturn(frame, currentPC, result);
     }
 
-    @EarlyInline
     private Object handleNormalReturn(final VirtualFrame frame, final int currentPC, final Object result) {
         final byte state = profiles[currentPC];
         if (FrameAccess.hasModifiedSender(frame)) {
@@ -307,7 +301,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         }
     }
 
-    @EarlyInline
+    @InliningCutoff
     private Object handleBlockReturn(final VirtualFrame frame, final int currentPC, final int pc, final int sp, final Object result) {
         // Target is sender of closure's home context.
         final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
