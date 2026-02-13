@@ -344,44 +344,44 @@ jobs:
         path: ${{ env.STANDALONE_ARCHIVE }}
         retention-days: 7
       if: ${{ matrix.os == 'ubuntu-22.04-arm' && matrix.type == 'native' }} # for run-benchmarks
-    # - name: Run Cuis 7.3 tests on TruffleSqueak standalone
-    #   run: |
-    #     mx.trufflesqueak/utils.sh download-cuis-7-3-test-image
-    #     trufflesqueak ${{ env.VM_ARGS }} images/Cuis?.?-????.image -s src/image-tests/runCuisTests.st
-    #   timeout-minutes: 10
-    #   if: ${{ matrix.os == 'macos-14' }}
-    # - name: Run Cuis 7.5 tests on TruffleSqueak standalone
-    #   run: |
-    #     mx.trufflesqueak/utils.sh download-cuis-7-5-test-image
-    #     trufflesqueak ${{ env.VM_ARGS }} images/Cuis?.?-????.image -s src/image-tests/runCuisTests.st
-    #   timeout-minutes: 10
-    #   if: ${{ matrix.os == 'ubuntu-22.04' }}
-    # - name: Run Squeak/Smalltalk tests on TruffleSqueak standalone on Windows
-    #   run: |
-    #     trufflesqueak ${{ env.VM_ARGS }} images\test-64bit.image ..\src\image-tests\runSqueakTests.st
-    #   timeout-minutes: 30
-    #   if: ${{ matrix.os == 'windows-2022' }}
-    # - name: Run Squeak/Smalltalk tests on TruffleSqueak standalone
-    #   shell: bash
-    #   run: |
-    #     trufflesqueak ${{ env.VM_ARGS }} images/test-64bit.image $(pwd)/src/image-tests/runSqueakTests.st
-    #   timeout-minutes: 30
-    #   if: ${{ matrix.os != 'windows-2022' }}
-    # - name: Upload test image on failure
-    #   uses: actions/upload-artifact@v4
-    #   with:
-    #     name: test-image-${{ matrix.type }}-${{ matrix.os }}
-    #     path: images/test-64bit.*
-    #     retention-days: 5
-    #   if: failure()
-    # - name: Upload Graal compiler dumps
-    #   uses: actions/upload-artifact@v4
-    #   with:
-    #     name: graal_dumps-${{ matrix.type }}-${{ matrix.os }}
-    #     path: graal_dumps/
-    #     if-no-files-found: ignore
-    #     retention-days: 5
-    #   if: always()
+    - name: Run Cuis 7.3 tests on TruffleSqueak standalone
+      run: |
+        mx.trufflesqueak/utils.sh download-cuis-7-3-test-image
+        trufflesqueak ${{ env.VM_ARGS }} images/Cuis?.?-????.image -s src/image-tests/runCuisTests.st
+      timeout-minutes: 10
+      if: ${{ matrix.os == 'macos-14' }}
+    - name: Run Cuis 7.5 tests on TruffleSqueak standalone
+      run: |
+        mx.trufflesqueak/utils.sh download-cuis-7-5-test-image
+        trufflesqueak ${{ env.VM_ARGS }} images/Cuis?.?-????.image -s src/image-tests/runCuisTests.st
+      timeout-minutes: 10
+      if: ${{ matrix.os == 'ubuntu-22.04' }}
+    - name: Run Squeak/Smalltalk tests on TruffleSqueak standalone on Windows
+      run: |
+        trufflesqueak ${{ env.VM_ARGS }} images\test-64bit.image ..\src\image-tests\runSqueakTests.st
+      timeout-minutes: 30
+      if: ${{ matrix.os == 'windows-2022' }}
+    - name: Run Squeak/Smalltalk tests on TruffleSqueak standalone
+      shell: bash
+      run: |
+        trufflesqueak ${{ env.VM_ARGS }} images/test-64bit.image $(pwd)/src/image-tests/runSqueakTests.st
+      timeout-minutes: 30
+      if: ${{ matrix.os != 'windows-2022' }}
+    - name: Upload test image on failure
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-image-${{ matrix.type }}-${{ matrix.os }}
+        path: images/test-64bit.*
+        retention-days: 5
+      if: failure()
+    - name: Upload Graal compiler dumps
+      uses: actions/upload-artifact@v4
+      with:
+        name: graal_dumps-${{ matrix.type }}-${{ matrix.os }}
+        path: graal_dumps/
+        if-no-files-found: ignore
+        retention-days: 5
+      if: always()
 
   run-benchmarks:
     needs: build-native-standalone
