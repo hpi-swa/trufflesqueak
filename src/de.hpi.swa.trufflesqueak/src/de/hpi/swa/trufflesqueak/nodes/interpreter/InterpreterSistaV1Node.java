@@ -449,24 +449,45 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         pc = handleDuplicateTop(pc, state, virtualState, frame);
                         break;
                     }
-                    case BC.RETURN_RECEIVER, BC.RETURN_TRUE, BC.RETURN_FALSE, BC.RETURN_NIL, BC.RETURN_TOP_FROM_METHOD: {
+                    case BC.RETURN_RECEIVER: {
                         state.reportLoopCountOnReturn(this);
-                        final Object value = switch (opcode) {
-                            case BC.RETURN_RECEIVER -> FrameAccess.getReceiver(frame);
-                            case BC.RETURN_TRUE -> BooleanObject.TRUE;
-                            case BC.RETURN_FALSE -> BooleanObject.FALSE;
-                            case BC.RETURN_NIL -> NilObject.SINGLETON;
-                            case BC.RETURN_TOP_FROM_METHOD -> top(frame, virtualState.sp);
-                            default -> throw CompilerDirectives.shouldNotReachHere();
-                        };
-                        returnValue = handleReturn(frame, pc, pc + 1, virtualState.sp, value);
+                        returnValue = handleReturn(frame, pc, pc + 1, virtualState.sp, FrameAccess.getReceiver(frame));
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
-                    case BC.RETURN_NIL_FROM_BLOCK, BC.RETURN_TOP_FROM_BLOCK: {
+                    case BC.RETURN_TRUE: {
                         state.reportLoopCountOnReturn(this);
-                        final Object value = opcode == BC.RETURN_NIL_FROM_BLOCK ? NilObject.SINGLETON : top(frame, virtualState.sp);
-                        returnValue = handleReturnFromBlock(frame, pc, value);
+                        returnValue = handleReturn(frame, pc, pc + 1, virtualState.sp, BooleanObject.TRUE);
+                        pc = LOCAL_RETURN_PC;
+                        break;
+                    }
+                    case BC.RETURN_FALSE: {
+                        state.reportLoopCountOnReturn(this);
+                        returnValue = handleReturn(frame, pc, pc + 1, virtualState.sp, BooleanObject.FALSE);
+                        pc = LOCAL_RETURN_PC;
+                        break;
+                    }
+                    case BC.RETURN_NIL: {
+                        state.reportLoopCountOnReturn(this);
+                        returnValue = handleReturn(frame, pc, pc + 1, virtualState.sp, NilObject.SINGLETON);
+                        pc = LOCAL_RETURN_PC;
+                        break;
+                    }
+                    case BC.RETURN_TOP_FROM_METHOD: {
+                        state.reportLoopCountOnReturn(this);
+                        returnValue = handleReturn(frame, pc, pc + 1, virtualState.sp, top(frame, virtualState.sp));
+                        pc = LOCAL_RETURN_PC;
+                        break;
+                    }
+                    case BC.RETURN_NIL_FROM_BLOCK: {
+                        state.reportLoopCountOnReturn(this);
+                        returnValue = handleReturnFromBlock(frame, pc, NilObject.SINGLETON);
+                        pc = LOCAL_RETURN_PC;
+                        break;
+                    }
+                    case BC.RETURN_TOP_FROM_BLOCK: {
+                        state.reportLoopCountOnReturn(this);
+                        returnValue = handleReturnFromBlock(frame, pc, top(frame, virtualState.sp));
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
