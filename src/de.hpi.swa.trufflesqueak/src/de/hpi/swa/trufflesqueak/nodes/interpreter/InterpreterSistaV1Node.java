@@ -270,18 +270,13 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     extBA = 0;
                     break;
                 }
-                case BC.EXT_PUSH_LITERAL, BC.EXT_PUSH_CHARACTER: {
+                case BC.EXT_PUSH_LITERAL, BC.EXT_PUSH_INTEGER, BC.EXT_PUSH_CHARACTER: {
                     pc++;
                     extBA = 0;
                     break;
                 }
                 case BC.LONG_PUSH_TEMPORARY_VARIABLE, BC.PUSH_NEW_ARRAY, BC.LONG_STORE_AND_POP_TEMPORARY_VARIABLE, BC.LONG_STORE_TEMPORARY_VARIABLE: {
                     pc++;
-                    break;
-                }
-                case BC.EXT_PUSH_INTEGER: {
-                    pc++;
-                    extBA = 0;
                     break;
                 }
                 case BC.EXT_SEND: {
@@ -400,94 +395,28 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             while (pc != LOCAL_RETURN_PC) {
                 switch (HostCompilerDirectives.markThreadedSwitch(nextOpcode(pc, state, virtualState, frame))) {
                     /* 1 byte bytecodes */
-                    case BC.PUSH_RCVR_VAR_0:
-                    case BC.PUSH_RCVR_VAR_1:
-                    case BC.PUSH_RCVR_VAR_2:
-                    case BC.PUSH_RCVR_VAR_3:
-                    case BC.PUSH_RCVR_VAR_4:
-                    case BC.PUSH_RCVR_VAR_5:
-                    case BC.PUSH_RCVR_VAR_6:
-                    case BC.PUSH_RCVR_VAR_7:
-                    case BC.PUSH_RCVR_VAR_8:
-                    case BC.PUSH_RCVR_VAR_9:
-                    case BC.PUSH_RCVR_VAR_A:
-                    case BC.PUSH_RCVR_VAR_B:
-                    case BC.PUSH_RCVR_VAR_C:
-                    case BC.PUSH_RCVR_VAR_D:
-                    case BC.PUSH_RCVR_VAR_E:
-                    case BC.PUSH_RCVR_VAR_F:
+                    case BC.PUSH_RCVR_VAR_0, BC.PUSH_RCVR_VAR_1, BC.PUSH_RCVR_VAR_2, BC.PUSH_RCVR_VAR_3, BC.PUSH_RCVR_VAR_4, BC.PUSH_RCVR_VAR_5, BC.PUSH_RCVR_VAR_6, BC.PUSH_RCVR_VAR_7, //
+                        BC.PUSH_RCVR_VAR_8, BC.PUSH_RCVR_VAR_9, BC.PUSH_RCVR_VAR_A, BC.PUSH_RCVR_VAR_B, BC.PUSH_RCVR_VAR_C, BC.PUSH_RCVR_VAR_D, BC.PUSH_RCVR_VAR_E, BC.PUSH_RCVR_VAR_F: {
                         pc = handlePushReceiverVariable(pc, state, virtualState, frame);
                         break;
-
-                    case BC.PUSH_LIT_VAR_0:
-                    case BC.PUSH_LIT_VAR_1:
-                    case BC.PUSH_LIT_VAR_2:
-                    case BC.PUSH_LIT_VAR_3:
-                    case BC.PUSH_LIT_VAR_4:
-                    case BC.PUSH_LIT_VAR_5:
-                    case BC.PUSH_LIT_VAR_6:
-                    case BC.PUSH_LIT_VAR_7:
-                    case BC.PUSH_LIT_VAR_8:
-                    case BC.PUSH_LIT_VAR_9:
-                    case BC.PUSH_LIT_VAR_A:
-                    case BC.PUSH_LIT_VAR_B:
-                    case BC.PUSH_LIT_VAR_C:
-                    case BC.PUSH_LIT_VAR_D:
-                    case BC.PUSH_LIT_VAR_E:
-                    case BC.PUSH_LIT_VAR_F:
+                    }
+                    case BC.PUSH_LIT_VAR_0, BC.PUSH_LIT_VAR_1, BC.PUSH_LIT_VAR_2, BC.PUSH_LIT_VAR_3, BC.PUSH_LIT_VAR_4, BC.PUSH_LIT_VAR_5, BC.PUSH_LIT_VAR_6, BC.PUSH_LIT_VAR_7, //
+                        BC.PUSH_LIT_VAR_8, BC.PUSH_LIT_VAR_9, BC.PUSH_LIT_VAR_A, BC.PUSH_LIT_VAR_B, BC.PUSH_LIT_VAR_C, BC.PUSH_LIT_VAR_D, BC.PUSH_LIT_VAR_E, BC.PUSH_LIT_VAR_F: {
                         pc = handlePushLiteralVariable(pc, state, virtualState, frame);
                         break;
-
-                    case BC.PUSH_LIT_CONST_00:
-                    case BC.PUSH_LIT_CONST_01:
-                    case BC.PUSH_LIT_CONST_02:
-                    case BC.PUSH_LIT_CONST_03:
-                    case BC.PUSH_LIT_CONST_04:
-                    case BC.PUSH_LIT_CONST_05:
-                    case BC.PUSH_LIT_CONST_06:
-                    case BC.PUSH_LIT_CONST_07:
-                    case BC.PUSH_LIT_CONST_08:
-                    case BC.PUSH_LIT_CONST_09:
-                    case BC.PUSH_LIT_CONST_0A:
-                    case BC.PUSH_LIT_CONST_0B:
-                    case BC.PUSH_LIT_CONST_0C:
-                    case BC.PUSH_LIT_CONST_0D:
-                    case BC.PUSH_LIT_CONST_0E:
-                    case BC.PUSH_LIT_CONST_0F:
-                    case BC.PUSH_LIT_CONST_10:
-                    case BC.PUSH_LIT_CONST_11:
-                    case BC.PUSH_LIT_CONST_12:
-                    case BC.PUSH_LIT_CONST_13:
-                    case BC.PUSH_LIT_CONST_14:
-                    case BC.PUSH_LIT_CONST_15:
-                    case BC.PUSH_LIT_CONST_16:
-                    case BC.PUSH_LIT_CONST_17:
-                    case BC.PUSH_LIT_CONST_18:
-                    case BC.PUSH_LIT_CONST_19:
-                    case BC.PUSH_LIT_CONST_1A:
-                    case BC.PUSH_LIT_CONST_1B:
-                    case BC.PUSH_LIT_CONST_1C:
-                    case BC.PUSH_LIT_CONST_1D:
-                    case BC.PUSH_LIT_CONST_1E:
-                    case BC.PUSH_LIT_CONST_1F:
+                    }
+                    case BC.PUSH_LIT_CONST_00, BC.PUSH_LIT_CONST_01, BC.PUSH_LIT_CONST_02, BC.PUSH_LIT_CONST_03, BC.PUSH_LIT_CONST_04, BC.PUSH_LIT_CONST_05, BC.PUSH_LIT_CONST_06, BC.PUSH_LIT_CONST_07, //
+                        BC.PUSH_LIT_CONST_08, BC.PUSH_LIT_CONST_09, BC.PUSH_LIT_CONST_0A, BC.PUSH_LIT_CONST_0B, BC.PUSH_LIT_CONST_0C, BC.PUSH_LIT_CONST_0D, BC.PUSH_LIT_CONST_0E, BC.PUSH_LIT_CONST_0F, //
+                        BC.PUSH_LIT_CONST_10, BC.PUSH_LIT_CONST_11, BC.PUSH_LIT_CONST_12, BC.PUSH_LIT_CONST_13, BC.PUSH_LIT_CONST_14, BC.PUSH_LIT_CONST_15, BC.PUSH_LIT_CONST_16, BC.PUSH_LIT_CONST_17, //
+                        BC.PUSH_LIT_CONST_18, BC.PUSH_LIT_CONST_19, BC.PUSH_LIT_CONST_1A, BC.PUSH_LIT_CONST_1B, BC.PUSH_LIT_CONST_1C, BC.PUSH_LIT_CONST_1D, BC.PUSH_LIT_CONST_1E, BC.PUSH_LIT_CONST_1F: {
                         pc = handlePushLiteralConstant(pc, state, virtualState, frame);
                         break;
-
-                    case BC.PUSH_TEMP_VAR_0:
-                    case BC.PUSH_TEMP_VAR_1:
-                    case BC.PUSH_TEMP_VAR_2:
-                    case BC.PUSH_TEMP_VAR_3:
-                    case BC.PUSH_TEMP_VAR_4:
-                    case BC.PUSH_TEMP_VAR_5:
-                    case BC.PUSH_TEMP_VAR_6:
-                    case BC.PUSH_TEMP_VAR_7:
-                    case BC.PUSH_TEMP_VAR_8:
-                    case BC.PUSH_TEMP_VAR_9:
-                    case BC.PUSH_TEMP_VAR_A:
-                    case BC.PUSH_TEMP_VAR_B:
+                    }
+                    case BC.PUSH_TEMP_VAR_0, BC.PUSH_TEMP_VAR_1, BC.PUSH_TEMP_VAR_2, BC.PUSH_TEMP_VAR_3, BC.PUSH_TEMP_VAR_4, BC.PUSH_TEMP_VAR_5, BC.PUSH_TEMP_VAR_6, BC.PUSH_TEMP_VAR_7, //
+                        BC.PUSH_TEMP_VAR_8, BC.PUSH_TEMP_VAR_9, BC.PUSH_TEMP_VAR_A, BC.PUSH_TEMP_VAR_B: {
                         pc = handlePushTemporaryVariable(pc, state, virtualState, frame);
                         break;
-
+                    }
                     case BC.PUSH_RECEIVER: {
                         pc = handlePushReceiver(pc, state, virtualState, frame);
                         break;
@@ -618,137 +547,45 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         pc = handlePrimitiveNotIdentical(pc, state, virtualState, frame);
                         break;
                     }
-                    case BC.BYTECODE_PRIM_SIZE:
-                    case BC.BYTECODE_PRIM_NEXT:
-                    case BC.BYTECODE_PRIM_AT_END:
-                    case BC.BYTECODE_PRIM_VALUE:
-                    case BC.BYTECODE_PRIM_NEW:
-                    case BC.BYTECODE_PRIM_POINT_X:
-                    case BC.BYTECODE_PRIM_POINT_Y:
-                    case BC.SEND_LIT_SEL0_0:
-                    case BC.SEND_LIT_SEL0_1:
-                    case BC.SEND_LIT_SEL0_2:
-                    case BC.SEND_LIT_SEL0_3:
-                    case BC.SEND_LIT_SEL0_4:
-                    case BC.SEND_LIT_SEL0_5:
-                    case BC.SEND_LIT_SEL0_6:
-                    case BC.SEND_LIT_SEL0_7:
-                    case BC.SEND_LIT_SEL0_8:
-                    case BC.SEND_LIT_SEL0_9:
-                    case BC.SEND_LIT_SEL0_A:
-                    case BC.SEND_LIT_SEL0_B:
-                    case BC.SEND_LIT_SEL0_C:
-                    case BC.SEND_LIT_SEL0_D:
-                    case BC.SEND_LIT_SEL0_E:
-                    case BC.SEND_LIT_SEL0_F:
+                    case BC.BYTECODE_PRIM_SIZE, BC.BYTECODE_PRIM_NEXT, BC.BYTECODE_PRIM_AT_END, BC.BYTECODE_PRIM_VALUE, BC.BYTECODE_PRIM_NEW, BC.BYTECODE_PRIM_POINT_X, BC.BYTECODE_PRIM_POINT_Y, //
+                        BC.SEND_LIT_SEL0_0, BC.SEND_LIT_SEL0_1, BC.SEND_LIT_SEL0_2, BC.SEND_LIT_SEL0_3, BC.SEND_LIT_SEL0_4, BC.SEND_LIT_SEL0_5, BC.SEND_LIT_SEL0_6, BC.SEND_LIT_SEL0_7, //
+                        BC.SEND_LIT_SEL0_8, BC.SEND_LIT_SEL0_9, BC.SEND_LIT_SEL0_A, BC.SEND_LIT_SEL0_B, BC.SEND_LIT_SEL0_C, BC.SEND_LIT_SEL0_D, BC.SEND_LIT_SEL0_E, BC.SEND_LIT_SEL0_F: {
                         pc = handleSend0(pc, state, virtualState, frame);
                         break;
-
-                    case BC.BYTECODE_PRIM_MULTIPLY:
-                    case BC.BYTECODE_PRIM_DIVIDE:
-                    case BC.BYTECODE_PRIM_MOD:
-                    case BC.BYTECODE_PRIM_MAKE_POINT:
-                    case BC.BYTECODE_PRIM_BIT_SHIFT:
-                    case BC.BYTECODE_PRIM_DIV:
-                    case BC.BYTECODE_PRIM_AT:
-                    case BC.BYTECODE_PRIM_NEXT_PUT:
-                    case BC.BYTECODE_PRIM_VALUE_WITH_ARG:
-                    case BC.BYTECODE_PRIM_DO:
-                    case BC.BYTECODE_PRIM_NEW_WITH_ARG:
-                    case BC.SEND_LIT_SEL1_0:
-                    case BC.SEND_LIT_SEL1_1:
-                    case BC.SEND_LIT_SEL1_2:
-                    case BC.SEND_LIT_SEL1_3:
-                    case BC.SEND_LIT_SEL1_4:
-                    case BC.SEND_LIT_SEL1_5:
-                    case BC.SEND_LIT_SEL1_6:
-                    case BC.SEND_LIT_SEL1_7:
-                    case BC.SEND_LIT_SEL1_8:
-                    case BC.SEND_LIT_SEL1_9:
-                    case BC.SEND_LIT_SEL1_A:
-                    case BC.SEND_LIT_SEL1_B:
-                    case BC.SEND_LIT_SEL1_C:
-                    case BC.SEND_LIT_SEL1_D:
-                    case BC.SEND_LIT_SEL1_E:
-                    case BC.SEND_LIT_SEL1_F:
+                    }
+                    case BC.BYTECODE_PRIM_MULTIPLY, BC.BYTECODE_PRIM_DIVIDE, BC.BYTECODE_PRIM_MOD, BC.BYTECODE_PRIM_MAKE_POINT, BC.BYTECODE_PRIM_BIT_SHIFT, //
+                        BC.BYTECODE_PRIM_DIV, BC.BYTECODE_PRIM_AT, BC.BYTECODE_PRIM_NEXT_PUT, BC.BYTECODE_PRIM_VALUE_WITH_ARG, BC.BYTECODE_PRIM_DO, BC.BYTECODE_PRIM_NEW_WITH_ARG, //
+                        BC.SEND_LIT_SEL1_0, BC.SEND_LIT_SEL1_1, BC.SEND_LIT_SEL1_2, BC.SEND_LIT_SEL1_3, BC.SEND_LIT_SEL1_4, BC.SEND_LIT_SEL1_5, BC.SEND_LIT_SEL1_6, BC.SEND_LIT_SEL1_7, //
+                        BC.SEND_LIT_SEL1_8, BC.SEND_LIT_SEL1_9, BC.SEND_LIT_SEL1_A, BC.SEND_LIT_SEL1_B, BC.SEND_LIT_SEL1_C, BC.SEND_LIT_SEL1_D, BC.SEND_LIT_SEL1_E, BC.SEND_LIT_SEL1_F: {
                         pc = handleSend1(pc, state, virtualState, frame);
                         break;
-
-                    case BC.BYTECODE_PRIM_AT_PUT:
-                    case BC.SEND_LIT_SEL2_0:
-                    case BC.SEND_LIT_SEL2_1:
-                    case BC.SEND_LIT_SEL2_2:
-                    case BC.SEND_LIT_SEL2_3:
-                    case BC.SEND_LIT_SEL2_4:
-                    case BC.SEND_LIT_SEL2_5:
-                    case BC.SEND_LIT_SEL2_6:
-                    case BC.SEND_LIT_SEL2_7:
-                    case BC.SEND_LIT_SEL2_8:
-                    case BC.SEND_LIT_SEL2_9:
-                    case BC.SEND_LIT_SEL2_A:
-                    case BC.SEND_LIT_SEL2_B:
-                    case BC.SEND_LIT_SEL2_C:
-                    case BC.SEND_LIT_SEL2_D:
-                    case BC.SEND_LIT_SEL2_E:
-                    case BC.SEND_LIT_SEL2_F:
+                    }
+                    case BC.BYTECODE_PRIM_AT_PUT, //
+                        BC.SEND_LIT_SEL2_0, BC.SEND_LIT_SEL2_1, BC.SEND_LIT_SEL2_2, BC.SEND_LIT_SEL2_3, BC.SEND_LIT_SEL2_4, BC.SEND_LIT_SEL2_5, BC.SEND_LIT_SEL2_6, BC.SEND_LIT_SEL2_7, //
+                        BC.SEND_LIT_SEL2_8, BC.SEND_LIT_SEL2_9, BC.SEND_LIT_SEL2_A, BC.SEND_LIT_SEL2_B, BC.SEND_LIT_SEL2_C, BC.SEND_LIT_SEL2_D, BC.SEND_LIT_SEL2_E, BC.SEND_LIT_SEL2_F: {
                         pc = handleSend2(pc, state, virtualState, frame);
                         break;
-
-                    case BC.SHORT_UJUMP_0:
-                    case BC.SHORT_UJUMP_1:
-                    case BC.SHORT_UJUMP_2:
-                    case BC.SHORT_UJUMP_3:
-                    case BC.SHORT_UJUMP_4:
-                    case BC.SHORT_UJUMP_5:
-                    case BC.SHORT_UJUMP_6:
-                    case BC.SHORT_UJUMP_7:
+                    }
+                    case BC.SHORT_UJUMP_0, BC.SHORT_UJUMP_1, BC.SHORT_UJUMP_2, BC.SHORT_UJUMP_3, BC.SHORT_UJUMP_4, BC.SHORT_UJUMP_5, BC.SHORT_UJUMP_6, BC.SHORT_UJUMP_7: {
                         pc = handleShortUnconditionalJump(pc, state, virtualState, frame);
                         break;
-
-                    case BC.SHORT_CJUMP_TRUE_0:
-                    case BC.SHORT_CJUMP_TRUE_1:
-                    case BC.SHORT_CJUMP_TRUE_2:
-                    case BC.SHORT_CJUMP_TRUE_3:
-                    case BC.SHORT_CJUMP_TRUE_4:
-                    case BC.SHORT_CJUMP_TRUE_5:
-                    case BC.SHORT_CJUMP_TRUE_6:
-                    case BC.SHORT_CJUMP_TRUE_7:
+                    }
+                    case BC.SHORT_CJUMP_TRUE_0, BC.SHORT_CJUMP_TRUE_1, BC.SHORT_CJUMP_TRUE_2, BC.SHORT_CJUMP_TRUE_3, BC.SHORT_CJUMP_TRUE_4, BC.SHORT_CJUMP_TRUE_5, BC.SHORT_CJUMP_TRUE_6, BC.SHORT_CJUMP_TRUE_7: {
                         pc = handleShortConditionalJumpTrue(pc, state, virtualState, frame);
                         break;
-
-                    case BC.SHORT_CJUMP_FALSE_0:
-                    case BC.SHORT_CJUMP_FALSE_1:
-                    case BC.SHORT_CJUMP_FALSE_2:
-                    case BC.SHORT_CJUMP_FALSE_3:
-                    case BC.SHORT_CJUMP_FALSE_4:
-                    case BC.SHORT_CJUMP_FALSE_5:
-                    case BC.SHORT_CJUMP_FALSE_6:
-                    case BC.SHORT_CJUMP_FALSE_7:
+                    }
+                    case BC.SHORT_CJUMP_FALSE_0, BC.SHORT_CJUMP_FALSE_1, BC.SHORT_CJUMP_FALSE_2, BC.SHORT_CJUMP_FALSE_3, BC.SHORT_CJUMP_FALSE_4, BC.SHORT_CJUMP_FALSE_5, BC.SHORT_CJUMP_FALSE_6, BC.SHORT_CJUMP_FALSE_7: {
                         pc = handleShortConditionalJumpFalse(pc, state, virtualState, frame);
                         break;
-
-                    case BC.POP_INTO_RCVR_VAR_0:
-                    case BC.POP_INTO_RCVR_VAR_1:
-                    case BC.POP_INTO_RCVR_VAR_2:
-                    case BC.POP_INTO_RCVR_VAR_3:
-                    case BC.POP_INTO_RCVR_VAR_4:
-                    case BC.POP_INTO_RCVR_VAR_5:
-                    case BC.POP_INTO_RCVR_VAR_6:
-                    case BC.POP_INTO_RCVR_VAR_7:
+                    }
+                    case BC.POP_INTO_RCVR_VAR_0, BC.POP_INTO_RCVR_VAR_1, BC.POP_INTO_RCVR_VAR_2, BC.POP_INTO_RCVR_VAR_3, BC.POP_INTO_RCVR_VAR_4, BC.POP_INTO_RCVR_VAR_5, BC.POP_INTO_RCVR_VAR_6, BC.POP_INTO_RCVR_VAR_7: {
                         pc = handlePopIntoReceiverVariable(pc, state, virtualState, frame);
                         break;
-
-                    case BC.POP_INTO_TEMP_VAR_0:
-                    case BC.POP_INTO_TEMP_VAR_1:
-                    case BC.POP_INTO_TEMP_VAR_2:
-                    case BC.POP_INTO_TEMP_VAR_3:
-                    case BC.POP_INTO_TEMP_VAR_4:
-                    case BC.POP_INTO_TEMP_VAR_5:
-                    case BC.POP_INTO_TEMP_VAR_6:
-                    case BC.POP_INTO_TEMP_VAR_7:
+                    }
+                    case BC.POP_INTO_TEMP_VAR_0, BC.POP_INTO_TEMP_VAR_1, BC.POP_INTO_TEMP_VAR_2, BC.POP_INTO_TEMP_VAR_3, BC.POP_INTO_TEMP_VAR_4, BC.POP_INTO_TEMP_VAR_5, BC.POP_INTO_TEMP_VAR_6, BC.POP_INTO_TEMP_VAR_7: {
                         pc = handlePopIntoTemporaryVariable(pc, state, virtualState, frame);
                         break;
-
+                    }
                     case BC.POP_STACK: {
                         pc = handlePopStack(pc, state, virtualState, frame);
                         break;
