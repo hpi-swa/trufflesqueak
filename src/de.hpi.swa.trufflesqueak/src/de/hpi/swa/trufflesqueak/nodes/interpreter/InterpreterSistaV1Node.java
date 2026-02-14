@@ -535,6 +535,10 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         pc = handlePrimitiveBitOr(pc, state, virtualState, frame);
                         break;
                     }
+                    case BC.BYTECODE_PRIM_SIZE: {
+                        pc = handlePrimitiveSize(pc, state, virtualState, frame);
+                        break;
+                    }
                     case BC.BYTECODE_PRIM_IDENTICAL: {
                         pc = handlePrimitiveIdentical(pc, state, virtualState, frame);
                         break;
@@ -547,7 +551,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         pc = handlePrimitiveNotIdentical(pc, state, virtualState, frame);
                         break;
                     }
-                    case BC.BYTECODE_PRIM_SIZE, BC.BYTECODE_PRIM_NEXT, BC.BYTECODE_PRIM_AT_END, BC.BYTECODE_PRIM_VALUE, BC.BYTECODE_PRIM_NEW, BC.BYTECODE_PRIM_POINT_X, BC.BYTECODE_PRIM_POINT_Y, //
+                    case BC.BYTECODE_PRIM_NEXT, BC.BYTECODE_PRIM_AT_END, BC.BYTECODE_PRIM_VALUE, BC.BYTECODE_PRIM_NEW, BC.BYTECODE_PRIM_POINT_X, BC.BYTECODE_PRIM_POINT_Y, //
                         BC.SEND_LIT_SEL0_0, BC.SEND_LIT_SEL0_1, BC.SEND_LIT_SEL0_2, BC.SEND_LIT_SEL0_3, BC.SEND_LIT_SEL0_4, BC.SEND_LIT_SEL0_5, BC.SEND_LIT_SEL0_6, BC.SEND_LIT_SEL0_7, //
                         BC.SEND_LIT_SEL0_8, BC.SEND_LIT_SEL0_9, BC.SEND_LIT_SEL0_A, BC.SEND_LIT_SEL0_B, BC.SEND_LIT_SEL0_C, BC.SEND_LIT_SEL0_D, BC.SEND_LIT_SEL0_E, BC.SEND_LIT_SEL0_F: {
                         pc = handleSend0(pc, state, virtualState, frame);
@@ -1419,6 +1423,27 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             enter(pc, profile, BRANCH1);
             externalizePCAndSP(frame, nextPC, virtualState.sp);
             result = send(frame, pc, receiver, arg);
+            nextPC = internalizePC(frame, nextPC);
+        }
+        push(frame, virtualState.sp++, result);
+        return nextPC;
+    }
+
+    @SuppressWarnings("unused")
+    @BytecodeInterpreterHandler(BC.BYTECODE_PRIM_SIZE)
+    @EarlyInline
+    private int handlePrimitiveSize(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
+        final Object receiver = popReceiver(frame, --virtualState.sp);
+        final byte profile = profiles[pc];
+        int nextPC = pc + 1;
+        final Object result;
+        if (receiver instanceof final NativeObject nativeObject && getContext().isByteString(nativeObject)) {
+            enter(pc, profile, BRANCH2);
+            result = (long) nativeObject.getByteLength();
+        } else { // TODO: OSVM also special cases arrays
+            enter(pc, profile, BRANCH1);
+            externalizePCAndSP(frame, nextPC, virtualState.sp);
+            result = send(frame, pc, receiver);
             nextPC = internalizePC(frame, nextPC);
         }
         push(frame, virtualState.sp++, result);
