@@ -49,3 +49,7 @@ lib/**/*.dylib
 lib/**/*.so
 trufflesqueak*.zip
 trufflesqueak*.jar
+
+# Cuis
+/*-UserFiles/
+/UserChanges/
