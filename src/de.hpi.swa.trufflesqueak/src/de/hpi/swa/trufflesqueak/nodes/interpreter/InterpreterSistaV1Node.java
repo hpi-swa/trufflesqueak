@@ -109,21 +109,21 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     }
 
     private static final class State {
+        private final byte[] bytecode;
+        private final LoopCounter loopCounter;
+        private int interpreterLoopCounter;
+
         @EarlyInline
-        State(final byte[] bytecode, final LoopCounter loopCounter, final int interpreterLoopCounter) {
+        State(final byte[] bytecode, final LoopCounter loopCounter) {
             this.bytecode = bytecode;
             this.loopCounter = loopCounter;
-            this.interpreterLoopCounter = interpreterLoopCounter;
+            this.interpreterLoopCounter = 0;
         }
-
-        final byte[] bytecode;
-        final LoopCounter loopCounter;
-        int interpreterLoopCounter;
 
         @EarlyInline
         private void reportLoopCountOnReturn(final Node source) {
             if (CompilerDirectives.hasNextTier()) {
-                int count = CompilerDirectives.inInterpreter() ? interpreterLoopCounter : loopCounter.value;
+                final int count = CompilerDirectives.inInterpreter() ? interpreterLoopCounter : loopCounter.value;
                 if (count > 0) {
                     LoopNode.reportLoopCount(source, count);
                 }
@@ -382,10 +382,9 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         if (CompilerDirectives.hasNextTier() && !CompilerDirectives.inInterpreter()) {
             loopCounter = new LoopCounter();
         }
-        int interpreterLoopCounter = 0;
 
         int pc = startPC;
-        final State state = new State(code.getBytes(), loopCounter, interpreterLoopCounter);
+        final State state = new State(code.getBytes(), loopCounter);
         final VirtualState virtualState = new VirtualState(startSP);
 
         hoistState(state.interpreterLoopCounter, virtualState.sp);
@@ -695,13 +694,13 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private static class OSRException extends RuntimeException {
         private final Object osrResult;
 
-        OSRException(Object osrResult) {
+        OSRException(final Object osrResult) {
             this.osrResult = osrResult;
         }
     }
 
     @CompilerDirectives.TruffleBoundary(allowInlining = true)
-    private void hoistState(int i1, int i2) {
+    private void hoistState(final int i1, final int i2) {
         // required
     }
 
@@ -1549,7 +1548,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final int nextPC = pc + 1 + offset;
         if (offset < 0) {
             if (CompilerDirectives.hasNextTier()) {
-                int count = CompilerDirectives.inInterpreter() ? ++state.interpreterLoopCounter : ++state.loopCounter.value;
+                final int count = CompilerDirectives.inInterpreter() ? ++state.interpreterLoopCounter : ++state.loopCounter.value;
                 if (CompilerDirectives.injectBranchProbability(LoopCounter.CHECK_LOOP_PROBABILITY, count >= LoopCounter.CHECK_LOOP_STRIDE)) {
                     LoopNode.reportLoopCount(this, count);
                     if (CompilerDirectives.inInterpreter() && !isBlock && BytecodeOSRNode.pollOSRBackEdge(this, count)) {
@@ -1616,7 +1615,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final int nextPC = pc + 2 + offset;
         if (offset < 0) {
             if (CompilerDirectives.hasNextTier()) {
-                int count = CompilerDirectives.inInterpreter() ? ++state.interpreterLoopCounter : ++state.loopCounter.value;
+                final int count = CompilerDirectives.inInterpreter() ? ++state.interpreterLoopCounter : ++state.loopCounter.value;
                 if (CompilerDirectives.injectBranchProbability(LoopCounter.CHECK_LOOP_PROBABILITY, count >= LoopCounter.CHECK_LOOP_STRIDE)) {
                     LoopNode.reportLoopCount(this, count);
                     if (CompilerDirectives.inInterpreter() && !isBlock && BytecodeOSRNode.pollOSRBackEdge(this, count)) {
