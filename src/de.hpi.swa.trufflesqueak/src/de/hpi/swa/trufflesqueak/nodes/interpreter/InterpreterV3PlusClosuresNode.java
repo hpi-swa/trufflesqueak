@@ -297,11 +297,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.MERGE_EXPLODE)
     public Object execute(final VirtualFrame frame, final int startPC, final int startSP) {
         assert isBlock == FrameAccess.hasClosure(frame);
-
-        if (numArguments == -1) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            numArguments = FrameAccess.getNumArguments(frame);
-        }
+        assert numArguments == FrameAccess.getNumArguments(frame);
 
         final SqueakImageContext image = getContext();
         final byte[] bc = uncheckedCast(code.getBytes(), byte[].class);

@@ -65,8 +65,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
 
     protected final CompiledCodeObject code;
     protected final boolean isBlock;
-
-    @CompilationFinal protected int numArguments;
+    protected final int numArguments;
 
     @CompilationFinal(dimensions = 1) protected final Object[] data;
     @CompilationFinal(dimensions = 1) protected final byte[] profiles;
@@ -76,7 +75,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     public AbstractInterpreterNode(final CompiledCodeObject code) {
         this.code = code;
         isBlock = code.isCompiledBlock() || code.isShadowBlock();
-        numArguments = -1;
+        numArguments = code.getNumArgsAndCopied();
         final int startPC = code.getStartPCZeroBased();
         final int endPC = code.getMaxPCZeroBased();
         data = new Object[endPC];

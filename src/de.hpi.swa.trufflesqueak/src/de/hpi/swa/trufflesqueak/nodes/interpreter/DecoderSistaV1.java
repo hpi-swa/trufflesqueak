@@ -9,6 +9,7 @@ package de.hpi.swa.trufflesqueak.nodes.interpreter;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -203,6 +204,9 @@ public final class DecoderSistaV1 extends AbstractDecoder {
         int offset = 0;
         int extA = 0;
         int extB = 0;
+        if (b != 0xE0 && b != 0xE1) {
+            return DecodedExtension.DEFAULT;
+        }
         while (b == 0xE0 || b == 0xE1) {
             final int byteValue = Byte.toUnsignedInt(bc[index + offset + 1]);
             if (b == 0xE0) {
@@ -249,6 +253,26 @@ public final class DecoderSistaV1 extends AbstractDecoder {
         final int blockSize = (extension.extB << 8) | byteB;
 
         return new ShadowBlockParams(numArgs, numCopied, blockSize);
+    }
+
+    public static int decodeFullBlockClosureNumCopied(final CompiledCodeObject block) {
+        final CompiledCodeObject outerMethod = block.getMethod();
+        final byte[] bc = outerMethod.getBytes();
+
+        int currentPC = 0;
+        final int end = outerMethod.getMaxPCZeroBased();
+        while (currentPC < end) {
+            final DecodedExtension extension = decodeExtension(bc, currentPC);
+            if (Byte.toUnsignedInt(bc[currentPC + extension.offset]) == 249) {
+                final int literalIndex = Byte.toUnsignedInt(bc[currentPC + extension.offset + 1]) + (extension.extA << 8);
+                final CompiledCodeObject currentBlock = (CompiledCodeObject) outerMethod.getLiteral(literalIndex);
+                if (currentBlock == block) {
+                    return Byte.toUnsignedInt(bc[currentPC + extension.offset + 2]) & 63;
+                }
+            }
+            currentPC += decodeNextPCDelta(outerMethod, currentPC, extension, true);
+        }
+        throw CompilerDirectives.shouldNotReachHere("Failed to find CompiledBlock in outer method");
     }
 
     /**

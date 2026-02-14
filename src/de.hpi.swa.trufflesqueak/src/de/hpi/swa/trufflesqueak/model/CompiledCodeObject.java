@@ -236,6 +236,16 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return getShadowBlockMetadata().params.numArgs();
     }
 
+    private int getShadowBlockNumCopied() {
+        return getShadowBlockMetadata().params.numCopied();
+    }
+
+    private int findCompiledBlockNumCopied() {
+        assert isCompiledBlock() && !getHasV3PlusClosuresBytecodes();
+        CompilerAsserts.neverPartOfCompilation();
+        return DecoderSistaV1.decodeFullBlockClosureNumCopied(this);
+    }
+
     private void setLiteralsAndBytes(final long internalHeader, final Object[] literals, final byte[] bytes) {
         this.internalHeader = internalHeader;
         this.literals = literals;
@@ -380,6 +390,18 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     @Idempotent
     public int getNumArgs() {
         return CompiledCodeHeaderUtils.getNumArguments(internalHeader);
+    }
+
+    /** Includes copied arguments from closures. */
+    public int getNumArgsAndCopied() {
+        CompilerAsserts.neverPartOfCompilation();
+        if (isCompiledBlock()) {
+            return getNumArgs() + findCompiledBlockNumCopied();
+        } else if (isShadowBlock()) {
+            return getShadowBlockNumArgs() + getShadowBlockNumCopied();
+        } else {
+            return getNumArgs(); // normal method
+        }
     }
 
     public int getNumTemps() {
