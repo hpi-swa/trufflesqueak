@@ -6,9 +6,10 @@
 
 # Eclipse
 .classpath
+.factorypath
+.metadata
 .project
 .settings
-.factorypath
 workingsets.xml
 
 # NetBeans
@@ -29,7 +30,7 @@ build.xml
 /mx.trufflesqueak/eclipse-launches
 /mx.trufflesqueak/mvn-settings.xml
 /mxbuild
-/TRUFFLESQUEAK*.dist
+/*.dist
 /coverage
 jacoco.exec
 
@@ -39,6 +40,7 @@ graal_dumps/
 
 # Profile output directory
 profiles/
+*.iprof
 
 # TruffleSqueak
 images
@@ -47,3 +49,7 @@ lib/**/*.dylib
 lib/**/*.so
 trufflesqueak*.zip
 trufflesqueak*.jar
+
+# Cuis
+/*-UserFiles/
+/UserChanges/
