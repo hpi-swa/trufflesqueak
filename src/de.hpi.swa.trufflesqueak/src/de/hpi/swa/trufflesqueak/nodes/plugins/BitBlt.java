@@ -6,8 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.plugins;
 
-import java.util.function.LongBinaryOperator;
-
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -190,7 +188,6 @@ public final class BitBlt {
     private boolean noHalftone;
     private boolean noSource;
     private int nWords;
-    @CompilationFinal(dimensions = 1) private final LongBinaryOperator[] opTable = new LongBinaryOperator[43];
     private boolean preload;
     private long skew;
     private long sourceAlpha;
@@ -1001,8 +998,7 @@ public final class BitBlt {
     private void copyLoopGeneralCase(final long initialHalftoneWord, final int hInc, final long notSkewMask, final long skewMask, final long unskew) {
         long halftoneWord = initialHalftoneWord;
         int y = dy;
-        final LongBinaryOperator mergeFnwith = opTable[combinationRule + 1];
-        assert mergeFnwith != null : "Unexpected `null` value";
+        final int rule = combinationRule;
 
         for (int i = 1; i <= bbH; i++) {
             /* here is the vertical loop for the general case (combinationRule ~= 3) */
@@ -1027,7 +1023,7 @@ public final class BitBlt {
             long skewWord = shift(prevWord & notSkewMask, unskew) | shift(thisWord & skewMask, skew);
             prevWord = thisWord;
             long destWord = dstLongAt(destIndex);
-            long mergeWord = mergeFnwith.applyAsLong(skewWord & halftoneWord, destWord);
+            long mergeWord = mergeFnwith(rule, skewWord & halftoneWord, destWord);
             destWord = destMask & mergeWord | destWord & ~destMask;
             dstLongAtput(destIndex, destWord);
             destIndex += hInc;
@@ -1041,7 +1037,7 @@ public final class BitBlt {
                 skewWord = (unskew < 0 ? (prevWord & notSkewMask) >>> -unskew : (prevWord & notSkewMask) << unskew) |
                                 (skew < 0 ? (thisWord & skewMask) >>> -skew : (thisWord & skewMask) << skew);
                 prevWord = thisWord;
-                mergeWord = mergeFnwith.applyAsLong(skewWord & halftoneWord, dstLongAt(destIndex));
+                mergeWord = mergeFnwith(rule, skewWord & halftoneWord, dstLongAt(destIndex));
                 dstLongAtput(destIndex, mergeWord);
                 destIndex += hInc;
             }
@@ -1058,7 +1054,7 @@ public final class BitBlt {
                 skewWord = (unskew < 0 ? (prevWord & notSkewMask) >>> -unskew : (prevWord & notSkewMask) << unskew) |
                                 (skew < 0 ? (thisWord & skewMask) >>> -skew : (thisWord & skewMask) << skew);
                 destWord = dstLongAt(destIndex);
-                mergeWord = mergeFnwith.applyAsLong(skewWord & halftoneWord, destWord);
+                mergeWord = mergeFnwith(rule, skewWord & halftoneWord, destWord);
                 destWord = destMask & mergeWord | destWord & ~destMask;
                 dstLongAtput(destIndex, destWord);
                 destIndex += hInc;
@@ -1076,8 +1072,7 @@ public final class BitBlt {
     /* BitBltSimulation>>#copyLoopNoSource */
     private void copyLoopNoSource() {
         long halftoneWord = 0;
-        final LongBinaryOperator mergeFnwith = opTable[combinationRule + 1];
-        assert mergeFnwith != null : "Unexpected `null` value";
+        final int rule = combinationRule;
         if (noHalftone) {
             halftoneWord = ALL_ONES;
         }
@@ -1088,12 +1083,12 @@ public final class BitBlt {
             }
             destMask = mask1;
             long destWord = dstLongAt(destIndex);
-            long mergeWord = mergeFnwith.applyAsLong(halftoneWord, destWord);
+            long mergeWord = mergeFnwith(rule, halftoneWord, destWord);
             destWord = destMask & mergeWord | destWord & ~destMask;
             dstLongAtput(destIndex, destWord);
             destIndex += 4;
             destMask = ALL_ONES;
-            if (combinationRule == 3) {
+            if (rule == 3) {
                 /* Special inner loop for STORE */
                 destWord = halftoneWord;
                 for (long word = 2; word < nWords; word++) {
@@ -1105,7 +1100,7 @@ public final class BitBlt {
                 for (long word = 2; word < nWords; word++) {
                     /* Normal inner loop does merge */
                     destWord = dstLongAt(destIndex);
-                    mergeWord = mergeFnwith.applyAsLong(halftoneWord, destWord);
+                    mergeWord = mergeFnwith(rule, halftoneWord, destWord);
                     dstLongAtput(destIndex, mergeWord);
                     destIndex += 4;
                 }
@@ -1113,7 +1108,7 @@ public final class BitBlt {
             if (nWords > 1) {
                 destMask = mask2;
                 destWord = dstLongAt(destIndex);
-                mergeWord = mergeFnwith.applyAsLong(halftoneWord, destWord);
+                mergeWord = mergeFnwith(rule, halftoneWord, destWord);
                 destWord = destMask & mergeWord | destWord & ~destMask;
                 dstLongAtput(destIndex, destWord);
                 destIndex += 4;
@@ -1138,8 +1133,7 @@ public final class BitBlt {
     /* BitBltSimulation>>#copyLoopPixMap */
     private void copyLoopPixMap() {
         long halftoneWord = 0;
-        final LongBinaryOperator mergeFnwith = opTable[combinationRule + 1];
-        assert mergeFnwith != null : "Unexpected `null` value";
+        final int rule = combinationRule;
         sourcePPW = div(32, sourceDepth);
         final int sourcePixMask = MASK_TABLE[sourceDepth];
         final int destPixMask = MASK_TABLE[destDepth];
@@ -1193,12 +1187,12 @@ public final class BitBlt {
                 dstBitShift = dstShiftLeft;
                 if (destMask == ALL_ONES) {
                     /* avoid read-modify-write */
-                    final long mergeWord = mergeFnwith.applyAsLong(skewWord & halftoneWord, dstLongAt(destIndex));
+                    final long mergeWord = mergeFnwith(rule, skewWord & halftoneWord, dstLongAt(destIndex));
                     dstLongAtput(destIndex, destMask & mergeWord);
                 } else {
                     /* General version using dest masking */
                     long destWord = dstLongAt(destIndex);
-                    final long mergeWord = mergeFnwith.applyAsLong(skewWord & halftoneWord, destWord & destMask);
+                    final long mergeWord = mergeFnwith(rule, skewWord & halftoneWord, destWord & destMask);
                     destWord = destMask & mergeWord | destWord & ~destMask;
                     dstLongAtput(destIndex, destWord);
                 }
@@ -1525,49 +1519,55 @@ public final class BitBlt {
 
     /* BitBltSimulation>>#initBBOpTable */
     private void initBBOpTable() {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        opTable[0 + 1] = BitBlt::clearWordwith;
-        opTable[1 + 1] = BitBlt::bitAndwith;
-        opTable[2 + 1] = BitBlt::bitAndInvertwith;
-        opTable[3 + 1] = BitBlt::sourceWordwith;
-        opTable[4 + 1] = BitBlt::bitInvertAndwith;
-        opTable[5 + 1] = BitBlt::destinationWordwith;
-        opTable[6 + 1] = BitBlt::bitXorwith;
-        opTable[7 + 1] = BitBlt::bitOrwith;
-        opTable[8 + 1] = BitBlt::bitInvertAndInvertwith;
-        opTable[9 + 1] = BitBlt::bitInvertXorwith;
-        opTable[10 + 1] = BitBlt::bitInvertDestinationwith;
-        opTable[11 + 1] = BitBlt::bitOrInvertwith;
-        opTable[12 + 1] = BitBlt::bitInvertSourcewith;
-        opTable[13 + 1] = BitBlt::bitInvertOrwith;
-        opTable[14 + 1] = BitBlt::bitInvertOrInvertwith;
-        opTable[15 + 1] = BitBlt::destinationWordwith;
-        opTable[16 + 1] = BitBlt::destinationWordwith;
-        opTable[17 + 1] = BitBlt::destinationWordwith;
-        opTable[18 + 1] = BitBlt::addWordwith;
-        opTable[19 + 1] = BitBlt::subWordwith;
-        opTable[20 + 1] = this::rgbAddwith;
-        opTable[21 + 1] = this::rgbSubwith;
-        opTable[22 + 1] = this::oLDrgbDiffwith;
-        opTable[23 + 1] = this::oLDtallyIntoMapwith;
-        opTable[24 + 1] = BitBlt::alphaBlendwith;
-        opTable[25 + 1] = this::pixPaintwith;
-        opTable[26 + 1] = this::pixMaskwith;
-        opTable[27 + 1] = this::rgbMaxwith;
-        opTable[28 + 1] = this::rgbMinwith;
-        opTable[29 + 1] = this::rgbMinInvertwith;
-        opTable[30 + 1] = this::alphaBlendConstwith;
-        opTable[31 + 1] = this::alphaPaintConstwith;
-        opTable[32 + 1] = this::rgbDiffwith;
-        opTable[33 + 1] = this::tallyIntoMapwith;
-        opTable[34 + 1] = BitBlt::alphaBlendScaledwith;
-        opTable[35 + 1] = BitBlt::alphaBlendScaledwith;
-        opTable[36 + 1] = BitBlt::alphaBlendScaledwith;
-        opTable[37 + 1] = this::rgbMulwith;
-        opTable[38 + 1] = this::pixSwapwith;
-        opTable[39 + 1] = this::pixClearwith;
-        opTable[40 + 1] = this::fixAlphawith;
-        opTable[41 + 1] = this::rgbComponentAlphawith;
+        // Using switch statement in mergeFnwith() instead of opTable.
+    }
+
+    private long mergeFnwith(final int rule, final long sourceWord, final long destinationWord) {
+        return switch (rule) {
+            case 0 -> clearWordwith(sourceWord, destinationWord);
+            case 1 -> bitAndwith(sourceWord, destinationWord);
+            case 2 -> bitAndInvertwith(sourceWord, destinationWord);
+            case 3 -> sourceWordwith(sourceWord, destinationWord);
+            case 4 -> bitInvertAndwith(sourceWord, destinationWord);
+            case 5 -> destinationWordwith(sourceWord, destinationWord);
+            case 6 -> bitXorwith(sourceWord, destinationWord);
+            case 7 -> bitOrwith(sourceWord, destinationWord);
+            case 8 -> bitInvertAndInvertwith(sourceWord, destinationWord);
+            case 9 -> bitInvertXorwith(sourceWord, destinationWord);
+            case 10 -> bitInvertDestinationwith(sourceWord, destinationWord);
+            case 11 -> bitOrInvertwith(sourceWord, destinationWord);
+            case 12 -> bitInvertSourcewith(sourceWord, destinationWord);
+            case 13 -> bitInvertOrwith(sourceWord, destinationWord);
+            case 14 -> bitInvertOrInvertwith(sourceWord, destinationWord);
+            case 15 -> destinationWordwith(sourceWord, destinationWord);
+            case 16 -> destinationWordwith(sourceWord, destinationWord);
+            case 17 -> destinationWordwith(sourceWord, destinationWord);
+            case 18 -> addWordwith(sourceWord, destinationWord);
+            case 19 -> subWordwith(sourceWord, destinationWord);
+            case 20 -> rgbAddwith(sourceWord, destinationWord);
+            case 21 -> rgbSubwith(sourceWord, destinationWord);
+            case 22 -> oLDrgbDiffwith(sourceWord, destinationWord);
+            case 23 -> oLDtallyIntoMapwith(sourceWord, destinationWord);
+            case 24 -> alphaBlendwith(sourceWord, destinationWord);
+            case 25 -> pixPaintwith(sourceWord, destinationWord);
+            case 26 -> pixMaskwith(sourceWord, destinationWord);
+            case 27 -> rgbMaxwith(sourceWord, destinationWord);
+            case 28 -> rgbMinwith(sourceWord, destinationWord);
+            case 29 -> rgbMinInvertwith(sourceWord, destinationWord);
+            case 30 -> alphaPaintConstwith(sourceWord, destinationWord);
+            case 31 -> alphaBlendConstwith(sourceWord, destinationWord);
+            case 32 -> rgbDiffwith(sourceWord, destinationWord);
+            case 33 -> tallyIntoMapwith(sourceWord, destinationWord);
+            case 34 -> alphaBlendScaledwith(sourceWord, destinationWord);
+            case 35 -> alphaBlendScaledwith(sourceWord, destinationWord);
+            case 36 -> alphaBlendScaledwith(sourceWord, destinationWord);
+            case 37 -> rgbMulwith(sourceWord, destinationWord);
+            case 38 -> pixSwapwith(sourceWord, destinationWord);
+            case 39 -> pixClearwith(sourceWord, destinationWord);
+            case 40 -> fixAlphawith(sourceWord, destinationWord);
+            case 41 -> rgbComponentAlphawith(sourceWord, destinationWord);
+            default -> throw CompilerDirectives.shouldNotReachHere("Unexpected combinationRule: " + rule);
+        };
     }
 
     /* BitBltSimulation>>#initDither8Lookup */
@@ -3485,7 +3485,7 @@ public final class BitBlt {
                 setupColorMasksFromto(8, cmBitsPerColor);
             }
         }
-        final LongBinaryOperator mergeFnwith = opTable[combinationRule + 1];
+        final int rule = combinationRule;
         final int mapperFlags = cmFlags & ~COLOR_MAP_NEW_STYLE;
         final int dstShiftInc;
         final int dstShiftLeft;
@@ -3544,14 +3544,14 @@ public final class BitBlt {
                 dstBitShift = dstShiftLeft;
                 if (destMask == ALL_ONES) {
                     /* avoid read-modify-write */
-                    final long mergeWord = mergeFnwith.applyAsLong(skewWord & halftoneWord, dstLongAt(destIndex));
+                    final long mergeWord = mergeFnwith(rule, skewWord & halftoneWord, dstLongAt(destIndex));
                     /* begin dstLongAt:put: */
                     dstLongAtput(destIndex, destMask & mergeWord);
                 } else {
                     /* General version using dest masking */
                     /* begin dstLongAt: */
                     long destWord = dstLongAt(destIndex);
-                    final long mergeWord = mergeFnwith.applyAsLong(skewWord & halftoneWord, destWord & destMask);
+                    final long mergeWord = mergeFnwith(rule, skewWord & halftoneWord, destWord & destMask);
                     destWord = destMask & mergeWord | destWord & ~destMask;
                     /* begin dstLongAt:put: */
                     dstLongAtput(destIndex, destWord);
