@@ -66,8 +66,6 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     protected final CompiledCodeObject code;
     protected final boolean isBlock;
 
-    @CompilationFinal protected int numArguments;
-
     @CompilationFinal(dimensions = 1) protected final Object[] data;
     @CompilationFinal(dimensions = 1) protected final byte[] profiles;
     @CompilationFinal private Object osrMetadata;
@@ -76,7 +74,6 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     public AbstractInterpreterNode(final CompiledCodeObject code) {
         this.code = code;
         isBlock = code.isCompiledBlock() || code.isShadowBlock();
-        numArguments = -1;
         final int startPC = code.getStartPCZeroBased();
         final int endPC = code.getMaxPCZeroBased();
         data = new Object[endPC];
@@ -89,7 +86,6 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         // reusable fields
         code = original.code;
         isBlock = original.isBlock;
-        numArguments = original.numArguments;
         // fresh fields
         final int startPC = code.getStartPCZeroBased();
         final int endPC = code.getMaxPCZeroBased();
@@ -374,7 +370,6 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     }
 
     protected final Object pop(final VirtualFrame frame, final int sp) {
-        assert sp >= numArguments;
         final int slotIndex = FrameAccess.toStackSlotIndex(sp);
         final Object result = frame.getObjectStatic(slotIndex);
         frame.setObjectStatic(slotIndex, NilObject.SINGLETON);
@@ -391,7 +386,6 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
 
     @ExplodeLoop
     private Object[] popNExploded(final VirtualFrame frame, final int sp, final int numPop) {
-        assert sp - numPop >= numArguments;
         final int topSlotIndex = FrameAccess.toStackSlotIndex(sp - 1);
         final Object[] stackValues = new Object[numPop];
         for (int i = 0; i < numPop; i++) {
@@ -406,21 +400,11 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         return getStackValue(frame, sp - 1);
     }
 
-    protected final Object getTemp(final VirtualFrame frame, final int sp) {
-        if (sp < numArguments) {
-            return UnsafeUtils.getObject(frame.getArguments(), FrameAccess.getArgumentStartIndex() + sp);
-        } else {
-            return FrameAccess.getSlotValue(frame, FrameAccess.toStackSlotIndex(sp));
-        }
-    }
-
     protected final Object getStackValue(final VirtualFrame frame, final int sp) {
-        assert sp >= numArguments;
         return FrameAccess.getSlotValue(frame, FrameAccess.toStackSlotIndex(sp));
     }
 
     protected final void setStackValue(final VirtualFrame frame, final int sp, final Object value) {
-        assert sp >= numArguments;
         FrameAccess.setSlotValue(frame, FrameAccess.toStackSlotIndex(sp), value);
     }
 

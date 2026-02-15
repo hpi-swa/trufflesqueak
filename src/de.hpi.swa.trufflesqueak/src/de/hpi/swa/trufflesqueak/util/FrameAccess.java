@@ -214,6 +214,10 @@ public final class FrameAccess {
         frame.setIntStatic(SlotIndices.STACK_POINTER, value);
     }
 
+    public static int getStackStart() {
+        return SlotIndices.STACK_START;
+    }
+
     public static int toStackSlotIndex(final Frame frame, final int index) {
         assert frame.getArguments().length - getArgumentStartIndex() <= index;
         return SlotIndices.STACK_START + index;

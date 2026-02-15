@@ -35,8 +35,7 @@ import de.hpi.swa.trufflesqueak.util.MiscUtils;
 public final class StartContextRootNode extends AbstractRootNode {
     private final int initialPC;
     @CompilationFinal private int initialSP;
-    @CompilationFinal private byte numTempSlots;
-    @CompilationFinal private byte tempStackSlotStartIndex;
+    @CompilationFinal private byte numArgs;
     @CompilationFinal private Assumption doesNotNeedThisContext;
 
     @Child private CheckForInterruptsQuickNode interruptHandlerNode;
@@ -52,8 +51,7 @@ public final class StartContextRootNode extends AbstractRootNode {
         super(original);
         initialPC = original.initialPC;
         initialSP = original.initialSP;
-        numTempSlots = original.numTempSlots;
-        tempStackSlotStartIndex = original.tempStackSlotStartIndex;
+        numArgs = original.numArgs;
         doesNotNeedThisContext = original.doesNotNeedThisContext;
         interruptHandlerNode = CheckForInterruptsQuickNode.createForSend(getCode());
         getOrCreateContextNode = null;
@@ -89,7 +87,7 @@ public final class StartContextRootNode extends AbstractRootNode {
     private void ensureInitialized(final VirtualFrame frame) {
         if (doesNotNeedThisContext == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            final int numArgs = FrameAccess.getNumArguments(frame);
+            numArgs = MiscUtils.toByteExact(FrameAccess.getNumArguments(frame));
             final CompiledCodeObject code = getCode();
             doesNotNeedThisContext = code.getDoesNotNeedThisContextAssumption();
             if (!FrameAccess.hasClosure(frame)) {
@@ -100,8 +98,6 @@ public final class StartContextRootNode extends AbstractRootNode {
                 initialSP = closure.getInitialSP();
                 assert numArgs == closure.getNumArgs() + closure.getNumCopied();
             }
-            numTempSlots = MiscUtils.toByteExact(initialSP - numArgs);
-            tempStackSlotStartIndex = MiscUtils.toByteExact(FrameAccess.toStackSlotIndex(frame, numArgs));
         }
     }
 
@@ -113,11 +109,16 @@ public final class StartContextRootNode extends AbstractRootNode {
         FrameAccess.setInstructionPointer(frame, initialPC);
         FrameAccess.setStackPointer(frame, initialSP);
 
-        // TODO: avoid nilling out of temp slots to allow slot specializations
+        int slotIndex = FrameAccess.getStackStart();
+        // Copy arguments onto stack
+        final Object[] arguments = frame.getArguments();
+        for (int i = 0; i < numArgs; i++) {
+            frame.setObjectStatic(slotIndex++, arguments[FrameAccess.getArgumentStartIndex() + i]);
+        }
         // Initialize remaining temporary variables with nil in newContext.
+        final int numTempSlots = initialSP - numArgs;
         for (int i = 0; i < numTempSlots; i++) {
-            final int slotIndex = tempStackSlotStartIndex + i;
-            frame.setObjectStatic(slotIndex, NilObject.SINGLETON);
+            frame.setObjectStatic(slotIndex++, NilObject.SINGLETON);
         }
     }
 
