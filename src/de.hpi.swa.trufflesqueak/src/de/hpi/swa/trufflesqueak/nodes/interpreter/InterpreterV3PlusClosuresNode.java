@@ -324,7 +324,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     }
                     case BC.PUSH_TEMP_VAR_0, BC.PUSH_TEMP_VAR_1, BC.PUSH_TEMP_VAR_2, BC.PUSH_TEMP_VAR_3, BC.PUSH_TEMP_VAR_4, BC.PUSH_TEMP_VAR_5, BC.PUSH_TEMP_VAR_6, BC.PUSH_TEMP_VAR_7, //
                         BC.PUSH_TEMP_VAR_8, BC.PUSH_TEMP_VAR_9, BC.PUSH_TEMP_VAR_A, BC.PUSH_TEMP_VAR_B, BC.PUSH_TEMP_VAR_C, BC.PUSH_TEMP_VAR_D, BC.PUSH_TEMP_VAR_E, BC.PUSH_TEMP_VAR_F: {
-                        pushFollowed(frame, currentPC, sp++, getStackValue(frame, b & 0xF));
+                        pushFollowed(frame, currentPC, sp++, FrameAccess.getStackValue(frame, b & 0xF));
                         break;
                     }
                     case BC.PUSH_LIT_CONST_00, BC.PUSH_LIT_CONST_01, BC.PUSH_LIT_CONST_02, BC.PUSH_LIT_CONST_03, BC.PUSH_LIT_CONST_04, BC.PUSH_LIT_CONST_05, BC.PUSH_LIT_CONST_06, BC.PUSH_LIT_CONST_07, //
@@ -346,7 +346,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         break;
                     }
                     case BC.POP_INTO_TEMP_VAR_0, BC.POP_INTO_TEMP_VAR_1, BC.POP_INTO_TEMP_VAR_2, BC.POP_INTO_TEMP_VAR_3, BC.POP_INTO_TEMP_VAR_4, BC.POP_INTO_TEMP_VAR_5, BC.POP_INTO_TEMP_VAR_6, BC.POP_INTO_TEMP_VAR_7: {
-                        setStackValue(frame, b & 7, pop(frame, --sp));
+                        FrameAccess.setStackValue(frame, b & 7, pop(frame, --sp));
                         break;
                     }
                     case BC.PUSH_RECEIVER: {
@@ -429,7 +429,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 break;
                             }
                             case 1: {
-                                pushFollowed(frame, currentPC, sp++, getStackValue(frame, variableIndex));
+                                pushFollowed(frame, currentPC, sp++, FrameAccess.getStackValue(frame, variableIndex));
                                 break;
                             }
                             case 2: {
@@ -455,7 +455,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 break;
                             }
                             case 1: {
-                                setStackValue(frame, variableIndex, stackTop);
+                                FrameAccess.setStackValue(frame, variableIndex, stackTop);
                                 break;
                             }
                             case 2: {
@@ -480,7 +480,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 break;
                             }
                             case 1: {
-                                setStackValue(frame, variableIndex, stackValue);
+                                FrameAccess.setStackValue(frame, variableIndex, stackValue);
                                 break;
                             }
                             case 2: {
@@ -610,26 +610,27 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         pc += 2;
                         if (getByte(bc, pc) == BC.EXTENDED_STORE) {
                             assert sp > 0;
-                            setStackValue(frame, sp - 1, getErrorObject());
+                            FrameAccess.setStackValue(frame, sp - 1, getErrorObject());
                         }
                         break;
                     }
                     case BC.PUSH_REMOTE_TEMP_LONG: {
                         final int remoteTempIndex = getUnsignedInt(bc, pc++);
                         final int tempVectorIndex = getUnsignedInt(bc, pc++);
-                        pushFollowed(frame, currentPC, sp++, uncheckedCast(data[currentPC], SqueakObjectAt0NodeGen.class).execute(this, getStackValue(frame, tempVectorIndex), remoteTempIndex));
+                        pushFollowed(frame, currentPC, sp++,
+                                        uncheckedCast(data[currentPC], SqueakObjectAt0NodeGen.class).execute(this, FrameAccess.getStackValue(frame, tempVectorIndex), remoteTempIndex));
                         break;
                     }
                     case BC.STORE_REMOTE_TEMP_LONG: {
                         final int remoteTempIndex = getUnsignedInt(bc, pc++);
                         final int tempVectorIndex = getUnsignedInt(bc, pc++);
-                        uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, getStackValue(frame, tempVectorIndex), remoteTempIndex, top(frame, sp));
+                        uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getStackValue(frame, tempVectorIndex), remoteTempIndex, top(frame, sp));
                         break;
                     }
                     case BC.POP_INTO_REMOTE_TEMP_LONG: {
                         final int remoteTempIndex = getUnsignedInt(bc, pc++);
                         final int tempVectorIndex = getUnsignedInt(bc, pc++);
-                        uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, getStackValue(frame, tempVectorIndex), remoteTempIndex, pop(frame, --sp));
+                        uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getStackValue(frame, tempVectorIndex), remoteTempIndex, pop(frame, --sp));
                         break;
                     }
                     case BC.PUSH_CLOSURE_COPY_COPIED_VALUES: {

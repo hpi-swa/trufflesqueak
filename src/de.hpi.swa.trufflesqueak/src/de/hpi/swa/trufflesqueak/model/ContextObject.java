@@ -422,7 +422,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         if (FrameAccess.getArgumentStartIndex() + index < args.length) {
             return args[FrameAccess.getArgumentStartIndex() + index];
         } else {
-            return NilObject.nullToNil(FrameAccess.getSlotValue(frame, FrameAccess.toStackSlotIndex(frame, index)));
+            return NilObject.nullToNil(FrameAccess.getStackValue(frame, index));
         }
     }
 
@@ -433,7 +433,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         if (FrameAccess.getArgumentStartIndex() + index < args.length) {
             args[FrameAccess.getArgumentStartIndex() + index] = value;
         }
-        FrameAccess.setStackSlot(frame, index, value);
+        FrameAccess.setStackValue(frame, index, value);
     }
 
     public void terminate() {
@@ -650,8 +650,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         // Write stack values from frame slots
         final int numSlots = FrameAccess.getNumStackSlots(frame);
         for (int i = numArgs; i < numSlots; i++) {
-            final int slotIndex = FrameAccess.toStackSlotIndex(frame, i);
-            final Object stackValue = frame.getObjectStatic(slotIndex);
+            final Object stackValue = FrameAccess.getStackValue(frame, i);
             if (stackValue == null) {
                 writer.writeNil();
             } else {

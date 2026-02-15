@@ -11,13 +11,11 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class PushToStackNode extends AbstractNode {
     @CompilationFinal private int stackPointer = -1;
-    @CompilationFinal private int stackSlot = -1;
 
     @NeverDefault
     public static PushToStackNode create() {
@@ -29,9 +27,8 @@ public final class PushToStackNode extends AbstractNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             stackPointer = FrameAccess.getStackPointer(frame) + 1;
             assert stackPointer <= FrameAccess.getCodeObject(frame).getMaxStackSize() : "Bad stack pointer";
-            stackSlot = FrameAccess.toStackSlotIndex(frame, stackPointer - 1);
         }
         FrameAccess.setStackPointer(frame, stackPointer);
-        FrameAccess.setSlotValue(frame, stackSlot, value);
+        FrameAccess.setStackValue(frame, stackPointer - 1, value);
     }
 }

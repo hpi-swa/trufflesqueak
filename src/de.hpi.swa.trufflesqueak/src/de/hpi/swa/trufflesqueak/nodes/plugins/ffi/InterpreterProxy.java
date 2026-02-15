@@ -233,7 +233,7 @@ public final class InterpreterProxy {
         setStackPointer(stackPointer + 1);
         // push to the original stack pointer, as it always points to the slot where the next object
         // is pushed
-        FrameAccess.setStackSlot(frame, stackPointer, object);
+        FrameAccess.setStackValue(frame, stackPointer, object);
     }
 
     private Object getObjectOnStack(final long reverseStackIndex) {
@@ -248,7 +248,7 @@ public final class InterpreterProxy {
             primitiveFail();
             return null;
         }
-        final Object value = FrameAccess.getStackValue(frame, stackIndex, FrameAccess.getNumArguments(frame));
+        final Object value = FrameAccess.getStackValue(frame, stackIndex);
         assert value != null;
         return value;
     }
@@ -257,7 +257,7 @@ public final class InterpreterProxy {
         assert hasSucceeded();
         final int stackPointer = getStackPointer() - numReceiverAndArguments;
         setStackPointer(stackPointer + 1);
-        FrameAccess.setStackSlot(frame, stackPointer, object);
+        FrameAccess.setStackValue(frame, stackPointer, object);
         return returnVoid();
     }
 

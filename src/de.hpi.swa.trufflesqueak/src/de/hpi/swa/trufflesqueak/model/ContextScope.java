@@ -87,8 +87,7 @@ public final class ContextScope implements TruffleObject {
             if (index >= getContextSize()) {
                 throw UnknownIdentifierException.create(member);
             }
-            final int numArgs = FrameAccess.getNumArguments(frame);
-            return FrameAccess.getStackValue(frame, index, numArgs);
+            return FrameAccess.getStackValue(frame, index);
         } catch (final NumberFormatException e) {
             LogUtils.INTEROP.log(Level.WARNING, "Invalid number format: " + member, e);
         }

@@ -218,23 +218,6 @@ public final class FrameAccess {
         return SlotIndices.STACK_START;
     }
 
-    public static int toStackSlotIndex(final Frame frame, final int index) {
-        assert frame.getArguments().length - getArgumentStartIndex() <= index;
-        return SlotIndices.STACK_START + index;
-    }
-
-    public static int toStackSlotIndex(final int index) {
-        return SlotIndices.STACK_START + index;
-    }
-
-    public static Object getStackValue(final Frame frame, final int stackIndex, final int numArguments) {
-        if (stackIndex < numArguments) {
-            return getArgument(frame, stackIndex);
-        } else {
-            return getSlotValue(frame, toStackSlotIndex(frame, stackIndex));
-        }
-    }
-
     public static int getNumStackSlots(final Frame frame) {
         return frame.getFrameDescriptor().getNumberOfSlots() - SlotIndices.STACK_START;
     }
@@ -338,10 +321,12 @@ public final class FrameAccess {
         frame.setObjectStatic(slotIndex, value);
     }
 
-    public static void setStackSlot(final Frame frame, final int stackIndex, final Object value) {
-        assert value != null;
-        assert 0 <= stackIndex && stackIndex <= getCodeObject(frame).getSqueakContextSize();
-        setSlotValue(frame, SlotIndices.STACK_START + stackIndex, value);
+    public static Object getStackValue(final Frame frame, final int sp) {
+        return getSlotValue(frame, SlotIndices.STACK_START + sp);
+    }
+
+    public static void setStackValue(final Frame frame, final int sp, final Object value) {
+        setSlotValue(frame, SlotIndices.STACK_START + sp, value);
     }
 
     public static boolean hasUnusedAuxiliarySlots(final Frame frame) {

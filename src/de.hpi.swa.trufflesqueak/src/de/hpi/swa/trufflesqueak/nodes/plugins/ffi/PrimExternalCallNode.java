@@ -193,7 +193,7 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode
              * (AbstractSendNode.executeVoid). Pop the return value and return it.
              */
             final int stackPointer = FrameAccess.getStackPointer(frame) - 1;
-            final Object returnValue = FrameAccess.getStackValue(frame, stackPointer, FrameAccess.getNumArguments(frame));
+            final Object returnValue = FrameAccess.getStackValue(frame, stackPointer);
             FrameAccess.setStackPointer(frame, stackPointer);
             final long failReason = interpreterProxy.failed();
             if (failReason == 0) {
@@ -228,7 +228,7 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode
             final int stackIndex = stackPointer + i;
             /* Only values stored above initialSP are cleared */
             if (stackIndex >= initialSP) {
-                FrameAccess.setStackSlot(frame, stackIndex, receiverAndArguments[i]);
+                FrameAccess.setStackValue(frame, stackIndex, receiverAndArguments[i]);
             }
         }
         FrameAccess.setStackPointer(frame, stackPointer + numReceiverAndArguments);
