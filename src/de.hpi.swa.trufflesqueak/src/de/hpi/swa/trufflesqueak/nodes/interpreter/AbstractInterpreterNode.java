@@ -365,27 +365,27 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         setStackValue(frame, sp, followForwarded(currentPC, value));
     }
 
-    protected final void push(final VirtualFrame frame, final int sp, final Object value) {
+    protected static final void push(final VirtualFrame frame, final int sp, final Object value) {
         setStackValue(frame, sp, value);
     }
 
-    protected final Object pop(final VirtualFrame frame, final int sp) {
+    protected static final Object pop(final VirtualFrame frame, final int sp) {
         final int slotIndex = FrameAccess.toStackSlotIndex(sp);
         final Object result = frame.getObjectStatic(slotIndex);
         frame.setObjectStatic(slotIndex, NilObject.SINGLETON);
         return result;
     }
 
-    protected final Object popReceiver(final VirtualFrame frame, final int sp) {
+    protected static final Object popReceiver(final VirtualFrame frame, final int sp) {
         return getStackValue(frame, sp);
     }
 
-    protected final Object[] popN(final VirtualFrame frame, final int sp, final int numPop) {
+    protected static final Object[] popN(final VirtualFrame frame, final int sp, final int numPop) {
         return numPop == 0 ? ArrayUtils.EMPTY_ARRAY : popNExploded(frame, sp, numPop);
     }
 
     @ExplodeLoop
-    private Object[] popNExploded(final VirtualFrame frame, final int sp, final int numPop) {
+    private static Object[] popNExploded(final VirtualFrame frame, final int sp, final int numPop) {
         final int topSlotIndex = FrameAccess.toStackSlotIndex(sp - 1);
         final Object[] stackValues = new Object[numPop];
         for (int i = 0; i < numPop; i++) {
@@ -396,15 +396,15 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         return stackValues;
     }
 
-    protected final Object top(final VirtualFrame frame, final int sp) {
+    protected static final Object top(final VirtualFrame frame, final int sp) {
         return getStackValue(frame, sp - 1);
     }
 
-    protected final Object getStackValue(final VirtualFrame frame, final int sp) {
+    protected static final Object getStackValue(final VirtualFrame frame, final int sp) {
         return FrameAccess.getSlotValue(frame, FrameAccess.toStackSlotIndex(sp));
     }
 
-    protected final void setStackValue(final VirtualFrame frame, final int sp, final Object value) {
+    protected static final void setStackValue(final VirtualFrame frame, final int sp, final Object value) {
         FrameAccess.setSlotValue(frame, FrameAccess.toStackSlotIndex(sp), value);
     }
 
