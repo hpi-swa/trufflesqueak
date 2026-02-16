@@ -386,11 +386,11 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
 
     @ExplodeLoop
     private static Object[] popNExploded(final VirtualFrame frame, final int sp, final int numPop) {
-        final int topSlotIndex = FrameAccess.getStackStart() + sp - 1;
+        final int firstSlotIndex = FrameAccess.getStackStart() + sp - numPop;
         final Object[] stackValues = new Object[numPop];
         for (int i = 0; i < numPop; i++) {
-            final int slotIndex = topSlotIndex - i;
-            stackValues[numPop - 1 - i] = frame.getObjectStatic(slotIndex);
+            final int slotIndex = firstSlotIndex + i;
+            stackValues[i] = frame.getObjectStatic(slotIndex);
             frame.setObjectStatic(slotIndex, NilObject.SINGLETON);
         }
         return stackValues;
