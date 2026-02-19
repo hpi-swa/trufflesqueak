@@ -1,0 +1,31 @@
+repos:
+- repo: local
+  hooks:
+  - id: checkcopyrights
+    name: Copyright check
+    language: system
+    require_serial: true
+    entry: bash mx.trufflesqueak/pre-commit/checkcopyrights.sh
+    types: [text]
+  - id: eclipseformat
+    name: Eclipse formatter
+    language: system
+    require_serial: true
+    entry: bash mx.trufflesqueak/pre-commit/eclipseformat.sh
+    types: [text]
+    files: '\.java$'
+  - id: checkstyle
+    name: Checkstyle
+    language: system
+    require_serial: true
+    entry: bash mx.trufflesqueak/pre-commit/checkstyle.sh
+    types: [text]
+    files: '\.java$'
+  - id: pyformat
+    name: Pyformat on mx files
+    language: system
+    pass_filenames: false
+    require_serial: true
+    entry: bash mx.trufflesqueak/pre-commit/pyformat.sh
+    types: [text]
+    files: '^mx\.trufflesqueak/.*\.py$'
