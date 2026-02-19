@@ -53,15 +53,24 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     public ContextObject(final VirtualFrame frame) {
         super();
         FrameAccess.assertSenderNotNull(frame);
-        this.senderOrFrameOrSize = FrameAccess.getSender(frame);
+        senderOrFrameOrSize = FrameAccess.getSender(frame);
         FrameAccess.setContext(frame, this);
     }
 
     public ContextObject(final MaterializedFrame frame) {
         super();
         FrameAccess.assertSenderNotNull(frame);
-        this.senderOrFrameOrSize = frame;
-        this.setMarkedCodeFlags();
+        senderOrFrameOrSize = frame;
+        setMarkedCodeFlags();
+        FrameAccess.setContext(frame, this);
+    }
+
+    public ContextObject(final CompiledCodeObject code, final MaterializedFrame frame) {
+        super();
+        CompilerAsserts.partialEvaluationConstant(code);
+        FrameAccess.assertSenderNotNull(frame);
+        senderOrFrameOrSize = frame;
+        setMarkedCodeFlags(code);
         FrameAccess.setContext(frame, this);
     }
 
@@ -216,9 +225,13 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
 
     /* Marked code flags (implemented in object header flags). */
     private void setMarkedCodeFlags() {
-        if (getCodeObject().isUnwindMarked() && !hasClosure()) {
+        setMarkedCodeFlags(getCodeObject());
+    }
+
+    private void setMarkedCodeFlags(final CompiledCodeObject code) {
+        if (code.isUnwindMarked() && !hasClosure()) {
             setUnwindMarked();
-        } else if (getCodeObject().isExceptionHandlerMarked()) {
+        } else if (code.isExceptionHandlerMarked()) {
             setExceptionHandlerMarked();
         }
     }
