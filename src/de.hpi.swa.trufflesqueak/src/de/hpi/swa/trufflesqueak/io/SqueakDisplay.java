@@ -129,7 +129,9 @@ public final class SqueakDisplay implements Consumer<Event> {
     }
 
     private void tryToSetTaskbarIcon() {
-        if (window == null) return;
+        if (window == null) {
+            return;
+        }
 
         try {
             final String iconExt;
@@ -149,7 +151,7 @@ public final class SqueakDisplay implements Consumer<Event> {
                 final File tempIcon = File.createTempFile("trufflesqueak-icon", iconExt);
                 tempIcon.deleteOnExit(); // Clean up when Squeak closes
 
-                try (final InputStream is = resource.openStream()) {
+                try (InputStream is = resource.openStream()) {
                     Files.copy(is, tempIcon.toPath(), StandardCopyOption.REPLACE_EXISTING);
                 }
 
@@ -187,11 +189,12 @@ public final class SqueakDisplay implements Consumer<Event> {
     }
 
     @TruffleBoundary
+    @SuppressWarnings("unused")
     public void showDisplayRect(final int left, final int top, final int right, final int bottom) {
         if (window != null) {
             boolean shouldRequestFrame = false;
 
-            synchronized(this) {
+            synchronized (this) {
                 // Zero-allocation, Zero-Java-copy snapshot directly into Skija's native memory!
                 if (pixelIntBuffer != null && squeakBitmapPixels != null && pixelIntBuffer.capacity() == squeakBitmapPixels.length) {
                     pixelIntBuffer.clear(); // Reset the buffer position to 0
@@ -221,7 +224,7 @@ public final class SqueakDisplay implements Consumer<Event> {
             return;
         }
 
-        synchronized(this) {
+        synchronized (this) {
             // Open the gate for the NEXT frame exactly as we consume the CURRENT frame
             frameRequested = false;
 
@@ -229,8 +232,8 @@ public final class SqueakDisplay implements Consumer<Event> {
             canvas.clear(0xFF000000);
 
             // makeRasterFromBitmap safely handles the native GPU handoff
-            try (Image image = Image.makeRasterFromBitmap(squeakBitmap)) {
-                canvas.drawImage(image, 0, 0);
+            try (Image skiaImage = Image.makeRasterFromBitmap(squeakBitmap)) {
+                canvas.drawImage(skiaImage, 0, 0);
             }
         }
     }
@@ -249,7 +252,7 @@ public final class SqueakDisplay implements Consumer<Event> {
         assert (long) squeakDisplay.instVarAt0Slow(FORM.DEPTH) == 32 : "Unsupported display depth";
 
         if (width > 0 && height > 0) {
-            synchronized(this) {
+            synchronized (this) {
                 squeakBitmapPixels = bitmap.getIntStorage();
 
                 // Clean up the old bitmap if we are resizing to prevent native memory leaks
@@ -259,13 +262,13 @@ public final class SqueakDisplay implements Consumer<Event> {
 
                 // Initialize the new Skija Bitmap
                 squeakBitmap = new Bitmap();
-                ImageInfo info = new ImageInfo(width, height, ColorType.BGRA_8888, ColorAlphaType.PREMUL);
+                final ImageInfo info = new ImageInfo(width, height, ColorType.BGRA_8888, ColorAlphaType.PREMUL);
                 squeakBitmap.allocPixels(info);
 
                 // Extract the Pixmap view, then grab its direct native memory buffer!
                 try (Pixmap pixmap = squeakBitmap.peekPixels()) {
                     if (pixmap != null) {
-                        ByteBuffer byteBuffer = pixmap.getBuffer();
+                        final ByteBuffer byteBuffer = pixmap.getBuffer();
                         if (byteBuffer != null) {
                             pixelIntBuffer = byteBuffer.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer();
                         }
@@ -308,12 +311,14 @@ public final class SqueakDisplay implements Consumer<Event> {
     @TruffleBoundary
     public void setFullscreen(final boolean enable) {
         App.runOnUIThread(() -> {
-            if (window == null) return;
+            if (window == null) {
+                return;
+            }
             // JWM doesn't have a direct "setFullscreen" convenience yet that matches AWT exactly,
             // but we can maximize or use screen bounds.
             // For now, let's assuming maximizing is close enough or use explicit bounds.
             if (enable) {
-                IRect rect = window.getWindowRect();
+                final IRect rect = window.getWindowRect();
                 rememberedWindowX = rect.getLeft();
                 rememberedWindowY = rect.getTop();
                 rememberedWindowWidth = rect.getWidth();
@@ -350,18 +355,21 @@ public final class SqueakDisplay implements Consumer<Event> {
     }
 
     @TruffleBoundary
+    @SuppressWarnings("unused")
     public void setCursor(final int[] cursorWords, final int[] mask, final int width, final int height, final int depth, final int offsetX, final int offsetY) {
         // ToDo: Do this right!
-        if (window == null) return;
+        if (window == null) {
+            return;
+        }
 
         MouseCursor jwmCursor = MouseCursor.ARROW;
 
         if (cursorWords != null && cursorWords.length > 0) {
             // Generate a unique footprint for this specific Smalltalk cursor
-            int hash = java.util.Arrays.hashCode(cursorWords);
+            final int hash = java.util.Arrays.hashCode(cursorWords);
 
             // Uncomment this line temporarily to discover the hashes of Squeak cursors
-            // System.out.println("Cursor Hash: " + hash);
+            // Systemx.out.println("Cursor Hash: " + hash);
 
             switch (hash) {
                 // TODO: Replace these hashes with the actual hashes printed to console
@@ -459,7 +467,7 @@ public final class SqueakDisplay implements Consumer<Event> {
 
     @TruffleBoundary
     public static String getClipboardData() {
-        ClipboardEntry entry = Clipboard.get(ClipboardFormat.TEXT);
+        final ClipboardEntry entry = Clipboard.get(ClipboardFormat.TEXT);
         return entry == null ? "" : entry.getString();
     }
 

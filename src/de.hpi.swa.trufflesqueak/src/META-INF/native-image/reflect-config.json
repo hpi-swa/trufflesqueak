@@ -141,5 +141,9 @@
   {
     "name": "sun.security.provider.SHA2$SHA256",
     "methods": [{ "name": "<init>", "parameterTypes": [ ] }]
+  },
+  {
+    "name": "java.lang.Throwable",
+    "methods": [ { "name": "toString", "parameterTypes": [ ] }]
   }
 ]

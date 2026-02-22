@@ -23,11 +23,10 @@ public final class SqueakKeyboard {
 
     public void onKey(final EventKey e) {
         final int modifiers = mapModifiers(
-                e.isModifierDown(KeyModifier.SHIFT),
-                e.isModifierDown(KeyModifier.CONTROL),
-                e.isModifierDown(KeyModifier.ALT),
-                e.isModifierDown(KeyModifier.MAC_COMMAND)
-        );
+                        e.isModifierDown(KeyModifier.SHIFT),
+                        e.isModifierDown(KeyModifier.CONTROL),
+                        e.isModifierDown(KeyModifier.ALT),
+                        e.isModifierDown(KeyModifier.MAC_COMMAND));
 
         final int keyCharOrCode = toSqueakKeyCode(e.getKey());
         final boolean isCmd = (modifiers & KEYBOARD.CMD) != 0;
@@ -59,7 +58,7 @@ public final class SqueakKeyboard {
         }
     }
 
-    private boolean isControlKey(final Key key) {
+    private static boolean isControlKey(final Key key) {
         switch (key) {
             case BACKSPACE:
             case DELETE:
@@ -83,7 +82,7 @@ public final class SqueakKeyboard {
     public void onTextInput(final EventTextInput e) {
         final String text = e.getText();
         for (int i = 0; i < text.length(); i++) {
-            int charCode = text.charAt(i);
+            final int charCode = text.charAt(i);
             // Send the exact Unicode character the OS generated
             addKeyboardEvent(KEYBOARD_EVENT.CHAR, charCode);
         }
@@ -93,42 +92,73 @@ public final class SqueakKeyboard {
         display.addEvent(EVENT_TYPE.KEYBOARD, keyCharOrCode, eventType, display.buttons >> 3, keyCharOrCode);
     }
 
-    public int mapModifiers(final boolean isShift, final boolean isCtrl, final boolean isAlt, final boolean isCmd) {
+    public static int mapModifiers(final boolean isShift, final boolean isCtrl, final boolean isAlt, final boolean isCmd) {
         int s = 0;
-        if (isShift) s |= KEYBOARD.SHIFT;
-        if (isCtrl) s |= KEYBOARD.CTRL;
-        if (isAlt) s |= KEYBOARD.ALT;
-        if (isCmd) s |= KEYBOARD.CMD;
+        if (isShift) {
+            s |= KEYBOARD.SHIFT;
+        }
+        if (isCtrl) {
+            s |= KEYBOARD.CTRL;
+        }
+        if (isAlt) {
+            s |= KEYBOARD.ALT;
+        }
+        if (isCmd) {
+            s |= KEYBOARD.CMD;
+        }
         return s;
     }
 
     private static int toSqueakKeyCode(final Key key) {
         switch (key) {
-            case BACKSPACE: return 8;
-            case TAB: return 9;
-            case ENTER: return 13;
-            case ESCAPE: return 27;
-            case SPACE: return 32;
-            case PAGE_UP: return 11;
-            case PAGE_DOWN: return 12;
-            case END: return 4;
-            case HOME: return 1;
-            case LEFT: return 28;
-            case UP: return 30;
-            case RIGHT: return 29;
-            case DOWN: return 31;
-            case INSERT: return 5;
-            case DELETE: return 127;
-            case COMMA: return ',';
-            case PERIOD: return '.';
-            case SLASH: return '/';
-            case SEMICOLON: return ';';
-            case MINUS: return '-';
-            case EQUALS: return '=';
-            case OPEN_BRACKET: return '[';
-            case CLOSE_BRACKET: return ']';
+            case BACKSPACE:
+                return 8;
+            case TAB:
+                return 9;
+            case ENTER:
+                return 13;
+            case ESCAPE:
+                return 27;
+            case SPACE:
+                return 32;
+            case PAGE_UP:
+                return 11;
+            case PAGE_DOWN:
+                return 12;
+            case END:
+                return 4;
+            case HOME:
+                return 1;
+            case LEFT:
+                return 28;
+            case UP:
+                return 30;
+            case RIGHT:
+                return 29;
+            case DOWN:
+                return 31;
+            case INSERT:
+                return 5;
+            case DELETE:
+                return 127;
+            case COMMA:
+                return ',';
+            case PERIOD:
+                return '.';
+            case SLASH:
+                return '/';
+            case SEMICOLON:
+                return ';';
+            case MINUS:
+                return '-';
+            case EQUALS:
+                return '=';
+            case OPEN_BRACKET:
+                return '[';
+            case CLOSE_BRACKET:
+                return ']';
             default:
-                String name = key.name();
+                final String name = key.name();
                 // Map JWM's "A" through "Z" to ASCII a-z
                 if (name.length() == 1 && name.charAt(0) >= 'A' && name.charAt(0) <= 'Z') {
                     return Character.toLowerCase(name.charAt(0));

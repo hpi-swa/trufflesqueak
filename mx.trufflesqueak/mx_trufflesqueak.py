@@ -76,7 +76,7 @@ def libsmalltalkvm_build_args():
                 "allDeclaredMethods": True,
                 "allPublicMethods": True,
                 "allDeclaredFields": True,
-                "allPublicFields": True
+                "allPublicFields": True,
             }
             for cls in sorted(class_set)
         ]

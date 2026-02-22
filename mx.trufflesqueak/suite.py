@@ -131,7 +131,6 @@ suite = {
             },
             "useModulePath": True,
         },
-
         # ==========================================================================
         #  JWM (Java Window Manager) - AWT-Free Windowing
         # ==========================================================================
@@ -373,13 +372,10 @@ suite = {
                 "-Dorg.graalvm.launcher.class=de.hpi.swa.trufflesqueak.launcher.TruffleSqueakLauncher",
                 "-H:+IncludeNodeSourcePositions",  # for improved stack traces on deopts
                 "-H:+DetectUserDirectoriesInImageHeap",
-
                 # JNI/JWM Configuration
                 "-H:+JNI",
-
                 # Tells Native Image to defer Skija/JWM native library loading until the app actually runs
                 "--initialize-at-run-time=io.github.humbleui",
-
                 # Bundle native OS windowing libraries
                 "-H:IncludeResources=.*(jwm|skija).*\\.(dylib|so|dll)|.*trufflesqueak-icon\\.(png|ico|icns)",
             ],

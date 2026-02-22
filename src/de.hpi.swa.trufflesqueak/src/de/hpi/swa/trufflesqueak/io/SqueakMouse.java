@@ -23,34 +23,31 @@ public final class SqueakMouse {
     }
 
     public void onMove(final EventMouseMove e) {
-        final int squeakModifiers = display.keyboard.mapModifiers(
-                e.isModifierDown(KeyModifier.SHIFT),
-                e.isModifierDown(KeyModifier.CONTROL),
-                e.isModifierDown(KeyModifier.ALT),
-                e.isModifierDown(KeyModifier.MAC_COMMAND)
-        );
+        final int squeakModifiers = SqueakKeyboard.mapModifiers(
+                        e.isModifierDown(KeyModifier.SHIFT),
+                        e.isModifierDown(KeyModifier.CONTROL),
+                        e.isModifierDown(KeyModifier.ALT),
+                        e.isModifierDown(KeyModifier.MAC_COMMAND));
         recordMouseEvent(MOUSE_EVENT.MOVE, e.getX(), e.getY(), 0, squeakModifiers);
     }
 
     public void onButton(final EventMouseButton e) {
-        final int squeakModifiers = display.keyboard.mapModifiers(
-                e.isModifierDown(KeyModifier.SHIFT),
-                e.isModifierDown(KeyModifier.CONTROL),
-                e.isModifierDown(KeyModifier.ALT),
-                e.isModifierDown(KeyModifier.MAC_COMMAND)
-        );
+        final int squeakModifiers = SqueakKeyboard.mapModifiers(
+                        e.isModifierDown(KeyModifier.SHIFT),
+                        e.isModifierDown(KeyModifier.CONTROL),
+                        e.isModifierDown(KeyModifier.ALT),
+                        e.isModifierDown(KeyModifier.MAC_COMMAND));
         final MOUSE_EVENT type = e.isPressed() ? MOUSE_EVENT.DOWN : MOUSE_EVENT.UP;
         final int button = mapButton(e.getButton());
         recordMouseEvent(type, e.getX(), e.getY(), button, squeakModifiers);
     }
 
     public void onScroll(final EventMouseScroll e) {
-        final int squeakModifiers = display.keyboard.mapModifiers(
-                e.isModifierDown(KeyModifier.SHIFT),
-                e.isModifierDown(KeyModifier.CONTROL),
-                e.isModifierDown(KeyModifier.ALT),
-                e.isModifierDown(KeyModifier.MAC_COMMAND)
-        );
+        final int squeakModifiers = SqueakKeyboard.mapModifiers(
+                        e.isModifierDown(KeyModifier.SHIFT),
+                        e.isModifierDown(KeyModifier.CONTROL),
+                        e.isModifierDown(KeyModifier.ALT),
+                        e.isModifierDown(KeyModifier.MAC_COMMAND));
 
         // Update the display's global modifier state so Squeak knows what's held during scroll
         display.buttons = (display.buttons & MOUSE.ALL) | squeakModifiers;
@@ -75,9 +72,12 @@ public final class SqueakMouse {
     }
 
     private static int mapButton(final MouseButton button) {
-        if (button == MouseButton.PRIMARY) return MOUSE.RED;
-        if (button == MouseButton.MIDDLE) return MOUSE.YELLOW;
-        if (button == MouseButton.SECONDARY) return MOUSE.BLUE;
+        if (button == MouseButton.PRIMARY) {
+            return MOUSE.RED;
+        }
+        if (button == MouseButton.MIDDLE) {
+            return MOUSE.YELLOW;
+        }
         return 0;
     }
 }

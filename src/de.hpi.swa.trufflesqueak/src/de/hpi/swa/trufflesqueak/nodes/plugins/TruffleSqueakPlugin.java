@@ -104,6 +104,9 @@ public final class TruffleSqueakPlugin extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+// @formatter:off
+// CHECKSTYLE:OFF
+
     // ToDo: disabled until we figure out what to do
 //    @GenerateNodeFactory
 //    @ImportStatic(FORM.class)
@@ -130,4 +133,7 @@ public final class TruffleSqueakPlugin extends AbstractPrimitiveFactoryHolder {
 //            }
 //        }
 //    }
+
+// CHECKSTYLE:ON
+// @formatter:on
 }
