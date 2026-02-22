@@ -104,29 +104,30 @@ public final class TruffleSqueakPlugin extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @GenerateNodeFactory
-    @ImportStatic(FORM.class)
-    @SqueakPrimitive(names = "primitiveFormToBufferedImage")
-    protected abstract static class PrimFormToBufferedImageNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = "form.instsize() > OFFSET")
-        protected final Object doFormToBufferedImage(@SuppressWarnings("unused") final Object receiver, final PointersObject form,
-                        @Cached final AbstractPointersObjectReadNode readNode) {
-            try {
-                /* Extract information from form. */
-                final NativeObject bits = readNode.executeNative(form, FORM.BITS);
-                final int width = readNode.executeInt(form, FORM.WIDTH);
-                final int height = readNode.executeInt(form, FORM.HEIGHT);
-                final long depth = readNode.executeLong(form, FORM.DEPTH);
-                if (!bits.isIntType() || depth != 32) {
-                    CompilerDirectives.transferToInterpreter();
-                    throw PrimitiveFailed.GENERIC_ERROR;
-                }
-                /* Use bitmap's storage as backend for BufferedImage. */
-                return getContext().env.asGuestValue(MiscUtils.new32BitBufferedImage(bits.getIntStorage(), width, height, true));
-            } catch (final ClassCastException e) {
-                CompilerDirectives.transferToInterpreter();
-                throw PrimitiveFailed.GENERIC_ERROR;
-            }
-        }
-    }
+    // ToDo: disabled until we figure out what to do
+//    @GenerateNodeFactory
+//    @ImportStatic(FORM.class)
+//    @SqueakPrimitive(names = "primitiveFormToBufferedImage")
+//    protected abstract static class PrimFormToBufferedImageNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
+//        @Specialization(guards = "form.instsize() > OFFSET")
+//        protected final Object doFormToBufferedImage(@SuppressWarnings("unused") final Object receiver, final PointersObject form,
+//                        @Cached final AbstractPointersObjectReadNode readNode) {
+//            try {
+//                /* Extract information from form. */
+//                final NativeObject bits = readNode.executeNative(form, FORM.BITS);
+//                final int width = readNode.executeInt(form, FORM.WIDTH);
+//                final int height = readNode.executeInt(form, FORM.HEIGHT);
+//                final long depth = readNode.executeLong(form, FORM.DEPTH);
+//                if (!bits.isIntType() || depth != 32) {
+//                    CompilerDirectives.transferToInterpreter();
+//                    throw PrimitiveFailed.GENERIC_ERROR;
+//                }
+//                /* Use bitmap's storage as backend for BufferedImage. */
+//                return getContext().env.asGuestValue(MiscUtils.new32BitBufferedImage(bits.getIntStorage(), width, height, true));
+//            } catch (final ClassCastException e) {
+//                CompilerDirectives.transferToInterpreter();
+//                throw PrimitiveFailed.GENERIC_ERROR;
+//            }
+//        }
+//    }
 }

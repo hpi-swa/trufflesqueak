@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import io.github.humbleui.jwm.App;
+
 import org.graalvm.launcher.AbstractLanguageLauncher;
 import org.graalvm.maven.downloader.Main;
 import org.graalvm.options.OptionCategory;
@@ -97,7 +99,29 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
 
     @Override
     protected void launch(final Context.Builder contextBuilder) {
-        System.exit(execute(contextBuilder));
+        if (headless) {
+            System.exit(execute(contextBuilder));
+
+        } else {
+            // Give JWM the Main Thread to run the native OS event loop
+            App.start(() -> {
+
+                // Run the Squeak VM in a background thread
+                final Thread squeakVMThread = new Thread(() -> {
+                    // Execute the Squeak image
+                    final int exitCode = execute(contextBuilder);
+
+                    // When Squeak exits, tell the JWM window to close
+                    App.terminate();
+
+                    // Shut down the JVM
+                    System.exit(exitCode);
+
+                }, "SqueakVM-Thread");
+
+                squeakVMThread.start();
+            });
+        }
     }
 
     private int execute(final Context.Builder contextBuilder) {

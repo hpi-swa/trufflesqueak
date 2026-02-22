@@ -6,29 +6,15 @@
  */
 package de.hpi.swa.trufflesqueak.io;
 
-import java.awt.*;
-import java.awt.Taskbar.Feature;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.StringSelection;
-import java.awt.datatransfer.Transferable;
-import java.awt.datatransfer.UnsupportedFlavorException;
-import java.awt.dnd.DnDConstants;
-import java.awt.dnd.DropTarget;
-import java.awt.dnd.DropTargetAdapter;
-import java.awt.dnd.DropTargetDragEvent;
-import java.awt.dnd.DropTargetDropEvent;
-import java.awt.dnd.DropTargetEvent;
-import java.awt.event.InputEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
-import java.io.Serial;
-import java.lang.reflect.InvocationTargetException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.IntBuffer;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayDeque;
-import java.util.List;
-import java.util.Objects;
+import java.util.function.Consumer;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -37,9 +23,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.DRAG;
 import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.EVENT_TYPE;
-import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.KEYBOARD;
 import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.WINDOW;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -47,258 +31,380 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.FORM;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.HostWindowPlugin;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
-import de.hpi.swa.trufflesqueak.util.ArrayUtils;
-import de.hpi.swa.trufflesqueak.util.LogUtils;
-import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
-public final class SqueakDisplay {
+import de.hpi.swa.trufflesqueak.util.LogUtils;
+import io.github.humbleui.jwm.App;
+import io.github.humbleui.jwm.Clipboard;
+import io.github.humbleui.jwm.ClipboardEntry;
+import io.github.humbleui.jwm.ClipboardFormat;
+import io.github.humbleui.jwm.Event;
+import io.github.humbleui.jwm.EventKey;
+import io.github.humbleui.jwm.EventMouseButton;
+import io.github.humbleui.jwm.EventMouseMove;
+import io.github.humbleui.jwm.EventMouseScroll;
+import io.github.humbleui.jwm.EventTextInput;
+import io.github.humbleui.jwm.EventWindowClose;
+import io.github.humbleui.jwm.EventWindowCloseRequest;
+import io.github.humbleui.jwm.EventWindowFocusIn;
+import io.github.humbleui.jwm.EventWindowFocusOut;
+import io.github.humbleui.jwm.EventWindowResize;
+import io.github.humbleui.jwm.Layer;
+import io.github.humbleui.jwm.MouseCursor;
+import io.github.humbleui.jwm.Platform;
+import io.github.humbleui.jwm.Window;
+import io.github.humbleui.jwm.skija.EventFrameSkija;
+import io.github.humbleui.jwm.skija.LayerD3D12Skija;
+import io.github.humbleui.jwm.skija.LayerGLSkija;
+import io.github.humbleui.jwm.skija.LayerMetalSkija;
+import io.github.humbleui.skija.Bitmap;
+import io.github.humbleui.skija.Canvas;
+import io.github.humbleui.skija.ColorAlphaType;
+import io.github.humbleui.skija.ColorType;
+import io.github.humbleui.skija.Image;
+import io.github.humbleui.skija.ImageInfo;
+import io.github.humbleui.skija.Pixmap;
+import io.github.humbleui.skija.Surface;
+import io.github.humbleui.types.IRect;
+
+public final class SqueakDisplay implements Consumer<Event> {
     private static final String DEFAULT_WINDOW_TITLE = "TruffleSqueak";
-    @CompilationFinal(dimensions = 1) private static final int[] CURSOR_COLORS = {0x00000000, 0xFF0000FF, 0xFFFFFFFF, 0xFF000000};
 
     public final SqueakImageContext image;
+    public Window window;
+    public Layer layer;
 
-    // public for the Java-based UI for TruffleSqueak.
-    public final Frame frame = new Frame(DEFAULT_WINDOW_TITLE);
+    // Input handlers
     public final SqueakMouse mouse;
     public final SqueakKeyboard keyboard;
 
-    private final SqueakDisplayCanvas canvas = new SqueakDisplayCanvas();
-    private final ArrayDeque<long[]> deferredEvents = new ArrayDeque<>();
+    // Graphics
+    private Bitmap squeakBitmap;
+    private int[] squeakBitmapPixels;
+    private IntBuffer pixelIntBuffer; // Direct buffer mapped to Skija's native memory
+    private boolean deferUpdates;
+    private boolean frameRequested = false;
 
+    // Event Queue
+    private final ArrayDeque<long[]> deferredEvents = new ArrayDeque<>();
     @CompilationFinal private int inputSemaphoreIndex = -1;
 
     public int buttons;
-    private Dimension rememberedWindowSize;
-    private Point rememberedWindowLocation;
-    private boolean deferUpdates;
+
+    // Window state tracking
+    private int rememberedWindowWidth;
+    private int rememberedWindowHeight;
+    private int rememberedWindowX;
+    private int rememberedWindowY;
 
     private SqueakDisplay(final SqueakImageContext image) {
-        assert EventQueue.isDispatchThread();
         this.image = image;
-        frame.add(canvas);
-        mouse = new SqueakMouse(this);
-        keyboard = new SqueakKeyboard(this);
-        frame.setFocusTraversalKeysEnabled(false); // Ensure `Tab` key is captured.
-        frame.setMinimumSize(new Dimension(200, 150));
-        frame.setResizable(true);
+        this.mouse = new SqueakMouse(this);
+        this.keyboard = new SqueakKeyboard(this);
 
-        // Install event listeners
-        canvas.addMouseListener(mouse);
-        canvas.addMouseMotionListener(mouse);
-        canvas.addMouseWheelListener(mouse);
-        frame.addKeyListener(keyboard);
-        installWindowAdapter();
-        installDropTargetListener();
+        // JWM must run on UI thread
+        App.runOnUIThread(() -> {
+            window = App.makeWindow();
+            window.setEventListener(this);
+            window.setTitle(DEFAULT_WINDOW_TITLE);
 
-        tryToSetTaskbarIcon();
+            // Select appropriate layer based on OS
+            if (Platform.CURRENT == Platform.MACOS) {
+                layer = new LayerMetalSkija();
+            } else if (Platform.CURRENT == Platform.WINDOWS) {
+                layer = new LayerD3D12Skija();
+            } else {
+                layer = new LayerGLSkija();
+            }
+
+            window.setLayer(layer);
+            window.setVisible(true);
+            window.bringToFront();
+            tryToSetTaskbarIcon();
+        });
     }
 
     public static SqueakDisplay create(final SqueakImageContext image) {
         CompilerAsserts.neverPartOfCompilation();
-        final SqueakDisplay[] display = new SqueakDisplay[1];
+        return new SqueakDisplay(image);
+    }
+
+    private void tryToSetTaskbarIcon() {
+        if (window == null) return;
+
         try {
-            EventQueue.invokeAndWait(() -> display[0] = new SqueakDisplay(image));
-        } catch (InvocationTargetException | InterruptedException e) {
+            final String iconExt;
+            if (Platform.CURRENT == Platform.MACOS) {
+                iconExt = ".icns";
+            } else if (Platform.CURRENT == Platform.WINDOWS) {
+                iconExt = ".ico";
+            } else {
+                // X11 and Wayland (Linux) support standard PNGs
+                iconExt = ".png";
+            }
+
+            final String resourcePath = "/trufflesqueak-icon" + iconExt;
+            final java.net.URL resource = SqueakDisplay.class.getResource(resourcePath);
+
+            if (resource != null) {
+                final File tempIcon = File.createTempFile("trufflesqueak-icon", iconExt);
+                tempIcon.deleteOnExit(); // Clean up when Squeak closes
+
+                try (final InputStream is = resource.openStream()) {
+                    Files.copy(is, tempIcon.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                }
+
+                window.setIcon(tempIcon);
+            }
+        } catch (Exception e) {
             LogUtils.IO.warning(e.toString());
         }
-        return Objects.requireNonNull(display[0]);
     }
 
-    private static void tryToSetTaskbarIcon() {
-        if (Taskbar.isTaskbarSupported()) {
-            try {
-                final Taskbar taskbar = Taskbar.getTaskbar();
-                if (taskbar.isSupported(Feature.ICON_IMAGE)) {
-                    taskbar.setIconImage(Toolkit.getDefaultToolkit().getImage(SqueakDisplay.class.getResource("/trufflesqueak-icon.png")));
-                }
-            } catch (Exception e) {
-                LogUtils.IO.warning(e.toString());
-            }
-        }
-    }
-
-    private static final class SqueakDisplayCanvas extends Component {
-        @Serial private static final long serialVersionUID = 1L;
-        private transient BufferedImage bufferedImage;
-
-        @Override
-        public boolean isOpaque() {
-            return true;
-        }
-
-        /**
-         * Override paint in case a repaint event is triggered (e.g. when window is moved to another
-         * screen).
-         */
-        @Override
-        public void paint(final Graphics g) {
-            g.drawImage(bufferedImage, 0, 0, null);
-        }
-
-        /**
-         * Paint directly onto graphics. Smalltalk manages repaints and thus, Swing's repaint
-         * manager needs to be bypassed to avoid flickering (repaints otherwise have a slight
-         * delay).
-         */
-        public void paintImmediately(final int left, final int top, final int right, final int bottom) {
-            final Graphics g = getGraphics();
-            if (g != null) {
-                g.drawImage(bufferedImage, left, top, right, bottom, left, top, right, bottom, null);
-                g.dispose();
-            }
-        }
-
-        private void setSqueakDisplay(final PointersObject squeakDisplay) {
-            final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
-            final NativeObject bitmap = readNode.executeNative(squeakDisplay, FORM.BITS);
-            if (!bitmap.isIntType()) {
-                throw SqueakException.create("Display bitmap expected to be a words object");
-            }
-            final int width = readNode.executeInt(squeakDisplay, FORM.WIDTH);
-            final int height = readNode.executeInt(squeakDisplay, FORM.HEIGHT);
-            assert (long) squeakDisplay.instVarAt0Slow(FORM.DEPTH) == 32 : "Unsupported display depth";
-            if (width > 0 && height > 0) {
-                bufferedImage = MiscUtils.new32BitBufferedImage(bitmap.getIntStorage(), width, height, false);
-            }
+    @Override
+    public void accept(final Event e) {
+        if (e instanceof EventFrameSkija) {
+            paint(((EventFrameSkija) e).getSurface());
+        } else if (e instanceof EventWindowClose || e instanceof EventWindowCloseRequest) {
+            // Don't terminate app here, let Squeak decide or use explicit close
+            addWindowEvent(WINDOW.CLOSE);
+        } else if (e instanceof EventWindowResize) {
+            addWindowEvent(WINDOW.METRIC_CHANGE);
+        } else if (e instanceof EventWindowFocusIn) {
+            addWindowEvent(WINDOW.ACTIVATED);
+        } else if (e instanceof EventWindowFocusOut) {
+            addWindowEvent(WINDOW.DEACTIVATED);
+        } else if (e instanceof EventMouseMove) {
+            mouse.onMove((EventMouseMove) e);
+        } else if (e instanceof EventMouseButton) {
+            mouse.onButton((EventMouseButton) e);
+        } else if (e instanceof EventMouseScroll) {
+            mouse.onScroll((EventMouseScroll) e);
+        } else if (e instanceof EventKey) {
+            keyboard.onKey((EventKey) e);
+        } else if (e instanceof EventTextInput) {
+            keyboard.onTextInput((EventTextInput) e);
         }
     }
 
     @TruffleBoundary
     public void showDisplayRect(final int left, final int top, final int right, final int bottom) {
-        assert left <= right && top <= bottom;
-        canvas.paintImmediately(left, top, right, bottom);
+        if (window != null) {
+            boolean shouldRequestFrame = false;
+
+            synchronized(this) {
+                // Zero-allocation, Zero-Java-copy snapshot directly into Skija's native memory!
+                if (pixelIntBuffer != null && squeakBitmapPixels != null && pixelIntBuffer.capacity() == squeakBitmapPixels.length) {
+                    pixelIntBuffer.clear(); // Reset the buffer position to 0
+                    pixelIntBuffer.put(squeakBitmapPixels); // Fast block-transfer directly to C++
+                }
+
+                // Check and set the lock atomically within the pixel-copy boundary
+                if (!frameRequested) {
+                    frameRequested = true;
+                    shouldRequestFrame = true;
+                }
+            }
+
+            // Queue the frame outside the sync block to avoid stalling the Squeak thread
+            if (shouldRequestFrame) {
+                App.runOnUIThread(() -> {
+                    if (window != null) {
+                        window.requestFrame();
+                    }
+                });
+            }
+        }
+    }
+
+    private void paint(final Surface surface) {
+        if (window == null || surface == null || squeakBitmap == null) {
+            return;
+        }
+
+        synchronized(this) {
+            // Open the gate for the NEXT frame exactly as we consume the CURRENT frame
+            frameRequested = false;
+
+            final Canvas canvas = surface.getCanvas();
+            canvas.clear(0xFF000000);
+
+            // makeRasterFromBitmap safely handles the native GPU handoff
+            try (Image image = Image.makeRasterFromBitmap(squeakBitmap)) {
+                canvas.drawImage(image, 0, 0);
+            }
+        }
+    }
+
+    /**
+     * Called by Squeak when the display bitmap changes (e.g. resize or startup).
+     */
+    public void setSqueakDisplay(final PointersObject squeakDisplay) {
+        final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
+        final NativeObject bitmap = readNode.executeNative(squeakDisplay, FORM.BITS);
+        if (!bitmap.isIntType()) {
+            throw SqueakException.create("Display bitmap expected to be a words object");
+        }
+        final int width = readNode.executeInt(squeakDisplay, FORM.WIDTH);
+        final int height = readNode.executeInt(squeakDisplay, FORM.HEIGHT);
+        assert (long) squeakDisplay.instVarAt0Slow(FORM.DEPTH) == 32 : "Unsupported display depth";
+
+        if (width > 0 && height > 0) {
+            synchronized(this) {
+                squeakBitmapPixels = bitmap.getIntStorage();
+
+                // Clean up the old bitmap if we are resizing to prevent native memory leaks
+                if (squeakBitmap != null) {
+                    squeakBitmap.close();
+                }
+
+                // Initialize the new Skija Bitmap
+                squeakBitmap = new Bitmap();
+                ImageInfo info = new ImageInfo(width, height, ColorType.BGRA_8888, ColorAlphaType.PREMUL);
+                squeakBitmap.allocPixels(info);
+
+                // Extract the Pixmap view, then grab its direct native memory buffer!
+                try (Pixmap pixmap = squeakBitmap.peekPixels()) {
+                    if (pixmap != null) {
+                        ByteBuffer byteBuffer = pixmap.getBuffer();
+                        if (byteBuffer != null) {
+                            pixelIntBuffer = byteBuffer.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer();
+                        }
+                    }
+                }
+            }
+
+            // Force a repaint now that the buffers are ready
+            showDisplayRect(0, 0, width - 1, height - 1);
+        }
     }
 
     @TruffleBoundary
     public void close() {
-        EventQueue.invokeLater(() -> {
-            frame.setVisible(false);
-            frame.dispose();
+        App.runOnUIThread(() -> {
+            if (window != null) {
+                window.close();
+                window = null;
+            }
         });
     }
 
     @TruffleBoundary
     public void resizeTo(final int width, final int height) {
-        EventQueue.invokeLater(() -> {
-            canvas.setPreferredSize(new Dimension(width, height));
-            frame.pack();
+        App.runOnUIThread(() -> {
+            if (window != null) {
+                window.setContentSize(width, height);
+            }
         });
     }
 
     public int getWindowWidth() {
-        return canvas.getWidth();
+        return window != null ? window.getContentRect().getWidth() : 0;
     }
 
     public int getWindowHeight() {
-        return canvas.getHeight();
+        return window != null ? window.getContentRect().getHeight() : 0;
     }
 
     @TruffleBoundary
     public void setFullscreen(final boolean enable) {
-        EventQueue.invokeLater(() -> {
+        App.runOnUIThread(() -> {
+            if (window == null) return;
+            // JWM doesn't have a direct "setFullscreen" convenience yet that matches AWT exactly,
+            // but we can maximize or use screen bounds.
+            // For now, let's assuming maximizing is close enough or use explicit bounds.
             if (enable) {
-                rememberedWindowLocation = frame.getLocationOnScreen();
-                rememberedWindowSize = frame.getSize();
-            }
-            frame.dispose();
-            frame.setUndecorated(enable);
-            if (enable) {
-                frame.setExtendedState(Frame.MAXIMIZED_BOTH);
-                frame.setResizable(false);
+                IRect rect = window.getWindowRect();
+                rememberedWindowX = rect.getLeft();
+                rememberedWindowY = rect.getTop();
+                rememberedWindowWidth = rect.getWidth();
+                rememberedWindowHeight = rect.getHeight();
+
+                // This is a simplification; true fullscreen often requires Screen API
+                // window.maximize() is available in newer JWM versions?
+                // Using setContentSize to screen size is a common workaround if API missing.
+                // Assuming maximize is what we want:
+                // window.maximize();
             } else {
-                frame.setExtendedState(Frame.NORMAL);
-                canvas.setPreferredSize(rememberedWindowSize);
-                frame.pack();
-                frame.setResizable(true);
+                window.setWindowPosition(rememberedWindowX, rememberedWindowY);
+                window.setContentSize(rememberedWindowWidth, rememberedWindowHeight);
             }
-            frame.pack();
-            if (!enable) {
-                if (rememberedWindowLocation != null) {
-                    frame.setLocation(rememberedWindowLocation);
-                }
-                rememberedWindowLocation = null;
-                rememberedWindowSize = null;
-            }
-            frame.setVisible(true);
         });
     }
 
     @TruffleBoundary
     public void open(final PointersObject sqDisplay) {
-        canvas.setSqueakDisplay(sqDisplay);
-        // Set or update frame title.
+        setSqueakDisplay(sqDisplay);
         final String imageFileName = new File(image.getImagePath()).getName();
-        // Avoid name duplication in frame title.
         final String title;
         if (imageFileName.contains(SqueakLanguageConfig.IMPLEMENTATION_NAME)) {
             title = imageFileName;
         } else {
             title = imageFileName + " running on " + SqueakLanguageConfig.IMPLEMENTATION_NAME;
         }
-        EventQueue.invokeLater(() -> {
-            frame.setTitle(title);
-            if (!frame.isVisible()) {
-                canvas.setPreferredSize(new Dimension(image.flags.getSnapshotScreenWidth(), image.flags.getSnapshotScreenHeight()));
-                frame.pack();
-                frame.setVisible(true);
-                frame.requestFocus();
-            }
-        });
+        setWindowTitle(title);
     }
 
     @TruffleBoundary
     public boolean isVisible() {
-        return frame.isVisible();
+        return window != null; // Simplified
     }
 
     @TruffleBoundary
     public void setCursor(final int[] cursorWords, final int[] mask, final int width, final int height, final int depth, final int offsetX, final int offsetY) {
-        final Dimension bestCursorSize = Toolkit.getDefaultToolkit().getBestCursorSize(width, height);
-        final Cursor cursor;
-        if (bestCursorSize.width == 0 || bestCursorSize.height == 0) {
-            cursor = Cursor.getDefaultCursor();
-        } else {
-            // TODO: Ensure the below works correctly for all cursor and maybe refactor senders.
-            final int[] ints;
-            if (mask != null) {
-                ints = mergeCursorWithMask(cursorWords, mask);
-            } else {
-                ints = cursorWords;
-            }
-            final BufferedImage bufferedImage;
-            if (depth == 32) {
-                bufferedImage = MiscUtils.new32BitBufferedImage(cursorWords, width, height, true);
-            } else {
-                bufferedImage = new BufferedImage(bestCursorSize.width, bestCursorSize.height, BufferedImage.TYPE_INT_ARGB);
-                for (int y = 0; y < height; y++) {
-                    final int word = ints[y];
-                    for (int x = 0; x < width; x++) {
-                        final int colorIndex = word >> (width - 1 - x) * 2 & 3;
-                        bufferedImage.setRGB(x, y, CURSOR_COLORS[colorIndex]);
-                    }
-                }
-            }
-            // Ensure hotspot is within cursor bounds.
-            final Point hotSpot = new Point(Math.min(Math.max(offsetX, 1), width - 1), Math.min(Math.max(offsetY, 1), height - 1));
-            cursor = Toolkit.getDefaultToolkit().createCustomCursor(bufferedImage, hotSpot, "TruffleSqueak Cursor");
-        }
-        EventQueue.invokeLater(() -> frame.setCursor(cursor));
-    }
+        // ToDo: Do this right!
+        if (window == null) return;
 
-    private static int[] mergeCursorWithMask(final int[] cursorWords, final int[] maskWords) {
-        final int[] cursorMergedWords = new int[SqueakIOConstants.CURSOR_HEIGHT];
-        for (int y = 0; y < SqueakIOConstants.CURSOR_HEIGHT; y++) {
-            final int cursorWord = cursorWords[y];
-            final int maskWord = maskWords[y];
-            int bit = 0x80000000;
-            int merged = 0;
-            for (int x = 0; x < SqueakIOConstants.CURSOR_WIDTH; x++) {
-                merged = merged | (maskWord & bit) >> x | (cursorWord & bit) >> x + 1;
-                bit = bit >>> 1;
+        MouseCursor jwmCursor = MouseCursor.ARROW;
+
+        if (cursorWords != null && cursorWords.length > 0) {
+            // Generate a unique footprint for this specific Smalltalk cursor
+            int hash = java.util.Arrays.hashCode(cursorWords);
+
+            // Uncomment this line temporarily to discover the hashes of Squeak cursors
+            // System.out.println("Cursor Hash: " + hash);
+
+            switch (hash) {
+                // TODO: Replace these hashes with the actual hashes printed to console
+                case 1447681537:
+                    jwmCursor = MouseCursor.IBEAM;
+                    break;
+                case -594223615:
+                    jwmCursor = MouseCursor.POINTING_HAND;
+                    break;
+
+                case 111111111:
+                    jwmCursor = MouseCursor.CROSSHAIR;
+                    break;
+                case 222222222:
+                    jwmCursor = MouseCursor.WAIT; // The Hourglass/Spinner
+                    break;
+
+                case 246013441:
+                    jwmCursor = MouseCursor.RESIZE_NS;
+                    break;
+                case 576642561:
+                    jwmCursor = MouseCursor.RESIZE_WE;
+                    break;
+                case -1628447231:
+                    jwmCursor = MouseCursor.RESIZE_NESW;
+                    break;
+                case 149937665:
+                    jwmCursor = MouseCursor.RESIZE_NWSE;
+                    break;
+                default:
+                    // If it's a completely custom Smalltalk cursor (like a paintbrush),
+                    // we gracefully degrade back to the standard OS arrow.
+                    jwmCursor = MouseCursor.ARROW;
+                    break;
             }
-            cursorMergedWords[y] = merged;
         }
-        return cursorMergedWords;
+
+        final MouseCursor finalCursor = jwmCursor;
+        App.runOnUIThread(() -> {
+            if (window != null) {
+                window.setMouseCursor(finalCursor);
+            }
+        });
     }
 
     public long[] getNextEvent() {
@@ -309,8 +415,9 @@ public final class SqueakDisplay {
         addEvent(eventType, value3, value4, value5, value6, 0L);
     }
 
-    private void addDragEvent(final long type, final Point location) {
-        addEvent(EVENT_TYPE.DRAG_DROP_FILES, type, (long) location.getX(), (long) location.getY(), buttons >> 3, image.dropPluginFileList.length);
+    public void addDragEvent(final long type, final int x, final int y) {
+        // ToDo: Need to add drag & drop somehow -- JWM doesn't supply one
+        addEvent(EVENT_TYPE.DRAG_DROP_FILES, type, x, y, buttons >> 3, image.dropPluginFileList.length);
     }
 
     private void addWindowEvent(final long type) {
@@ -322,16 +429,6 @@ public final class SqueakDisplay {
         if (image.options.signalInputSemaphore() && inputSemaphoreIndex > 0) {
             image.interrupt.signalSemaphoreWithIndex(inputSemaphoreIndex);
         }
-    }
-
-    public int recordModifiers(final InputEvent e) {
-        final int shiftValue = e.isShiftDown() ? KEYBOARD.SHIFT : 0;
-        final int ctrlValue = e.isControlDown() ? KEYBOARD.CTRL : 0;
-        final int optValue = e.isAltGraphDown() ? KEYBOARD.ALT : 0;
-        final int cmdValue = e.isAltDown() || e.isMetaDown() ? KEYBOARD.CMD : 0;
-        final int modifiers = shiftValue + ctrlValue + optValue + cmdValue;
-        buttons = buttons & ~KEYBOARD.ALL | modifiers;
-        return modifiers;
     }
 
     private long getEventTime() {
@@ -348,7 +445,11 @@ public final class SqueakDisplay {
 
     @TruffleBoundary
     public void setWindowTitle(final String title) {
-        EventQueue.invokeLater(() -> frame.setTitle(title));
+        App.runOnUIThread(() -> {
+            if (window != null) {
+                window.setTitle(title);
+            }
+        });
     }
 
     public void setInputSemaphoreIndex(final int interruptSemaphoreIndex) {
@@ -358,107 +459,21 @@ public final class SqueakDisplay {
 
     @TruffleBoundary
     public static String getClipboardData() {
-        final Transferable contents = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
-        if (contents != null && contents.isDataFlavorSupported(DataFlavor.stringFlavor)) {
-            try {
-                return (String) contents.getTransferData(DataFlavor.stringFlavor);
-            } catch (final UnsupportedFlavorException | IOException e) {
-                throw CompilerDirectives.shouldNotReachHere(e);
-            }
-        }
-        return "";
+        ClipboardEntry entry = Clipboard.get(ClipboardFormat.TEXT);
+        return entry == null ? "" : entry.getString();
     }
 
     @TruffleBoundary
     public static void setClipboardData(final String text) {
-        final StringSelection selection = new StringSelection(text);
-        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(selection, selection);
+        Clipboard.set(ClipboardEntry.makeString(ClipboardFormat.TEXT, text));
     }
 
     @TruffleBoundary
     public static void beep() {
-        Toolkit.getDefaultToolkit().beep();
-    }
-
-    private void installWindowAdapter() {
-        assert EventQueue.isDispatchThread();
-        frame.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowActivated(final WindowEvent e) {
-                addWindowEvent(WINDOW.ACTIVATED);
-            }
-
-            @Override
-            public void windowClosing(final WindowEvent e) {
-                addWindowEvent(WINDOW.CLOSE);
-            }
-
-            @Override
-            public void windowDeactivated(final WindowEvent e) {
-                addWindowEvent(WINDOW.DEACTIVATED);
-            }
-
-            @Override
-            public void windowIconified(final WindowEvent e) {
-                addWindowEvent(WINDOW.ICONISE);
-            }
-
-            @Override
-            public void windowStateChanged(final WindowEvent e) {
-                addWindowEvent(WINDOW.METRIC_CHANGE);
-            }
-        });
-    }
-
-    @SuppressWarnings("unused")
-    private void installDropTargetListener() {
-        assert EventQueue.isDispatchThread();
-        new DropTarget(canvas, new DropTargetAdapter() {
-            @Override
-            public void drop(final DropTargetDropEvent dtde) {
-                final Transferable transferable = dtde.getTransferable();
-                for (final DataFlavor flavor : transferable.getTransferDataFlavors()) {
-                    if (DataFlavor.javaFileListFlavor.equals(flavor)) {
-                        dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
-                        try {
-                            @SuppressWarnings("unchecked")
-                            final List<File> fileList = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
-                            final String[] fileArray = new String[fileList.size()];
-                            int i = 0;
-                            for (final File file : fileList) {
-                                fileArray[i++] = file.getCanonicalPath();
-                            }
-                            image.dropPluginFileList = fileArray;
-                            addDragEvent(DRAG.DROP, dtde.getLocation());
-                            dtde.getDropTargetContext().dropComplete(true);
-                            return;
-                        } catch (final IOException | UnsupportedFlavorException e) {
-                            LogUtils.IO.warning(e.toString());
-                        }
-                    }
-                }
-                image.dropPluginFileList = ArrayUtils.EMPTY_STRINGS_ARRAY;
-                addDragEvent(DRAG.DROP, dtde.getLocation());
-                dtde.rejectDrop();
-            }
-
-            @Override
-            public void dragOver(final DropTargetDragEvent dtde) {
-                addDragEvent(DRAG.MOVE, dtde.getLocation());
-
-            }
-
-            @Override
-            public void dragExit(final DropTargetEvent dte) {
-                addDragEvent(DRAG.LEAVE, new Point(0, 0));
-
-            }
-
-            @Override
-            public void dragEnter(final DropTargetDragEvent dtde) {
-                addDragEvent(DRAG.ENTER, dtde.getLocation());
-
-            }
-        });
+        // JWM doesn't have beep. Java Toolkit might still work for simple beep if available,
+        // otherwise ignore or implement platform specific.
+        // ToDo: is there anything to be done with this?
+        // java.awt.Toolkit.getDefaultToolkit().beep(); // Fallback if java.desktop is present?
+        // If java.desktop is GONE, this will fail. We should probably do nothing.
     }
 }

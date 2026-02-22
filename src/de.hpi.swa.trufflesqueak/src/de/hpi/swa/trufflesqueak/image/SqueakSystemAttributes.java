@@ -6,9 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.image;
 
-import java.awt.DisplayMode;
-import java.awt.GraphicsEnvironment;
-import java.awt.HeadlessException;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -24,6 +21,8 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.OS;
+import io.github.humbleui.jwm.App;
+import io.github.humbleui.types.IRect;
 
 public final class SqueakSystemAttributes {
     private final SqueakImageContext image;
@@ -212,13 +211,11 @@ public final class SqueakSystemAttributes {
     private NativeObject getGraphicsHardwareDetails() {
         int width = 0;
         int height = 0;
-        try {
-            final DisplayMode dm = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDisplayMode();
-            width = dm.getWidth();
-            height = dm.getHeight();
-        } catch (final HeadlessException e) {
-            /* Report 0 x 0 in headless mode. */
-        }
+        if (!image.options.isHeadless()) {
+            final IRect bounds = App.getPrimaryScreen().getBounds();
+            width = bounds.getWidth();
+            height = bounds.getHeight();
+        } /* Report 0 x 0 in headless mode. */
         return asByteString(String.format("Display Information: \n\tPrimary monitor resolution: %s x %s\n", width, height));
     }
 

@@ -203,8 +203,9 @@ public final class JavaObjectWrapper implements TruffleObject {
                             // TruffleSqueak's object layout
                             ObjectLayout.class,
                             // Java types used by TruffleSqueak utilities
-                            java.awt.Color.class, java.awt.Frame.class, java.awt.image.DataBufferInt.class, java.awt.image.DirectColorModel.class, java.awt.image.Raster.class,
-                            java.awt.image.BufferedImage.class,
+                            // ToDo: what should be done here?
+                            // java.awt.Color.class, java.awt.Frame.class, java.awt.image.DataBufferInt.class, java.awt.image.DirectColorModel.class, java.awt.image.Raster.class,
+                            // java.awt.image.BufferedImage.class,
                             // Java types used by interop
                             java.time.Duration.class, java.time.LocalDate.class, java.time.LocalTime.class, java.time.Instant.class, java.time.ZoneId.class, java.time.format.TextStyle.class,
                             java.util.Locale.class,
