@@ -162,7 +162,7 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = "obj.isEmptyType()")
         protected static final int doEmptyArrayObject(final ArrayObject obj) {
-            return obj.getEmptyStorage();
+            return obj.getEmptyLength();
         }
 
         @Specialization(guards = "obj.isDoubleType()")
@@ -199,7 +199,7 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = "obj.isEmptyType()")
         protected static final Object[] doEmptyArray(final ArrayObject obj) {
-            return ArrayUtils.withAll(obj.getEmptyStorage(), NilObject.SINGLETON);
+            return ArrayUtils.withAll(obj.getEmptyLength(), NilObject.SINGLETON);
         }
 
         @Specialization(guards = "obj.isBooleanType()")
