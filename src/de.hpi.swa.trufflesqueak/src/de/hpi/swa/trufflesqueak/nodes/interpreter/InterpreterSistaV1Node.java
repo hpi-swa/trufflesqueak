@@ -1175,7 +1175,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handlePrimitiveAdd(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
         final Object arg = pop(frame, --virtualState.sp);
         final Object receiver = popReceiver(frame, --virtualState.sp);
-        final byte profile = profiles[pc];
+        final byte profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
@@ -1208,7 +1208,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handlePrimitiveSubtract(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
         final Object arg = pop(frame, --virtualState.sp);
         final Object receiver = popReceiver(frame, --virtualState.sp);
-        final byte profile = profiles[pc];
+        final byte profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
@@ -1241,7 +1241,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handlePrimitiveLessThan(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
         final Object arg = pop(frame, --virtualState.sp);
         final Object receiver = popReceiver(frame, --virtualState.sp);
-        final byte profile = profiles[pc];
+        final byte profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
@@ -1266,7 +1266,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handlePrimitiveGreaterThan(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
         final Object arg = pop(frame, --virtualState.sp);
         final Object receiver = popReceiver(frame, --virtualState.sp);
-        final byte profile = profiles[pc];
+        final byte profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
@@ -1291,7 +1291,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handlePrimitiveLessOrEqual(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
         final Object arg = pop(frame, --virtualState.sp);
         final Object receiver = popReceiver(frame, --virtualState.sp);
-        final byte profile = profiles[pc];
+        final byte profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
@@ -1316,7 +1316,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handlePrimitiveGreaterOrEqual(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
         final Object arg = pop(frame, --virtualState.sp);
         final Object receiver = popReceiver(frame, --virtualState.sp);
-        final byte profile = profiles[pc];
+        final byte profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
@@ -1341,7 +1341,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handlePrimitiveEqual(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
         final Object arg = pop(frame, --virtualState.sp);
         final Object receiver = popReceiver(frame, --virtualState.sp);
-        final byte profile = profiles[pc];
+        final byte profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
@@ -1366,7 +1366,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handlePrimitiveNotEqual(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
         final Object arg = pop(frame, --virtualState.sp);
         final Object receiver = popReceiver(frame, --virtualState.sp);
-        final byte profile = profiles[pc];
+        final byte profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
@@ -1391,7 +1391,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handlePrimitiveBitAnd(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
         final Object arg = pop(frame, --virtualState.sp);
         final Object receiver = popReceiver(frame, --virtualState.sp);
-        final byte profile = profiles[pc];
+        final byte profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
@@ -1413,7 +1413,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handlePrimitiveBitOr(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
         final Object arg = pop(frame, --virtualState.sp);
         final Object receiver = popReceiver(frame, --virtualState.sp);
-        final byte profile = profiles[pc];
+        final byte profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
@@ -1434,7 +1434,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     private int handlePrimitiveSize(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
         final Object receiver = popReceiver(frame, --virtualState.sp);
-        final byte profile = profiles[pc];
+        final byte profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
         if (receiver instanceof final NativeObject nativeObject && getContext().isByteString(nativeObject)) {

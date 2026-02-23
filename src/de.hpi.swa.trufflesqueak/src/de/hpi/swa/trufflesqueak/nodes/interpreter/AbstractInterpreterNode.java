@@ -174,15 +174,15 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     }
 
     protected final Object handleReturnException(final VirtualFrame frame, final int currentPC, final AbstractStandardSendReturn returnException) {
-        final byte state = profiles[currentPC];
-        enter(currentPC, state, BRANCH1);
+        final byte profile = getProfile(currentPC);
+        enter(currentPC, profile, BRANCH1);
         if (returnException.targetIsFrame(frame)) {
-            enter(currentPC, state, BRANCH2);
+            enter(currentPC, profile, BRANCH2);
             return returnException.getReturnValue();
         } else {
-            enter(currentPC, state, BRANCH3);
+            enter(currentPC, profile, BRANCH3);
             if (returnException instanceof NonLocalReturn) {
-                enter(currentPC, state, BRANCH4);
+                enter(currentPC, profile, BRANCH4);
                 FrameAccess.terminateFrame(frame);
             }
             throw returnException;
@@ -195,17 +195,17 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
 
     /** Inlined version of {@link GetOrCreateContextWithFrameNode}. */
     protected final ContextObject getOrCreateContext(final VirtualFrame frame, final int currentPC) {
-        final byte state = profiles[currentPC];
+        final byte profile = getProfile(currentPC);
         final ContextObject context = FrameAccess.getContext(frame);
         if (context != null) {
-            enter(currentPC, state, BRANCH1);
+            enter(currentPC, profile, BRANCH1);
             if (!context.hasTruffleFrame()) {
-                enter(currentPC, state, BRANCH2);
+                enter(currentPC, profile, BRANCH2);
                 context.setTruffleFrame(frame.materialize());
             }
             return context;
         } else {
-            enter(currentPC, state, BRANCH3);
+            enter(currentPC, profile, BRANCH3);
             return new ContextObject(frame.materialize());
         }
     }
@@ -240,7 +240,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     public final Object getAndResolveLiteral(final int currentPC, final long longIndex) {
         final Object litVar = code.getLiteral(longIndex);
         if (litVar instanceof final AbstractSqueakObjectWithClassAndHash obj) {
-            enter(currentPC, profiles[currentPC], BRANCH1);
+            enter(currentPC, getProfile(currentPC), BRANCH1);
             if (!obj.isNotForwarded()) {
                 CompilerDirectives.transferToInterpreter();
                 final AbstractSqueakObjectWithClassAndHash forwarded = obj.getForwardingPointer();
@@ -290,12 +290,12 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     }
 
     private Object handleNormalReturn(final VirtualFrame frame, final int currentPC, final Object result) {
-        final byte state = profiles[currentPC];
+        final byte profile = getProfile(currentPC);
         if (FrameAccess.hasModifiedSender(frame)) {
-            enter(currentPC, state, BRANCH1);
+            enter(currentPC, profile, BRANCH1);
             throw new NonVirtualReturn(result, FrameAccess.getSender(frame));
         } else {
-            enter(currentPC, state, BRANCH2);
+            enter(currentPC, profile, BRANCH2);
             FrameAccess.terminateFrame(frame);
             return result;
         }
@@ -359,12 +359,12 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
      * Handling of forwarding pointers
      */
     private Object followForwarded(final int currentPC, final Object value) {
-        final byte state = profiles[currentPC];
+        final byte profile = getProfile(currentPC);
         if (value instanceof final AbstractSqueakObjectWithClassAndHash object) {
-            enter(currentPC, state, BRANCH6);
+            enter(currentPC, profile, BRANCH6);
             return object.resolveForwardingPointer();
         } else {
-            enter(currentPC, state, BRANCH7);
+            enter(currentPC, profile, BRANCH7);
             return value;
         }
     }
@@ -494,10 +494,14 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
      * Profiling
      */
 
-    protected final void enter(final int currentPC, final byte state, final byte stateBit) {
-        if ((state & stateBit) == 0) {
+    protected final byte getProfile(final int pc) {
+        return UnsafeUtils.getByte(profiles, pc);
+    }
+
+    protected final void enter(final int currentPC, final byte profile, final byte stateBit) {
+        if ((profile & stateBit) == 0) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            profiles[currentPC] |= stateBit;
+            UnsafeUtils.putByte(profiles, currentPC, (byte) (profile | stateBit));
         }
     }
 

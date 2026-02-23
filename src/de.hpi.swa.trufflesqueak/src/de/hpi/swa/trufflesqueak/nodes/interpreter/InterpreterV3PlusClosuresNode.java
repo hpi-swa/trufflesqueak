@@ -757,24 +757,24 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     case BC.BYTECODE_PRIM_ADD: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        final byte state = profiles[currentPC];
+                        final byte profile = getProfile(currentPC);
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            enter(currentPC, state, BRANCH2);
+                            enter(currentPC, profile, BRANCH2);
                             /* Profiled version of LargeIntegers.add(image, lhs, rhs). */
                             final long r = lhs + rhs;
                             if (((lhs ^ r) & (rhs ^ r)) < 0) {
-                                enter(currentPC, state, BRANCH3);
+                                enter(currentPC, profile, BRANCH3);
                                 result = LargeIntegers.addLarge(image, lhs, rhs);
                             } else {
-                                enter(currentPC, state, BRANCH4);
+                                enter(currentPC, profile, BRANCH4);
                                 result = r;
                             }
                         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
-                            enter(currentPC, state, BRANCH5);
+                            enter(currentPC, profile, BRANCH5);
                             result = PrimSmallFloatAddNode.doDouble(lhs, rhs);
                         } else {
-                            enter(currentPC, state, BRANCH1);
+                            enter(currentPC, profile, BRANCH1);
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
                             pc = internalizePC(frame, pc);
@@ -785,24 +785,24 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     case BC.BYTECODE_PRIM_SUBTRACT: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        final byte state = profiles[currentPC];
+                        final byte profile = getProfile(currentPC);
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            enter(currentPC, state, BRANCH2);
+                            enter(currentPC, profile, BRANCH2);
                             /* Profiled version of LargeIntegers.subtract(image, lhs, rhs). */
                             final long r = lhs - rhs;
                             if (((lhs ^ rhs) & (lhs ^ r)) < 0) {
-                                enter(currentPC, state, BRANCH3);
+                                enter(currentPC, profile, BRANCH3);
                                 result = LargeIntegers.subtractLarge(image, lhs, rhs);
                             } else {
-                                enter(currentPC, state, BRANCH4);
+                                enter(currentPC, profile, BRANCH4);
                                 result = r;
                             }
                         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
-                            enter(currentPC, state, BRANCH5);
+                            enter(currentPC, profile, BRANCH5);
                             result = PrimSmallFloatSubtractNode.doDouble(lhs, rhs);
                         } else {
-                            enter(currentPC, state, BRANCH1);
+                            enter(currentPC, profile, BRANCH1);
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
                             pc = internalizePC(frame, pc);
@@ -813,16 +813,16 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     case BC.BYTECODE_PRIM_LESS_THAN: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        final byte state = profiles[currentPC];
+                        final byte profile = getProfile(currentPC);
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            enter(currentPC, state, BRANCH2);
+                            enter(currentPC, profile, BRANCH2);
                             result = PrimLessThanNode.doLong(lhs, rhs);
                         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
-                            enter(currentPC, state, BRANCH3);
+                            enter(currentPC, profile, BRANCH3);
                             result = PrimSmallFloatLessThanNode.doDouble(lhs, rhs);
                         } else {
-                            enter(currentPC, state, BRANCH1);
+                            enter(currentPC, profile, BRANCH1);
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
                             pc = internalizePC(frame, pc);
@@ -833,16 +833,16 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     case BC.BYTECODE_PRIM_GREATER_THAN: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        final byte state = profiles[currentPC];
+                        final byte profile = getProfile(currentPC);
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            enter(currentPC, state, BRANCH2);
+                            enter(currentPC, profile, BRANCH2);
                             result = PrimGreaterThanNode.doLong(lhs, rhs);
                         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
-                            enter(currentPC, state, BRANCH3);
+                            enter(currentPC, profile, BRANCH3);
                             result = PrimSmallFloatGreaterThanNode.doDouble(lhs, rhs);
                         } else {
-                            enter(currentPC, state, BRANCH1);
+                            enter(currentPC, profile, BRANCH1);
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
                             pc = internalizePC(frame, pc);
@@ -853,16 +853,16 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     case BC.BYTECODE_PRIM_LESS_OR_EQUAL: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        final byte state = profiles[currentPC];
+                        final byte profile = getProfile(currentPC);
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            enter(currentPC, state, BRANCH2);
+                            enter(currentPC, profile, BRANCH2);
                             result = PrimLessOrEqualNode.doLong(lhs, rhs);
                         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
-                            enter(currentPC, state, BRANCH3);
+                            enter(currentPC, profile, BRANCH3);
                             result = PrimSmallFloatLessOrEqualNode.doDouble(lhs, rhs);
                         } else {
-                            enter(currentPC, state, BRANCH1);
+                            enter(currentPC, profile, BRANCH1);
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
                             pc = internalizePC(frame, pc);
@@ -873,16 +873,16 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     case BC.BYTECODE_PRIM_GREATER_OR_EQUAL: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        final byte state = profiles[currentPC];
+                        final byte profile = getProfile(currentPC);
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            enter(currentPC, state, BRANCH2);
+                            enter(currentPC, profile, BRANCH2);
                             result = PrimGreaterOrEqualNode.doLong(lhs, rhs);
                         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
-                            enter(currentPC, state, BRANCH3);
+                            enter(currentPC, profile, BRANCH3);
                             result = PrimSmallFloatGreaterOrEqualNode.doDouble(lhs, rhs);
                         } else {
-                            enter(currentPC, state, BRANCH1);
+                            enter(currentPC, profile, BRANCH1);
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
                             pc = internalizePC(frame, pc);
@@ -893,16 +893,16 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     case BC.BYTECODE_PRIM_EQUAL: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        final byte state = profiles[currentPC];
+                        final byte profile = getProfile(currentPC);
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            enter(currentPC, state, BRANCH2);
+                            enter(currentPC, profile, BRANCH2);
                             result = PrimEqualNode.doLong(lhs, rhs);
                         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
-                            enter(currentPC, state, BRANCH3);
+                            enter(currentPC, profile, BRANCH3);
                             result = PrimSmallFloatEqualNode.doDouble(lhs, rhs);
                         } else {
-                            enter(currentPC, state, BRANCH1);
+                            enter(currentPC, profile, BRANCH1);
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
                             pc = internalizePC(frame, pc);
@@ -913,16 +913,16 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     case BC.BYTECODE_PRIM_NOT_EQUAL: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        final byte state = profiles[currentPC];
+                        final byte profile = getProfile(currentPC);
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            enter(currentPC, state, BRANCH2);
+                            enter(currentPC, profile, BRANCH2);
                             result = PrimNotEqualNode.doLong(lhs, rhs);
                         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
-                            enter(currentPC, state, BRANCH3);
+                            enter(currentPC, profile, BRANCH3);
                             result = PrimSmallFloatNotEqualNode.doDouble(lhs, rhs);
                         } else {
-                            enter(currentPC, state, BRANCH1);
+                            enter(currentPC, profile, BRANCH1);
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
                             pc = internalizePC(frame, pc);
@@ -933,13 +933,13 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     case BC.BYTECODE_PRIM_BIT_AND: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        final byte state = profiles[currentPC];
+                        final byte profile = getProfile(currentPC);
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            enter(currentPC, state, BRANCH2);
+                            enter(currentPC, profile, BRANCH2);
                             result = PrimBitAndNode.doLong(lhs, rhs);
                         } else {
-                            enter(currentPC, state, BRANCH1);
+                            enter(currentPC, profile, BRANCH1);
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
                             pc = internalizePC(frame, pc);
@@ -950,13 +950,13 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     case BC.BYTECODE_PRIM_BIT_OR: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        final byte state = profiles[currentPC];
+                        final byte profile = getProfile(currentPC);
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            enter(currentPC, state, BRANCH2);
+                            enter(currentPC, profile, BRANCH2);
                             result = PrimBitOrNode.doLong(lhs, rhs);
                         } else {
-                            enter(currentPC, state, BRANCH1);
+                            enter(currentPC, profile, BRANCH1);
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
                             pc = internalizePC(frame, pc);
