@@ -81,7 +81,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
             switch (b) {
                 case BC.PUSH_RCVR_VAR_0, BC.PUSH_RCVR_VAR_1, BC.PUSH_RCVR_VAR_2, BC.PUSH_RCVR_VAR_3, BC.PUSH_RCVR_VAR_4, BC.PUSH_RCVR_VAR_5, BC.PUSH_RCVR_VAR_6, BC.PUSH_RCVR_VAR_7, //
                     BC.PUSH_RCVR_VAR_8, BC.PUSH_RCVR_VAR_9, BC.PUSH_RCVR_VAR_A, BC.PUSH_RCVR_VAR_B, BC.PUSH_RCVR_VAR_C, BC.PUSH_RCVR_VAR_D, BC.PUSH_RCVR_VAR_E, BC.PUSH_RCVR_VAR_F: {
-                    data[currentPC] = insert(SqueakObjectAt0NodeGen.create());
+                    setData(currentPC, insert(SqueakObjectAt0NodeGen.create()));
                     break;
                 }
                 case BC.PUSH_TEMP_VAR_0, BC.PUSH_TEMP_VAR_1, BC.PUSH_TEMP_VAR_2, BC.PUSH_TEMP_VAR_3, BC.PUSH_TEMP_VAR_4, BC.PUSH_TEMP_VAR_5, BC.PUSH_TEMP_VAR_6, BC.PUSH_TEMP_VAR_7, //
@@ -100,11 +100,11 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     BC.PUSH_LIT_VAR_08, BC.PUSH_LIT_VAR_09, BC.PUSH_LIT_VAR_0A, BC.PUSH_LIT_VAR_0B, BC.PUSH_LIT_VAR_0C, BC.PUSH_LIT_VAR_0D, BC.PUSH_LIT_VAR_0E, BC.PUSH_LIT_VAR_0F, //
                     BC.PUSH_LIT_VAR_10, BC.PUSH_LIT_VAR_11, BC.PUSH_LIT_VAR_12, BC.PUSH_LIT_VAR_13, BC.PUSH_LIT_VAR_14, BC.PUSH_LIT_VAR_15, BC.PUSH_LIT_VAR_16, BC.PUSH_LIT_VAR_17, //
                     BC.PUSH_LIT_VAR_18, BC.PUSH_LIT_VAR_19, BC.PUSH_LIT_VAR_1A, BC.PUSH_LIT_VAR_1B, BC.PUSH_LIT_VAR_1C, BC.PUSH_LIT_VAR_1D, BC.PUSH_LIT_VAR_1E, BC.PUSH_LIT_VAR_1F: {
-                    data[currentPC] = getLiteralVariableOrCreateLiteralNode(code.getAndResolveLiteral(b & 0x1F));
+                    setData(currentPC, getLiteralVariableOrCreateLiteralNode(code.getAndResolveLiteral(b & 0x1F)));
                     break;
                 }
                 case BC.POP_INTO_RCVR_VAR_0, BC.POP_INTO_RCVR_VAR_1, BC.POP_INTO_RCVR_VAR_2, BC.POP_INTO_RCVR_VAR_3, BC.POP_INTO_RCVR_VAR_4, BC.POP_INTO_RCVR_VAR_5, BC.POP_INTO_RCVR_VAR_6, BC.POP_INTO_RCVR_VAR_7: {
-                    data[currentPC] = insert(SqueakObjectAtPut0NodeGen.create());
+                    setData(currentPC, insert(SqueakObjectAtPut0NodeGen.create()));
                     break;
                 }
                 case BC.EXTENDED_PUSH: {
@@ -112,14 +112,14 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     final int variableIndex = variableIndex(descriptor);
                     switch (variableType(descriptor)) {
                         case 0: {
-                            data[currentPC] = insert(SqueakObjectAt0NodeGen.create());
+                            setData(currentPC, insert(SqueakObjectAt0NodeGen.create()));
                             break;
                         }
                         case 1, 2: {
                             break;
                         }
                         case 3: {
-                            data[currentPC] = getLiteralVariableOrCreateLiteralNode(code.getAndResolveLiteral(variableIndex));
+                            setData(currentPC, getLiteralVariableOrCreateLiteralNode(code.getAndResolveLiteral(variableIndex)));
                             break;
                         }
                     }
@@ -129,7 +129,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     final byte descriptor = getByte(bc, pc++);
                     switch (variableType(descriptor)) {
                         case 0, 3: {
-                            data[currentPC] = insert(SqueakObjectAtPut0NodeGen.create());
+                            setData(currentPC, insert(SqueakObjectAtPut0NodeGen.create()));
                             break;
                         }
                         case 1: {
@@ -143,7 +143,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                 }
                 case BC.SINGLE_EXTENDED_SEND: {
                     final NativeObject selector = (NativeObject) code.getLiteral(getByte(bc, pc++) & 0x1F);
-                    data[currentPC] = insert(DispatchNaryNodeGen.create(selector));
+                    setData(currentPC, insert(DispatchNaryNodeGen.create(selector)));
                     break;
                 }
                 case BC.DOUBLE_EXTENDED_DO_ANYTHING: {
@@ -152,28 +152,28 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     switch (byte2 >> 5) {
                         case 0: {
                             final NativeObject selector = (NativeObject) code.getLiteral(byte3);
-                            data[currentPC] = insert(DispatchNaryNodeGen.create(selector));
+                            setData(currentPC, insert(DispatchNaryNodeGen.create(selector)));
                             break;
                         }
                         case 1: {
                             final NativeObject selector = (NativeObject) code.getLiteral(byte3);
                             final ClassObject methodClass = code.getMethod().getMethodClassSlow();
-                            data[currentPC] = insert(DispatchSuperNaryNodeGen.create(methodClass, selector));
+                            setData(currentPC, insert(DispatchSuperNaryNodeGen.create(methodClass, selector)));
                             break;
                         }
                         case 2: {
-                            data[currentPC] = insert(SqueakObjectAt0NodeGen.create());
+                            setData(currentPC, insert(SqueakObjectAt0NodeGen.create()));
                             break;
                         }
                         case 3: {
                             break;
                         }
                         case 4: {
-                            data[currentPC] = getLiteralVariableOrCreateLiteralNode(code.getAndResolveLiteral(byte3));
+                            setData(currentPC, getLiteralVariableOrCreateLiteralNode(code.getAndResolveLiteral(byte3)));
                             break;
                         }
                         case 5, 6, 7: {
-                            data[currentPC] = insert(SqueakObjectAtPut0NodeGen.create());
+                            setData(currentPC, insert(SqueakObjectAtPut0NodeGen.create()));
                             break;
                         }
                         default: {
@@ -185,12 +185,12 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                 case BC.SINGLE_EXTENDED_SUPER: {
                     final NativeObject selector = (NativeObject) code.getLiteral(getByte(bc, pc++) & 0x1F);
                     final ClassObject methodClass = code.getMethod().getMethodClassSlow();
-                    data[currentPC] = insert(DispatchSuperNaryNodeGen.create(methodClass, selector));
+                    setData(currentPC, insert(DispatchSuperNaryNodeGen.create(methodClass, selector)));
                     break;
                 }
                 case BC.SECOND_EXTENDED_SEND: {
                     final NativeObject selector = (NativeObject) code.getLiteral(getByte(bc, pc++) & 0x3F);
-                    data[currentPC] = insert(DispatchNaryNodeGen.create(selector));
+                    setData(currentPC, insert(DispatchNaryNodeGen.create(selector)));
                     break;
                 }
                 case BC.PUSH_NEW_ARRAY: {
@@ -202,12 +202,12 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     break;
                 }
                 case BC.PUSH_REMOTE_TEMP_LONG: {
-                    data[currentPC] = insert(SqueakObjectAt0NodeGen.create());
+                    setData(currentPC, insert(SqueakObjectAt0NodeGen.create()));
                     pc += 2;
                     break;
                 }
                 case BC.STORE_REMOTE_TEMP_LONG, BC.POP_INTO_REMOTE_TEMP_LONG: {
-                    data[currentPC] = insert(SqueakObjectAtPut0NodeGen.create());
+                    setData(currentPC, insert(SqueakObjectAtPut0NodeGen.create()));
                     pc += 2;
                     break;
                 }
@@ -216,73 +216,73 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     final int numArgs = numArgsNumCopied & 0xF;
                     final int numCopied = numArgsNumCopied >> 4 & 0xF;
                     final int blockSize = getBlockSize(bc, pc++, pc++);
-                    data[currentPC] = createBlock(code, pc, numArgs, numCopied, blockSize);
+                    setData(currentPC, createBlock(code, pc, numArgs, numCopied, blockSize));
                     pc += blockSize;
                     break;
                 }
                 case BC.SHORT_UJUMP_0, BC.SHORT_UJUMP_1, BC.SHORT_UJUMP_2, BC.SHORT_UJUMP_3, BC.SHORT_UJUMP_4, BC.SHORT_UJUMP_5, BC.SHORT_UJUMP_6, BC.SHORT_UJUMP_7: {
                     final int offset = calculateShortOffset(b);
                     if (offset < 0) {
-                        data[currentPC] = insert(CheckForInterruptsInLoopNode.createForLoop(data, pc, 1, offset));
+                        setData(currentPC, insert(createCheckForInterruptsInLoopNode(pc, 1, offset)));
                     }
                     break;
                 }
                 case BC.SHORT_CJUMP_FALSE_0, BC.SHORT_CJUMP_FALSE_1, BC.SHORT_CJUMP_FALSE_2, BC.SHORT_CJUMP_FALSE_3, BC.SHORT_CJUMP_FALSE_4, BC.SHORT_CJUMP_FALSE_5, BC.SHORT_CJUMP_FALSE_6, BC.SHORT_CJUMP_FALSE_7: {
-                    data[currentPC] = CountingConditionProfile.create();
+                    setData(currentPC, CountingConditionProfile.create());
                     break;
                 }
 
                 case BC.LONG_UJUMP_0, BC.LONG_UJUMP_1, BC.LONG_UJUMP_2, BC.LONG_UJUMP_3, BC.LONG_UJUMP_4, BC.LONG_UJUMP_5, BC.LONG_UJUMP_6, BC.LONG_UJUMP_7: {
                     final int offset = ((b & 7) - 4 << 8) + getUnsignedInt(bc, pc++);
                     if (offset < 0) {
-                        data[currentPC] = insert(CheckForInterruptsInLoopNode.createForLoop(data, pc, 1, offset));
+                        setData(currentPC, insert(createCheckForInterruptsInLoopNode(pc, 1, offset)));
                     }
                     break;
                 }
                 case BC.LONG_CJUMP_TRUE_0, BC.LONG_CJUMP_TRUE_1, BC.LONG_CJUMP_TRUE_2, BC.LONG_CJUMP_TRUE_3, //
                     BC.LONG_CJUMP_FALSE_0, BC.LONG_CJUMP_FALSE_1, BC.LONG_CJUMP_FALSE_2, BC.LONG_CJUMP_FALSE_3: {
-                    data[currentPC] = CountingConditionProfile.create();
+                    setData(currentPC, CountingConditionProfile.create());
                     pc++;
                     break;
                 }
                 case BC.BYTECODE_PRIM_SIZE, BC.BYTECODE_PRIM_NEXT, BC.BYTECODE_PRIM_AT_END, BC.BYTECODE_PRIM_VALUE, BC.BYTECODE_PRIM_NEW, BC.BYTECODE_PRIM_POINT_X, BC.BYTECODE_PRIM_POINT_Y: {
-                    data[currentPC] = insert(Dispatch0NodeGen.create(image.getSpecialSelector(b - BC.BYTECODE_PRIM_ADD)));
+                    setData(currentPC, insert(Dispatch0NodeGen.create(image.getSpecialSelector(b - BC.BYTECODE_PRIM_ADD))));
                     break;
                 }
                 case BC.BYTECODE_PRIM_CLASS: {
-                    data[currentPC] = insert(SqueakObjectClassNodeGen.create());
+                    setData(currentPC, insert(SqueakObjectClassNodeGen.create()));
                     break;
                 }
                 case BC.BYTECODE_PRIM_ADD, BC.BYTECODE_PRIM_SUBTRACT, BC.BYTECODE_PRIM_LESS_THAN, BC.BYTECODE_PRIM_GREATER_THAN, BC.BYTECODE_PRIM_LESS_OR_EQUAL, BC.BYTECODE_PRIM_GREATER_OR_EQUAL, //
                     BC.BYTECODE_PRIM_EQUAL, BC.BYTECODE_PRIM_NOT_EQUAL, BC.BYTECODE_PRIM_MULTIPLY, BC.BYTECODE_PRIM_DIVIDE, BC.BYTECODE_PRIM_MOD, BC.BYTECODE_PRIM_MAKE_POINT, BC.BYTECODE_PRIM_BIT_SHIFT, BC.BYTECODE_PRIM_DIV, //
                     BC.BYTECODE_PRIM_BIT_AND, BC.BYTECODE_PRIM_BIT_OR, BC.BYTECODE_PRIM_AT, BC.BYTECODE_PRIM_NEXT_PUT, BC.BYTECODE_PRIM_VALUE_WITH_ARG, BC.BYTECODE_PRIM_DO, BC.BYTECODE_PRIM_NEW_WITH_ARG: {
-                    data[currentPC] = insert(Dispatch1NodeGen.create(image.getSpecialSelector(b - BC.BYTECODE_PRIM_ADD)));
+                    setData(currentPC, insert(Dispatch1NodeGen.create(image.getSpecialSelector(b - BC.BYTECODE_PRIM_ADD))));
                     break;
                 }
                 case BC.BYTECODE_PRIM_IDENTICAL, BC.BYTECODE_PRIM_NOT_IDENTICAL: {
-                    data[currentPC] = insert(SqueakObjectIdentityNodeGen.create());
+                    setData(currentPC, insert(SqueakObjectIdentityNodeGen.create()));
                     break;
                 }
                 case BC.BYTECODE_PRIM_AT_PUT: {
-                    data[currentPC] = insert(Dispatch2NodeGen.create(image.getSpecialSelector(b - BC.BYTECODE_PRIM_ADD)));
+                    setData(currentPC, insert(Dispatch2NodeGen.create(image.getSpecialSelector(b - BC.BYTECODE_PRIM_ADD))));
                     break;
                 }
                 case BC.SEND_LIT_SEL0_0, BC.SEND_LIT_SEL0_1, BC.SEND_LIT_SEL0_2, BC.SEND_LIT_SEL0_3, BC.SEND_LIT_SEL0_4, BC.SEND_LIT_SEL0_5, BC.SEND_LIT_SEL0_6, BC.SEND_LIT_SEL0_7, //
                     BC.SEND_LIT_SEL0_8, BC.SEND_LIT_SEL0_9, BC.SEND_LIT_SEL0_A, BC.SEND_LIT_SEL0_B, BC.SEND_LIT_SEL0_C, BC.SEND_LIT_SEL0_D, BC.SEND_LIT_SEL0_E, BC.SEND_LIT_SEL0_F: {
                     final NativeObject selector = (NativeObject) code.getAndResolveLiteral(b & 0xF);
-                    data[currentPC] = insert(Dispatch0NodeGen.create(selector));
+                    setData(currentPC, insert(Dispatch0NodeGen.create(selector)));
                     break;
                 }
                 case BC.SEND_LIT_SEL1_0, BC.SEND_LIT_SEL1_1, BC.SEND_LIT_SEL1_2, BC.SEND_LIT_SEL1_3, BC.SEND_LIT_SEL1_4, BC.SEND_LIT_SEL1_5, BC.SEND_LIT_SEL1_6, BC.SEND_LIT_SEL1_7, //
                     BC.SEND_LIT_SEL1_8, BC.SEND_LIT_SEL1_9, BC.SEND_LIT_SEL1_A, BC.SEND_LIT_SEL1_B, BC.SEND_LIT_SEL1_C, BC.SEND_LIT_SEL1_D, BC.SEND_LIT_SEL1_E, BC.SEND_LIT_SEL1_F: {
                     final NativeObject selector = (NativeObject) code.getAndResolveLiteral(b & 0xF);
-                    data[currentPC] = insert(Dispatch1NodeGen.create(selector));
+                    setData(currentPC, insert(Dispatch1NodeGen.create(selector)));
                     break;
                 }
                 case BC.SEND_LIT_SEL2_0, BC.SEND_LIT_SEL2_1, BC.SEND_LIT_SEL2_2, BC.SEND_LIT_SEL2_3, BC.SEND_LIT_SEL2_4, BC.SEND_LIT_SEL2_5, BC.SEND_LIT_SEL2_6, BC.SEND_LIT_SEL2_7, //
                     BC.SEND_LIT_SEL2_8, BC.SEND_LIT_SEL2_9, BC.SEND_LIT_SEL2_A, BC.SEND_LIT_SEL2_B, BC.SEND_LIT_SEL2_C, BC.SEND_LIT_SEL2_D, BC.SEND_LIT_SEL2_E, BC.SEND_LIT_SEL2_F: {
                     final NativeObject selector = (NativeObject) code.getAndResolveLiteral(b & 0xF);
-                    data[currentPC] = insert(Dispatch2NodeGen.create(selector));
+                    setData(currentPC, insert(Dispatch2NodeGen.create(selector)));
                     break;
                 }
                 default: {
@@ -319,7 +319,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     case BC.PUSH_RCVR_VAR_0, BC.PUSH_RCVR_VAR_1, BC.PUSH_RCVR_VAR_2, BC.PUSH_RCVR_VAR_3, BC.PUSH_RCVR_VAR_4, BC.PUSH_RCVR_VAR_5, BC.PUSH_RCVR_VAR_6, BC.PUSH_RCVR_VAR_7, //
                         BC.PUSH_RCVR_VAR_8, BC.PUSH_RCVR_VAR_9, BC.PUSH_RCVR_VAR_A, BC.PUSH_RCVR_VAR_B, BC.PUSH_RCVR_VAR_C, BC.PUSH_RCVR_VAR_D, BC.PUSH_RCVR_VAR_E, BC.PUSH_RCVR_VAR_F: {
                         externalizePCAndSP(frame, pc, sp); // for ContextObject access
-                        pushFollowed(frame, currentPC, sp++, uncheckedCast(data[currentPC], SqueakObjectAt0NodeGen.class).execute(this, FrameAccess.getReceiver(frame), b & 0xF));
+                        pushFollowed(frame, currentPC, sp++, uncheckedCast(getData(currentPC), SqueakObjectAt0NodeGen.class).execute(this, FrameAccess.getReceiver(frame), b & 0xF));
                         break;
                     }
                     case BC.PUSH_TEMP_VAR_0, BC.PUSH_TEMP_VAR_1, BC.PUSH_TEMP_VAR_2, BC.PUSH_TEMP_VAR_3, BC.PUSH_TEMP_VAR_4, BC.PUSH_TEMP_VAR_5, BC.PUSH_TEMP_VAR_6, BC.PUSH_TEMP_VAR_7, //
@@ -342,7 +342,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         break;
                     }
                     case BC.POP_INTO_RCVR_VAR_0, BC.POP_INTO_RCVR_VAR_1, BC.POP_INTO_RCVR_VAR_2, BC.POP_INTO_RCVR_VAR_3, BC.POP_INTO_RCVR_VAR_4, BC.POP_INTO_RCVR_VAR_5, BC.POP_INTO_RCVR_VAR_6, BC.POP_INTO_RCVR_VAR_7: {
-                        uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), b & 7, pop(frame, --sp));
+                        uncheckedCast(getData(currentPC), SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), b & 7, pop(frame, --sp));
                         break;
                     }
                     case BC.POP_INTO_TEMP_VAR_0, BC.POP_INTO_TEMP_VAR_1, BC.POP_INTO_TEMP_VAR_2, BC.POP_INTO_TEMP_VAR_3, BC.POP_INTO_TEMP_VAR_4, BC.POP_INTO_TEMP_VAR_5, BC.POP_INTO_TEMP_VAR_6, BC.POP_INTO_TEMP_VAR_7: {
@@ -425,7 +425,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         switch (variableType) {
                             case 0: {
                                 externalizePCAndSP(frame, pc, sp); // for ContextObject access
-                                pushFollowed(frame, currentPC, sp++, uncheckedCast(data[currentPC], SqueakObjectAt0NodeGen.class).execute(this, FrameAccess.getReceiver(frame), variableIndex));
+                                pushFollowed(frame, currentPC, sp++, uncheckedCast(getData(currentPC), SqueakObjectAt0NodeGen.class).execute(this, FrameAccess.getReceiver(frame), variableIndex));
                                 break;
                             }
                             case 1: {
@@ -451,7 +451,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         CompilerAsserts.partialEvaluationConstant(variableType);
                         switch (variableType) {
                             case 0: {
-                                uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), variableIndex, stackTop);
+                                uncheckedCast(getData(currentPC), SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), variableIndex, stackTop);
                                 break;
                             }
                             case 1: {
@@ -462,7 +462,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 throw unknownBytecode();
                             }
                             case 3: {
-                                uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, getAndResolveLiteral(currentPC, variableIndex), ASSOCIATION.VALUE, stackTop);
+                                uncheckedCast(getData(currentPC), SqueakObjectAtPut0Node.class).execute(this, getAndResolveLiteral(currentPC, variableIndex), ASSOCIATION.VALUE, stackTop);
                                 break;
                             }
                         }
@@ -476,7 +476,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         CompilerAsserts.partialEvaluationConstant(variableType);
                         switch (variableType) {
                             case 0: {
-                                uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), variableIndex, stackValue);
+                                uncheckedCast(getData(currentPC), SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), variableIndex, stackValue);
                                 break;
                             }
                             case 1: {
@@ -487,7 +487,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 throw unknownBytecode();
                             }
                             case 3: {
-                                uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, getAndResolveLiteral(currentPC, variableIndex), ASSOCIATION.VALUE, stackValue);
+                                uncheckedCast(getData(currentPC), SqueakObjectAtPut0Node.class).execute(this, getAndResolveLiteral(currentPC, variableIndex), ASSOCIATION.VALUE, stackValue);
                                 break;
                             }
                         }
@@ -531,7 +531,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                             }
                             case 2: {
                                 externalizePCAndSP(frame, pc, sp); // for ContextObject access
-                                pushFollowed(frame, currentPC, sp++, uncheckedCast(data[currentPC], SqueakObjectAt0NodeGen.class).execute(this, FrameAccess.getReceiver(frame), byte3));
+                                pushFollowed(frame, currentPC, sp++, uncheckedCast(getData(currentPC), SqueakObjectAt0NodeGen.class).execute(this, FrameAccess.getReceiver(frame), byte3));
                                 break;
                             }
                             case 3: {
@@ -543,15 +543,15 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 break;
                             }
                             case 5: {
-                                uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), byte3, top(frame, sp));
+                                uncheckedCast(getData(currentPC), SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), byte3, top(frame, sp));
                                 break;
                             }
                             case 6: {
-                                uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), byte3, pop(frame, --sp));
+                                uncheckedCast(getData(currentPC), SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), byte3, pop(frame, --sp));
                                 break;
                             }
                             case 7: {
-                                uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, getAndResolveLiteral(currentPC, byte3), ASSOCIATION.VALUE, top(frame, sp));
+                                uncheckedCast(getData(currentPC), SqueakObjectAtPut0Node.class).execute(this, getAndResolveLiteral(currentPC, byte3), ASSOCIATION.VALUE, top(frame, sp));
                                 break;
                             }
                             default: {
@@ -618,19 +618,19 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         final int remoteTempIndex = getUnsignedInt(bc, pc++);
                         final int tempVectorIndex = getUnsignedInt(bc, pc++);
                         pushFollowed(frame, currentPC, sp++,
-                                        uncheckedCast(data[currentPC], SqueakObjectAt0NodeGen.class).execute(this, FrameAccess.getStackValue(frame, tempVectorIndex), remoteTempIndex));
+                                        uncheckedCast(getData(currentPC), SqueakObjectAt0NodeGen.class).execute(this, FrameAccess.getStackValue(frame, tempVectorIndex), remoteTempIndex));
                         break;
                     }
                     case BC.STORE_REMOTE_TEMP_LONG: {
                         final int remoteTempIndex = getUnsignedInt(bc, pc++);
                         final int tempVectorIndex = getUnsignedInt(bc, pc++);
-                        uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getStackValue(frame, tempVectorIndex), remoteTempIndex, top(frame, sp));
+                        uncheckedCast(getData(currentPC), SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getStackValue(frame, tempVectorIndex), remoteTempIndex, top(frame, sp));
                         break;
                     }
                     case BC.POP_INTO_REMOTE_TEMP_LONG: {
                         final int remoteTempIndex = getUnsignedInt(bc, pc++);
                         final int tempVectorIndex = getUnsignedInt(bc, pc++);
-                        uncheckedCast(data[currentPC], SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getStackValue(frame, tempVectorIndex), remoteTempIndex, pop(frame, --sp));
+                        uncheckedCast(getData(currentPC), SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getStackValue(frame, tempVectorIndex), remoteTempIndex, pop(frame, --sp));
                         break;
                     }
                     case BC.PUSH_CLOSURE_COPY_COPIED_VALUES: {
@@ -639,7 +639,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         final int numCopied = numArgsNumCopied >> 4 & 0xF;
                         final Object[] copiedValues = popN(frame, sp, numCopied);
                         sp -= numCopied;
-                        push(frame, sp++, createBlockClosure(frame, uncheckedCast(data[currentPC], CompiledCodeObject.class), copiedValues, getOrCreateContext(frame, currentPC)));
+                        push(frame, sp++, createBlockClosure(frame, uncheckedCast(getData(currentPC), CompiledCodeObject.class), copiedValues, getOrCreateContext(frame, currentPC)));
                         pc += blockSize;
                         break;
                     }
@@ -673,7 +673,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                     counter = 0;
                                 }
                             }
-                            if (data[currentPC] instanceof final CheckForInterruptsInLoopNode checkForInterruptsNode) {
+                            if (getData(currentPC) instanceof final CheckForInterruptsInLoopNode checkForInterruptsNode) {
                                 checkForInterruptsNode.execute(frame, pc);
                             }
                         }
@@ -682,7 +682,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     case BC.SHORT_CJUMP_FALSE_0, BC.SHORT_CJUMP_FALSE_1, BC.SHORT_CJUMP_FALSE_2, BC.SHORT_CJUMP_FALSE_3, BC.SHORT_CJUMP_FALSE_4, BC.SHORT_CJUMP_FALSE_5, BC.SHORT_CJUMP_FALSE_6, BC.SHORT_CJUMP_FALSE_7: {
                         final Object stackValue = pop(frame, --sp);
                         if (stackValue instanceof final Boolean condition) {
-                            if (uncheckedCast(data[currentPC], CountingConditionProfile.class).profile(!condition)) {
+                            if (uncheckedCast(getData(currentPC), CountingConditionProfile.class).profile(!condition)) {
                                 pc += calculateShortOffset(b);
                             }
                         } else {
@@ -720,7 +720,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                     counter = 0;
                                 }
                             }
-                            if (data[currentPC] instanceof final CheckForInterruptsInLoopNode checkForInterruptsNode) {
+                            if (getData(currentPC) instanceof final CheckForInterruptsInLoopNode checkForInterruptsNode) {
                                 checkForInterruptsNode.execute(frame, pc);
                             }
                         }
@@ -730,7 +730,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         final Object stackValue = pop(frame, --sp);
                         final int offset = longJump(b, getUnsignedInt(bc, pc++));
                         if (stackValue instanceof final Boolean condition) {
-                            if (uncheckedCast(data[currentPC], CountingConditionProfile.class).profile(condition)) {
+                            if (uncheckedCast(getData(currentPC), CountingConditionProfile.class).profile(condition)) {
                                 pc += offset;
                             }
                         } else {
@@ -742,7 +742,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         final Object stackValue = pop(frame, --sp);
                         final int offset = longJump(b, getUnsignedInt(bc, pc++));
                         if (stackValue instanceof final Boolean condition) {
-                            if (uncheckedCast(data[currentPC], CountingConditionProfile.class).profile(!condition)) {
+                            if (uncheckedCast(getData(currentPC), CountingConditionProfile.class).profile(!condition)) {
                                 pc += offset;
                             }
                         } else {
@@ -753,24 +753,24 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     case BC.BYTECODE_PRIM_ADD: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        final byte state = profiles[currentPC];
+                        final byte profile = getProfile(currentPC);
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            enter(currentPC, state, BRANCH2);
+                            enter(currentPC, profile, BRANCH2);
                             /* Profiled version of LargeIntegers.add(image, lhs, rhs). */
                             final long r = lhs + rhs;
                             if (((lhs ^ r) & (rhs ^ r)) < 0) {
-                                enter(currentPC, state, BRANCH3);
+                                enter(currentPC, profile, BRANCH3);
                                 result = LargeIntegers.addLarge(image, lhs, rhs);
                             } else {
-                                enter(currentPC, state, BRANCH4);
+                                enter(currentPC, profile, BRANCH4);
                                 result = r;
                             }
                         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
-                            enter(currentPC, state, BRANCH5);
+                            enter(currentPC, profile, BRANCH5);
                             result = PrimSmallFloatAddNode.doDouble(lhs, rhs);
                         } else {
-                            enter(currentPC, state, BRANCH1);
+                            enter(currentPC, profile, BRANCH1);
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
                             pc = internalizePC(frame, pc);
@@ -781,24 +781,24 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     case BC.BYTECODE_PRIM_SUBTRACT: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        final byte state = profiles[currentPC];
+                        final byte profile = getProfile(currentPC);
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            enter(currentPC, state, BRANCH2);
+                            enter(currentPC, profile, BRANCH2);
                             /* Profiled version of LargeIntegers.subtract(image, lhs, rhs). */
                             final long r = lhs - rhs;
                             if (((lhs ^ rhs) & (lhs ^ r)) < 0) {
-                                enter(currentPC, state, BRANCH3);
+                                enter(currentPC, profile, BRANCH3);
                                 result = LargeIntegers.subtractLarge(image, lhs, rhs);
                             } else {
-                                enter(currentPC, state, BRANCH4);
+                                enter(currentPC, profile, BRANCH4);
                                 result = r;
                             }
                         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
-                            enter(currentPC, state, BRANCH5);
+                            enter(currentPC, profile, BRANCH5);
                             result = PrimSmallFloatSubtractNode.doDouble(lhs, rhs);
                         } else {
-                            enter(currentPC, state, BRANCH1);
+                            enter(currentPC, profile, BRANCH1);
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
                             pc = internalizePC(frame, pc);
@@ -809,16 +809,16 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     case BC.BYTECODE_PRIM_LESS_THAN: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        final byte state = profiles[currentPC];
+                        final byte profile = getProfile(currentPC);
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            enter(currentPC, state, BRANCH2);
+                            enter(currentPC, profile, BRANCH2);
                             result = PrimLessThanNode.doLong(lhs, rhs);
                         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
-                            enter(currentPC, state, BRANCH3);
+                            enter(currentPC, profile, BRANCH3);
                             result = PrimSmallFloatLessThanNode.doDouble(lhs, rhs);
                         } else {
-                            enter(currentPC, state, BRANCH1);
+                            enter(currentPC, profile, BRANCH1);
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
                             pc = internalizePC(frame, pc);
@@ -829,16 +829,16 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     case BC.BYTECODE_PRIM_GREATER_THAN: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        final byte state = profiles[currentPC];
+                        final byte profile = getProfile(currentPC);
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            enter(currentPC, state, BRANCH2);
+                            enter(currentPC, profile, BRANCH2);
                             result = PrimGreaterThanNode.doLong(lhs, rhs);
                         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
-                            enter(currentPC, state, BRANCH3);
+                            enter(currentPC, profile, BRANCH3);
                             result = PrimSmallFloatGreaterThanNode.doDouble(lhs, rhs);
                         } else {
-                            enter(currentPC, state, BRANCH1);
+                            enter(currentPC, profile, BRANCH1);
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
                             pc = internalizePC(frame, pc);
@@ -849,16 +849,16 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     case BC.BYTECODE_PRIM_LESS_OR_EQUAL: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        final byte state = profiles[currentPC];
+                        final byte profile = getProfile(currentPC);
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            enter(currentPC, state, BRANCH2);
+                            enter(currentPC, profile, BRANCH2);
                             result = PrimLessOrEqualNode.doLong(lhs, rhs);
                         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
-                            enter(currentPC, state, BRANCH3);
+                            enter(currentPC, profile, BRANCH3);
                             result = PrimSmallFloatLessOrEqualNode.doDouble(lhs, rhs);
                         } else {
-                            enter(currentPC, state, BRANCH1);
+                            enter(currentPC, profile, BRANCH1);
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
                             pc = internalizePC(frame, pc);
@@ -869,16 +869,16 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     case BC.BYTECODE_PRIM_GREATER_OR_EQUAL: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        final byte state = profiles[currentPC];
+                        final byte profile = getProfile(currentPC);
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            enter(currentPC, state, BRANCH2);
+                            enter(currentPC, profile, BRANCH2);
                             result = PrimGreaterOrEqualNode.doLong(lhs, rhs);
                         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
-                            enter(currentPC, state, BRANCH3);
+                            enter(currentPC, profile, BRANCH3);
                             result = PrimSmallFloatGreaterOrEqualNode.doDouble(lhs, rhs);
                         } else {
-                            enter(currentPC, state, BRANCH1);
+                            enter(currentPC, profile, BRANCH1);
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
                             pc = internalizePC(frame, pc);
@@ -889,16 +889,16 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     case BC.BYTECODE_PRIM_EQUAL: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        final byte state = profiles[currentPC];
+                        final byte profile = getProfile(currentPC);
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            enter(currentPC, state, BRANCH2);
+                            enter(currentPC, profile, BRANCH2);
                             result = PrimEqualNode.doLong(lhs, rhs);
                         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
-                            enter(currentPC, state, BRANCH3);
+                            enter(currentPC, profile, BRANCH3);
                             result = PrimSmallFloatEqualNode.doDouble(lhs, rhs);
                         } else {
-                            enter(currentPC, state, BRANCH1);
+                            enter(currentPC, profile, BRANCH1);
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
                             pc = internalizePC(frame, pc);
@@ -909,16 +909,16 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     case BC.BYTECODE_PRIM_NOT_EQUAL: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        final byte state = profiles[currentPC];
+                        final byte profile = getProfile(currentPC);
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            enter(currentPC, state, BRANCH2);
+                            enter(currentPC, profile, BRANCH2);
                             result = PrimNotEqualNode.doLong(lhs, rhs);
                         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
-                            enter(currentPC, state, BRANCH3);
+                            enter(currentPC, profile, BRANCH3);
                             result = PrimSmallFloatNotEqualNode.doDouble(lhs, rhs);
                         } else {
-                            enter(currentPC, state, BRANCH1);
+                            enter(currentPC, profile, BRANCH1);
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
                             pc = internalizePC(frame, pc);
@@ -929,13 +929,13 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     case BC.BYTECODE_PRIM_BIT_AND: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        final byte state = profiles[currentPC];
+                        final byte profile = getProfile(currentPC);
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            enter(currentPC, state, BRANCH2);
+                            enter(currentPC, profile, BRANCH2);
                             result = PrimBitAndNode.doLong(lhs, rhs);
                         } else {
-                            enter(currentPC, state, BRANCH1);
+                            enter(currentPC, profile, BRANCH1);
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
                             pc = internalizePC(frame, pc);
@@ -946,13 +946,13 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     case BC.BYTECODE_PRIM_BIT_OR: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        final byte state = profiles[currentPC];
+                        final byte profile = getProfile(currentPC);
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-                            enter(currentPC, state, BRANCH2);
+                            enter(currentPC, profile, BRANCH2);
                             result = PrimBitOrNode.doLong(lhs, rhs);
                         } else {
-                            enter(currentPC, state, BRANCH1);
+                            enter(currentPC, profile, BRANCH1);
                             externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
                             pc = internalizePC(frame, pc);
@@ -963,18 +963,18 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     case BC.BYTECODE_PRIM_IDENTICAL: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        push(frame, sp++, uncheckedCast(data[currentPC], SqueakObjectIdentityNodeGen.class).execute(this, receiver, arg));
+                        push(frame, sp++, uncheckedCast(getData(currentPC), SqueakObjectIdentityNodeGen.class).execute(this, receiver, arg));
                         break;
                     }
                     case BC.BYTECODE_PRIM_CLASS: {
                         final Object receiver = popReceiver(frame, --sp);
-                        push(frame, sp++, uncheckedCast(data[currentPC], SqueakObjectClassNodeGen.class).executeLookup(this, receiver));
+                        push(frame, sp++, uncheckedCast(getData(currentPC), SqueakObjectClassNodeGen.class).executeLookup(this, receiver));
                         break;
                     }
                     case BC.BYTECODE_PRIM_NOT_IDENTICAL: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        push(frame, sp++, !uncheckedCast(data[currentPC], SqueakObjectIdentityNodeGen.class).execute(this, receiver, arg));
+                        push(frame, sp++, !uncheckedCast(getData(currentPC), SqueakObjectIdentityNodeGen.class).execute(this, receiver, arg));
                         break;
                     }
                     case BC.BYTECODE_PRIM_SIZE, BC.BYTECODE_PRIM_NEXT, BC.BYTECODE_PRIM_AT_END, BC.BYTECODE_PRIM_VALUE, BC.BYTECODE_PRIM_NEW, BC.BYTECODE_PRIM_POINT_X, BC.BYTECODE_PRIM_POINT_Y, //
@@ -1027,7 +1027,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
 
     private Object sendSuper(final VirtualFrame frame, final int currentPC, final Object receiver, final Object[] arguments) {
         try {
-            return uncheckedCast(data[currentPC], DispatchSuperNaryNodeGen.class).execute(frame, receiver, arguments);
+            return uncheckedCast(getData(currentPC), DispatchSuperNaryNodeGen.class).execute(frame, receiver, arguments);
         } catch (final AbstractStandardSendReturn r) {
             return handleReturnException(frame, currentPC, r);
         }
