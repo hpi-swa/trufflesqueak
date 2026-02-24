@@ -48,6 +48,7 @@ import io.github.humbleui.jwm.EventWindowCloseRequest;
 import io.github.humbleui.jwm.EventWindowFocusIn;
 import io.github.humbleui.jwm.EventWindowFocusOut;
 import io.github.humbleui.jwm.EventWindowResize;
+import io.github.humbleui.jwm.EventWindowScreenChange;
 import io.github.humbleui.jwm.Layer;
 import io.github.humbleui.jwm.MouseCursor;
 import io.github.humbleui.jwm.Platform;
@@ -90,12 +91,6 @@ public final class SqueakDisplay implements Consumer<Event> {
 
     public int buttons;
 
-    // Window state tracking
-    private int rememberedWindowWidth;
-    private int rememberedWindowHeight;
-    private int rememberedWindowX;
-    private int rememberedWindowY;
-
     private SqueakDisplay(final SqueakImageContext image) {
         this.image = image;
         this.mouse = new SqueakMouse(this);
@@ -126,6 +121,14 @@ public final class SqueakDisplay implements Consumer<Event> {
     public static SqueakDisplay create(final SqueakImageContext image) {
         CompilerAsserts.neverPartOfCompilation();
         return new SqueakDisplay(image);
+    }
+
+    public static double getScreenScaleFactor(final SqueakImageContext image) {
+        if (image.getDisplay() instanceof final SqueakDisplay display) {
+            return display.window.getScreen().getScale();
+        } else {
+            return App.getPrimaryScreen().getScale();
+        }
     }
 
     private void tryToSetTaskbarIcon() {
@@ -170,6 +173,12 @@ public final class SqueakDisplay implements Consumer<Event> {
             // Don't terminate app here, let Squeak decide or use explicit close
             addWindowEvent(WINDOW.CLOSE);
         } else if (e instanceof EventWindowResize) {
+            addWindowEvent(WINDOW.METRIC_CHANGE);
+        } else if (e instanceof EventWindowScreenChange) {
+            // Reconfigure the GPU swap chain for the new monitor
+            if (layer != null) {
+                layer.reconfigure();
+            }
             addWindowEvent(WINDOW.METRIC_CHANGE);
         } else if (e instanceof EventWindowFocusIn) {
             addWindowEvent(WINDOW.ACTIVATED);
@@ -314,24 +323,14 @@ public final class SqueakDisplay implements Consumer<Event> {
             if (window == null) {
                 return;
             }
-            // JWM doesn't have a direct "setFullscreen" convenience yet that matches AWT exactly,
-            // but we can maximize or use screen bounds.
-            // For now, let's assuming maximizing is close enough or use explicit bounds.
-            if (enable) {
-                final IRect rect = window.getWindowRect();
-                rememberedWindowX = rect.getLeft();
-                rememberedWindowY = rect.getTop();
-                rememberedWindowWidth = rect.getWidth();
-                rememberedWindowHeight = rect.getHeight();
 
-                // This is a simplification; true fullscreen often requires Screen API
-                // window.maximize() is available in newer JWM versions?
-                // Using setContentSize to screen size is a common workaround if API missing.
-                // Assuming maximize is what we want:
-                // window.maximize();
+            if (enable) {
+                // Tells the native OS to maximize the window
+                window.maximize();
             } else {
-                window.setWindowPosition(rememberedWindowX, rememberedWindowY);
-                window.setContentSize(rememberedWindowWidth, rememberedWindowHeight);
+                // Tells the native OS to snap the window back to its previous dimensions and
+                // position
+                window.restore();
             }
         });
     }

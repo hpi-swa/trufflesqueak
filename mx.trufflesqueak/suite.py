@@ -371,7 +371,7 @@ suite = {
                 # Configure launcher
                 "-Dorg.graalvm.launcher.class=de.hpi.swa.trufflesqueak.launcher.TruffleSqueakLauncher",
                 "-H:+IncludeNodeSourcePositions",  # for improved stack traces on deopts
-                "-H:+DetectUserDirectoriesInImageHeap",
+                "-H:-DetectUserDirectoriesInImageHeap",  # ToDo: scrub GitHub path from JWM/Skija packages
                 # JNI/JWM Configuration
                 "-H:+JNI",
                 # Tells Native Image to defer Skija/JWM native library loading until the app actually runs
