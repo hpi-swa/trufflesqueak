@@ -139,9 +139,9 @@ suite = {
             "maven": {
                 "groupId": "io.github.humbleui",
                 "artifactId": "jwm",
-                "version": "0.4.23",
+                "version": "0.4.24",
             },
-            "digest": "sha256:7115f89f52e2832501d8197cec285151a680777e52e85dfcea620a60396a3283",
+            "digest": "sha256:a67c689bafb15f596c8ccefcf880d9b2457e2087b4af8c4b6a7b51bad982696a",
             "licence": "Apache-2.0",
             "useModulePath": True,
         },
@@ -371,7 +371,7 @@ suite = {
                 # Configure launcher
                 "-Dorg.graalvm.launcher.class=de.hpi.swa.trufflesqueak.launcher.TruffleSqueakLauncher",
                 "-H:+IncludeNodeSourcePositions",  # for improved stack traces on deopts
-                "-H:-DetectUserDirectoriesInImageHeap",  # ToDo: scrub GitHub path from JWM/Skija packages
+                "-H:+DetectUserDirectoriesInImageHeap",  # ToDo: scrub GitHub path from JWM/Skija packages
                 # JNI/JWM Configuration
                 "-H:+JNI",
                 # Tells Native Image to defer Skija/JWM native library loading until the app actually runs
