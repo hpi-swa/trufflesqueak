@@ -371,14 +371,36 @@ suite = {
                 # Configure launcher
                 "-Dorg.graalvm.launcher.class=de.hpi.swa.trufflesqueak.launcher.TruffleSqueakLauncher",
                 "-H:+IncludeNodeSourcePositions",  # for improved stack traces on deopts
-                "-H:+DetectUserDirectoriesInImageHeap",  # ToDo: scrub GitHub path from JWM/Skija packages
+                "-H:-DetectUserDirectoriesInImageHeap",  # ToDo: scrub GitHub path from Skija packages
                 # JNI/JWM Configuration
                 "-H:+JNI",
                 # Tells Native Image to defer Skija/JWM native library loading until the app actually runs
                 "--initialize-at-run-time=io.github.humbleui",
-                # Bundle native OS windowing libraries
-                "-H:IncludeResources=.*(jwm|skija).*\\.(dylib|so|dll)|.*trufflesqueak-icon\\.(png|ico|icns)",
             ],
+            # Dynamically select the correct native libraries and icons to bundle into the Native Image
+            "os_arch": {
+                "linux": {
+                    "<others>": {
+                        "build_args": [
+                            "-H:IncludeResources=.*(jwm|skija).*\\.so|.*trufflesqueak-icon\\.png",
+                        ]
+                    }
+                },
+                "darwin": {
+                    "<others>": {
+                        "build_args": [
+                            "-H:IncludeResources=.*(jwm|skija).*\\.dylib|.*trufflesqueak-icon\\.icns",
+                        ]
+                    }
+                },
+                "windows": {
+                    "<others>": {
+                        "build_args": [
+                            "-H:IncludeResources=.*(jwm|skija).*\\.dll|.*trufflesqueak-icon\\.ico",
+                        ]
+                    }
+                },
+            },
             "dynamicBuildArgs": "libsmalltalkvm_build_args",
         },
     },
