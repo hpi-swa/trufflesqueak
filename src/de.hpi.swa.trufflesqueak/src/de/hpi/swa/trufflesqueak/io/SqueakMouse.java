@@ -73,11 +73,13 @@ public final class SqueakMouse {
 
     private static int mapButton(final MouseButton button) {
         if (button == MouseButton.PRIMARY) {
-            return MOUSE.RED;
+            return MOUSE.RED;       // Left Click
+        }
+        if (button == MouseButton.SECONDARY) {
+            return MOUSE.BLUE;      // Right Click
         }
         if (button == MouseButton.MIDDLE) {
-            return MOUSE.YELLOW;
+            return MOUSE.YELLOW;    // Middle Click
         }
         return 0;
-    }
-}
+    }}

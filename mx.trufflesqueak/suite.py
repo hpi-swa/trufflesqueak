@@ -354,6 +354,8 @@ suite = {
             "liblang_relpath": "../lib/<lib:smalltalkvm>",
             "default_vm_args": [
                 "--vm.-add-exports=java.base/jdk.internal.module=de.hpi.swa.trufflesqueak",
+                # Grant both JWM and Skija permission to execute fast native memory operations
+                "--vm.-enable-native-access=jwm,io.github.humbleui.skija.shared",
                 # Force headless AWT just in case some transitive dep tries to init it
                 "-Djava.awt.headless=true",
             ],

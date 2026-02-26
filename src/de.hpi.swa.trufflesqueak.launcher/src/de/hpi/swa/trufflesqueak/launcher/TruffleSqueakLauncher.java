@@ -101,20 +101,26 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
     protected void launch(final Context.Builder contextBuilder) {
         if (headless) {
             System.exit(execute(contextBuilder));
-
         } else {
             // Give JWM the Main Thread to run the native OS event loop
             App.start(() -> {
 
                 // Run the Squeak VM in a background thread
                 final Thread squeakVMThread = new Thread(() -> {
-                    // Execute the Squeak image
-                    final int exitCode = execute(contextBuilder);
+                    int exitCode = -1; // Assume crash by default
 
-                    // When Squeak exits, tell the JWM window to close
-                    App.terminate();
+                    try {
+                        // Execute the Squeak image
+                        exitCode = execute(contextBuilder);
+                    } catch (Throwable t) {
+                        // Log the fatal crash through the GraalVM launcher framework
+                        throw abort(t);
+                    } finally {
+                        // GUARANTEED TO RUN: When Squeak exits or crashes, tell the JWM window to close
+                        App.runOnUIThread(App::terminate);
+                    }
 
-                    // Shut down the JVM
+                    // Shut down the JVM completely (only reached if no exception was thrown)
                     System.exit(exitCode);
 
                 }, "SqueakVM-Thread");

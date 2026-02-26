@@ -13,7 +13,6 @@ import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayDeque;
 import java.util.function.Consumer;
 
 import com.oracle.truffle.api.CompilerAsserts;
@@ -58,21 +57,21 @@ import io.github.humbleui.jwm.skija.LayerD3D12Skija;
 import io.github.humbleui.jwm.skija.LayerGLSkija;
 import io.github.humbleui.jwm.skija.LayerMetalSkija;
 import io.github.humbleui.skija.Bitmap;
-import io.github.humbleui.skija.Canvas;
 import io.github.humbleui.skija.ColorAlphaType;
 import io.github.humbleui.skija.ColorType;
 import io.github.humbleui.skija.Image;
 import io.github.humbleui.skija.ImageInfo;
 import io.github.humbleui.skija.Pixmap;
 import io.github.humbleui.skija.Surface;
-import io.github.humbleui.types.IRect;
+import io.github.humbleui.types.Rect;
 
 public final class SqueakDisplay implements Consumer<Event> {
     private static final String DEFAULT_WINDOW_TITLE = "TruffleSqueak";
 
     public final SqueakImageContext image;
-    public Window window;
-    public Layer layer;
+    private Window window;
+    private volatile boolean hasWindow = false;
+    private Layer layer;
 
     // Input handlers
     public final SqueakMouse mouse;
@@ -82,11 +81,19 @@ public final class SqueakDisplay implements Consumer<Event> {
     private Bitmap squeakBitmap;
     private int[] squeakBitmapPixels;
     private IntBuffer pixelIntBuffer; // Direct buffer mapped to Skija's native memory
+    private Surface gpuSurface;       // Permanent Offscreen VRAM texture
+    private int dirtyTop = Integer.MAX_VALUE;
+    private int dirtyBottom = -1;
     private boolean deferUpdates;
     private boolean frameRequested = false;
 
+    // Cached window information (avoids calls on UI thread)
+    private int windowWidth = 0;
+    private int windowHeight = 0;
+    private double windowScaleFactor = 1.0d;
+
     // Event Queue
-    private final ArrayDeque<long[]> deferredEvents = new ArrayDeque<>();
+    private final java.util.concurrent.ConcurrentLinkedDeque<long[]> deferredEvents = new java.util.concurrent.ConcurrentLinkedDeque<>();
     @CompilationFinal private int inputSemaphoreIndex = -1;
 
     public int buttons;
@@ -99,6 +106,7 @@ public final class SqueakDisplay implements Consumer<Event> {
         // JWM must run on UI thread
         App.runOnUIThread(() -> {
             window = App.makeWindow();
+            hasWindow = true;
             window.setEventListener(this);
             window.setTitle(DEFAULT_WINDOW_TITLE);
 
@@ -115,20 +123,13 @@ public final class SqueakDisplay implements Consumer<Event> {
             window.setVisible(true);
             window.bringToFront();
             tryToSetTaskbarIcon();
+            cacheWindowInfo();
         });
     }
 
     public static SqueakDisplay create(final SqueakImageContext image) {
         CompilerAsserts.neverPartOfCompilation();
         return new SqueakDisplay(image);
-    }
-
-    public static double getScreenScaleFactor(final SqueakImageContext image) {
-        if (image.getDisplay() instanceof final SqueakDisplay display) {
-            return display.window.getScreen().getScale();
-        } else {
-            return App.getPrimaryScreen().getScale();
-        }
     }
 
     private void tryToSetTaskbarIcon() {
@@ -165,55 +166,160 @@ public final class SqueakDisplay implements Consumer<Event> {
         }
     }
 
+    public static double getScreenScaleFactor(final SqueakImageContext image) {
+        if (image.getDisplay() instanceof final SqueakDisplay display) {
+            return display.getWindowScaleFactor();
+        } else {
+            return getScreenScaleFactorSlow();
+        }
+    }
+
+    @TruffleBoundary
+    private static double getScreenScaleFactorSlow() {
+        // Request is occurring before Display has been created; have to do an inter-thread call.
+        final java.util.concurrent.CompletableFuture<Double> future = new java.util.concurrent.CompletableFuture<>();
+        App.runOnUIThread(() -> {
+            try {
+                future.complete((double) App.getPrimaryScreen().getScale());
+            } catch (Exception e) {
+                future.complete(1.0d);
+            }
+        });
+        try {
+            return future.get();
+        } catch (Exception e) {
+            return 1.0d;
+        }
+    }
+
+    private void cacheWindowInfo() {
+        // Called from the UI thread
+        if (window != null) {
+            windowWidth = window.getContentRect().getWidth();
+            windowHeight = window.getContentRect().getHeight();
+            windowScaleFactor = window.getScreen().getScale();
+        } else {
+            windowWidth = 0;
+            windowHeight = 0;
+            windowScaleFactor = 1.0d;
+        }
+    }
+
     @Override
     public void accept(final Event e) {
-        if (e instanceof EventFrameSkija) {
-            paint(((EventFrameSkija) e).getSurface());
-        } else if (e instanceof EventWindowClose || e instanceof EventWindowCloseRequest) {
-            // Don't terminate app here, let Squeak decide or use explicit close
-            addWindowEvent(WINDOW.CLOSE);
-        } else if (e instanceof EventWindowResize) {
-            addWindowEvent(WINDOW.METRIC_CHANGE);
-        } else if (e instanceof EventWindowScreenChange) {
-            // Reconfigure the GPU swap chain for the new monitor
-            if (layer != null) {
-                layer.reconfigure();
+        switch (e) {
+            case EventFrameSkija f -> paint(f.getSurface());
+
+            case EventWindowClose c -> addWindowEvent(WINDOW.CLOSE);
+            case EventWindowCloseRequest cr -> addWindowEvent(WINDOW.CLOSE);
+
+            case EventWindowResize r -> {
+                cacheWindowInfo();
+                addWindowEvent(WINDOW.METRIC_CHANGE);
             }
-            addWindowEvent(WINDOW.METRIC_CHANGE);
-        } else if (e instanceof EventWindowFocusIn) {
-            addWindowEvent(WINDOW.ACTIVATED);
-        } else if (e instanceof EventWindowFocusOut) {
-            addWindowEvent(WINDOW.DEACTIVATED);
-        } else if (e instanceof EventMouseMove) {
-            mouse.onMove((EventMouseMove) e);
-        } else if (e instanceof EventMouseButton) {
-            mouse.onButton((EventMouseButton) e);
-        } else if (e instanceof EventMouseScroll) {
-            mouse.onScroll((EventMouseScroll) e);
-        } else if (e instanceof EventKey) {
-            keyboard.onKey((EventKey) e);
-        } else if (e instanceof EventTextInput) {
-            keyboard.onTextInput((EventTextInput) e);
+            case EventWindowScreenChange sc -> {
+                // Reconfigure the GPU swap chain for the new monitor
+                if (layer != null) {
+                    layer.reconfigure();
+                }
+                cacheWindowInfo();
+                addWindowEvent(WINDOW.METRIC_CHANGE);
+            }
+
+            case EventWindowFocusIn fi -> addWindowEvent(WINDOW.ACTIVATED);
+            case EventWindowFocusOut fo -> addWindowEvent(WINDOW.DEACTIVATED);
+
+            case EventMouseMove m -> mouse.onMove(m);
+            case EventMouseButton b -> mouse.onButton(b);
+            case EventMouseScroll s -> mouse.onScroll(s);
+
+            case EventKey k -> keyboard.onKey(k);
+            case EventTextInput ti -> keyboard.onTextInput(ti);
+
+            default -> {
+                // Ignore any other JWM events we don't care about
+            }
+        }
+    }
+
+    private void paint(final Surface swapchainSurface) {
+        if (window == null || swapchainSurface == null || squeakBitmap == null) {
+            return;
+        }
+
+        synchronized (this) {
+            frameRequested = false;
+
+            final int width = squeakBitmap.getWidth();
+            final int height = squeakBitmap.getHeight();
+
+            // Lazily allocate the GPU surface
+            if (gpuSurface == null) {
+                final ImageInfo info = new ImageInfo(width, height, ColorType.BGRA_8888, ColorAlphaType.PREMUL);
+
+                // Grab the context directly from the active swapchain surface
+                if (swapchainSurface._context != null) {
+                    // Create a permanent hardware-accelerated VRAM texture
+                    gpuSurface = Surface.makeRenderTarget(swapchainSurface._context, false, info);
+                }
+
+                if (gpuSurface == null) {
+                    // Fallback to CPU raster if hardware rendering is unavailable
+                    gpuSurface = Surface.makeRaster(info);
+                }
+            }
+
+            // Upload ONLY the dirty band to the GPU
+            if (dirtyTop <= dirtyBottom) {
+                try (Image skiaImage = Image.makeRasterFromBitmap(squeakBitmap)) {
+                    final Rect dirtyRect = Rect.makeLTRB(0, dirtyTop, width, dirtyBottom + 1);
+                    gpuSurface.getCanvas().drawImageRect(skiaImage, dirtyRect, dirtyRect, null);
+                }
+
+                // Reset the dirty tracker for the next frame
+                dirtyTop = Integer.MAX_VALUE;
+                dirtyBottom = -1;
+            }
+
+            // Stamp the complete, tear-free GPU texture onto the rotating JWM swapchain
+            try (Image gpuSnapshot = gpuSurface.makeImageSnapshot()) {
+                swapchainSurface.getCanvas().drawImage(gpuSnapshot, 0, 0);
+            }
         }
     }
 
     @TruffleBoundary
     @SuppressWarnings("unused")
     public void showDisplayRect(final int left, final int top, final int right, final int bottom) {
-        if (window != null) {
+        if (squeakBitmap != null) {
             boolean shouldRequestFrame = false;
 
-            synchronized (this) {
-                // Zero-allocation, Zero-Java-copy snapshot directly into Skija's native memory!
-                if (pixelIntBuffer != null && squeakBitmapPixels != null && pixelIntBuffer.capacity() == squeakBitmapPixels.length) {
-                    pixelIntBuffer.clear(); // Reset the buffer position to 0
-                    pixelIntBuffer.put(squeakBitmapPixels); // Fast block-transfer directly to C++
-                }
+            // Clip vertical bounds to prevent array out-of-bounds exceptions
+            final int width = squeakBitmap.getWidth();
+            final int height = squeakBitmap.getHeight();
+            final int clippedTop = Math.max(0, top);
+            final int clippedBottom = Math.min(height - 1, bottom);
 
-                // Check and set the lock atomically within the pixel-copy boundary
-                if (!frameRequested) {
-                    frameRequested = true;
-                    shouldRequestFrame = true;
+            if (clippedTop <= clippedBottom) {
+                synchronized (this) {
+                    if (pixelIntBuffer != null && squeakBitmapPixels != null) {
+                        // Fast block-transfer exactly one slice of memory
+                        final int offset = clippedTop * width;
+                        final int length = (clippedBottom - clippedTop + 1) * width;
+
+                        pixelIntBuffer.position(offset);
+                        pixelIntBuffer.put(squeakBitmapPixels, offset, length);
+
+                        // Accumulate the dirty band for the GPU thread
+                        dirtyTop = Math.min(dirtyTop, clippedTop);
+                        dirtyBottom = Math.max(dirtyBottom, clippedBottom);
+                    }
+
+                    // Check and set the lock atomically
+                    if (!frameRequested) {
+                        frameRequested = true;
+                        shouldRequestFrame = true;
+                    }
                 }
             }
 
@@ -224,25 +330,6 @@ public final class SqueakDisplay implements Consumer<Event> {
                         window.requestFrame();
                     }
                 });
-            }
-        }
-    }
-
-    private void paint(final Surface surface) {
-        if (window == null || surface == null || squeakBitmap == null) {
-            return;
-        }
-
-        synchronized (this) {
-            // Open the gate for the NEXT frame exactly as we consume the CURRENT frame
-            frameRequested = false;
-
-            final Canvas canvas = surface.getCanvas();
-            canvas.clear(0xFF000000);
-
-            // makeRasterFromBitmap safely handles the native GPU handoff
-            try (Image skiaImage = Image.makeRasterFromBitmap(squeakBitmap)) {
-                canvas.drawImage(skiaImage, 0, 0);
             }
         }
     }
@@ -264,9 +351,13 @@ public final class SqueakDisplay implements Consumer<Event> {
             synchronized (this) {
                 squeakBitmapPixels = bitmap.getIntStorage();
 
-                // Clean up the old bitmap if we are resizing to prevent native memory leaks
+                // Clean up the old bitmap and GPU surface if resizing
                 if (squeakBitmap != null) {
                     squeakBitmap.close();
+                }
+                if (gpuSurface != null) {
+                    gpuSurface.close();
+                    gpuSurface = null; // Will be lazily recreated on the UI thread
                 }
 
                 // Initialize the new Skija Bitmap
@@ -283,19 +374,32 @@ public final class SqueakDisplay implements Consumer<Event> {
                         }
                     }
                 }
-            }
 
-            // Force a repaint now that the buffers are ready
-            showDisplayRect(0, 0, width - 1, height - 1);
+                // Mark the entire screen as dirty for the initial frame
+                dirtyTop = 0;
+                dirtyBottom = height - 1;
+
+                // Tell the OS we are ready to draw the very first frame
+                if (!frameRequested) {
+                    frameRequested = true;
+                    App.runOnUIThread(() -> {
+                        if (window != null) {
+                            window.requestFrame();
+                        }
+                    });
+                }
+            }
         }
     }
 
     @TruffleBoundary
     public void close() {
+        hasWindow = false;
         App.runOnUIThread(() -> {
             if (window != null) {
                 window.close();
                 window = null;
+                cacheWindowInfo();
             }
         });
     }
@@ -310,11 +414,15 @@ public final class SqueakDisplay implements Consumer<Event> {
     }
 
     public int getWindowWidth() {
-        return window != null ? window.getContentRect().getWidth() : 0;
+        return windowWidth;
     }
 
     public int getWindowHeight() {
-        return window != null ? window.getContentRect().getHeight() : 0;
+        return windowHeight;
+    }
+
+    public double getWindowScaleFactor() {
+        return windowScaleFactor;
     }
 
     @TruffleBoundary
@@ -350,17 +458,13 @@ public final class SqueakDisplay implements Consumer<Event> {
 
     @TruffleBoundary
     public boolean isVisible() {
-        return window != null; // Simplified
+        return hasWindow;
     }
 
     @TruffleBoundary
     @SuppressWarnings("unused")
     public void setCursor(final int[] cursorWords, final int[] mask, final int width, final int height, final int depth, final int offsetX, final int offsetY) {
         // ToDo: Do this right!
-        if (window == null) {
-            return;
-        }
-
         MouseCursor jwmCursor = MouseCursor.ARROW;
 
         if (cursorWords != null && cursorWords.length > 0) {
@@ -466,13 +570,34 @@ public final class SqueakDisplay implements Consumer<Event> {
 
     @TruffleBoundary
     public static String getClipboardData() {
-        final ClipboardEntry entry = Clipboard.get(ClipboardFormat.TEXT);
-        return entry == null ? "" : entry.getString();
+        final java.util.concurrent.CompletableFuture<String> future = new java.util.concurrent.CompletableFuture<>();
+
+        App.runOnUIThread(() -> {
+            try {
+                final ClipboardEntry entry = Clipboard.get(ClipboardFormat.TEXT);
+                future.complete(entry == null ? "" : entry.getString());
+            } catch (Exception e) {
+                // Clipboard might be locked by another OS process
+                future.complete("");
+            }
+        });
+
+        try {
+            return future.get();
+        } catch (Exception e) {
+            return "";
+        }
     }
 
     @TruffleBoundary
     public static void setClipboardData(final String text) {
-        Clipboard.set(ClipboardEntry.makeString(ClipboardFormat.TEXT, text));
+        App.runOnUIThread(() -> {
+            try {
+                Clipboard.set(ClipboardEntry.makeString(ClipboardFormat.TEXT, text));
+            } catch (Exception e) {
+                LogUtils.IO.warning("JWM failed to set OS clipboard: " + e.getMessage());
+            }
+        });
     }
 
     @TruffleBoundary
