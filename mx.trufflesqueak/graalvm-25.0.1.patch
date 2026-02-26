@@ -11,3 +11,112 @@ index 79c97354020..9518d41f5db 100644
        "graalCompilerSourceEdition": "ignore",
      },
      "org.graalvm.launcher.test" : {
+diff --git a/truffle/src/com.oracle.truffle.api.instrumentation/src/com/oracle/truffle/api/instrumentation/InstrumentationHandler.java b/truffle/src/com.oracle.truffle.api.instrumentation/src/com/oracle/truffle/api/instrumentation/InstrumentationHandler.java
+index 29f9331b139..2e9de07ea4d 100644
+--- a/truffle/src/com.oracle.truffle.api.instrumentation/src/com/oracle/truffle/api/instrumentation/InstrumentationHandler.java
++++ b/truffle/src/com.oracle.truffle.api.instrumentation/src/com/oracle/truffle/api/instrumentation/InstrumentationHandler.java
+@@ -97,7 +97,7 @@ import com.oracle.truffle.api.source.SourceSection;
+  * Central coordinator class for the Truffle instrumentation framework. Allocated once per
+  * {@linkplain org.graalvm.polyglot.Engine engine}.
+  */
+-final class InstrumentationHandler {
++public final class InstrumentationHandler {
+ 
+     /* Enable trace output to stdout. */
+     static final boolean TRACE = Boolean.getBoolean("truffle.instrumentation.trace");
+@@ -110,7 +110,7 @@ final class InstrumentationHandler {
+ 
+     private final ThreadLocal<List<BindingLoadSourceSectionEvent>> threadLocalSourceSectionLoadedList = new ThreadLocal<>();
+ 
+-    final Collection<RootNode> loadedRoots = new WeakAsyncList<>(256);
++    public static final Collection<RootNode> loadedRoots = new WeakAsyncList<>(256);
+     private final Collection<RootNode> executedRoots = new WeakAsyncList<>(64);
+     private final Map<LanguageInfo, AllocationReporter> allocationReporters = new WeakHashMap<>();
+ 
+diff --git a/truffle/src/com.oracle.truffle.runtime/src/com/oracle/truffle/runtime/BackgroundCompileQueue.java b/truffle/src/com.oracle.truffle.runtime/src/com/oracle/truffle/runtime/BackgroundCompileQueue.java
+index a8da704feaa..2ab011c5221 100644
+--- a/truffle/src/com.oracle.truffle.runtime/src/com/oracle/truffle/runtime/BackgroundCompileQueue.java
++++ b/truffle/src/com.oracle.truffle.runtime/src/com/oracle/truffle/runtime/BackgroundCompileQueue.java
+@@ -51,6 +51,7 @@ import java.util.concurrent.BlockingQueue;
+ import java.util.concurrent.Callable;
+ import java.util.concurrent.ConcurrentHashMap;
+ import java.util.concurrent.ExecutorService;
++import java.util.concurrent.Executors;
+ import java.util.concurrent.LinkedBlockingDeque;
+ import java.util.concurrent.PriorityBlockingQueue;
+ import java.util.concurrent.RejectedExecutionException;
+@@ -59,8 +60,10 @@ import java.util.concurrent.ThreadFactory;
+ import java.util.concurrent.ThreadPoolExecutor;
+ import java.util.concurrent.TimeUnit;
+ import java.util.concurrent.atomic.AtomicLong;
++import java.util.concurrent.locks.LockSupport;
+ import java.util.function.Consumer;
+ 
++import com.oracle.truffle.api.instrumentation.InstrumentationHandler;
+ import com.oracle.truffle.runtime.CompilationTask.ExecutorServiceWrapper;
+ 
+ /**
+@@ -161,6 +164,30 @@ public class BackgroundCompileQueue {
+                 threadPoolExecutor.allowCoreThreadTimeOut(true);
+             }
+ 
++            boolean traceCompilation = callTarget.getOptionValue(OptimizedRuntimeOptions.TraceCompilation);
++
++            Executors.newSingleThreadExecutor().submit(() -> {
++                while (!Thread.interrupted()) {
++                    LockSupport.parkNanos(1_000_000_000);
++                    int zero = 0;
++                    int cancelled = 0;
++                    for (var root : InstrumentationHandler.loadedRoots) {
++                        if (root.getCallTarget() instanceof OptimizedCallTarget oct) {
++                            if (oct.decay()) {
++                                zero++;
++                                if (oct.isCompiling()) {
++                                    cancelled++;
++                                    oct.cancelCompilation("back to zero");
++                                }
++                            }
++                        }
++                    }
++                    if (traceCompilation) {
++                        System.out.printf("Back to zero: %s; cancelled: %s%n", +zero, cancelled);
++                    }
++                }
++            });
++
+             return executor = threadPoolExecutor;
+         }
+     }
+diff --git a/truffle/src/com.oracle.truffle.runtime/src/com/oracle/truffle/runtime/OptimizedCallTarget.java b/truffle/src/com.oracle.truffle.runtime/src/com/oracle/truffle/runtime/OptimizedCallTarget.java
+index 46791032cf7..fc405b78e3c 100644
+--- a/truffle/src/com.oracle.truffle.runtime/src/com/oracle/truffle/runtime/OptimizedCallTarget.java
++++ b/truffle/src/com.oracle.truffle.runtime/src/com/oracle/truffle/runtime/OptimizedCallTarget.java
+@@ -686,6 +686,15 @@ public abstract class OptimizedCallTarget implements TruffleCompilable, RootCall
+          */
+     }
+ 
++    public boolean decay() {
++        if (callCount < 10 || callAndLoopCount < 10) {
++            return false;
++        }
++        callCount = callCount * 3 / 4;
++        callAndLoopCount = callAndLoopCount * 3 / 4;
++        return callCount < 100 || callAndLoopCount < 100;
++    }
++
+     private boolean interpreterCall() {
+         if (TruffleOptions.AOT) {
+             ensureStackSpace(engine.interpreterCallStackHeadRoom);
+diff --git a/truffle/src/com.oracle.truffle.runtime/src/com/oracle/truffle/runtime/TraversingBlockingQueue.java b/truffle/src/com.oracle.truffle.runtime/src/com/oracle/truffle/runtime/TraversingBlockingQueue.java
+index 3547541fc10..d018ebc9b41 100644
+--- a/truffle/src/com.oracle.truffle.runtime/src/com/oracle/truffle/runtime/TraversingBlockingQueue.java
++++ b/truffle/src/com.oracle.truffle.runtime/src/com/oracle/truffle/runtime/TraversingBlockingQueue.java
+@@ -57,7 +57,7 @@ class TraversingBlockingQueue implements BlockingQueue<Runnable> {
+     }
+ 
+     @SuppressWarnings("unchecked")
+-    private static CompilationTask task(Runnable entry) {
++    public static CompilationTask task(Runnable entry) {
+         return ((CompilationTask.ExecutorServiceWrapper) entry).getCompileTask();
+     }
+ 
