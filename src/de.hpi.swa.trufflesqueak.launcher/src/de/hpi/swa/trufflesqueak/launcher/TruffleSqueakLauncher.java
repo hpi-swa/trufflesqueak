@@ -43,7 +43,7 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
     private String imagePath;
     private String sourceCode;
     private boolean enableTranscriptForwarding;
-    private boolean useEngineModeLatency = true;
+    private boolean useEngineModeLatency = false;
 
     public static void main(final String[] arguments) throws RuntimeException {
         new TruffleSqueakLauncher().launch(arguments);
