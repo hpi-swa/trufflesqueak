@@ -18,7 +18,7 @@ on:
   workflow_dispatch:
 
 env:
-  GRAALVM_VERSION: '25.0.1-ea.13'
+  GRAALVM_VERSION: '25.0.2-ea.15'
   JVMCI_VERSION_CHECK: 'warn' # version of EA build does not always match
   JAVA_VERSION: '25.0.2'
   NATIVE_IMAGE_OPTIONS: '-J-XX:MaxRAMPercentage=100'
@@ -243,7 +243,7 @@ jobs:
         path: trufflesqueak-*.iprof
 
   build-native-standalone:
-    # needs: build-instrumented
+    needs: build-instrumented
     strategy:
       fail-fast: false
       matrix:
@@ -282,11 +282,11 @@ jobs:
     - name: Set up dependencies
       shell: bash
       run: mx.trufflesqueak/utils.sh set-up-dependencies ${{ matrix.type }}
-    # - name: Download PGO profiles
-    #   uses: actions/download-artifact@v4
-    #   with:
-    #     name: trufflesqueak-profiles
-    #   if: ${{ matrix.type == 'native' }}
+    - name: Download PGO profiles
+      uses: actions/download-artifact@v4
+      with:
+        name: trufflesqueak-profiles
+      if: ${{ matrix.type == 'native' }}
     - name: Free resources on macOS
       run: |
         echo "Disabling Spotlight indexing..."
@@ -307,14 +307,14 @@ jobs:
         echo "NATIVE_IMAGE_OPTIONS=--parallelism=1 ${NATIVE_IMAGE_OPTIONS}" >> $GITHUB_ENV
       if: ${{ runner.os == 'macOS' }}
     - name: Build TruffleSqueak standalone
-      # export NATIVE_IMAGE_OPTIONS="${NATIVE_IMAGE_OPTIONS} --pgo=${{ env.PGO_FILE_CUIS }},${{ env.PGO_FILE_SQUEAK }}"
       run: |
+        export NATIVE_IMAGE_OPTIONS="${NATIVE_IMAGE_OPTIONS} --pgo=${{ env.PGO_FILE_CUIS }},${{ env.PGO_FILE_SQUEAK }}"
         mx.trufflesqueak/utils.sh build-standalone ${{ matrix.type }}
       if: ${{ runner.os != 'Windows' }}
     - name: Build TruffleSqueak standalone via cmd.exe
       shell: cmd
-      # set NATIVE_IMAGE_OPTIONS=%NATIVE_IMAGE_OPTIONS% --pgo=${{ env.PGO_FILE_CUIS }},${{ env.PGO_FILE_SQUEAK }}
       run: |
+        set NATIVE_IMAGE_OPTIONS=%NATIVE_IMAGE_OPTIONS% --pgo=${{ env.PGO_FILE_CUIS }},${{ env.PGO_FILE_SQUEAK }}
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
         call mx --env trufflesqueak-${{ matrix.type }} --no-download-progress build
         if ${{ matrix.type }}==native (set "STANDALONE_NAME=TRUFFLESQUEAK_NATIVE_STANDALONE") else (set "STANDALONE_NAME=TRUFFLESQUEAK_JVM_STANDALONE") 
