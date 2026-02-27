@@ -17,8 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import io.github.humbleui.jwm.App;
-
 import org.graalvm.launcher.AbstractLanguageLauncher;
 import org.graalvm.maven.downloader.Main;
 import org.graalvm.options.OptionCategory;
@@ -31,6 +29,7 @@ import org.graalvm.polyglot.Value;
 import de.hpi.swa.trufflesqueak.shared.SqueakImageLocator;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageOptions;
+import io.github.humbleui.jwm.App;
 
 public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
     private static final String ENGINE_MODE_OPTION = "engine.Mode";
@@ -116,7 +115,8 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
                         // Log the fatal crash through the GraalVM launcher framework
                         throw abort(t);
                     } finally {
-                        // GUARANTEED TO RUN: When Squeak exits or crashes, tell the JWM window to close
+                        // GUARANTEED TO RUN: When Squeak exits or crashes, tell the JWM window to
+                        // close
                         App.runOnUIThread(App::terminate);
                     }
 

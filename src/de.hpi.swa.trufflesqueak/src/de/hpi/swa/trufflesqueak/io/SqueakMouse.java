@@ -82,4 +82,5 @@ public final class SqueakMouse {
             return MOUSE.YELLOW;    // Middle Click
         }
         return 0;
-    }}
+    }
+}
