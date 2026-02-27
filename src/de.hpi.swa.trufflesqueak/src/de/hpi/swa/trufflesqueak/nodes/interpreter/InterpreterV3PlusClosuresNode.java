@@ -382,31 +382,31 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         break;
                     }
                     case BC.RETURN_RECEIVER: {
-                        returnValue = handleReturn(frame, currentPC, pc, sp, FrameAccess.getReceiver(frame),
+                        returnValue = handleReturn(frame, currentPC, sp, FrameAccess.getReceiver(frame),
                                         CompilerDirectives.inCompiledCode() && CompilerDirectives.hasNextTier() ? loopCounter.value : counter);
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_TRUE: {
-                        returnValue = handleReturn(frame, currentPC, pc, sp, BooleanObject.TRUE,
+                        returnValue = handleReturn(frame, currentPC, sp, BooleanObject.TRUE,
                                         CompilerDirectives.inCompiledCode() && CompilerDirectives.hasNextTier() ? loopCounter.value : counter);
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_FALSE: {
-                        returnValue = handleReturn(frame, currentPC, pc, sp, BooleanObject.FALSE,
+                        returnValue = handleReturn(frame, currentPC, sp, BooleanObject.FALSE,
                                         CompilerDirectives.inCompiledCode() && CompilerDirectives.hasNextTier() ? loopCounter.value : counter);
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_NIL: {
-                        returnValue = handleReturn(frame, currentPC, pc, sp, NilObject.SINGLETON,
+                        returnValue = handleReturn(frame, currentPC, sp, NilObject.SINGLETON,
                                         CompilerDirectives.inCompiledCode() && CompilerDirectives.hasNextTier() ? loopCounter.value : counter);
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_TOP_FROM_METHOD: {
-                        returnValue = handleReturn(frame, currentPC, pc, sp, top(frame, sp),
+                        returnValue = handleReturn(frame, currentPC, sp, top(frame, sp),
                                         CompilerDirectives.inCompiledCode() && CompilerDirectives.hasNextTier() ? loopCounter.value : counter);
                         pc = LOCAL_RETURN_PC;
                         break;

@@ -259,12 +259,12 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         return Byte.toUnsignedInt(getByte(bc, pc));
     }
 
-    protected final Object handleReturn(final VirtualFrame frame, final int currentPC, final int pc, final int sp, final Object result, final int loopCounter) {
+    protected final Object handleReturn(final VirtualFrame frame, final int currentPC, final int sp, final Object result, final int loopCounter) {
         if (loopCounter > 0) {
             LoopNode.reportLoopCount(this, loopCounter);
         }
         if (isBlock) {
-            return handleBlockReturn(frame, currentPC, pc, sp, result);
+            return handleBlockReturn(frame, currentPC, sp, result);
         } else {
             return handleNormalReturn(frame, currentPC, result);
         }
@@ -290,13 +290,14 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     }
 
     @InliningCutoff
-    private Object handleBlockReturn(final VirtualFrame frame, final int currentPC, final int pc, final int sp, final Object result) {
+    private Object handleBlockReturn(final VirtualFrame frame, final int currentPC, final int sp, final Object result) {
         // Target is sender of closure's home context.
         final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
         if (homeContext.canBeReturnedTo()) {
             final ContextObject firstMarkedContext = firstUnwindMarkedOrThrowNLR(FrameAccess.getSender(frame), homeContext, result);
             if (firstMarkedContext != null) {
-                externalizePCAndSP(frame, pc, sp);
+                final int nextPC = currentPC + 1; // all returns are 1-byte bytecodes
+                externalizePCAndSP(frame, nextPC, sp);
                 if (data[currentPC] == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     data[currentPC] = insert(Dispatch2NodeGen.create(getContext().aboutToReturnSelector));
