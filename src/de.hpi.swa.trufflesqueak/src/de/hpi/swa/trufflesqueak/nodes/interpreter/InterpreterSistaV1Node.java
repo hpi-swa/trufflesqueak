@@ -387,7 +387,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final State state = new State(code.getBytes(), loopCounter);
         final VirtualState virtualState = new VirtualState(startSP);
 
-        hoistState(state.interpreterLoopCounter, virtualState.sp);
+        // hoistState(state.interpreterLoopCounter, virtualState.sp);
 
         Object returnValue = null;
         try {
@@ -912,8 +912,13 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         } else {
             values = ArrayUtils.withAll(arraySize, NilObject.SINGLETON);
         }
-        push(frame, virtualState.sp++, ArrayObject.createWithStorage(getContext().arrayClass, values));
+        push(frame, virtualState.sp++, getArrayObject(values));
         return pc + 2;
+    }
+
+    @CompilerDirectives.TruffleBoundary(allowInlining = true)
+    private ArrayObject getArrayObject(Object[] values) {
+        return ArrayObject.createWithStorage(getContext().arrayClass, values);
     }
 
     @SuppressWarnings("unused")
@@ -951,9 +956,14 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final boolean receiverOnStack = (byteB & 0x80) != 0;
         final ContextObject outerContext = ignoreContext ? null : getOrCreateContext(frame, pc);
         final Object receiver = receiverOnStack ? pop(frame, --virtualState.sp) : FrameAccess.getReceiver(frame);
-        push(frame, virtualState.sp++, new BlockClosureObject(false, block, block.getNumArgs(), copiedValues, receiver, outerContext));
+        push(frame, virtualState.sp++, getBlockClosureObject(block, copiedValues, receiver, outerContext));
         virtualState.resetExtensions();
         return pc + 3;
+    }
+
+    @CompilerDirectives.TruffleBoundary(allowInlining = true)
+    private static BlockClosureObject getBlockClosureObject(CompiledCodeObject block, Object[] copiedValues, Object receiver, ContextObject outerContext) {
+        return new BlockClosureObject(false, block, block.getNumArgs(), copiedValues, receiver, outerContext);
     }
 
     @SuppressWarnings("unused")
