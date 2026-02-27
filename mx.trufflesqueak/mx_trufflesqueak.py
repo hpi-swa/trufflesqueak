@@ -6,9 +6,6 @@
 #
 
 import os
-import glob
-import zipfile
-import json
 import mx
 import mx_gate
 import mx_truffle
@@ -45,50 +42,6 @@ def libsmalltalkvm_build_args():
     is_oracle_graalvm = "-community" not in java_home and java_home != ""
     if is_oracle_graalvm and mx.get_os() == "linux":
         build_args.append("--gc=G1")
-
-    # 1. Setup the temporary auto-generated UI config folder (lives in mxbuild)
-    auto_config_dir = os.path.join(_SUITE.dir, "mxbuild", "auto-jni-config")
-    os.makedirs(auto_config_dir, exist_ok=True)
-
-    # 2. Auto-generate the broad HumbleUI config
-    cache_dir = os.path.expanduser("~/.mx/cache")
-    target_jars = glob.glob(os.path.join(cache_dir, "**", "*.jar"), recursive=True)
-
-    class_set = set()
-    for jar in target_jars:
-        try:
-            with zipfile.ZipFile(jar, "r") as z:
-                for file_path in z.namelist():
-                    if (
-                        file_path.endswith(".class")
-                        and "io/github/humbleui" in file_path
-                    ):
-                        class_set.add(file_path.replace("/", ".")[:-6])
-        except zipfile.BadZipFile:
-            pass
-
-    if class_set:
-        jni_config = [
-            {
-                "name": cls,
-                "allDeclaredConstructors": True,
-                "allPublicConstructors": True,
-                "allDeclaredMethods": True,
-                "allPublicMethods": True,
-                "allDeclaredFields": True,
-                "allPublicFields": True,
-            }
-            for cls in sorted(class_set)
-        ]
-
-        with open(os.path.join(auto_config_dir, "jni-config.json"), "w") as f:
-            json.dump(jni_config, f, indent=2)
-
-        mx.log(f"Auto-generated JNI config for {len(class_set)} HumbleUI classes.")
-
-        # 3. Feed the dynamic directory to GraalVM
-        # (GraalVM automatically finds the META-INF.native-image/jwm-skija files)
-        build_args.append(f"-H:ConfigurationFileDirectories={auto_config_dir}")
 
     return build_args
 

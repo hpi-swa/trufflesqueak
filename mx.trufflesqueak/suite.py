@@ -374,9 +374,9 @@ suite = {
                 "-Dorg.graalvm.launcher.class=de.hpi.swa.trufflesqueak.launcher.TruffleSqueakLauncher",
                 "-H:+IncludeNodeSourcePositions",  # for improved stack traces on deopts
                 "-H:-DetectUserDirectoriesInImageHeap",  # ToDo: scrub GitHub path from Skija packages
-                # JNI/JWM Configuration
-                "-H:+JNI",
-                # Tells Native Image to defer Skija/JWM native library loading until the app actually runs
+                # Preserve Skija/JWM for JNI and reflective access
+                "-H:Preserve=package=io.github.humbleui.*",
+                # Avoid initializing Skija/JWM at build time
                 "--initialize-at-run-time=io.github.humbleui",
             ],
             # Dynamically select the correct native libraries and icons to bundle into the Native Image
