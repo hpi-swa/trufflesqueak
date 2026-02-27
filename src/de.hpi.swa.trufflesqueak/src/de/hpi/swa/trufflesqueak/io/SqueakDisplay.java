@@ -30,7 +30,6 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.FORM;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.HostWindowPlugin;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
-
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 import io.github.humbleui.jwm.App;
 import io.github.humbleui.jwm.Clipboard;
@@ -109,16 +108,12 @@ public final class SqueakDisplay implements Consumer<Event> {
             hasWindow = true;
             window.setEventListener(this);
             window.setTitle(DEFAULT_WINDOW_TITLE);
-
-            // Select appropriate layer based on OS
-            if (Platform.CURRENT == Platform.MACOS) {
-                layer = new LayerMetalSkija();
-            } else if (Platform.CURRENT == Platform.WINDOWS) {
-                layer = new LayerD3D12Skija();
-            } else {
-                layer = new LayerGLSkija();
-            }
-
+            window.setWindowSize(image.flags.getSnapshotScreenWidth(), image.flags.getSnapshotScreenHeight());
+            layer = switch (Platform.CURRENT) {
+                case MACOS -> new LayerMetalSkija();
+                case WINDOWS -> new LayerD3D12Skija();
+                case X11 -> new LayerGLSkija();
+            };
             window.setLayer(layer);
             window.setVisible(true);
             window.bringToFront();
@@ -195,8 +190,8 @@ public final class SqueakDisplay implements Consumer<Event> {
     private void cacheWindowInfo() {
         // Called from the UI thread
         if (window != null) {
-            windowWidth = window.getContentRect().getWidth();
-            windowHeight = window.getContentRect().getHeight();
+            windowWidth = window.getWindowRect().getWidth();
+            windowHeight = window.getWindowRect().getHeight();
             windowScaleFactor = window.getScreen().getScale();
         } else {
             windowWidth = 0;
@@ -406,9 +401,11 @@ public final class SqueakDisplay implements Consumer<Event> {
 
     @TruffleBoundary
     public void resizeTo(final int width, final int height) {
+        windowWidth = width;
+        windowHeight = height;
         App.runOnUIThread(() -> {
             if (window != null) {
-                window.setContentSize(width, height);
+                window.setWindowSize(windowWidth, windowHeight);
             }
         });
     }
