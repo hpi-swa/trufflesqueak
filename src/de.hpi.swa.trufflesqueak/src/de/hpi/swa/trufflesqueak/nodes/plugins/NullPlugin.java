@@ -21,7 +21,6 @@ import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.io.SqueakDisplay;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -43,10 +42,10 @@ public final class NullPlugin extends AbstractPrimitiveFactoryHolder {
         @Override
         public Object execute(final VirtualFrame frame, final Object receiver) {
             final SqueakImageContext image = getContext();
-            if (image.options.isHeadless()) {
-                return 1.0d;
+            if (image.hasDisplay()) {
+                return image.getDisplay().getWindowScaleFactor();
             } else {
-                return SqueakDisplay.getScreenScaleFactor(image);
+                return 1.0d;
             }
         }
     }

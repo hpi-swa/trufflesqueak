@@ -133,15 +133,11 @@ public final class SqueakDisplay implements Consumer<Event> {
         }
 
         try {
-            final String iconExt;
-            if (Platform.CURRENT == Platform.MACOS) {
-                iconExt = ".icns";
-            } else if (Platform.CURRENT == Platform.WINDOWS) {
-                iconExt = ".ico";
-            } else {
-                // X11 and Wayland (Linux) support standard PNGs
-                iconExt = ".png";
-            }
+            final String iconExt = switch (Platform.CURRENT) {
+                case MACOS -> ".icns";
+                case WINDOWS -> ".ico";
+                case X11 -> ".png";
+            };
 
             final String resourcePath = "/trufflesqueak-icon" + iconExt;
             final java.net.URL resource = SqueakDisplay.class.getResource(resourcePath);
@@ -158,32 +154,6 @@ public final class SqueakDisplay implements Consumer<Event> {
             }
         } catch (Exception e) {
             LogUtils.IO.warning(e.toString());
-        }
-    }
-
-    public static double getScreenScaleFactor(final SqueakImageContext image) {
-        if (image.getDisplay() instanceof final SqueakDisplay display) {
-            return display.getWindowScaleFactor();
-        } else {
-            return getScreenScaleFactorSlow();
-        }
-    }
-
-    @TruffleBoundary
-    private static double getScreenScaleFactorSlow() {
-        // Request is occurring before Display has been created; have to do an inter-thread call.
-        final java.util.concurrent.CompletableFuture<Double> future = new java.util.concurrent.CompletableFuture<>();
-        App.runOnUIThread(() -> {
-            try {
-                future.complete((double) App.getPrimaryScreen().getScale());
-            } catch (Exception e) {
-                future.complete(1.0d);
-            }
-        });
-        try {
-            return future.get();
-        } catch (Exception e) {
-            return 1.0d;
         }
     }
 
