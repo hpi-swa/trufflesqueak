@@ -93,6 +93,15 @@
           "parameterTypes": []
         }
       ]
+    },
+    {
+      "type": "com.oracle.truffle.runtime.OptimizedTruffleRuntime",
+      "methods": [
+        {
+          "name": "getCompileQueue",
+          "parameterTypes": []
+        }
+      ]
     }
   ],
   "resources": [
