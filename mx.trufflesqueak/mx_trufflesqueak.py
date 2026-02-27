@@ -37,12 +37,9 @@ def libsmalltalkvm_build_args():
         else ("armv8.1-a" if mx.get_arch() == "aarch64" else "compatibility")
     )
     build_args.append(f"-march={selected_march}")
-
-    java_home = os.getenv("JAVA_HOME", "")
-    is_oracle_graalvm = "-community" not in java_home and java_home != ""
+    is_oracle_graalvm = "-community" not in os.getenv("JAVA_HOME")
     if is_oracle_graalvm and mx.get_os() == "linux":
         build_args.append("--gc=G1")
-
     return build_args
 
 
