@@ -132,7 +132,7 @@ suite = {
             "useModulePath": True,
         },
         # ==========================================================================
-        #  JWM (Java Window Manager) - AWT-Free Windowing
+        #  Java Window Manager (JWM)
         # ==========================================================================
         "JWM": {
             "moduleName": "jwm",
@@ -141,7 +141,20 @@ suite = {
                 "artifactId": "jwm",
                 "version": "0.4.24",
             },
+            "dependencies": ["JETBRAINS_ANNOTATIONS", "HUMBLE_UI_TYPES"],
             "digest": "sha256:a67c689bafb15f596c8ccefcf880d9b2457e2087b4af8c4b6a7b51bad982696a",
+            "licence": "Apache-2.0",
+            "useModulePath": True,
+        },
+        "HUMBLE_UI_TYPES": {
+            "moduleName": "io.github.humbleui.types",
+            "maven": {
+                "groupId": "io.github.humbleui",
+                "artifactId": "types",
+                "version": "0.2.0",
+            },
+            "dependencies": ["JETBRAINS_ANNOTATIONS"],
+            "digest": "sha256:38d94d00770c4f261ffb50ee68d5da853c416c8fe7c57842f0e28049fc26cca8",
             "licence": "Apache-2.0",
             "useModulePath": True,
         },
@@ -156,17 +169,6 @@ suite = {
             "licence": "Apache-2.0",
             "useModulePath": True,
         },
-        "TYPES": {
-            "moduleName": "io.github.humbleui.types",
-            "maven": {
-                "groupId": "io.github.humbleui",
-                "artifactId": "types",
-                "version": "0.2.0",
-            },
-            "digest": "sha256:38d94d00770c4f261ffb50ee68d5da853c416c8fe7c57842f0e28049fc26cca8",
-            "licence": "Apache-2.0",
-            "useModulePath": True,
-        },
         # ==========================================================================
         #  Skija (Skia Bindings - HumbleUI fork)
         # ==========================================================================
@@ -175,9 +177,10 @@ suite = {
             "maven": {
                 "groupId": "io.github.humbleui",
                 "artifactId": "skija-shared",
-                "version": "0.143.9",
+                "version": "0.143.10",
             },
-            "digest": "sha256:012a91105a10f2974547679803b304ffc37353fd28dca408b4a9acfa68642c0f",
+            "dependencies": ["JETBRAINS_ANNOTATIONS", "HUMBLE_UI_TYPES"],
+            "digest": "sha256:323cd87df6aac56ce1b271d8aeedcc1c30ffb25cb4ebf39685418c71faa56c5a",
             "licence": "Apache-2.0",
             "useModulePath": True,
         },
@@ -190,17 +193,17 @@ suite = {
                         "maven": {
                             "groupId": "io.github.humbleui",
                             "artifactId": "skija-linux-x64",
-                            "version": "0.143.9",
+                            "version": "0.143.10",
                         },
-                        "digest": "sha256:2fb033c4ea1594bda5a182e28cd91e675ab93b2029c5930c5d4c29515be9b70a",
+                        "digest": "sha256:eb5dccc41c8087255aecc981b0b31b52d1cf9a9737866f207f8e652a293c1d4a",
                     },
                     "aarch64": {
                         "maven": {
                             "groupId": "io.github.humbleui",
                             "artifactId": "skija-linux-arm64",
-                            "version": "0.143.9",
+                            "version": "0.143.10",
                         },
-                        "digest": "sha256:0b103f144a7a0ae28bcdd0b7c79cabcc8459aec33011bb868720cc9750ceb16c",
+                        "digest": "sha256:b732a97754249384a48b5a57ab3b30ce7be2faed4f0f1a7a84529df93ce911b9",
                     },
                 },
                 "darwin": {
@@ -208,9 +211,9 @@ suite = {
                         "maven": {
                             "groupId": "io.github.humbleui",
                             "artifactId": "skija-macos-arm64",
-                            "version": "0.143.9",
+                            "version": "0.143.10",
                         },
-                        "digest": "sha256:8c525e882b8ad9f648e28a97ce38698f9636d3cdab4696667f9de393067db81a",
+                        "digest": "sha256:ba64d2d17df80a4ab4132f575b627ea2c31aead2786b790ca2100f6ed7b53cb0",
                     },
                 },
                 "windows": {
@@ -218,9 +221,9 @@ suite = {
                         "maven": {
                             "groupId": "io.github.humbleui",
                             "artifactId": "skija-windows-x64",
-                            "version": "0.143.9",
+                            "version": "0.143.10",
                         },
-                        "digest": "sha256:cff43eb34b38f572753f2971f2cc9f53395835b83017325a61519c5d4f312001",
+                        "digest": "sha256:316c2a79d84a30f29d8a7a680af9132817a9604d0d3216a3c0c0f1dbeab4022d",
                     },
                 },
             },
@@ -240,16 +243,12 @@ suite = {
                 "TRUFFLESQUEAK_SHARED",
                 "truffle:TRUFFLE_API",
                 "truffle:TRUFFLE_NFI",
-                # The Clean Stack: JWM + Skija
                 "JWM",
-                "TYPES",
-                "JETBRAINS_ANNOTATIONS",
                 "SKIJA_SHARED",
             ],
             "requires": [
                 "java.datatransfer",
                 "java.xml",
-                # "java.desktop",  <-- REMOVED (Ensures AWT-free build)
                 "java.logging",
                 "java.management",
                 "jdk.management",
@@ -275,7 +274,6 @@ suite = {
             ],
             "requires": [
                 "java.xml",
-                # "java.desktop", <-- REMOVED
             ],
             "checkstyle": "de.hpi.swa.trufflesqueak",
             "jacoco": "include",
@@ -373,7 +371,6 @@ suite = {
                 # Configure launcher
                 "-Dorg.graalvm.launcher.class=de.hpi.swa.trufflesqueak.launcher.TruffleSqueakLauncher",
                 "-H:+IncludeNodeSourcePositions",  # for improved stack traces on deopts
-                "-H:-DetectUserDirectoriesInImageHeap",  # ToDo: scrub GitHub path from Skija packages
                 # Preserve Skija/JWM for JNI and reflective access
                 "-H:Preserve=package=io.github.humbleui.*",
                 # Avoid initializing Skija/JWM at build time
@@ -429,7 +426,7 @@ suite = {
             "exclude": [
                 "JWM",
                 "SKIJA_SHARED",
-                "TYPES",
+                "HUMBLE_UI_TYPES",
                 "JETBRAINS_ANNOTATIONS",
             ],
             "distDependencies": [
@@ -438,11 +435,8 @@ suite = {
                 "truffle:TRUFFLE_NFI",
                 "truffle:TRUFFLE_NFI_LIBFFI",  # runtime dependency
                 "truffle:TRUFFLE_NFI_PANAMA",  # runtime dependency
-                # Ensure runtime deps are on classpath
                 "JWM",
                 "SKIJA_SHARED",
-                "TYPES",
-                "JETBRAINS_ANNOTATIONS",
             ],
             "javaProperties": {
                 "org.graalvm.language.smalltalk.home": "<path:TRUFFLESQUEAK_HOME>",
