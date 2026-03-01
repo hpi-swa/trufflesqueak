@@ -53,10 +53,10 @@ public final class ObjectLayout {
         newLocations[index] = SlotLocation.UNINITIALIZED_LOCATION;
         if (oldLocation.isUninitialized()) {
             switch (value) {
-                case Boolean ignored -> assignPrimitiveLocation(newLocations, index, SlotLocation.BOOL_LOCATIONS);
-                case Character ignored -> assignPrimitiveLocation(newLocations, index, SlotLocation.CHAR_LOCATIONS);
-                case Long ignored -> assignPrimitiveLocation(newLocations, index, SlotLocation.LONG_LOCATIONS);
-                case Double ignored -> assignPrimitiveLocation(newLocations, index, SlotLocation.DOUBLE_LOCATIONS);
+                case Boolean _ -> assignPrimitiveLocation(newLocations, index, SlotLocation.BOOL_LOCATIONS);
+                case Character _ -> assignPrimitiveLocation(newLocations, index, SlotLocation.CHAR_LOCATIONS);
+                case Long _ -> assignPrimitiveLocation(newLocations, index, SlotLocation.LONG_LOCATIONS);
+                case Double _ -> assignPrimitiveLocation(newLocations, index, SlotLocation.DOUBLE_LOCATIONS);
                 case null, default -> assignGenericLocation(newLocations, index);
             }
         } else {

@@ -43,6 +43,20 @@ def libsmalltalkvm_build_args():
     return build_args
 
 
+def _patch_ThinLauncherProject():
+    old_init = ThinLauncherProject.__init__
+
+    def new_init(self, suite, name, deps, workingSets, theLicense=None, **kw_args):
+        if mx.is_darwin():
+            kw_args["default_vm_args"] += ["--vm.XstartOnFirstThread"]
+        old_init(self, suite, name, deps, workingSets, theLicense, **kw_args)
+
+    ThinLauncherProject.__init__ = new_init
+
+
+_patch_ThinLauncherProject()
+
+
 def _trufflesqueak_gate_runner(args, tasks):
     with mx_gate.Task("Check Copyrights", tasks, tags=[mx_gate.Tags.style]) as t:
         if t:

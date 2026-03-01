@@ -26,6 +26,7 @@ import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 
+import de.hpi.swa.trufflesqueak.shared.PlatformEventLoop;
 import de.hpi.swa.trufflesqueak.shared.SqueakImageLocator;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageOptions;
@@ -97,7 +98,35 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
 
     @Override
     protected void launch(final Context.Builder contextBuilder) {
-        System.exit(execute(contextBuilder));
+        if (headless) {
+            System.exit(execute(contextBuilder));
+            return;
+        }
+
+        // Run the Squeak VM in a background thread
+        final Thread squeakVMThread = new Thread(() -> {
+            int exitCode = -1; // Assume crash by default
+
+            try {
+                // Execute the Squeak image
+                exitCode = execute(contextBuilder);
+            } catch (Throwable t) {
+                // Log the fatal crash through the GraalVM launcher framework
+                throw abort(t);
+            } finally {
+                // GUARANTEED TO RUN: When Squeak exits or crashes, tell the JWM window to
+                // close
+// App.runOnUIThread(App::terminate);
+            }
+
+            // Shut down the JVM completely (only reached if no exception was thrown)
+            System.exit(exitCode);
+
+        }, "SqueakVM-Thread");
+
+        squeakVMThread.start();
+
+        PlatformEventLoop.run();
     }
 
     private int execute(final Context.Builder contextBuilder) {

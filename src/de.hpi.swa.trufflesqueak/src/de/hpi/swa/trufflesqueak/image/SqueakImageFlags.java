@@ -13,10 +13,28 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Idempotent;
 
+/**
+ * Squeak Image Header Flags.
+ * 
+ * <pre>
+ * Bit  2: if set, implies the image's Process class has threadAffinity as its 3rd inst var (zero relative) (meaningful to the MT VM only)
+ * Bit  3: if set, methods that are interpreted will have the flag bit set in their header (meaningful to the Cog VM only)
+ * Bit  4: if set, implies preempting a process does not put it to the back of its run queue
+ * Bit  5: if set, implies the image's Process class has osErr as its 4th inst var (zero relative) holding the platform's error code collected after every FFI call
+ * Bit  6: if set, implies the new finalization scheme where WeakArrays are queued
+ * Bit  7: if set, implies wheel events will be delivered as such and not mapped to arrow key events
+ * Bit  8: if set, implies arithmetic primitives will fail if given arguments of different types (float vs int)
+ * Bit  9: if set, implies file primitives (FilePlugin, FileAttributesPlugin) will answer file times in UTC not local times
+ * Bit 10: if set, implies the VM will not upscale the display on high DPI monitors; older VMs did this by default.
+ * Bit 11: if set, implies numeric comparison primitives will fail if given arguments of different types (float vs int)
+ * </pre>
+ */
 public final class SqueakImageFlags {
+
+    private static final int PREEMPTION_DOES_NOT_YIELD = 0x010;
     private static final int NUMERIC_PRIMS_MIX_ARITHMETIC = 0x100;
     private static final int NUMERIC_PRIMS_MIX_COMPARISON = 0x800;
-    private static final int PREEMPTION_DOES_NOT_YIELD = 0x010;
+    private static final int UPSCALE_DISPLAY_IF_HIGH_DPI = 0x400;
 
     @CompilationFinal private Assumption headerFlagsAssumption = Assumption.create("constant headerFlags");
 
@@ -136,5 +154,10 @@ public final class SqueakImageFlags {
             CompilerDirectives.transferToInterpreterAndInvalidate();
         }
         return preemptionYields;
+    }
+
+    @Idempotent
+    public boolean upscaleDisplayIfHighDPI() {
+        return (headerFlags & UPSCALE_DISPLAY_IF_HIGH_DPI) == 0;
     }
 }
