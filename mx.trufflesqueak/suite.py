@@ -131,6 +131,119 @@ suite = {
             },
             "useModulePath": True,
         },
+        "LWJGL": {
+            "moduleName": "org.lwjgl",
+            "digest": "sha512:54dc983a8020a4d662c51f72d68ea90e8e16951c156869195b49826a086dcd4e4cfa17052720198335226de706aaa3198ec29b7b6b6332b7eeab5230c7b7a3c6",
+            "maven": {
+                "groupId": "org.lwjgl",
+                "artifactId": "lwjgl",
+                "version": "3.4.1",
+            },
+            "useModulePath": True,
+        },
+        "LWJGL_PLATFORM": {
+            "os_arch": {
+                "linux": {
+                    "amd64": {
+                        "maven": {
+                            "groupId": "org.lwjgl",
+                            "artifactId": "lwjgl",
+                            "classifier": "natives-linux",
+                            "version": "3.4.1",
+                        },
+                        "digest": "sha256:x",
+                    },
+                    "aarch64": {
+                        "maven": {
+                            "groupId": "org.lwjgl",
+                            "artifactId": "lwjgl",
+                            "classifier": "natives-linux-arm64",
+                            "version": "3.4.1",
+                        },
+                        "digest": "sha256:x",
+                    },
+                },
+                "darwin": {
+                    "aarch64": {
+                        "maven": {
+                            "groupId": "org.lwjgl",
+                            "artifactId": "lwjgl",
+                            "classifier": "natives-macos-arm64",
+                            "version": "3.4.1",
+                        },
+                        "digest": "sha256:96cfb1ac127a684a2c7ce3f0a2f1da206c2190f6a2e962c377f1835e549a3dcb",
+                    },
+                },
+                "windows": {
+                    "amd64": {
+                        "maven": {
+                            "groupId": "org.lwjgl",
+                            "artifactId": "lwjgl",
+                            "classifier": "natives-windows",
+                            "version": "3.4.1",
+                        },
+                        "digest": "sha256:x",
+                    },
+                },
+            },
+        },
+        "LWJGL_SDL": {
+            "moduleName": "org.lwjgl.sdl",
+            "digest": "sha512:3b66fceb301ba2a81b2044e31494dbb271dabe32aaa9d43e01f361e6805d6697e0f6b8c5ff4c1ab8c404443b42adc748e61299ac1be4cfd36b37d70a50574ce1",
+            "maven": {
+                "groupId": "org.lwjgl",
+                "artifactId": "lwjgl-sdl",
+                "version": "3.4.1",
+            },
+            "dependencies": ["LWJGL"],
+            "useModulePath": True,
+        },
+        "LWJGL_SDL_PLATFORM": {
+            "os_arch": {
+                "linux": {
+                    "amd64": {
+                        "maven": {
+                            "groupId": "org.lwjgl",
+                            "artifactId": "lwjgl-sdl",
+                            "classifier": "natives-linux",
+                            "version": "3.4.1",
+                        },
+                        "digest": "sha256:x",
+                    },
+                    "aarch64": {
+                        "maven": {
+                            "groupId": "org.lwjgl",
+                            "artifactId": "lwjgl-sdl",
+                            "classifier": "natives-linux-arm64",
+                            "version": "3.4.1",
+                        },
+                        "digest": "sha256:x",
+                    },
+                },
+                "darwin": {
+                    "aarch64": {
+                        "maven": {
+                            "groupId": "org.lwjgl",
+                            "artifactId": "lwjgl-sdl",
+                            "classifier": "natives-macos-arm64",
+                            "version": "3.4.1",
+                        },
+                        "digest": "sha256:ae26260771e5e7ff1ed7cc37fefa3e84cbee98f0831e02eff0eb353481d18322",
+                    },
+                },
+                "windows": {
+                    "amd64": {
+                        "maven": {
+                            "groupId": "org.lwjgl",
+                            "artifactId": "lwjgl-sdl",
+                            "classifier": "natives-windows",
+                            "version": "3.4.1",
+                        },
+                        "digest": "sha256:x",
+                    },
+                },
+            },
+        },
     },
     # ==========================================================================
     #  PROJECTS
@@ -146,6 +259,7 @@ suite = {
                 "TRUFFLESQUEAK_SHARED",
                 "truffle:TRUFFLE_API",
                 "truffle:TRUFFLE_NFI",
+                "LWJGL_SDL",
             ],
             "requires": [
                 "java.datatransfer",
@@ -288,9 +402,12 @@ suite = {
                     "jdk.unsupported",  # sun.misc.Unsafe
                 ],
             },
-            "useModulePath": True,
             "dependencies": [
                 "de.hpi.swa.trufflesqueak",
+            ],
+            "exclude": [
+                "LWJGL",
+                "LWJGL_SDL",
             ],
             "distDependencies": [
                 "TRUFFLESQUEAK_SHARED",
@@ -361,6 +478,8 @@ suite = {
                         "dependency": "OSVM_PLUGINS",
                         "path": "*",
                     },
+                    "extracted-dependency:LWJGL_PLATFORM/*",
+                    "extracted-dependency:LWJGL_SDL_PLATFORM/*",
                 ],
             },
             "maven": False,
@@ -466,6 +585,8 @@ suite = {
                         "dependency": "OSVM_PLUGINS",
                         "path": "*",
                     },
+                    "extracted-dependency:LWJGL_PLATFORM/*",
+                    "extracted-dependency:LWJGL_SDL_PLATFORM/*",
                 ],
             },
             "license": ["MIT"],
@@ -490,6 +611,8 @@ suite = {
                 "trufflesqueak:TRUFFLESQUEAK_LAUNCHER",
                 "trufflesqueak:TRUFFLESQUEAK",
                 "sdk:TOOLS_FOR_STANDALONE",
+                "LWJGL",
+                "LWJGL_SDL",
             ],
             "dynamicDistDependencies": "trufflesqueak_standalone_deps",
             "maven": False,
