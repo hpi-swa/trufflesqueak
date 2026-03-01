@@ -65,11 +65,17 @@ public final class SqueakImageFlags {
     }
 
     public void setHeaderFlagsEncoded(final long headerFlags) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
         setHeaderFlags(headerFlags << 2);
     }
 
     public long getSnapshotScreenSize() {
         return snapshotScreenSize;
+    }
+
+    public void setSnapshotScreenSize(final int width, final int height) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        snapshotScreenSize = ((long) width << 16) | (height & 0xFFFFL);
     }
 
     public int getSnapshotScreenWidth() {
