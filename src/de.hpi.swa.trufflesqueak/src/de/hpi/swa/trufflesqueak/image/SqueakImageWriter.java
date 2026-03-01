@@ -87,15 +87,6 @@ public final class SqueakImageWriter {
 
     private void run(final ContextObject thisContext) throws IOException {
         final long start = MiscUtils.currentTimeMillis();
-        /* Obtain and save the current window dimensions. */
-        // ToDo: Clean up: move the following into SqueakDisplay when AWT is gone
-        if (image.getDisplay() instanceof final SqueakDisplay display) {
-            final int width = display.getWindowWidth();
-            final int height = display.getWindowHeight();
-            if (width > 0 && height > 0) {
-                image.flags.setScreenSize(width, height);
-            }
-        }
         nextChunk = image.flags.getOldBaseAddress();
         final PointersObject activeProcess = image.getActiveProcessSlow();
         try {

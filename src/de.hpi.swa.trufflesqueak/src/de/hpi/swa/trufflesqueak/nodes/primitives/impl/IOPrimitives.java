@@ -219,15 +219,12 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 final int offsetX = Math.abs(offsetReadNode.executeInt(offset, POINT.X));
                 final int offsetY = Math.abs(offsetReadNode.executeInt(offset, POINT.Y));
                 final int[] mask;
-                final int realDepth;
                 if (depthProfile.profile(node, depth == 1)) {
                     mask = cursorReadNode.executeNative(maskObject, FORM.BITS).getIntStorage();
-                    realDepth = 2;
                 } else {
                     mask = null;
-                    realDepth = depth;
                 }
-                image.getDisplay().setCursor(words, mask, width, height, realDepth, offsetX, offsetY);
+                image.getDisplay().setCursor(words, mask, width, height, depth, offsetX, offsetY);
             }
             return receiver;
         }
@@ -799,15 +796,10 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 140)
     protected abstract static class PrimBeepNode extends AbstractPrimitiveNode implements Primitive0 {
-
         @Specialization
-        protected final Object doBeep(final Object receiver) {
-            final SqueakImageContext image = getContext();
-            if (image.hasDisplay()) {
-                SqueakDisplay.beep();
-            } else {
-                printBeepCharacter(image);
-            }
+        protected static final Object doBeep(final Object receiver,
+                        @Bind final SqueakImageContext image) {
+            printBeepCharacter(image);
             return receiver;
         }
 

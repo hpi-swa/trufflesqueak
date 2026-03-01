@@ -49,8 +49,8 @@ jobs:
         wget --no-verbose https://archive.eclipse.org/eclipse/downloads/drops4/R-4.36-202505281830/eclipse-SDK-4.36-linux-gtk-x86_64.tar.gz -O ${eclipse_tar_path}
         tar -xzf ${eclipse_tar_path} -C ${RUNNER_TEMP}
         echo "ECLIPSE_EXE=${RUNNER_TEMP}/eclipse/eclipse" >> "${GITHUB_ENV}" # required by mx
-        # Set up mx, oracle/graal, and LabsJDK21
-        mx.trufflesqueak/utils.sh "set-up-mx && shallow-clone-graal && set-up-labsjdk 21"
+        # Set up mx, oracle/graal, and LabsJDK
+        mx.trufflesqueak/utils.sh "set-up-mx && shallow-clone-graal && set-up-labsjdk latest"
         # Set up style dependencies
         sudo apt update && sudo apt install python3-pip python-setuptools
         jq -r '.pip | to_entries[] | .key+.value' ../graal/common.json | xargs sudo pip install
@@ -112,12 +112,9 @@ jobs:
     - name: Archive TruffleSqueak standalone
       shell: bash
       run: mx.trufflesqueak/utils.sh archive-standalone ${{ matrix.type }}
-      # GraalVM Native Image does not support AWT on macOS yet (https://github.com/oracle/graal/issues/4921)
-      if: ${{ matrix.type == 'jvm' || runner.os != 'macOS' }}
     - name: Deploy TruffleSqueak standalone
       shell: bash
       run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.STANDALONE_ARCHIVE }} ${{ secrets.GITHUB_TOKEN }}
-      if: ${{ matrix.type == 'jvm' || runner.os != 'macOS' }}
     - name: Upload TruffleSqueak standalone
       uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
       with:
@@ -311,12 +308,9 @@ jobs:
     - name: Archive TruffleSqueak standalone
       shell: bash
       run: mx.trufflesqueak/utils.sh archive-standalone ${{ matrix.type }}
-      # GraalVM Native Image does not support AWT on macOS yet (https://github.com/oracle/graal/issues/4921)
-      if: ${{ matrix.type == 'jvm' || runner.os != 'macOS' }}
     - name: Deploy TruffleSqueak standalone
       shell: bash
       run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.STANDALONE_ARCHIVE }} ${{ secrets.GITHUB_TOKEN }}
-      if: ${{ matrix.type == 'jvm' || runner.os != 'macOS' }}
     - name: Upload TruffleSqueak standalone
       uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
       with:

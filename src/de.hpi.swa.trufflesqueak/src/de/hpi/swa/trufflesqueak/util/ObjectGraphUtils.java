@@ -248,7 +248,7 @@ public final class ObjectGraphUtils {
         if (!becomeMap.isEmpty()) {
             flattenForwardPointers();
             if (allAbstractSqueakObjectWithHash) {
-                pointersBecomeOneWayFrames(o -> {
+                pointersBecomeOneWayFrames(_ -> {
                 }, becomeMap);
             } else {
                 final ObjectTracer roots = ObjectTracer.fromRoots(image, false);
