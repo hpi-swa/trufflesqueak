@@ -26,6 +26,7 @@ import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 
+import de.hpi.swa.trufflesqueak.shared.PlatformEventLoop;
 import de.hpi.swa.trufflesqueak.shared.SqueakImageLocator;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageOptions;
@@ -97,7 +98,11 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
 
     @Override
     protected void launch(final Context.Builder contextBuilder) {
-        System.exit(execute(contextBuilder));
+        if (headless) {
+            System.exit(execute(contextBuilder));
+        } else {
+            executeInVMThread(contextBuilder);
+        }
     }
 
     private int execute(final Context.Builder contextBuilder) {
@@ -173,6 +178,22 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
         } catch (final IOException e) {
             throw abort(String.format("Error loading file '%s' (%s)", imagePath, e.getMessage()));
         }
+    }
+
+    private void executeInVMThread(final Context.Builder contextBuilder) {
+        final int[] vmExitCode = {-1};
+        final Thread vmThread = new Thread(() -> {
+            try {
+                vmExitCode[0] = execute(contextBuilder);
+            } catch (Throwable t) {
+                throw abort(t);
+            } finally {
+                PlatformEventLoop.stop();
+            }
+        }, "TruffleSqueakVM-Thread");
+        vmThread.start();
+        PlatformEventLoop.run();
+        System.exit(vmExitCode[0]);
     }
 
     @Override

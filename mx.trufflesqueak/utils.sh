@@ -243,7 +243,7 @@ standalone-dirname() {
 }
 
 format-native-image-config() {
-  readonly NI_CONFIG_BASE="${BASE_DIRECTORY}/src/de.hpi.swa.trufflesqueak/src/META-INF/native-image"
+  readonly NI_CONFIG_BASE="${BASE_DIRECTORY}/src/de.hpi.swa.trufflesqueak/src/META-INF/native-image/de.hpi.swa.trufflesqueak/trufflesqueak"
   for f in "${NI_CONFIG_BASE}/"*.json; do
     underscore --in "${f}" --out "${f}" --wrapwidth 80 print
   done

@@ -53,3 +53,6 @@ trufflesqueak*.jar
 # Cuis
 /*-UserFiles/
 /UserChanges/
+
+# SDL3 sources
+src/SDL-release-3.4.2/**

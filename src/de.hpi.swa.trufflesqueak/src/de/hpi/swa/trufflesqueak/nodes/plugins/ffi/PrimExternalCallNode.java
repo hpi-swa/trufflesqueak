@@ -68,7 +68,7 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode
     }
 
     private static Object lookupModuleLibrary(final SqueakImageContext context, final String moduleName) {
-        final Object moduleLibrary = context.loadedLibraries.computeIfAbsent(moduleName, (String s) -> {
+        final Object moduleLibrary = context.loadedLibraries.computeIfAbsent(moduleName, (String _) -> {
             if (context.loadedLibraries.containsKey(moduleName)) {
                 // if moduleName was associated with null
                 return null;

@@ -90,6 +90,52 @@ suite = {
                 "<others>": {"<others>": {"optional": True}},
             },
         },
+        "LWJGL_SDL_PLATFORM": {
+            "os_arch": {
+                "linux": {
+                    "amd64": {
+                        "maven": {
+                            "groupId": "org.lwjgl",
+                            "artifactId": "lwjgl-sdl",
+                            "classifier": "natives-linux",
+                            "version": "3.4.1",
+                        },
+                        "digest": "sha256:740fdd20b4ad78a0604ffdf17a9f6fd1f926373a6f01db3a4a01e4b8de60f41a",
+                    },
+                    "aarch64": {
+                        "maven": {
+                            "groupId": "org.lwjgl",
+                            "artifactId": "lwjgl-sdl",
+                            "classifier": "natives-linux-arm64",
+                            "version": "3.4.1",
+                        },
+                        "digest": "sha256:8aa7ce580ea64fea11d4a5edf49d7ba885d43a6b424e53b22c43534f82331734",
+                    },
+                },
+                "darwin": {
+                    "aarch64": {
+                        "maven": {
+                            "groupId": "org.lwjgl",
+                            "artifactId": "lwjgl-sdl",
+                            "classifier": "natives-macos-arm64",
+                            "version": "3.4.1",
+                        },
+                        "digest": "sha256:ae26260771e5e7ff1ed7cc37fefa3e84cbee98f0831e02eff0eb353481d18322",
+                    },
+                },
+                "windows": {
+                    "amd64": {
+                        "maven": {
+                            "groupId": "org.lwjgl",
+                            "artifactId": "lwjgl-sdl",
+                            "classifier": "natives-windows",
+                            "version": "3.4.1",
+                        },
+                        "digest": "sha256:1441c37843555f9c90297148a0abbd674d838ad22202e174a00d83c624b19c06",
+                    },
+                },
+            },
+        },
     },
     # ==========================================================================
     #  PROJECTS
@@ -119,7 +165,7 @@ suite = {
             },
             "checkstyleVersion": "10.7.0",
             "jacoco": "include",
-            "javaCompliance": "21+",
+            "javaCompliance": "24+",
             "annotationProcessors": ["truffle:TRUFFLE_DSL_PROCESSOR"],
             "workingSets": "TruffleSqueak",
         },
@@ -136,7 +182,7 @@ suite = {
             ],
             "checkstyle": "de.hpi.swa.trufflesqueak",
             "jacoco": "include",
-            "javaCompliance": "21+",
+            "javaCompliance": "24+",
             "workingSets": "TruffleSqueak",
         },
         "de.hpi.swa.trufflesqueak.ffi.native": {
@@ -156,15 +202,26 @@ suite = {
                 },
             },
         },
+        "de.hpi.swa.trufflesqueak.sdl3": {
+            "subDir": "src",
+            "sourceDirs": ["src"],
+            "eclipseformat": False,
+            "forceJavac": True,
+            "javac.lint.overrides": "none",
+            "jacoco": "exclude",
+            "javaCompliance": "24+",
+            "workingSets": "TruffleSqueak",
+        },
         "de.hpi.swa.trufflesqueak.shared": {
             "subDir": "src",
             "sourceDirs": ["src"],
             "dependencies": [
+                "de.hpi.swa.trufflesqueak.sdl3",
                 "sdk:GRAAL_SDK",
             ],
             "checkstyle": "de.hpi.swa.trufflesqueak",
             "jacoco": "include",
-            "javaCompliance": "21+",
+            "javaCompliance": "24+",
             "workingSets": "TruffleSqueak",
         },
         "de.hpi.swa.trufflesqueak.tck": {
@@ -172,7 +229,7 @@ suite = {
             "sourceDirs": ["src"],
             "dependencies": ["TRUFFLESQUEAK_SHARED", "sdk:POLYGLOT_TCK", "mx:JUNIT"],
             "checkstyle": "de.hpi.swa.trufflesqueak",
-            "javaCompliance": "21+",
+            "javaCompliance": "24+",
             "workingSets": "TruffleSqueak",
             "testProject": True,
         },
@@ -186,7 +243,7 @@ suite = {
             ],
             "checkstyle": "de.hpi.swa.trufflesqueak",
             "jacoco": "include",
-            "javaCompliance": "21+",
+            "javaCompliance": "24+",
             "workingSets": "TruffleSqueak",
             "testProject": True,
         },
@@ -205,10 +262,12 @@ suite = {
             "relative_extracted_lib_paths": {
                 "truffle.attach.library": "../jvmlibs/<lib:truffleattach>",
                 "truffle.nfi.library": "../jvmlibs/<lib:trufflenfi>",
+                "java.library.path": "../lib",
             },
             "liblang_relpath": "../lib/<lib:smalltalkvm>",
             "default_vm_args": [
                 "--vm.-add-exports=java.base/jdk.internal.module=de.hpi.swa.trufflesqueak",
+                "--vm.-enable-native-access=de.hpi.swa.trufflesqueak.sdl3",
             ],
         },
         "libsmalltalkvm": {
@@ -220,8 +279,6 @@ suite = {
                 "TRUFFLESQUEAK_STANDALONE_COMMON",
             ],
             "build_args": [
-                # "-Dpolyglot.image-build-time.PreinitializeContexts=smalltalk",
-                # Configure launcher
                 "-Dorg.graalvm.launcher.class=de.hpi.swa.trufflesqueak.launcher.TruffleSqueakLauncher",
                 "-H:+IncludeNodeSourcePositions",  # for improved stack traces on deopts
                 "-H:+DetectUserDirectoriesInImageHeap",
@@ -250,6 +307,7 @@ suite = {
                 "de.hpi.swa.trufflesqueak",
             ],
             "distDependencies": [
+                "TRUFFLESQUEAK_SDL3",
                 "TRUFFLESQUEAK_SHARED",
                 "truffle:TRUFFLE_API",
                 "truffle:TRUFFLE_NFI",
@@ -347,6 +405,29 @@ suite = {
             "noMavenJavadoc": True,
             "license": ["MIT"],
         },
+        "TRUFFLESQUEAK_SDL3": {
+            "description": "TruffleSqueak SDL3 bindings distribution",
+            "moduleInfo": {
+                "name": "de.hpi.swa.trufflesqueak.sdl3",
+                "exports": [
+                    "de.hpi.swa.trufflesqueak.sdl3.bindings",
+                ],
+            },
+            "useModulePath": True,
+            "dependencies": [
+                "de.hpi.swa.trufflesqueak.sdl3",
+            ],
+            "distDependencies": [
+                "sdk:GRAAL_SDK",
+            ],
+            "maven": {
+                "groupId": "de.hpi.swa.trufflesqueak",
+                "artifactId": "trufflesqueak-sdl3",
+                "tag": ["default", "public"],
+            },
+            "noMavenJavadoc": True,
+            "license": ["MIT"],
+        },
         "TRUFFLESQUEAK_SHARED": {
             "description": "TruffleSqueak shared distribution",
             "moduleInfo": {
@@ -355,10 +436,12 @@ suite = {
                     "de.hpi.swa.trufflesqueak.shared",
                 ],
             },
+            "useModulePath": True,
             "dependencies": [
                 "de.hpi.swa.trufflesqueak.shared",
             ],
             "distDependencies": [
+                "TRUFFLESQUEAK_SDL3",
                 "sdk:GRAAL_SDK",
             ],
             "maven": {
@@ -396,7 +479,7 @@ suite = {
                 ],
             },
             "useModulePath": True,
-            "javaCompliance": "21+",
+            "javaCompliance": "24+",
             "dependencies": [
                 "de.hpi.swa.trufflesqueak.test",
             ],
@@ -415,15 +498,65 @@ suite = {
             "fileListPurpose": "native-image-resources",
             "native": True,
             "platformDependent": True,
-            "layout": {
-                "lib/": [
-                    "dependency:de.hpi.swa.trufflesqueak.ffi.native/*",
-                    {
-                        "source_type": "extracted-dependency",
-                        "dependency": "OSVM_PLUGINS",
-                        "path": "*",
+            "os_arch": {
+                "linux": {
+                    "amd64": {
+                        "layout": {
+                            "lib/": [
+                                "dependency:de.hpi.swa.trufflesqueak.ffi.native/*",
+                                {
+                                    "source_type": "extracted-dependency",
+                                    "dependency": "OSVM_PLUGINS",
+                                    "path": "*",
+                                },
+                                "extracted-dependency:LWJGL_SDL_PLATFORM/linux/x64/org/lwjgl/sdl/libSDL3.so",
+                            ],
+                        },
                     },
-                ],
+                    "aarch64": {
+                        "layout": {
+                            "lib/": [
+                                "dependency:de.hpi.swa.trufflesqueak.ffi.native/*",
+                                {
+                                    "source_type": "extracted-dependency",
+                                    "dependency": "OSVM_PLUGINS",
+                                    "path": "*",
+                                },
+                                "extracted-dependency:LWJGL_SDL_PLATFORM/linux/arm64/org/lwjgl/sdl/libSDL3.so",
+                            ],
+                        },
+                    },
+                },
+                "darwin": {
+                    "aarch64": {
+                        "layout": {
+                            "lib/": [
+                                "dependency:de.hpi.swa.trufflesqueak.ffi.native/*",
+                                {
+                                    "source_type": "extracted-dependency",
+                                    "dependency": "OSVM_PLUGINS",
+                                    "path": "*",
+                                },
+                                "extracted-dependency:LWJGL_SDL_PLATFORM/macos/arm64/org/lwjgl/sdl/libSDL3.dylib",
+                            ],
+                        },
+                    },
+                },
+                "windows": {
+                    "amd64": {
+                        "layout": {
+                            "lib/": [
+                                "dependency:de.hpi.swa.trufflesqueak.ffi.native/*",
+                                {
+                                    "source_type": "extracted-dependency",
+                                    "dependency": "OSVM_PLUGINS",
+                                    "path": "*",
+                                },
+                                "extracted-dependency:LWJGL_SDL_PLATFORM/windows/x64/org/lwjgl/sdl/SDL3.dll",
+                            ],
+                        },
+                    },
+                },
             },
             "license": ["MIT"],
             "maven": False,
@@ -466,33 +599,6 @@ suite = {
                 "release": "dependency:sdk:STANDALONE_JAVA_HOME/release",
             },
         },
-        "TRUFFLSQUEAK_NATIVE_STANDALONE_JDK_LIBRARIES": {
-            "description": "JDK libraries for TruffleSqueak Native standalone.",
-            "maven": False,
-            "native": True,
-            "platformDependent": True,
-            "platforms": "local",
-            "type": "dir",
-            "os_arch": {
-                "linux": {
-                    "<others>": {
-                        "layout": {
-                            "lib/": "dependency:libsmalltalkvm/jdk_libraries/*",
-                        },
-                    },
-                },
-                "windows": {
-                    "<others>": {
-                        "layout": {
-                            # JDK libraries need to be in bin/ on Windows
-                            "bin/": "dependency:libsmalltalkvm/jdk_libraries/*",
-                        },
-                    },
-                },
-                # AWT not supported on macOS yet, so no JDK libraries yet
-                "<others>": {"<others>": {"optional": True}},
-            },
-        },
         "TRUFFLESQUEAK_NATIVE_STANDALONE": {
             "description": "TruffleSqueak Native standalone",
             "type": "dir",
@@ -501,7 +607,6 @@ suite = {
             "layout": {
                 "./": [
                     "dependency:TRUFFLESQUEAK_STANDALONE_COMMON/*",
-                    "dependency:TRUFFLSQUEAK_NATIVE_STANDALONE_JDK_LIBRARIES/*",
                 ],
                 "lib/": "dependency:libsmalltalkvm",
             },

@@ -1252,7 +1252,7 @@ public final class SqueakImageContext {
     @TruffleBoundary
     public NativeObject toInteropSelector(final Message message) {
         assert message.getLibraryClass() == InteropLibrary.class;
-        return interopMessageToSelectorMap.computeIfAbsent(message, m -> {
+        return interopMessageToSelectorMap.computeIfAbsent(message, _ -> {
             final String libraryName = message.getLibraryClass().getSimpleName();
             final String libraryPrefix = libraryName.substring(0, 1).toLowerCase() + libraryName.substring(1, libraryName.length() - 7);
             final String messageName = message.getSimpleName();

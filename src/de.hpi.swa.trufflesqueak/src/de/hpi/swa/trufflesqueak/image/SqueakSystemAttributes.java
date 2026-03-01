@@ -6,9 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.image;
 
-import java.awt.DisplayMode;
-import java.awt.GraphicsEnvironment;
-import java.awt.HeadlessException;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -212,12 +209,10 @@ public final class SqueakSystemAttributes {
     private NativeObject getGraphicsHardwareDetails() {
         int width = 0;
         int height = 0;
-        try {
-            final DisplayMode dm = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDisplayMode();
-            width = dm.getWidth();
-            height = dm.getHeight();
-        } catch (final HeadlessException e) {
-            /* Report 0 x 0 in headless mode. */
+        if (image.hasDisplay()) {
+            final int[] dimensions = image.getDisplay().getPrimaryDisplayDimensions();
+            width = dimensions[0];
+            height = dimensions[1];
         }
         return asByteString(String.format("Display Information: \n\tPrimary monitor resolution: %s x %s\n", width, height));
     }
