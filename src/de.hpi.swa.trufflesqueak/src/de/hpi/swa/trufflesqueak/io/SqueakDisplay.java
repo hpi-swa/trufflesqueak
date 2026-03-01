@@ -13,6 +13,9 @@ import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.function.Consumer;
 
 import com.oracle.truffle.api.CompilerAsserts;
@@ -50,6 +53,7 @@ import io.github.humbleui.jwm.EventWindowScreenChange;
 import io.github.humbleui.jwm.Layer;
 import io.github.humbleui.jwm.MouseCursor;
 import io.github.humbleui.jwm.Platform;
+import io.github.humbleui.jwm.Screen;
 import io.github.humbleui.jwm.Window;
 import io.github.humbleui.jwm.skija.EventFrameSkija;
 import io.github.humbleui.jwm.skija.LayerD3D12Skija;
@@ -62,6 +66,7 @@ import io.github.humbleui.skija.Image;
 import io.github.humbleui.skija.ImageInfo;
 import io.github.humbleui.skija.Pixmap;
 import io.github.humbleui.skija.Surface;
+import io.github.humbleui.types.IRect;
 import io.github.humbleui.types.Rect;
 
 public final class SqueakDisplay implements Consumer<Event> {
@@ -85,6 +90,8 @@ public final class SqueakDisplay implements Consumer<Event> {
     private int dirtyBottom = -1;
     private boolean deferUpdates;
     private boolean frameRequested = false;
+    private boolean hasShownWindow = false;
+    private int desktopColor = 0xFFCCCCCC;
 
     // Cached window information (avoids calls on UI thread)
     private int windowWidth = 0;
@@ -92,7 +99,7 @@ public final class SqueakDisplay implements Consumer<Event> {
     private double windowScaleFactor = 1.0d;
 
     // Event Queue
-    private final java.util.concurrent.ConcurrentLinkedDeque<long[]> deferredEvents = new java.util.concurrent.ConcurrentLinkedDeque<>();
+    private final ConcurrentLinkedDeque<long[]> deferredEvents = new ConcurrentLinkedDeque<>();
     @CompilationFinal private int inputSemaphoreIndex = -1;
 
     public int buttons;
@@ -108,15 +115,25 @@ public final class SqueakDisplay implements Consumer<Event> {
             hasWindow = true;
             window.setEventListener(this);
             window.setTitle(DEFAULT_WINDOW_TITLE);
-            window.setWindowSize(image.flags.getSnapshotScreenWidth(), image.flags.getSnapshotScreenHeight());
+            final int snapWidth = image.flags.getSnapshotScreenWidth();
+            final int snapHeight = image.flags.getSnapshotScreenHeight();
+            final int initialWidth = snapWidth > 0 ? snapWidth : 1024;
+            final int initialHeight = snapHeight > 0 ? snapHeight : 768;
+            window.setContentSize(initialWidth, initialHeight);
+            final Screen screen = App.getPrimaryScreen();
+            if (screen != null) {
+                final IRect workArea = screen.getWorkArea();
+                final IRect winRect = window.getWindowRect();
+                final int x = workArea.getLeft() + (workArea.getWidth() - winRect.getWidth()) / 2;
+                final int y = workArea.getTop() + (workArea.getHeight() - winRect.getHeight()) / 2;
+                window.setWindowPosition(x, y);
+            }
             layer = switch (Platform.CURRENT) {
                 case MACOS -> new LayerMetalSkija();
                 case WINDOWS -> new LayerD3D12Skija();
                 case X11 -> new LayerGLSkija();
             };
             window.setLayer(layer);
-            window.setVisible(true);
-            window.bringToFront();
             tryToSetTaskbarIcon();
             cacheWindowInfo();
         });
@@ -160,8 +177,8 @@ public final class SqueakDisplay implements Consumer<Event> {
     private void cacheWindowInfo() {
         // Called from the UI thread
         if (window != null) {
-            windowWidth = window.getWindowRect().getWidth();
-            windowHeight = window.getWindowRect().getHeight();
+            windowWidth = window.getContentRect().getWidth();
+            windowHeight = window.getContentRect().getHeight();
             windowScaleFactor = window.getScreen().getScale();
         } else {
             windowWidth = 0;
@@ -218,37 +235,45 @@ public final class SqueakDisplay implements Consumer<Event> {
             final int width = squeakBitmap.getWidth();
             final int height = squeakBitmap.getHeight();
 
-            // Lazily allocate the GPU surface
-            if (gpuSurface == null) {
-                final ImageInfo info = new ImageInfo(width, height, ColorType.BGRA_8888, ColorAlphaType.PREMUL);
-
-                // Grab the context directly from the active swapchain surface
-                if (swapchainSurface._context != null) {
-                    // Create a permanent hardware-accelerated VRAM texture
-                    gpuSurface = Surface.makeRenderTarget(swapchainSurface._context, false, info);
-                }
-
-                if (gpuSurface == null) {
-                    // Fallback to CPU raster if hardware rendering is unavailable
-                    gpuSurface = Surface.makeRaster(info);
+            // Lazily allocate the GPU surface OR recreate it if Squeak changed dimensions
+            if (gpuSurface == null || gpuSurface.getWidth() != width || gpuSurface.getHeight() != height) {
+                // Only resize the GPU surface if Squeak has actually pushed new pixels.
+                // If dirtyBottom == -1, Squeak is still updating, so keep old surface
+                if (dirtyBottom != -1 || gpuSurface == null) {
+                    if (gpuSurface != null) {
+                        gpuSurface.close();
+                    }
+                    final ImageInfo info = new ImageInfo(width, height, ColorType.BGRA_8888, ColorAlphaType.PREMUL);
+                    if (swapchainSurface._context != null) {
+                        gpuSurface = Surface.makeRenderTarget(swapchainSurface._context, false, info);
+                    }
+                    if (gpuSurface == null) {
+                        gpuSurface = Surface.makeRaster(info);
+                    }
+                    // We just made a new surface, so force the entire bitmap to upload
+                    dirtyTop = 0;
+                    dirtyBottom = height - 1;
                 }
             }
 
             // Upload ONLY the dirty band to the GPU
-            if (dirtyTop <= dirtyBottom) {
+            if (gpuSurface != null && dirtyTop <= dirtyBottom) {
                 try (Image skiaImage = Image.makeRasterFromBitmap(squeakBitmap)) {
                     final Rect dirtyRect = Rect.makeLTRB(0, dirtyTop, width, dirtyBottom + 1);
                     gpuSurface.getCanvas().drawImageRect(skiaImage, dirtyRect, dirtyRect, null);
                 }
-
-                // Reset the dirty tracker for the next frame
                 dirtyTop = Integer.MAX_VALUE;
                 dirtyBottom = -1;
             }
 
+            // Clear the native swapchain to the dynamic Squeak desktop color
+            swapchainSurface.getCanvas().clear(desktopColor);
+
             // Stamp the complete, tear-free GPU texture onto the rotating JWM swapchain
-            try (Image gpuSnapshot = gpuSurface.makeImageSnapshot()) {
-                swapchainSurface.getCanvas().drawImage(gpuSnapshot, 0, 0);
+            if (gpuSurface != null) {
+                try (Image gpuSnapshot = gpuSurface.makeImageSnapshot()) {
+                    swapchainSurface.getCanvas().drawImage(gpuSnapshot, 0, 0);
+                }
             }
         }
     }
@@ -275,6 +300,13 @@ public final class SqueakDisplay implements Consumer<Event> {
                         pixelIntBuffer.position(offset);
                         pixelIntBuffer.put(squeakBitmapPixels, offset, length);
 
+                        // Sample the right-center pixel to as the async-resize background
+                        final int rightCenterIndex = (height / 2) * width + (width - 1);
+                        if (rightCenterIndex >= 0 && rightCenterIndex < squeakBitmapPixels.length) {
+                            // Force 100% opacity
+                            desktopColor = squeakBitmapPixels[rightCenterIndex] | 0xFF000000;
+                        }
+
                         // Accumulate the dirty band for the GPU thread
                         dirtyTop = Math.min(dirtyTop, clippedTop);
                         dirtyBottom = Math.max(dirtyBottom, clippedBottom);
@@ -292,6 +324,12 @@ public final class SqueakDisplay implements Consumer<Event> {
             if (shouldRequestFrame) {
                 App.runOnUIThread(() -> {
                     if (window != null) {
+                        // If this is the very first frame of the app, show the window!
+                        if (!hasShownWindow) {
+                            hasShownWindow = true;
+                            window.setVisible(true);
+                            window.bringToFront();
+                        }
                         window.requestFrame();
                     }
                 });
@@ -316,13 +354,9 @@ public final class SqueakDisplay implements Consumer<Event> {
             synchronized (this) {
                 squeakBitmapPixels = bitmap.getIntStorage();
 
-                // Clean up the old bitmap and GPU surface if resizing
+                // Clean up only old CPU bitmap. Leave GPU surface alive so it stays on screen
                 if (squeakBitmap != null) {
                     squeakBitmap.close();
-                }
-                if (gpuSurface != null) {
-                    gpuSurface.close();
-                    gpuSurface = null; // Will be lazily recreated on the UI thread
                 }
 
                 // Initialize the new Skija Bitmap
@@ -330,7 +364,7 @@ public final class SqueakDisplay implements Consumer<Event> {
                 final ImageInfo info = new ImageInfo(width, height, ColorType.BGRA_8888, ColorAlphaType.PREMUL);
                 squeakBitmap.allocPixels(info);
 
-                // Extract the Pixmap view, then grab its direct native memory buffer!
+                // Extract the Pixmap view, then grab its direct native memory buffer
                 try (Pixmap pixmap = squeakBitmap.peekPixels()) {
                     if (pixmap != null) {
                         final ByteBuffer byteBuffer = pixmap.getBuffer();
@@ -340,19 +374,11 @@ public final class SqueakDisplay implements Consumer<Event> {
                     }
                 }
 
-                // Mark the entire screen as dirty for the initial frame
-                dirtyTop = 0;
-                dirtyBottom = height - 1;
-
-                // Tell the OS we are ready to draw the very first frame
-                if (!frameRequested) {
-                    frameRequested = true;
-                    App.runOnUIThread(() -> {
-                        if (window != null) {
-                            window.requestFrame();
-                        }
-                    });
-                }
+                // Wipe out any pending dirty regions from the old display.
+                // This forces paint() to keep drawing the old GPU surface until Squeak
+                // actually finishes layout and calls showDisplayRect().
+                dirtyTop = Integer.MAX_VALUE;
+                dirtyBottom = -1;
             }
         }
     }
@@ -375,7 +401,7 @@ public final class SqueakDisplay implements Consumer<Event> {
         windowHeight = height;
         App.runOnUIThread(() -> {
             if (window != null) {
-                window.setWindowSize(windowWidth, windowHeight);
+                window.setContentSize(windowWidth, windowHeight);
             }
         });
     }
@@ -400,11 +426,8 @@ public final class SqueakDisplay implements Consumer<Event> {
             }
 
             if (enable) {
-                // Tells the native OS to maximize the window
                 window.maximize();
             } else {
-                // Tells the native OS to snap the window back to its previous dimensions and
-                // position
                 window.restore();
             }
         });
@@ -432,55 +455,30 @@ public final class SqueakDisplay implements Consumer<Event> {
     @SuppressWarnings("unused")
     public void setCursor(final int[] cursorWords, final int[] mask, final int width, final int height, final int depth, final int offsetX, final int offsetY) {
         // ToDo: Do this right!
-        MouseCursor jwmCursor = MouseCursor.ARROW;
 
-        if (cursorWords != null && cursorWords.length > 0) {
-            // Generate a unique footprint for this specific Smalltalk cursor
-            final int hash = java.util.Arrays.hashCode(cursorWords);
+        final int hash = (cursorWords != null && cursorWords.length > 0) ? Arrays.hashCode(cursorWords) : 0;
 
-            // Uncomment this line temporarily to discover the hashes of Squeak cursors
-            // Systemx.out.println("Cursor Hash: " + hash);
+        // Uncomment this line temporarily to discover the hashes of Squeak cursors
+        // Systemx.out.println("Cursor Hash: " + hash);
 
-            switch (hash) {
-                // TODO: Replace these hashes with the actual hashes printed to console
-                case 1447681537:
-                    jwmCursor = MouseCursor.IBEAM;
-                    break;
-                case -594223615:
-                    jwmCursor = MouseCursor.POINTING_HAND;
-                    break;
+        final MouseCursor jwmCursor = switch (hash) {
+            case 1447681537 -> MouseCursor.IBEAM;
+            case -594223615 -> MouseCursor.POINTING_HAND;
+            case 111111111 -> MouseCursor.CROSSHAIR;
+            case 222222222 -> MouseCursor.WAIT;
+            case 246013441 -> MouseCursor.RESIZE_NS;
+            case 576642561 -> MouseCursor.RESIZE_WE;
+            case -1628447231 -> MouseCursor.RESIZE_NESW;
+            case 149937665 -> MouseCursor.RESIZE_NWSE;
 
-                case 111111111:
-                    jwmCursor = MouseCursor.CROSSHAIR;
-                    break;
-                case 222222222:
-                    jwmCursor = MouseCursor.WAIT; // The Hourglass/Spinner
-                    break;
+            // If it's a completely custom Smalltalk cursor (like a paintbrush),
+            // we gracefully degrade back to the standard OS arrow.
+            default -> MouseCursor.ARROW;
+        };
 
-                case 246013441:
-                    jwmCursor = MouseCursor.RESIZE_NS;
-                    break;
-                case 576642561:
-                    jwmCursor = MouseCursor.RESIZE_WE;
-                    break;
-                case -1628447231:
-                    jwmCursor = MouseCursor.RESIZE_NESW;
-                    break;
-                case 149937665:
-                    jwmCursor = MouseCursor.RESIZE_NWSE;
-                    break;
-                default:
-                    // If it's a completely custom Smalltalk cursor (like a paintbrush),
-                    // we gracefully degrade back to the standard OS arrow.
-                    jwmCursor = MouseCursor.ARROW;
-                    break;
-            }
-        }
-
-        final MouseCursor finalCursor = jwmCursor;
         App.runOnUIThread(() -> {
             if (window != null) {
-                window.setMouseCursor(finalCursor);
+                window.setMouseCursor(jwmCursor);
             }
         });
     }
@@ -537,7 +535,7 @@ public final class SqueakDisplay implements Consumer<Event> {
 
     @TruffleBoundary
     public static String getClipboardData() {
-        final java.util.concurrent.CompletableFuture<String> future = new java.util.concurrent.CompletableFuture<>();
+        final CompletableFuture<String> future = new CompletableFuture<>();
 
         App.runOnUIThread(() -> {
             try {
