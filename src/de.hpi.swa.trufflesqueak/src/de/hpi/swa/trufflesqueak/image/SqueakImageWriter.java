@@ -22,6 +22,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.trufflesqueak.io.SqueakDisplay;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithHash;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
@@ -86,6 +87,14 @@ public final class SqueakImageWriter {
 
     private void run(final ContextObject thisContext) throws IOException {
         final long start = MiscUtils.currentTimeMillis();
+        /* Obtain and save the current window dimensions. */
+        if (image.getDisplay() instanceof final SqueakDisplay display) {
+            final int width = display.getWindowWidth();
+            final int height = display.getWindowHeight();
+            if (width > 0 && height > 0) {
+                image.flags.setSnapshotScreenSize(width, height);
+            }
+        }
         nextChunk = image.flags.getOldBaseAddress();
         final PointersObject activeProcess = image.getActiveProcessSlow();
         try {
