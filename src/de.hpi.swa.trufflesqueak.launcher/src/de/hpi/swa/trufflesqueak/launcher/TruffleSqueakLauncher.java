@@ -6,6 +6,13 @@
  */
 package de.hpi.swa.trufflesqueak.launcher;
 
+import static org.lwjgl.sdl.SDLError.SDL_GetError;
+import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_QUIT;
+import static org.lwjgl.sdl.SDLEvents.SDL_PollEvent;
+import static org.lwjgl.sdl.SDLInit.SDL_INIT_VIDEO;
+import static org.lwjgl.sdl.SDLInit.SDL_Init;
+import static org.lwjgl.sdl.SDLStdinc.SDL_SetMemoryFunctions;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -16,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.locks.LockSupport;
 
 import org.graalvm.launcher.AbstractLanguageLauncher;
 import org.graalvm.maven.downloader.Main;
@@ -25,7 +33,10 @@ import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
+import org.lwjgl.sdl.SDL_Event;
+import org.lwjgl.system.MemoryUtil;
 
+import de.hpi.swa.trufflesqueak.shared.EventQueue;
 import de.hpi.swa.trufflesqueak.shared.SqueakImageLocator;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageOptions;
@@ -97,7 +108,63 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
 
     @Override
     protected void launch(final Context.Builder contextBuilder) {
-        System.exit(execute(contextBuilder));
+        if (headless) {
+            System.exit(execute(contextBuilder));
+            return;
+        }
+
+        SDL_SetMemoryFunctions(
+                        MemoryUtil::nmemAllocChecked,
+                        MemoryUtil::nmemCallocChecked,
+                        MemoryUtil::nmemReallocChecked,
+                        MemoryUtil::nmemFree);
+
+        if (!SDL_Init(SDL_INIT_VIDEO)) {
+            throw new IllegalStateException("Unable to initialize SDL: " + SDL_GetError());
+        }
+
+        // Run the Squeak VM in a background thread
+        final Thread squeakVMThread = new Thread(() -> {
+            int exitCode = -1; // Assume crash by default
+
+            try {
+                // Execute the Squeak image
+                exitCode = execute(contextBuilder);
+            } catch (Throwable t) {
+                // Log the fatal crash through the GraalVM launcher framework
+                throw abort(t);
+            } finally {
+                // GUARANTEED TO RUN: When Squeak exits or crashes, tell the JWM window to
+                // close
+// App.runOnUIThread(App::terminate);
+            }
+
+            // Shut down the JVM completely (only reached if no exception was thrown)
+            System.exit(exitCode);
+
+        }, "SqueakVM-Thread");
+
+        squeakVMThread.start();
+
+        SDL_Event event = SDL_Event.create();
+
+        main: while (true) {
+            Runnable r = EventQueue.INSTANCE.poll();
+            while (r != null) {
+                r.run();
+                r = EventQueue.INSTANCE.poll();
+            }
+
+            while (SDL_PollEvent(event)) {
+                // final long time = getEventTime();
+                final int eventType = event.type();
+                System.out.println(event);
+                if (event.type() == SDL_EVENT_QUIT) {
+                    break main;
+                }
+            }
+            LockSupport.parkNanos(1_000_000L);
+        }
     }
 
     private int execute(final Context.Builder contextBuilder) {

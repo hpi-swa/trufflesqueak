@@ -285,6 +285,7 @@ suite = {
                 "TRUFFLESQUEAK_SHARED",
                 "sdk:LAUNCHER_COMMON",
                 "sdk:MAVEN_DOWNLOADER",
+                "LWJGL_SDL",
             ],
             "requires": [
                 "java.desktop",
@@ -496,10 +497,16 @@ suite = {
             "dependencies": [
                 "de.hpi.swa.trufflesqueak.launcher",
             ],
+            "exclude": [
+                "LWJGL",
+                "LWJGL_SDL",
+            ],
             "distDependencies": [
                 "TRUFFLESQUEAK_SHARED",
                 "sdk:LAUNCHER_COMMON",
                 "sdk:MAVEN_DOWNLOADER",
+                "LWJGL",
+                "LWJGL_SDL",
             ],
             "maven": {
                 "groupId": "de.hpi.swa.trufflesqueak",

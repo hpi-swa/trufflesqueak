@@ -7,8 +7,6 @@
 package de.hpi.swa.trufflesqueak.io;
 
 import static org.lwjgl.sdl.SDLError.SDL_GetError;
-import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_QUIT;
-import static org.lwjgl.sdl.SDLEvents.SDL_PollEvent;
 import static org.lwjgl.sdl.SDLHints.SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK;
 import static org.lwjgl.sdl.SDLHints.SDL_HINT_RENDER_VSYNC;
 import static org.lwjgl.sdl.SDLHints.SDL_SetHint;
@@ -16,43 +14,23 @@ import static org.lwjgl.sdl.SDLInit.SDL_INIT_VIDEO;
 import static org.lwjgl.sdl.SDLInit.SDL_Init;
 import static org.lwjgl.sdl.SDLInit.SDL_Quit;
 import static org.lwjgl.sdl.SDLPixels.SDL_PIXELFORMAT_ARGB8888;
-import static org.lwjgl.sdl.SDLProperties.SDL_CreateProperties;
-import static org.lwjgl.sdl.SDLProperties.SDL_DestroyProperties;
-import static org.lwjgl.sdl.SDLProperties.SDL_SetBooleanProperty;
-import static org.lwjgl.sdl.SDLProperties.SDL_SetNumberProperty;
-import static org.lwjgl.sdl.SDLProperties.SDL_SetStringProperty;
 import static org.lwjgl.sdl.SDLRect.SDL_GetRectUnionFloat;
-import static org.lwjgl.sdl.SDLRender.SDL_CreateRenderer;
-import static org.lwjgl.sdl.SDLRender.SDL_CreateSoftwareRenderer;
 import static org.lwjgl.sdl.SDLRender.SDL_CreateTexture;
 import static org.lwjgl.sdl.SDLRender.SDL_DestroyRenderer;
 import static org.lwjgl.sdl.SDLRender.SDL_DestroyTexture;
-import static org.lwjgl.sdl.SDLRender.SDL_RenderClear;
 import static org.lwjgl.sdl.SDLRender.SDL_RenderPresent;
 import static org.lwjgl.sdl.SDLRender.SDL_RenderTexture;
 import static org.lwjgl.sdl.SDLRender.SDL_TEXTUREACCESS_STREAMING;
 import static org.lwjgl.sdl.SDLRender.SDL_UpdateTexture;
-import static org.lwjgl.sdl.SDLStdinc.SDL_SetMemoryFunctions;
+import static org.lwjgl.sdl.SDLRender.nSDL_CreateRenderer;
 import static org.lwjgl.sdl.SDLVideo.SDL_CreateWindow;
-import static org.lwjgl.sdl.SDLVideo.SDL_CreateWindowWithProperties;
 import static org.lwjgl.sdl.SDLVideo.SDL_DestroyWindow;
-import static org.lwjgl.sdl.SDLVideo.SDL_GL_SetSwapInterval;
 import static org.lwjgl.sdl.SDLVideo.SDL_GetWindowDisplayScale;
-import static org.lwjgl.sdl.SDLVideo.SDL_GetWindowSurface;
-import static org.lwjgl.sdl.SDLVideo.SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER;
-import static org.lwjgl.sdl.SDLVideo.SDL_PROP_WINDOW_CREATE_HIDDEN_BOOLEAN;
-import static org.lwjgl.sdl.SDLVideo.SDL_PROP_WINDOW_CREATE_RESIZABLE_BOOLEAN;
-import static org.lwjgl.sdl.SDLVideo.SDL_PROP_WINDOW_CREATE_TITLE_STRING;
-import static org.lwjgl.sdl.SDLVideo.SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER;
-import static org.lwjgl.sdl.SDLVideo.SDL_PROP_WINDOW_CREATE_X_NUMBER;
-import static org.lwjgl.sdl.SDLVideo.SDL_PROP_WINDOW_CREATE_Y_NUMBER;
 import static org.lwjgl.sdl.SDLVideo.SDL_RaiseWindow;
-import static org.lwjgl.sdl.SDLVideo.SDL_SetWindowMinimumSize;
 import static org.lwjgl.sdl.SDLVideo.SDL_SetWindowTitle;
-import static org.lwjgl.sdl.SDLVideo.SDL_ShowWindow;
-import static org.lwjgl.sdl.SDLVideo.SDL_WINDOWPOS_CENTERED;
 import static org.lwjgl.sdl.SDLVideo.SDL_WINDOW_HIGH_PIXEL_DENSITY;
 import static org.lwjgl.sdl.SDLVideo.SDL_WINDOW_RESIZABLE;
+import static org.lwjgl.system.MemoryUtil.NULL;
 
 import java.awt.*;
 import java.awt.Taskbar.Feature;
@@ -67,16 +45,14 @@ import java.awt.dnd.DropTargetDragEvent;
 import java.awt.dnd.DropTargetDropEvent;
 import java.awt.dnd.DropTargetEvent;
 import java.awt.event.InputEvent;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.io.Serial;
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 import java.util.List;
+import java.util.concurrent.locks.LockSupport;
 
 import org.lwjgl.sdl.SDLHints;
-import org.lwjgl.sdl.SDL_Event;
 import org.lwjgl.sdl.SDL_FRect;
 import org.lwjgl.sdl.SDL_Surface;
 import org.lwjgl.sdl.SDL_Texture;
@@ -95,16 +71,13 @@ import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.KEYBOARD;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.FORM;
-import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.HostWindowPlugin;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
-import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 public final class SqueakDisplay {
     private static final String DEFAULT_WINDOW_TITLE = "TruffleSqueak";
-    private static final long NULL = 0L;
     @CompilationFinal(dimensions = 1) private static final int[] CURSOR_COLORS = {0x00000000, 0xFF0000FF, 0xFFFFFFFF, 0xFF000000};
 
     public final SqueakImageContext image;
@@ -120,15 +93,14 @@ public final class SqueakDisplay {
 
     private int width;
     private int height;
+    private ByteBuffer pixelBuffer;
     private float scaleFactor;
     private boolean textureDirty = false;
     private NativeObject bitmap;
-    private int bpp = 4; // TODO: for 32bit only!
+    private int bpp = Integer.BYTES; // TODO: for 32bit only!
     private SDL_FRect flipRect = SDL_FRect.create();
     private SDL_FRect renderRect = SDL_FRect.create();
-    private SDL_Event event = SDL_Event.create();
 
-    private final SqueakDisplayCanvas canvas = new SqueakDisplayCanvas();
     private final ArrayDeque<long[]> deferredEvents = new ArrayDeque<>();
 
     @CompilationFinal private int inputSemaphoreIndex = -1;
@@ -137,14 +109,6 @@ public final class SqueakDisplay {
     private Dimension rememberedWindowSize;
     private Point rememberedWindowLocation;
     private boolean deferUpdates;
-
-    static {
-        SDL_SetMemoryFunctions(
-                        MemoryUtil::nmemAllocChecked,
-                        MemoryUtil::nmemCallocChecked,
-                        MemoryUtil::nmemReallocChecked,
-                        MemoryUtil::nmemFree);
-    }
 
     private SqueakDisplay(final SqueakImageContext image) {
 // assert EventQueue.isDispatchThread();
@@ -163,10 +127,6 @@ public final class SqueakDisplay {
 // frame.addKeyListener(keyboard);
 // installWindowAdapter();
 // installDropTargetListener();
-
-        if (!SDL_Init(SDL_INIT_VIDEO)) {
-            throw new IllegalStateException("Unable to initialize SDL: " + SDL_GetError());
-        }
 
         // Do not wait for vsync.
         checkSdlError(SDL_SetHint(SDLHints.SDL_HINT_RENDER_VSYNC, "0"));
@@ -204,7 +164,12 @@ public final class SqueakDisplay {
 
     public static SqueakDisplay create(final SqueakImageContext image) {
         CompilerAsserts.neverPartOfCompilation();
-        return new SqueakDisplay(image);
+        SqueakDisplay[] display = new SqueakDisplay[1];
+        de.hpi.swa.trufflesqueak.shared.EventQueue.INSTANCE.add(() -> display[0] = new SqueakDisplay(image));
+        while (display[0] == null) {
+            LockSupport.parkNanos(1_000_000L);
+        }
+        return display[0];
     }
 
     private static void tryToSetTaskbarIcon() {
@@ -228,63 +193,17 @@ public final class SqueakDisplay {
         }
     }
 
-    private static final class SqueakDisplayCanvas extends Component {
-        @Serial private static final long serialVersionUID = 1L;
-        private transient BufferedImage bufferedImage;
-
-        @Override
-        public boolean isOpaque() {
-            return true;
-        }
-
-        /**
-         * Override paint in case a repaint event is triggered (e.g. when window is moved to another
-         * screen).
-         */
-        @Override
-        public void paint(final Graphics g) {
-            g.drawImage(bufferedImage, 0, 0, null);
-        }
-
-        /**
-         * Paint directly onto graphics. Smalltalk manages repaints and thus, Swing's repaint
-         * manager needs to be bypassed to avoid flickering (repaints otherwise have a slight
-         * delay).
-         */
-        public void paintImmediately(final int left, final int top, final int right, final int bottom) {
-            final Graphics g = getGraphics();
-            if (g != null) {
-                g.drawImage(bufferedImage, left, top, right, bottom, left, top, right, bottom, null);
-                g.dispose();
-            }
-        }
-
-        private void setSqueakDisplay(final PointersObject squeakDisplay) {
-            final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
-            final NativeObject bitmap = readNode.executeNative(squeakDisplay, FORM.BITS);
-            if (!bitmap.isIntType()) {
-                throw SqueakException.create("Display bitmap expected to be a words object");
-            }
-            final int width = readNode.executeInt(squeakDisplay, FORM.WIDTH);
-            final int height = readNode.executeInt(squeakDisplay, FORM.HEIGHT);
-            assert (long) squeakDisplay.instVarAt0Slow(FORM.DEPTH) == 32 : "Unsupported display depth";
-            if (width > 0 && height > 0) {
-                bufferedImage = MiscUtils.new32BitBufferedImage(bitmap.getIntStorage(), width, height, false);
-            }
-        }
-    }
-
     @TruffleBoundary
     public void showDisplayRect(final int left, final int top, final int right, final int bottom) {
         assert left <= right && top <= bottom;
-        paintImmediately(left, top, right, bottom);
+        de.hpi.swa.trufflesqueak.shared.EventQueue.INSTANCE.add(() -> paintImmediately(left, top, right, bottom));
     }
 
     private void paintImmediately(final int left, final int top, final int right, final int bottom) {
         copyPixels(left + top * width, right + bottom * width);
         recordDamage(left, top, right - left, bottom - top);
         textureDirty = true;
-        render(true);
+        render();
     }
 
     private void copyPixels(final int start, final int stop) {
@@ -295,47 +214,50 @@ public final class SqueakDisplay {
             LogUtils.IO.fine(() -> "remainingSize <= 0" + (remainingSize <= 0) + "start >= stop" + (start >= stop));
 // return;
         }
-        final int[] pixelInts = bitmap.getIntStorage();
-        ByteBuffer pixels = MemoryUtil.memAlloc(pixelInts.length * Integer.BYTES);
-        pixels.asIntBuffer().put(pixelInts);
-        pixels.clear();
+// final int[] pixelInts = bitmap.getIntStorage();
+//
+// ByteBuffer pixels = MemoryUtil.memAlloc(pixelInts.length * Integer.BYTES);
+// MemoryUtil.pixels.asIntBuffer().put(pixelInts);
+// pixels.clear();
 // surface.pixels(pixels);
 
-        System.out.print(".");
-        System.out.flush();
+        // System.out.print(".");
+        // System.out.flush();
+        MemoryUtil.memCopy(bitmap.getIntStorage(), pixelBuffer);
+        pixelBuffer.clear();
 
-        SDL_UpdateTexture(texture, null, pixels, width * bpp);
+        SDL_UpdateTexture(texture, null, pixelBuffer, width * bpp);
     }
 
     private void recordDamage(final int x, final int y, final int w, final int h) {
-        flipRect.x(x * 2.0f);
-        flipRect.y(y * 2.0f);
-        flipRect.w(Math.min(w + 1, width) * 2.0f);
-        flipRect.h(Math.min(h + 1, height) * 2.0f);
+        flipRect.x(x * scaleFactor);
+        flipRect.y(y * scaleFactor);
+        flipRect.w(Math.min(w + 1, width) * scaleFactor);
+        flipRect.h(Math.min(h + 1, height) * scaleFactor);
 // System.out.println("flipRect: " + flipRect.w() + " " + flipRect.h() + " " + flipRect.x() + " " +
 // flipRect.y());
         SDL_GetRectUnionFloat(flipRect, renderRect, renderRect);
     }
 
-    private void render(final boolean forced) {
-// if (!forced && (deferUpdates || !textureDirty)) {
-// return;
-// }
+    private void render() {
+        if (deferUpdates || !textureDirty) {
+            return;
+        }
         textureDirty = false;
 
         // Clear the renderer
-        SDL_RenderClear(renderer);
+        // SDL_RenderClear(renderer);
 
         // Copy the texture to the rendering target (replaces SDL2's SDL_RenderCopy)
 // System.out.println("RenderRect: " + renderRect.w() + " " + renderRect.h() + " " + renderRect.x()
 // + " " + renderRect.y());
-        SDL_RenderTexture(renderer, texture, null, null);
+        checkSdlError(SDL_RenderTexture(renderer, texture, null, null));
 
         // Present the updated renderer to the screen
         SDL_RenderPresent(renderer);
 
-        System.out.print("x");
-        System.out.flush();
+        // System.out.print("x");
+        // System.out.flush();
 
 // if (!SDL_RenderTexture(renderer, texture, renderRect, renderRect)) {
 //// return;
@@ -356,22 +278,25 @@ public final class SqueakDisplay {
     private void fullDamage() {
         renderRect.x(0);
         renderRect.y(0);
-        renderRect.w(width);
-        renderRect.h(height);
+        renderRect.w(width * scaleFactor);
+        renderRect.h(height * scaleFactor);
     }
 
     @TruffleBoundary
     public void close() {
-        if (texture != null) {
-            SDL_DestroyTexture(texture);
-        }
-        if (renderer != NULL) {
-            SDL_DestroyRenderer(renderer);
-        }
-        if (window != NULL) {
-            SDL_DestroyWindow(window);
-        }
-        SDL_Quit();
+        de.hpi.swa.trufflesqueak.shared.EventQueue.INSTANCE.add(() -> {
+            if (texture != null) {
+                SDL_DestroyTexture(texture);
+            }
+            if (renderer != NULL) {
+                SDL_DestroyRenderer(renderer);
+            }
+            if (window != NULL) {
+                SDL_DestroyWindow(window);
+            }
+            System.out.println("Quitting SqueakVM");
+            SDL_Quit();
+        });
     }
 
     @TruffleBoundary
@@ -436,55 +361,12 @@ public final class SqueakDisplay {
         if (window == NULL) {
             width = (int) (long) sqDisplay.instVarAt0Slow(FORM.WIDTH);
             height = (int) (long) sqDisplay.instVarAt0Slow(FORM.HEIGHT);
+            pixelBuffer = ByteBuffer.allocateDirect(width * height * Integer.BYTES);
             System.out.println("opening " + title);
-            if (true) {
+            de.hpi.swa.trufflesqueak.shared.EventQueue.INSTANCE.add(() -> {
                 init();
-                fullDamage();
-                return;
-            }
-            int props = SDL_CreateProperties();
-            checkSdlError(SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_X_NUMBER,
-                            SDL_WINDOWPOS_CENTERED));
-            checkSdlError(SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_Y_NUMBER,
-                            SDL_WINDOWPOS_CENTERED));
-            checkSdlError(SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, width));
-            checkSdlError(SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, height));
-            checkSdlError(SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_TITLE_STRING, title));
-            // checkSdlError(SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_OPENGL_BOOLEAN,
-            // true));
-            checkSdlError(SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_HIDDEN_BOOLEAN, true));
-            checkSdlError(SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_RESIZABLE_BOOLEAN, true));
-
-            window = checkSdlError(SDL_CreateWindowWithProperties(props));
-            SDL_DestroyProperties(props);
-
-            checkSdlError(SDL_SetWindowMinimumSize(window, width, height));
-
-            // glContext = checkSdlError(SDL_GL_CreateContext(window));
-
-// SDL_GL_MakeCurrent(window, glContext);
-
-// Configuration.OPENGL_EXPLICIT_INIT.set(true);
-
-// checkSdlError(SDL_GL_LoadLibrary((ByteBuffer) null));
-
-// try (MemoryStack stack = stackPush()) {
-// PointerBuffer windowPtr = stack.mallocPointer(1);
-// PointerBuffer rendererPtr = stack.mallocPointer(1);
-// checkSdlError(SDL_CreateWindowAndRenderer(title, width, height, 0, windowPtr, rendererPtr));
-// window = windowPtr.get(0);
-// renderer = rendererPtr.get(0);
-// }
-
-            SDL_GL_SetSwapInterval(0); // disable vsync
-
-            checkSdlError(SDL_ShowWindow(window));
-            checkSdlError(SDL_RaiseWindow(window));
-
-            surface = SDL_GetWindowSurface(window);
-            renderer = checkSdlError(SDL_CreateSoftwareRenderer(surface));
-            texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, width, height);
-            System.out.println("texture created: " + texture);
+            });
+            fullDamage();
         }
     }
 
@@ -506,7 +388,9 @@ public final class SqueakDisplay {
         scaleFactor = SDL_GetWindowDisplayScale(window);
 
         // Create the hardware-accelerated renderer
-        renderer = SDL_CreateRenderer(window, "metal");
+// surface = SDL_GetWindowSurface(window);
+// renderer = SDL_CreateSoftwareRenderer(surface);
+        renderer = nSDL_CreateRenderer(window, NULL);
         if (renderer == NULL) {
             throw new RuntimeException("Failed to create SDL renderer: " + SDL_GetError());
         }
@@ -524,6 +408,9 @@ public final class SqueakDisplay {
         if (texture == null) {
             throw new RuntimeException("Failed to create SDL texture: " + SDL_GetError());
         }
+
+        // checkSdlError(SDL_GL_SetSwapInterval(0)); // disable vsync
+
     }
 
     @TruffleBoundary
@@ -586,14 +473,14 @@ public final class SqueakDisplay {
     }
 
     public long[] getNextEvent() {
-        while (SDL_PollEvent(event)) {
-            final long time = getEventTime();
-            final int eventType = event.type();
-            System.out.println(event);
-            if (event.type() == SDL_EVENT_QUIT) {
-                close();
-            }
-        }
+// while (SDL_PollEvent(event)) {
+// final long time = getEventTime();
+// final int eventType = event.type();
+// System.out.println(event);
+// if (event.type() == SDL_EVENT_QUIT) {
+// close();
+// }
+// }
         return deferredEvents.pollFirst();
     }
 
@@ -640,7 +527,9 @@ public final class SqueakDisplay {
 
     @TruffleBoundary
     public void setWindowTitle(final String title) {
-        SDL_SetWindowTitle(window, title);
+        de.hpi.swa.trufflesqueak.shared.EventQueue.INSTANCE.add(() -> {
+            SDL_SetWindowTitle(window, title);
+        });
     }
 
     public void setInputSemaphoreIndex(final int interruptSemaphoreIndex) {
@@ -705,7 +594,7 @@ public final class SqueakDisplay {
     @SuppressWarnings("unused")
     private void installDropTargetListener() {
         assert EventQueue.isDispatchThread();
-        new DropTarget(canvas, new DropTargetAdapter() {
+        new DropTarget(/* canvas */ null, new DropTargetAdapter() {
             @Override
             public void drop(final DropTargetDropEvent dtde) {
                 final Transferable transferable = dtde.getTransferable();
