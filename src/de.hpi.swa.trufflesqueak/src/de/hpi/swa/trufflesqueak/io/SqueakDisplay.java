@@ -14,6 +14,7 @@ import static org.lwjgl.sdl.SDLInit.SDL_INIT_VIDEO;
 import static org.lwjgl.sdl.SDLInit.SDL_Init;
 import static org.lwjgl.sdl.SDLInit.SDL_Quit;
 import static org.lwjgl.sdl.SDLPixels.SDL_PIXELFORMAT_ARGB8888;
+import static org.lwjgl.sdl.SDLRect.SDL_GetRectUnion;
 import static org.lwjgl.sdl.SDLRect.SDL_GetRectUnionFloat;
 import static org.lwjgl.sdl.SDLRender.SDL_CreateTexture;
 import static org.lwjgl.sdl.SDLRender.SDL_DestroyRenderer;
@@ -54,6 +55,7 @@ import java.util.concurrent.locks.LockSupport;
 
 import org.lwjgl.sdl.SDLHints;
 import org.lwjgl.sdl.SDL_FRect;
+import org.lwjgl.sdl.SDL_Rect;
 import org.lwjgl.sdl.SDL_Surface;
 import org.lwjgl.sdl.SDL_Texture;
 import org.lwjgl.system.MemoryUtil;
@@ -95,10 +97,12 @@ public final class SqueakDisplay {
     private int height;
     private ByteBuffer pixelBuffer;
     private float scaleFactor;
-    private boolean textureDirty = false;
     private NativeObject bitmap;
     private int bpp = Integer.BYTES; // TODO: for 32bit only!
+    private SDL_Rect updateRect = SDL_Rect.create();
     private SDL_FRect flipRect = SDL_FRect.create();
+    private SDL_Rect flipRect2 = SDL_Rect.create();
+    private SDL_FRect sourceRect = SDL_FRect.create();
     private SDL_FRect renderRect = SDL_FRect.create();
 
     private final ArrayDeque<long[]> deferredEvents = new ArrayDeque<>();
@@ -196,61 +200,109 @@ public final class SqueakDisplay {
     @TruffleBoundary
     public void showDisplayRect(final int left, final int top, final int right, final int bottom) {
         assert left <= right && top <= bottom;
+        if (right - left <= 1) {
+            var x = 1;
+        }
         de.hpi.swa.trufflesqueak.shared.EventQueue.INSTANCE.add(() -> paintImmediately(left, top, right, bottom));
     }
 
     private void paintImmediately(final int left, final int top, final int right, final int bottom) {
-        copyPixels(left + top * width, right + bottom * width);
-        recordDamage(left, top, right - left, bottom - top);
-        textureDirty = true;
+        if (deferUpdates) {
+            System.out.println("defer");
+            return;
+        }
+        final int copyWidth = right - left;
+        final int copyHeight = bottom - top;
+        // System.out.println("updateXXXX: x=" + left + " y=" + top + " w=" + copyWidth + " h=" +
+        // copyHeight);
+        if (copyWidth <= 0 || copyHeight <= 0) {
+            System.out.println("skipping frame");
+            return;
+        }
+
+        recordDamage(left, top, copyWidth, copyHeight);
+        copyPixels(left, top, right, bottom, copyWidth, copyHeight);
         render();
     }
 
-    private void copyPixels(final int start, final int stop) {
-        final int offset = start * bpp;
-        assert offset >= 0;
-        final int remainingSize = width * height * bpp - offset;
-        if (remainingSize <= 0 || start >= stop) {
-            LogUtils.IO.fine(() -> "remainingSize <= 0" + (remainingSize <= 0) + "start >= stop" + (start >= stop));
-// return;
-        }
-// final int[] pixelInts = bitmap.getIntStorage();
-//
-// ByteBuffer pixels = MemoryUtil.memAlloc(pixelInts.length * Integer.BYTES);
-// MemoryUtil.pixels.asIntBuffer().put(pixelInts);
-// pixels.clear();
-// surface.pixels(pixels);
+    private void copyPixels(final int left, final int top, final int right, final int bottom, final int copyWidth, final int copyHeight) {
+        final int pitch = width * bpp;
+        final int byteOffset = top * pitch + left * bpp;
 
-        // System.out.print(".");
-        // System.out.flush();
-        MemoryUtil.memCopy(bitmap.getIntStorage(), pixelBuffer);
+        final int start = updateRect.y() * width + updateRect.x();
+        final int end = (updateRect.y() + updateRect.h()) * width + (updateRect.x() + updateRect.w());
+// final int end= updateRect.y() * width + updateRect.x();
+
+        // final int byteOffsetEnd = bottom * pitch + right * bpp;
+
         pixelBuffer.clear();
+        MemoryUtil.memCopy(bitmap.getIntStorage(), pixelBuffer);
 
-        SDL_UpdateTexture(texture, null, pixelBuffer, width * bpp);
+// pixelBuffer.position(start * bpp);
+// SDL_UpdateTexture(texture, updateRect, pixelBuffer, pitch);
+
+        pixelBuffer.clear();
+        SDL_UpdateTexture(texture, null, pixelBuffer, pitch);
     }
 
     private void recordDamage(final int x, final int y, final int w, final int h) {
+        updateRect.x(x);
+        updateRect.y(y);
+        updateRect.w(w);
+        updateRect.h(h);
+
+        sourceRect.x(x);
+        sourceRect.y(y);
+        sourceRect.w(w);
+        sourceRect.h(h);
+
+        renderRect.x(x * scaleFactor);
+        renderRect.y(y * scaleFactor);
+        renderRect.w(w * scaleFactor);
+        renderRect.h(h * scaleFactor);
+    }
+
+    private void recordDamage2(final int x, final int y, final int w, final int h) {
+        System.out.println("            x=" + x + " y=" + y + " w=" + w + " h=" + h);
+        flipRect2.x(x);
+        flipRect2.y(y);
+        flipRect2.w(w);
+        flipRect2.h(h);
+        System.out.println("flipRect2:  x=" + flipRect2.x() + " y=" + flipRect2.y() + " w=" + flipRect2.w() + " h=" + flipRect2.h());
+        System.out.println("updateRect: x=" + updateRect.x() + " y=" + updateRect.y() + " w=" + updateRect.w() + " h=" + updateRect.h());
+        SDL_GetRectUnion(flipRect2, updateRect, updateRect);
+        System.out.println("updateRect: x=" + updateRect.x() + " y=" + updateRect.y() + " w=" + updateRect.w() + " h=" + updateRect.h());
+
+        flipRect.x(x);
+        flipRect.y(y);
+        flipRect.w(w);
+        flipRect.h(h);
+        System.out.println("flipRect:   x=" + flipRect.x() + " y=" + flipRect.y() + " w=" + flipRect.w() + " h=" + flipRect.h());
+        System.out.println("sourceRect: x=" + sourceRect.x() + " y=" + sourceRect.y() + " w=" + sourceRect.w() + " h=" + sourceRect.h());
+        SDL_GetRectUnionFloat(flipRect, sourceRect, sourceRect);
+        System.out.println("sourceRect: x=" + sourceRect.x() + " y=" + sourceRect.y() + " w=" + sourceRect.w() + " h=" + sourceRect.h());
+
         flipRect.x(x * scaleFactor);
         flipRect.y(y * scaleFactor);
-        flipRect.w(Math.min(w + 1, width) * scaleFactor);
-        flipRect.h(Math.min(h + 1, height) * scaleFactor);
+        flipRect.w(w * scaleFactor);
+        flipRect.h(h * scaleFactor);
 // System.out.println("flipRect: " + flipRect.w() + " " + flipRect.h() + " " + flipRect.x() + " " +
 // flipRect.y());
         SDL_GetRectUnionFloat(flipRect, renderRect, renderRect);
     }
 
     private void render() {
-        if (deferUpdates || !textureDirty) {
-            return;
-        }
-        textureDirty = false;
 
         // Clear the renderer
         // SDL_RenderClear(renderer);
 
         // Copy the texture to the rendering target (replaces SDL2's SDL_RenderCopy)
-// System.out.println("RenderRect: " + renderRect.w() + " " + renderRect.h() + " " + renderRect.x()
-// + " " + renderRect.y());
+// System.out.println("updateRect: x=" + updateRect.x() + " y=" + updateRect.y() + " w=" +
+// updateRect.w() + " h=" + updateRect.h());
+// System.out.println("sourceRect: x=" + sourceRect.x() + " y=" + sourceRect.y() + " w=" +
+// sourceRect.w() + " h=" + sourceRect.h());
+// System.out.println("renderRect: x=" + renderRect.x() + " y=" + renderRect.y() + " w=" +
+// renderRect.w() + " h=" + renderRect.h());
         checkSdlError(SDL_RenderTexture(renderer, texture, null, null));
 
         // Present the updated renderer to the screen
@@ -269,6 +321,16 @@ public final class SqueakDisplay {
     }
 
     private void resetDamage() {
+        updateRect.x(0);
+        updateRect.y(0);
+        updateRect.w(0);
+        updateRect.h(0);
+
+        sourceRect.x(0);
+        sourceRect.y(0);
+        sourceRect.w(0);
+        sourceRect.h(0);
+
         renderRect.x(0);
         renderRect.y(0);
         renderRect.w(0);
@@ -276,6 +338,16 @@ public final class SqueakDisplay {
     }
 
     private void fullDamage() {
+        updateRect.x(0);
+        updateRect.y(0);
+        updateRect.w(width);
+        updateRect.h(height);
+
+        sourceRect.x(0);
+        sourceRect.y(0);
+        sourceRect.w(width);
+        sourceRect.h(height);
+
         renderRect.x(0);
         renderRect.y(0);
         renderRect.w(width * scaleFactor);
@@ -366,7 +438,7 @@ public final class SqueakDisplay {
             de.hpi.swa.trufflesqueak.shared.EventQueue.INSTANCE.add(() -> {
                 init();
             });
-            fullDamage();
+            // fullDamage();
         }
     }
 

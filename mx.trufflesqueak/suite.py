@@ -363,10 +363,13 @@ suite = {
             "relative_extracted_lib_paths": {
                 "truffle.attach.library": "../jvmlibs/<lib:truffleattach>",
                 "truffle.nfi.library": "../jvmlibs/<lib:trufflenfi>",
+                "org.lwjgl.librarypath": "../lib",
             },
             "liblang_relpath": "../lib/<lib:smalltalkvm>",
             "default_vm_args": [
                 "--vm.-add-exports=java.base/jdk.internal.module=de.hpi.swa.trufflesqueak",
+                "--vm.-enable-native-access=org.lwjgl",
+                "--vm.XstartOnFirstThread",
             ],
         },
         "libsmalltalkvm": {
@@ -479,8 +482,6 @@ suite = {
                         "dependency": "OSVM_PLUGINS",
                         "path": "*",
                     },
-                    "extracted-dependency:LWJGL_PLATFORM/*",
-                    "extracted-dependency:LWJGL_SDL_PLATFORM/*",
                 ],
             },
             "maven": False,
@@ -592,8 +593,8 @@ suite = {
                         "dependency": "OSVM_PLUGINS",
                         "path": "*",
                     },
-                    "extracted-dependency:LWJGL_PLATFORM/*",
-                    "extracted-dependency:LWJGL_SDL_PLATFORM/*",
+                    "extracted-dependency:LWJGL_PLATFORM/macos/arm64/org/lwjgl/liblwjgl.dylib",
+                    "extracted-dependency:LWJGL_SDL_PLATFORM/macos/arm64/org/lwjgl/sdl/libSDL3.dylib",
                 ],
             },
             "license": ["MIT"],
