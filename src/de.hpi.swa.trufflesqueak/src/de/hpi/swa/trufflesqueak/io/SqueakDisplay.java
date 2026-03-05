@@ -6,6 +6,7 @@
  */
 package de.hpi.swa.trufflesqueak.io;
 
+import static org.lwjgl.sdl.SDLEvents.*;
 import static org.lwjgl.sdl.SDLError.SDL_GetError;
 import static org.lwjgl.sdl.SDLHints.SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK;
 import static org.lwjgl.sdl.SDLHints.SDL_HINT_RENDER_VSYNC;
@@ -13,6 +14,7 @@ import static org.lwjgl.sdl.SDLHints.SDL_SetHint;
 import static org.lwjgl.sdl.SDLInit.SDL_INIT_VIDEO;
 import static org.lwjgl.sdl.SDLInit.SDL_Init;
 import static org.lwjgl.sdl.SDLInit.SDL_Quit;
+import static org.lwjgl.sdl.SDLKeyboard.SDL_StartTextInput;
 import static org.lwjgl.sdl.SDLPixels.SDL_PIXELFORMAT_ARGB8888;
 import static org.lwjgl.sdl.SDLRect.SDL_GetRectUnion;
 import static org.lwjgl.sdl.SDLRect.SDL_GetRectUnionFloat;
@@ -45,15 +47,16 @@ import java.awt.dnd.DropTargetAdapter;
 import java.awt.dnd.DropTargetDragEvent;
 import java.awt.dnd.DropTargetDropEvent;
 import java.awt.dnd.DropTargetEvent;
-import java.awt.event.InputEvent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayDeque;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.locks.LockSupport;
 
 import org.lwjgl.sdl.SDLHints;
+import org.lwjgl.sdl.SDLKeycode;
+import org.lwjgl.sdl.SDL_Event;
 import org.lwjgl.sdl.SDL_FRect;
 import org.lwjgl.sdl.SDL_Rect;
 import org.lwjgl.sdl.SDL_Surface;
@@ -105,7 +108,7 @@ public final class SqueakDisplay {
     private SDL_FRect sourceRect = SDL_FRect.create();
     private SDL_FRect renderRect = SDL_FRect.create();
 
-    private final ArrayDeque<long[]> deferredEvents = new ArrayDeque<>();
+    private final ConcurrentLinkedDeque<long[]> deferredEvents = new ConcurrentLinkedDeque<>();
 
     @CompilationFinal private int inputSemaphoreIndex = -1;
 
@@ -149,6 +152,13 @@ public final class SqueakDisplay {
 // SDL.eventState(SDL.EventType.FINGERMOTION.getCValue(), SDL.ignore());
 
         System.out.println("display created");
+
+        // Register this display to receive events from the Launcher
+        de.hpi.swa.trufflesqueak.shared.EventQueue.osEventHandler = (obj) -> {
+            if (obj instanceof SDL_Event sdlEvent) {
+                this.processEvent(sdlEvent);
+            }
+        };
 
         // tryToSetTaskbarIcon();
     }
@@ -459,6 +469,9 @@ public final class SqueakDisplay {
         checkSdlError(SDL_RaiseWindow(window));
         scaleFactor = SDL_GetWindowDisplayScale(window);
 
+        // Tell the OS we want translated text input events
+        SDL_StartTextInput(window);
+
         // Create the hardware-accelerated renderer
 // surface = SDL_GetWindowSurface(window);
 // renderer = SDL_CreateSoftwareRenderer(surface);
@@ -544,6 +557,45 @@ public final class SqueakDisplay {
         return cursorMergedWords;
     }
 
+    public void processEvent(SDL_Event event) {
+        switch (event.type()) {
+            case SDL_EVENT_KEY_DOWN:
+                // Note the removal of keysym() here!
+                keyboard.processKeyDown(event.key().key(), event.key().mod());
+                break;
+            case SDL_EVENT_KEY_UP:
+                keyboard.processKeyUp(event.key().key(), event.key().mod());
+                break;
+            case SDL_EVENT_TEXT_INPUT:
+                keyboard.processTextInput(event.text().textString());
+                break;
+            case SDL_EVENT_MOUSE_MOTION:
+                mouse.processMouseMotion(event.motion());
+                break;
+            case SDL_EVENT_MOUSE_BUTTON_DOWN:
+                mouse.processMouseButtonDown(event.button());
+                break;
+            case SDL_EVENT_MOUSE_BUTTON_UP:
+                mouse.processMouseButtonUp(event.button());
+                break;
+            case SDL_EVENT_MOUSE_WHEEL:
+                mouse.processMouseWheel(event.wheel());
+                break;
+        }
+    }
+
+    public int recordModifiers(int sdlModifiers) {
+        // Changed SDLKeymod to SDLKeycode
+        final int shiftValue = (sdlModifiers & (SDLKeycode.SDL_KMOD_LSHIFT | SDLKeycode.SDL_KMOD_RSHIFT)) != 0 ? KEYBOARD.SHIFT : 0;
+        final int ctrlValue = (sdlModifiers & (SDLKeycode.SDL_KMOD_LCTRL | SDLKeycode.SDL_KMOD_RCTRL)) != 0 ? KEYBOARD.CTRL : 0;
+        final int optValue = (sdlModifiers & (SDLKeycode.SDL_KMOD_LALT | SDLKeycode.SDL_KMOD_RALT)) != 0 ? KEYBOARD.ALT : 0;
+        final int cmdValue = (sdlModifiers & (SDLKeycode.SDL_KMOD_LGUI | SDLKeycode.SDL_KMOD_RGUI)) != 0 ? KEYBOARD.CMD : 0;
+
+        final int modifiers = shiftValue + ctrlValue + optValue + cmdValue;
+        buttons = buttons & ~KEYBOARD.ALL | modifiers;
+        return modifiers;
+    }
+
     public long[] getNextEvent() {
 // while (SDL_PollEvent(event)) {
 // final long time = getEventTime();
@@ -573,16 +625,6 @@ public final class SqueakDisplay {
         if (image.options.signalInputSemaphore() && inputSemaphoreIndex > 0) {
             image.interrupt.signalSemaphoreWithIndex(inputSemaphoreIndex);
         }
-    }
-
-    public int recordModifiers(final InputEvent e) {
-        final int shiftValue = e.isShiftDown() ? KEYBOARD.SHIFT : 0;
-        final int ctrlValue = e.isControlDown() ? KEYBOARD.CTRL : 0;
-        final int optValue = e.isAltGraphDown() ? KEYBOARD.ALT : 0;
-        final int cmdValue = e.isAltDown() || e.isMetaDown() ? KEYBOARD.CMD : 0;
-        final int modifiers = shiftValue + ctrlValue + optValue + cmdValue;
-        buttons = buttons & ~KEYBOARD.ALL | modifiers;
-        return modifiers;
     }
 
     private long getEventTime() {

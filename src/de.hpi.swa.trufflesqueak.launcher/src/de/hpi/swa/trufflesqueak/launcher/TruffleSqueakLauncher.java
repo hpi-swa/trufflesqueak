@@ -156,11 +156,12 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
             }
 
             while (SDL_PollEvent(event)) {
-                // final long time = getEventTime();
-                final int eventType = event.type();
-                System.out.println(event);
                 if (event.type() == SDL_EVENT_QUIT) {
                     break main;
+                }
+                // Route the event through the shared module to the VM
+                if (EventQueue.osEventHandler != null) {
+                    EventQueue.osEventHandler.accept(event);
                 }
             }
             LockSupport.parkNanos(1_000_000L);

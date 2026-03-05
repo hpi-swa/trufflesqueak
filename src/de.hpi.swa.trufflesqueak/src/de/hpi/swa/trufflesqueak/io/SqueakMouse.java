@@ -1,73 +1,62 @@
-/*
- * Copyright (c) 2017-2026 Software Architecture Group, Hasso Plattner Institute
- * Copyright (c) 2021-2026 Oracle and/or its affiliates
- *
- * Licensed under the MIT License.
- */
 package de.hpi.swa.trufflesqueak.io;
-
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
-
-import javax.swing.event.MouseInputAdapter;
 
 import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.EVENT_TYPE;
 import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.MOUSE;
 import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.MOUSE_EVENT;
-import de.hpi.swa.trufflesqueak.util.LogUtils;
+import org.lwjgl.sdl.SDL_MouseButtonEvent;
+import org.lwjgl.sdl.SDL_MouseMotionEvent;
+import org.lwjgl.sdl.SDL_MouseWheelEvent;
+import org.lwjgl.sdl.SDLMouse;
 
-public final class SqueakMouse extends MouseInputAdapter {
+public final class SqueakMouse {
     private final SqueakDisplay display;
 
     public SqueakMouse(final SqueakDisplay display) {
         this.display = display;
     }
 
-    @Override
-    public void mouseDragged(final MouseEvent e) {
-        recordMouseEvent(MOUSE_EVENT.MOVE, e);
+    public void processMouseMotion(final SDL_MouseMotionEvent event) {
+        recordMouseEvent(MOUSE_EVENT.MOVE, event.x(), event.y(), 0);
     }
 
-    @Override
-    public void mouseMoved(final MouseEvent e) {
-        recordMouseEvent(MOUSE_EVENT.MOVE, e);
+    public void processMouseButtonDown(final SDL_MouseButtonEvent event) {
+        recordMouseEvent(MOUSE_EVENT.DOWN, event.x(), event.y(), event.button());
     }
 
-    @Override
-    public void mousePressed(final MouseEvent e) {
-        recordMouseEvent(MOUSE_EVENT.DOWN, e);
+    public void processMouseButtonUp(final SDL_MouseButtonEvent event) {
+        recordMouseEvent(MOUSE_EVENT.UP, event.x(), event.y(), event.button());
     }
 
-    @Override
-    public void mouseReleased(final MouseEvent e) {
-        recordMouseEvent(MOUSE_EVENT.UP, e);
+    public void processMouseWheel(final SDL_MouseWheelEvent event) {
+        display.addEvent(EVENT_TYPE.MOUSE_WHEEL, 0L, (long) (event.y() * MOUSE.WHEEL_DELTA_FACTOR), display.buttons >> 3, 0L);
     }
 
-    @Override
-    public void mouseWheelMoved(final MouseWheelEvent e) {
-        display.addEvent(EVENT_TYPE.MOUSE_WHEEL, 0L /* X-Axis Scrolling is not supported */, (long) (e.getPreciseWheelRotation() * MOUSE.WHEEL_DELTA_FACTOR), display.buttons >> 3, 0L);
-    }
+    private void recordMouseEvent(final MOUSE_EVENT type, final float x, final float y, final int sdlButton) {
+//        final double scale = display.getDisplayScale();
+        final double scale = 1.0d;
+        final int scaledX = (int) (x * scale);
+        final int scaledY = (int) (y * scale);
 
-    private void recordMouseEvent(final MOUSE_EVENT type, final MouseEvent e) {
-        final int buttons = switch (type) {
-            case DOWN -> mapButton(e);
-            case MOVE -> display.buttons & MOUSE.ALL;
-            case UP -> 0;
+        final int currentButtons = display.buttons & MOUSE.ALL;
+
+        final int newButtonState = switch (type) {
+            case DOWN -> currentButtons | mapButton(sdlButton);         // Add the new button
+            case MOVE -> currentButtons;                                // Keep existing buttons
+            case UP -> currentButtons & ~mapButton(sdlButton);          // Remove ONLY the released button
         };
-        display.buttons = buttons | display.recordModifiers(e);
-        display.addEvent(EVENT_TYPE.MOUSE, e.getX(), e.getY(), display.buttons & MOUSE.ALL, display.buttons >> 3);
+
+        // Merge the new mouse button state with the existing keyboard modifiers
+        display.buttons = newButtonState | (display.buttons & ~MOUSE.ALL);
+
+        display.addEvent(EVENT_TYPE.MOUSE, scaledX, scaledY, display.buttons & MOUSE.ALL, display.buttons >> 3);
     }
 
-    private static int mapButton(final MouseEvent e) {
-        return switch (e.getButton()) {
-            case MouseEvent.BUTTON1 -> e.isAltDown() ? MOUSE.YELLOW : MOUSE.RED; // left
-            case MouseEvent.BUTTON2 -> MOUSE.YELLOW; // middle
-            case MouseEvent.BUTTON3 -> MOUSE.BLUE; // right
-            case MouseEvent.NOBUTTON -> 0;
-            default -> {
-                LogUtils.IO.warning("Unknown mouse button in event: " + e);
-                yield 0;
-            }
+    private static int mapButton(final int sdlButton) {
+        return switch (sdlButton) {
+            case SDLMouse.SDL_BUTTON_LEFT -> MOUSE.RED;
+            case SDLMouse.SDL_BUTTON_MIDDLE -> MOUSE.YELLOW;
+            case SDLMouse.SDL_BUTTON_RIGHT -> MOUSE.BLUE;
+            default -> 0;
         };
     }
 }
