@@ -193,8 +193,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 final PointersObject offset = receiver.getFormOffset(cursorReadNode);
                 final int offsetX = Math.abs(offsetReadNode.executeInt(offset, POINT.X));
                 final int offsetY = Math.abs(offsetReadNode.executeInt(offset, POINT.Y));
-                image.getDisplay().setCursor(receiver.getFormBits(cursorReadNode), null, receiver.getFormWidth(cursorReadNode), receiver.getFormHeight(cursorReadNode),
-                                receiver.getFormDepth(cursorReadNode), offsetX, offsetY);
+                image.getDisplay().setCursor(receiver.getFormBits(cursorReadNode), null, receiver.getFormWidth(cursorReadNode), receiver.getFormHeight(cursorReadNode), offsetX, offsetY);
             }
             return receiver;
         }
@@ -219,15 +218,12 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 final int offsetX = Math.abs(offsetReadNode.executeInt(offset, POINT.X));
                 final int offsetY = Math.abs(offsetReadNode.executeInt(offset, POINT.Y));
                 final int[] mask;
-                final int realDepth;
                 if (depthProfile.profile(node, depth == 1)) {
                     mask = cursorReadNode.executeNative(maskObject, FORM.BITS).getIntStorage();
-                    realDepth = 2;
                 } else {
                     mask = null;
-                    realDepth = depth;
                 }
-                image.getDisplay().setCursor(words, mask, width, height, realDepth, offsetX, offsetY);
+                image.getDisplay().setCursor(words, mask, width, height, offsetX, offsetY);
             }
             return receiver;
         }

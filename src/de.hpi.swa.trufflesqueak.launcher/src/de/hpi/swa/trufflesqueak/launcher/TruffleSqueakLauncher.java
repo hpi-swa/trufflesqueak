@@ -146,7 +146,7 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
 
         squeakVMThread.start();
 
-        SDL_Event event = SDL_Event.create();
+        final SDL_Event event = SDL_Event.create();
 
         main: while (true) {
             Runnable r = EventQueue.INSTANCE.poll();
