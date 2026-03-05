@@ -1300,8 +1300,12 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 231)
     protected abstract static class PrimForceDisplayUpdateNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
-        protected static final Object doForceUpdate(final Object receiver) {
-            return receiver; // Do nothing.
+        protected final Object doForceUpdate(final Object receiver) {
+            final SqueakImageContext image = getContext();
+            if (image.hasDisplay()) {
+                image.getDisplay().render(true);
+            }
+            return receiver;
         }
     }
 

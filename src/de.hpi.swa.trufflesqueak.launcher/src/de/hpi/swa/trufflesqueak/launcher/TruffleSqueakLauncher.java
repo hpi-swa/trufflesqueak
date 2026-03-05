@@ -7,7 +7,6 @@
 package de.hpi.swa.trufflesqueak.launcher;
 
 import static org.lwjgl.sdl.SDLError.SDL_GetError;
-import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_QUIT;
 import static org.lwjgl.sdl.SDLEvents.SDL_PollEvent;
 import static org.lwjgl.sdl.SDLInit.SDL_INIT_VIDEO;
 import static org.lwjgl.sdl.SDLInit.SDL_Init;
@@ -148,7 +147,7 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
 
         final SDL_Event event = SDL_Event.create();
 
-        main: while (true) {
+        while (true) {
             Runnable r = EventQueue.INSTANCE.poll();
             while (r != null) {
                 r.run();
@@ -156,9 +155,6 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
             }
 
             while (SDL_PollEvent(event)) {
-                if (event.type() == SDL_EVENT_QUIT) {
-                    break main;
-                }
                 // Route the event through the shared module to the VM
                 if (EventQueue.osEventHandler != null) {
                     EventQueue.osEventHandler.accept(event);
