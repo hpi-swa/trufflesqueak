@@ -36,20 +36,26 @@ import static org.lwjgl.sdl.SDLKeyboard.SDL_StartTextInput;
 import static org.lwjgl.sdl.SDLMouse.SDL_CreateCursor;
 import static org.lwjgl.sdl.SDLMouse.SDL_DestroyCursor;
 import static org.lwjgl.sdl.SDLMouse.SDL_SetCursor;
-import static org.lwjgl.sdl.SDLRect.SDL_GetRectUnionFloat;
+import static org.lwjgl.sdl.SDLPixels.SDL_PIXELFORMAT_ARGB8888;
+import static org.lwjgl.sdl.SDLRender.nSDL_CreateRenderer;
+import static org.lwjgl.sdl.SDLRender.SDL_CreateTexture;
 import static org.lwjgl.sdl.SDLRender.SDL_DestroyRenderer;
 import static org.lwjgl.sdl.SDLRender.SDL_DestroyTexture;
 import static org.lwjgl.sdl.SDLRender.SDL_LockTexture;
+import static org.lwjgl.sdl.SDLRender.SDL_RenderClear;
+import static org.lwjgl.sdl.SDLRender.SDL_RenderTexture;
+import static org.lwjgl.sdl.SDLRender.SDL_RenderPresent;
+import static org.lwjgl.sdl.SDLRender.SDL_SetTextureScaleMode;
 import static org.lwjgl.sdl.SDLRender.SDL_UnlockTexture;
+import static org.lwjgl.sdl.SDLRender.SDL_TEXTUREACCESS_STREAMING;
+import static org.lwjgl.sdl.SDLSurface.SDL_SCALEMODE_NEAREST;
 import static org.lwjgl.sdl.SDLVideo.SDL_CreateWindow;
 import static org.lwjgl.sdl.SDLVideo.SDL_DestroyWindow;
-import static org.lwjgl.sdl.SDLVideo.SDL_GL_SetSwapInterval;
 import static org.lwjgl.sdl.SDLVideo.SDL_GetWindowDisplayScale;
-import static org.lwjgl.sdl.SDLVideo.SDL_GetWindowSurface;
 import static org.lwjgl.sdl.SDLVideo.SDL_RaiseWindow;
 import static org.lwjgl.sdl.SDLVideo.SDL_SetWindowFullscreen;
+import static org.lwjgl.sdl.SDLVideo.SDL_SetWindowSize;
 import static org.lwjgl.sdl.SDLVideo.SDL_SetWindowTitle;
-import static org.lwjgl.sdl.SDLVideo.SDL_UpdateWindowSurface;
 import static org.lwjgl.sdl.SDLVideo.SDL_WINDOW_HIGH_PIXEL_DENSITY;
 import static org.lwjgl.sdl.SDLVideo.SDL_WINDOW_RESIZABLE;
 import static org.lwjgl.system.MemoryStack.stackPush;
@@ -59,6 +65,7 @@ import java.awt.*;
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.locks.LockSupport;
 
@@ -69,7 +76,7 @@ import org.lwjgl.sdl.SDLKeycode;
 import org.lwjgl.sdl.SDL_Event;
 import org.lwjgl.sdl.SDL_FRect;
 import org.lwjgl.sdl.SDL_Point;
-import org.lwjgl.sdl.SDL_Surface;
+import org.lwjgl.sdl.SDL_Rect;
 import org.lwjgl.sdl.SDL_Texture;
 import org.lwjgl.sdl.SDL_WindowEvent;
 import org.lwjgl.system.MemoryStack;
@@ -102,24 +109,32 @@ public final class SqueakDisplay {
     // public final Frame frame = new Frame(DEFAULT_WINDOW_TITLE);
     private long window = NULL;
     private long cursor = NULL;
-    private SDL_Surface screen;
     private long renderer = NULL;
     private SDL_Texture texture;
     public final SqueakMouse mouse;
     public final SqueakKeyboard keyboard;
 
-    private int width;
-    private int height;
+    // Squeak bitmap (physical pixels)
+    private volatile int width;
+    private volatile int height;
+    private volatile NativeObject bitmap;
+
+    // UI Thread Tracking (Texture & Logical Window)
+    private int textureWidth = -1;
+    private int textureHeight = -1;
+    private int osWindowWidth;
+    private int osWindowHeight;
+
     private final PointerBuffer pixels = BufferUtils.createPointerBuffer(1);
-    private int lockedDimension;
     final IntBuffer pitch = BufferUtils.createIntBuffer(1);
 
     private float scaleFactor;
-    private NativeObject bitmap;
     private static final int BPP = Integer.BYTES;
-    private boolean textureDirty = false;
-    private SDL_FRect flipRect = SDL_FRect.create();
-    private SDL_FRect renderRect = SDL_FRect.create();
+
+    // Dirty band tracking
+    private int dirtyTop = Integer.MAX_VALUE;
+    private int dirtyBottom = Integer.MIN_VALUE;
+    private final AtomicBoolean frameRequested = new AtomicBoolean(false);
 
     private final ConcurrentLinkedDeque<long[]> deferredEvents = new ConcurrentLinkedDeque<>();
 
@@ -135,11 +150,9 @@ public final class SqueakDisplay {
         mouse = new SqueakMouse(this);
         keyboard = new SqueakKeyboard(this);
 
-        // Do not wait for vsync.
-        checkSdlError(SDL_SetHint(SDLHints.SDL_HINT_RENDER_VSYNC, "0"));
-        // Nearest pixel sampling.
-        // checkSdlError(SDLHints.SDL_SetHint(SDLHints.HINT_RENDER_SCALE_QUALITY, "0"));
-        // SDL.setHint(SDL.HINT_RENDER_SCALE_QUALITY, "0");
+        // Enable VSync to accumulate damage and prevent tearing.
+        checkSdlError(SDL_SetHint(SDLHints.SDL_HINT_RENDER_VSYNC, "1"));
+
         // Disable WM_PING, so the WM does not think it is hung.
         checkSdlError(SDL_SetHint(SDLHints.SDL_HINT_VIDEO_X11_NET_WM_PING, "0"));
         // Ctrl-Click on macOS is right click.
@@ -208,107 +221,108 @@ public final class SqueakDisplay {
         }
         final int copyWidth = right - left;
         final int copyHeight = bottom - top;
-        // System.out.println("updateXXXX: x=" + left + " y=" + top + " w=" + copyWidth + " h=" +
-        // copyHeight);
+
         if (copyWidth <= 0 || copyHeight <= 0) {
-            System.out.println("skipping frame");
             return;
         }
 
         recordDamage(left, top, copyWidth, copyHeight);
-        copyPixels(left, top, right, bottom, copyWidth, copyHeight);
-        textureDirty = true;
-        // render();
-    }
-
-    private void copyPixels(final int left, final int top, final int right, final int bottom, final int copyWidth, final int copyHeight) {
-
-        final int currentPitch = width * BPP;
-        // final int byteOffset = top * pitch + left * BPP;
-
-        final int start = (int) ((left + top * width));
-        final int stop = (int) ((right + bottom * width));
-
-        final int offset = (int) (start);
-        assert offset >= 0;
-        final int remainingSize = (int) (width * height) - offset;
-        if (remainingSize <= 0 || start >= stop) {
-            System.out.println("skipping frame");
-            return;
-        }
-        final int numBytes = Math.min((stop - start), remainingSize);
-
-        // final int end = (updateRect.y() + updateRect.h()) * width + (updateRect.x() +
-        // updateRect.w());
-// final int end= updateRect.y() * width + updateRect.x();
-
-        // final int byteOffsetEnd = bottom * pitch + right * bpp;
-
-// if (currentPitch != pitch.get(0)) {
-// return;
-// }
-
-        // assert lockedDimension == bitmap.getIntLength();
-
-        // System.out.println("left: " + left + " top: " + top + " right: " + right + " bottom: " +
-        // bottom + " [copying " + numBytes + " of " + bitmap.getIntLength() + "]");
-
-        final long pixelBuffer = pixels.get(0);
-        // MemoryUtil.memCopy(bitmap.getIntStorage(), pixelBuffer + offset * BPP, offset, numBytes);
-
-        if (screen == null) {
-            System.out.println("skip copy");
-            return;
-        }
-        // SDL_UpdateTexture()
-        MemoryUtil.memCopy(bitmap.getIntStorage(), MemoryUtil.memAddress(screen.pixels()) + offset * BPP, offset, numBytes);
-        // MemoryUtil.memCopy(bitmap.getIntStorage(), pixelBuffer);
-    }
-
-    private void recordDamage(final int x, final int y, final int w, final int h) {
-        if (renderRect.w() == 0) {
-            renderRect.set(x, y, Math.min(w + 1, width - x), Math.min(h + 1, height - y));
-        } else {
-            flipRect.set(x, y, Math.min(w + 1, width - x), Math.min(h + 1, height - y));
-            SDL_GetRectUnionFloat(flipRect, renderRect, renderRect);
-        }
-    }
-
-    private void resetDamage() {
-        renderRect.set(0, 0, 0, 0);
-    }
-
-    private void fullDamage() {
-        renderRect.set(0, 0, width, height);
+        render(false);
     }
 
     public void render(final boolean force) {
-        if (!force && (deferUpdates || !textureDirty)) {
+        // Capture and strictly clamp the dirty band
+        final int safeTop = Math.max(0, dirtyTop);
+        final int safeBottom = Math.min(height, dirtyBottom);
+
+        if (!force && (deferUpdates || safeTop >= safeBottom)) {
             return;
         }
-        textureDirty = false;
+
+        // Try to queue a frame
+        if (frameRequested.getAndSet(true)) {
+            // A frame is already in flight.
+            // IMPORTANT: DO NOT reset damage! Let the next frame pick up this missed update.
+            return;
+        }
+
+        // We successfully claimed the frame. We can safely reset the damage trackers.
+        resetDamage();
+
+        // Queue the render task using our safely clamped bounds
         EventQueue.INSTANCE.add(() -> {
-            // unlock();
-            SDL_UpdateWindowSurface(window);
-// checkSdlError(SDL_RenderTexture(renderer, texture, renderRect, renderRect));
-// SDL_RenderPresent(renderer);
-            resetDamage();
-            // lock();
+            if (renderer != NULL) {
+                // LAZY TEXTURE SYNC: This absolutely guarantees the texture pitch matches Squeak's bitmap
+                if (textureWidth != width || textureHeight != height || texture == null) {
+                    if (texture != null) {
+                        SDL_DestroyTexture(texture);
+                    }
+                    textureWidth = width;
+                    textureHeight = height;
+                    texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, textureWidth, textureHeight);
+                    SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
+                }
+
+                try (MemoryStack stack = stackPush()) {
+                    SDL_Rect lockRect = SDL_Rect.malloc(stack);
+                    lockRect.set(0, safeTop, textureWidth, safeBottom - safeTop); // Use textureWidth!
+
+                    if (SDL_LockTexture(texture, lockRect, pixels, pitch)) {
+                        long pixelBufferAddress = pixels.get(0);
+                        int currentPitch = pitch.get(0);
+                        int storageLength = bitmap.getIntStorage().length;
+
+                        if (currentPitch == textureWidth * Integer.BYTES) {
+                            int srcOffsetInts = safeTop * textureWidth;
+                            int numIntsToCopy = (safeBottom - safeTop) * textureWidth;
+
+                            int maxSafeInts = Math.min(numIntsToCopy, storageLength - srcOffsetInts);
+                            if (srcOffsetInts >= 0 && maxSafeInts > 0) {
+                                MemoryUtil.memCopy(bitmap.getIntStorage(), pixelBufferAddress, srcOffsetInts, maxSafeInts);
+                            }
+                        } else {
+                            int dirtyH = safeBottom - safeTop;
+                            for (int y = 0; y < dirtyH; y++) {
+                                int rowOffsetInts = (safeTop + y) * textureWidth;
+                                if (rowOffsetInts >= 0 && rowOffsetInts + textureWidth <= storageLength) {
+                                    MemoryUtil.memCopy(bitmap.getIntStorage(), pixelBufferAddress + (y * currentPitch), rowOffsetInts, textureWidth);
+                                }
+                            }
+                        }
+                        SDL_UnlockTexture(texture);
+                    }
+                }
+
+                SDL_RenderClear(renderer);
+                SDL_RenderTexture(renderer, texture, null, null);
+                SDL_RenderPresent(renderer);
+            }
+
+            // Release the lock so the next frame can be scheduled
+            frameRequested.set(false);
         });
+    }
+
+    private void recordDamage(final int x, final int y, final int w, final int h) {
+        final int clippedTop = Math.max(0, y);
+        final int clippedBottom = Math.min(height, y + h);
+
+        dirtyTop = Math.min(dirtyTop, clippedTop);
+        dirtyBottom = Math.max(dirtyBottom, clippedBottom);
+    }
+
+    private void resetDamage() {
+        dirtyTop = Integer.MAX_VALUE;
+        dirtyBottom = Integer.MIN_VALUE;
+    }
+
+    private void fullDamage() {
+        dirtyTop = 0;
+        dirtyBottom = height;
     }
 
     private static void debug(final String name, final SDL_FRect rect) {
         System.out.println(name + ": x=" + rect.x() + ", y=" + rect.y() + ", w=" + rect.w() + ", h=" + rect.h());
-    }
-
-    private void lock() {
-        checkSdlError(SDL_LockTexture(texture, null, pixels, pitch));
-        lockedDimension = texture.w() * texture.h();
-    }
-
-    private void unlock() {
-        SDL_UnlockTexture(texture);
-        lockedDimension = -1;
     }
 
     @TruffleBoundary
@@ -328,33 +342,12 @@ public final class SqueakDisplay {
         });
     }
 
-    @TruffleBoundary
-    public void resizeTo(final int newWidth, final int newHeight) {
-        width = newWidth;
-        height = newHeight;
-
-// if (texture != null) {
-// SDL_DestroyTexture(texture);
-// }
-//
-// texture = SDL_CreateTexture(
-// renderer,
-// SDL_PIXELFORMAT_ARGB8888,
-// SDL_TEXTUREACCESS_STREAMING,
-// width,
-// height);
-// if (texture == null) {
-// throw new RuntimeException("Failed to create SDL texture: " + SDL_GetError());
-// }
-// lock();
-    }
-
     public int getWindowWidth() {
-        return width;
+        return osWindowWidth > 0 ? (int) Math.ceil(osWindowWidth * getDisplayScale()) : width;
     }
 
     public int getWindowHeight() {
-        return height;
+        return osWindowHeight > 0 ? (int) Math.ceil(osWindowHeight * getDisplayScale()) : height;
     }
 
     @TruffleBoundary
@@ -373,74 +366,76 @@ public final class SqueakDisplay {
         if (!bitmap.isIntType()) {
             throw SqueakException.create("Display bitmap expected to be a words object");
         }
+
+        // Squeak thread updates physical dimensions instantly
         width = (int) (long) sqDisplay.instVarAt0Slow(FORM.WIDTH);
         height = (int) (long) sqDisplay.instVarAt0Slow(FORM.HEIGHT);
+
         if (window == NULL) {
+            // Initial boot
+            osWindowWidth = (int) Math.ceil(width / getDisplayScale());
+            osWindowHeight = (int) Math.ceil(height / getDisplayScale());
             EventQueue.INSTANCE.add(this::init);
         } else {
-            EventQueue.INSTANCE.add(() -> resizeTo(width, height));
+            // Prevent the shrink loop: only resize OS window if Squeak explicitly requested a different logical size
+            final int targetLogicalWidth = (int) Math.ceil(width / getDisplayScale());
+            final int targetLogicalHeight = (int) Math.ceil(height / getDisplayScale());
+
+            EventQueue.INSTANCE.add(() -> {
+                if (targetLogicalWidth != osWindowWidth || targetLogicalHeight != osWindowHeight) {
+                    osWindowWidth = targetLogicalWidth;
+                    osWindowHeight = targetLogicalHeight;
+                    SDL_SetWindowSize(window, osWindowWidth, osWindowHeight);
+                }
+            });
         }
 
-        // Set or update frame title.
         final String imageFileName = new File(image.getImagePath()).getName();
-        // Avoid name duplication in frame title.
-        final String title;
-        if (imageFileName.contains(SqueakLanguageConfig.IMPLEMENTATION_NAME)) {
-            title = imageFileName;
-        } else {
-            title = imageFileName + " running on " + SqueakLanguageConfig.IMPLEMENTATION_NAME;
-        }
+        final String title = imageFileName.contains(SqueakLanguageConfig.IMPLEMENTATION_NAME) ? imageFileName : imageFileName + " running on " + SqueakLanguageConfig.IMPLEMENTATION_NAME;
         setWindowTitle(title);
     }
 
     public void init() {
-        checkSdlError(SDL_SetHint(SDL_HINT_RENDER_VSYNC, "0"));
+        checkSdlError(SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1"));
         checkSdlError(SDL_SetHint(SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK, "1"));
 
-        // Create the native window
-// try (MemoryStack stack = stackPush()) {
-// final PointerBuffer windowPointer = stack.mallocPointer(1);
-// final PointerBuffer rendererPointer = stack.mallocPointer(1);
-// if (!SDL_CreateWindowAndRenderer(DEFAULT_WINDOW_TITLE, width, height, SDL_WINDOW_RESIZABLE |
-// SDL_WINDOW_HIGH_PIXEL_DENSITY, windowPointer, rendererPointer)) {
-// throw new RuntimeException("Failed to create SDL window and renderer: " + SDL_GetError());
-// }
-// window = windowPointer.get(0);
-// screen = SDL_GetWindowSurface(window);
-// renderer = rendererPointer.get(0);
-// }
-
-        window = SDL_CreateWindow(DEFAULT_WINDOW_TITLE, width, height, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
+        window = SDL_CreateWindow(DEFAULT_WINDOW_TITLE, osWindowWidth, osWindowHeight, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
         if (window == NULL) {
             throw new RuntimeException("Failed to create SDL window: " + SDL_GetError());
         }
-        screen = SDL_GetWindowSurface(window);
-        if (screen == null) {
-            throw new RuntimeException("Failed to create SDL surface: " + SDL_GetError());
+
+        renderer = nSDL_CreateRenderer(window, NULL);
+        if (renderer == NULL) {
+            throw new RuntimeException("Failed to create SDL renderer: " + SDL_GetError());
         }
 
         checkSdlError(SDL_RaiseWindow(window));
         scaleFactor = SDL_GetWindowDisplayScale(window);
-
-        // Tell the OS we want translated text input events
         SDL_StartTextInput(window);
+        fullDamage();
+    }
 
-        // Create a texture configured for frequent updates (streaming).
-        // Note: Adjust the PixelFormat if TruffleSqueak is yielding a different byte order (e.g.,
-        // BGRA).
-        // texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
-        // SDL_TEXTUREACCESS_STREAMING, width, height);
-// if (texture == null) {
-// throw new RuntimeException("Failed to create SDL texture: " + SDL_GetError());
-// }
-// lock();
+    @TruffleBoundary
+    public void resizeTo(final int newWidth, final int newHeight) {
+        // The Squeak interpreter is explicitly requesting a new physical size
+        width = newWidth;
+        height = newHeight;
 
-        // checkSdlError(SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST));
+        // Calculate the logical size needed for the OS window
+        final int targetLogicalWidth = (int) Math.ceil(width / getDisplayScale());
+        final int targetLogicalHeight = (int) Math.ceil(height / getDisplayScale());
 
-        // try to allow late tearing (pushes frames faster)
-        if (SDL_GL_SetSwapInterval(-1)) {
-            checkSdlError(SDL_GL_SetSwapInterval(0)); // at least try to disable vsync
+        osWindowWidth = targetLogicalWidth;
+        osWindowHeight = targetLogicalHeight;
+
+        if (window != NULL) {
+            EventQueue.INSTANCE.add(() -> {
+                SDL_SetWindowSize(window, osWindowWidth, osWindowHeight);
+            });
         }
+
+        // Ensure the entire new area gets drawn on the next frame
+        fullDamage();
     }
 
     @TruffleBoundary
@@ -516,16 +511,18 @@ public final class SqueakDisplay {
                 addWindowEvent(SqueakIOConstants.WINDOW.CLOSE);
                 break;
             case SDL_EVENT_WINDOW_DISPLAY_CHANGED:
+                scaleFactor = SDL_GetWindowDisplayScale(window);
                 addWindowEvent(SqueakIOConstants.WINDOW.CHANGED_SCREEN);
                 break;
             case SDL_EVENT_WINDOW_RESIZED:
-                addWindowEvent(SqueakIOConstants.WINDOW.METRIC_CHANGE);
                 final SDL_WindowEvent we = event.window();
-                resizeTo(we.data1(), we.data2());
+                // SDL3 reports window sizes in logical coordinates
+                osWindowWidth = we.data1();
+                osWindowHeight = we.data2();
+                addWindowEvent(SqueakIOConstants.WINDOW.METRIC_CHANGE);
                 fullDamage();
                 render(true);
-                break;
-            case SDL_EVENT_RENDER_TARGETS_RESET, SDL_EVENT_RENDER_DEVICE_RESET:
+                break;            case SDL_EVENT_RENDER_TARGETS_RESET, SDL_EVENT_RENDER_DEVICE_RESET:
                 fullDamage();
                 render(true);
                 break;
@@ -561,7 +558,20 @@ public final class SqueakDisplay {
     }
 
     public void addEvent(final long eventType, final long value3, final long value4, final long value5, final long value6, final long value7) {
-        deferredEvents.add(new long[]{eventType, getEventTime(), value3, value4, value5, value6, value7, HostWindowPlugin.DEFAULT_HOST_WINDOW_ID});
+        // Coalesce mouse events if the button state has not changed.
+        if (eventType == EVENT_TYPE.MOUSE) {
+            long[] lastEvent = deferredEvents.pollLast();
+            if (lastEvent != null) {
+                if (lastEvent[0] == EVENT_TYPE.MOUSE && lastEvent[4] == value5) {
+                    // Throw away event if it is a mouse event with same button state.
+                    // We will fall through and add a new one below.
+                } else {
+                    // Otherwise, add this event back and add a mouse event below.
+                    deferredEvents.addLast(lastEvent);
+                }
+            }
+        }
+        deferredEvents.addLast(new long[]{eventType, getEventTime(), value3, value4, value5, value6, value7, HostWindowPlugin.DEFAULT_HOST_WINDOW_ID});
         if (image.options.signalInputSemaphore() && inputSemaphoreIndex > 0) {
             image.interrupt.signalSemaphoreWithIndex(inputSemaphoreIndex);
         }
