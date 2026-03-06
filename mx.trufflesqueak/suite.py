@@ -259,7 +259,6 @@ suite = {
                 "TRUFFLESQUEAK_SHARED",
                 "truffle:TRUFFLE_API",
                 "truffle:TRUFFLE_NFI",
-                "LWJGL_SDL",
             ],
             "requires": [
                 "java.datatransfer",
@@ -285,7 +284,6 @@ suite = {
                 "TRUFFLESQUEAK_SHARED",
                 "sdk:LAUNCHER_COMMON",
                 "sdk:MAVEN_DOWNLOADER",
-                "LWJGL_SDL",
             ],
             "requires": [
                 "java.desktop",
@@ -317,6 +315,7 @@ suite = {
             "sourceDirs": ["src"],
             "dependencies": [
                 "sdk:GRAAL_SDK",
+                "LWJGL_SDL",
             ],
             "checkstyle": "de.hpi.swa.trufflesqueak",
             "jacoco": "include",
@@ -408,10 +407,6 @@ suite = {
             },
             "dependencies": [
                 "de.hpi.swa.trufflesqueak",
-            ],
-            "exclude": [
-                "LWJGL",
-                "LWJGL_SDL",
             ],
             "distDependencies": [
                 "TRUFFLESQUEAK_SHARED",
@@ -525,6 +520,10 @@ suite = {
                     "de.hpi.swa.trufflesqueak.shared",
                 ],
             },
+            "exclude": [
+                "LWJGL",
+                "LWJGL_SDL",
+            ],
             "dependencies": [
                 "de.hpi.swa.trufflesqueak.shared",
             ],

@@ -37,17 +37,17 @@ import static org.lwjgl.sdl.SDLMouse.SDL_CreateCursor;
 import static org.lwjgl.sdl.SDLMouse.SDL_DestroyCursor;
 import static org.lwjgl.sdl.SDLMouse.SDL_SetCursor;
 import static org.lwjgl.sdl.SDLPixels.SDL_PIXELFORMAT_ARGB8888;
-import static org.lwjgl.sdl.SDLRender.nSDL_CreateRenderer;
 import static org.lwjgl.sdl.SDLRender.SDL_CreateTexture;
 import static org.lwjgl.sdl.SDLRender.SDL_DestroyRenderer;
 import static org.lwjgl.sdl.SDLRender.SDL_DestroyTexture;
 import static org.lwjgl.sdl.SDLRender.SDL_LockTexture;
 import static org.lwjgl.sdl.SDLRender.SDL_RenderClear;
-import static org.lwjgl.sdl.SDLRender.SDL_RenderTexture;
 import static org.lwjgl.sdl.SDLRender.SDL_RenderPresent;
+import static org.lwjgl.sdl.SDLRender.SDL_RenderTexture;
 import static org.lwjgl.sdl.SDLRender.SDL_SetTextureScaleMode;
-import static org.lwjgl.sdl.SDLRender.SDL_UnlockTexture;
 import static org.lwjgl.sdl.SDLRender.SDL_TEXTUREACCESS_STREAMING;
+import static org.lwjgl.sdl.SDLRender.SDL_UnlockTexture;
+import static org.lwjgl.sdl.SDLRender.nSDL_CreateRenderer;
 import static org.lwjgl.sdl.SDLSurface.SDL_SCALEMODE_NEAREST;
 import static org.lwjgl.sdl.SDLVideo.SDL_CreateWindow;
 import static org.lwjgl.sdl.SDLVideo.SDL_DestroyWindow;
@@ -65,8 +65,8 @@ import java.awt.*;
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.LockSupport;
 
 import org.lwjgl.BufferUtils;
@@ -165,11 +165,7 @@ public final class SqueakDisplay {
         SDL_SetEventEnabled(SDL_EVENT_FINGER_MOTION, false);
 
         // Register this display to receive events from the Launcher
-        EventQueue.osEventHandler = (obj) -> {
-            if (obj instanceof SDL_Event sdlEvent) {
-                this.processEvent(sdlEvent);
-            }
-        };
+        EventQueue.osEventHandler = this::processEvent;
 
         tryToSetTaskbarIcon();
     }
@@ -252,7 +248,8 @@ public final class SqueakDisplay {
         // Queue the render task using our safely clamped bounds
         EventQueue.INSTANCE.add(() -> {
             if (renderer != NULL) {
-                // LAZY TEXTURE SYNC: This absolutely guarantees the texture pitch matches Squeak's bitmap
+                // LAZY TEXTURE SYNC: This absolutely guarantees the texture pitch matches Squeak's
+                // bitmap
                 if (textureWidth != width || textureHeight != height || texture == null) {
                     if (texture != null) {
                         SDL_DestroyTexture(texture);
@@ -265,7 +262,8 @@ public final class SqueakDisplay {
 
                 try (MemoryStack stack = stackPush()) {
                     SDL_Rect lockRect = SDL_Rect.malloc(stack);
-                    lockRect.set(0, safeTop, textureWidth, safeBottom - safeTop); // Use textureWidth!
+                    lockRect.set(0, safeTop, textureWidth, safeBottom - safeTop); // Use
+                                                                                  // textureWidth!
 
                     if (SDL_LockTexture(texture, lockRect, pixels, pitch)) {
                         long pixelBufferAddress = pixels.get(0);
@@ -377,7 +375,8 @@ public final class SqueakDisplay {
             osWindowHeight = (int) Math.ceil(height / getDisplayScale());
             EventQueue.INSTANCE.add(this::init);
         } else {
-            // Prevent the shrink loop: only resize OS window if Squeak explicitly requested a different logical size
+            // Prevent the shrink loop: only resize OS window if Squeak explicitly requested a
+            // different logical size
             final int targetLogicalWidth = (int) Math.ceil(width / getDisplayScale());
             final int targetLogicalHeight = (int) Math.ceil(height / getDisplayScale());
 
@@ -522,7 +521,8 @@ public final class SqueakDisplay {
                 addWindowEvent(SqueakIOConstants.WINDOW.METRIC_CHANGE);
                 fullDamage();
                 render(true);
-                break;            case SDL_EVENT_RENDER_TARGETS_RESET, SDL_EVENT_RENDER_DEVICE_RESET:
+                break;
+            case SDL_EVENT_RENDER_TARGETS_RESET, SDL_EVENT_RENDER_DEVICE_RESET:
                 fullDamage();
                 render(true);
                 break;
