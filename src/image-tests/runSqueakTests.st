@@ -144,6 +144,7 @@
         InteropTest -> #(#testArrays #testMembers #testMetadataAPIs #testScopeAPIs).
         JavaTest -> #(#testJavaHashes #testJavaInetAddress #testJavaIterator).
         PolyglotTest -> #(#testInstallLanguage).
+        SUnitTest -> #(#testTestTimeoutLoop #testTestTimeoutPragma #testWithExceptionDo).
     } collect: [:assoc | | testCase |
         testCase := assoc key.
         assoc value do: [:sel | ignoredTests add: (testCase selector: sel) ]].
