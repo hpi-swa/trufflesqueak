@@ -10,9 +10,6 @@ import static org.lwjgl.sdl.SDLClipboard.SDL_GetClipboardText;
 import static org.lwjgl.sdl.SDLClipboard.SDL_HasClipboardText;
 import static org.lwjgl.sdl.SDLClipboard.SDL_SetClipboardText;
 import static org.lwjgl.sdl.SDLError.SDL_GetError;
-import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_FINGER_DOWN;
-import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_FINGER_MOTION;
-import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_FINGER_UP;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_KEY_DOWN;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_KEY_UP;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_MOUSE_BUTTON_DOWN;
@@ -22,12 +19,10 @@ import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_MOUSE_WHEEL;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_QUIT;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_RENDER_DEVICE_RESET;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_RENDER_TARGETS_RESET;
-import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_TEXT_EDITING;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_TEXT_INPUT;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_WINDOW_CLOSE_REQUESTED;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_WINDOW_DISPLAY_CHANGED;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_WINDOW_RESIZED;
-import static org.lwjgl.sdl.SDLEvents.SDL_SetEventEnabled;
 import static org.lwjgl.sdl.SDLHints.SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK;
 import static org.lwjgl.sdl.SDLHints.SDL_HINT_RENDER_VSYNC;
 import static org.lwjgl.sdl.SDLHints.SDL_SetHint;
@@ -67,11 +62,9 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.LockSupport;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
-import org.lwjgl.sdl.SDLHints;
 import org.lwjgl.sdl.SDLKeycode;
 import org.lwjgl.sdl.SDL_Event;
 import org.lwjgl.sdl.SDL_FRect;
@@ -150,24 +143,11 @@ public final class SqueakDisplay {
         mouse = new SqueakMouse(this);
         keyboard = new SqueakKeyboard(this);
 
-        // Enable VSync to accumulate damage and prevent tearing.
-        checkSdlError(SDL_SetHint(SDLHints.SDL_HINT_RENDER_VSYNC, "1"));
-
-        // Disable WM_PING, so the WM does not think it is hung.
-        checkSdlError(SDL_SetHint(SDLHints.SDL_HINT_VIDEO_X11_NET_WM_PING, "0"));
-        // Ctrl-Click on macOS is right click.
-        checkSdlError(SDL_SetHint(SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK, "1"));
-
-        // Disable unneeded events to avoid issues (e.g. double clicks).
-        SDL_SetEventEnabled(SDL_EVENT_TEXT_EDITING, false);
-        SDL_SetEventEnabled(SDL_EVENT_FINGER_DOWN, false);
-        SDL_SetEventEnabled(SDL_EVENT_FINGER_UP, false);
-        SDL_SetEventEnabled(SDL_EVENT_FINGER_MOTION, false);
-
         // Register this display to receive events from the Launcher
         EventQueue.osEventHandler = this::processEvent;
+        EventQueue.onClose = this::onClose;
 
-        tryToSetTaskbarIcon();
+        EventQueue.start.countDown();
     }
 
     private static void checkSdlError(final boolean success) {
@@ -185,12 +165,7 @@ public final class SqueakDisplay {
 
     public static SqueakDisplay create(final SqueakImageContext image) {
         CompilerAsserts.neverPartOfCompilation();
-        final SqueakDisplay[] display = new SqueakDisplay[1];
-        EventQueue.INSTANCE.add(() -> display[0] = new SqueakDisplay(image));
-        while (display[0] == null) {
-            LockSupport.parkNanos(1_000_000L);
-        }
-        return display[0];
+        return new SqueakDisplay(image);
     }
 
     private static void tryToSetTaskbarIcon() {
@@ -261,27 +236,27 @@ public final class SqueakDisplay {
                 }
 
                 try (MemoryStack stack = stackPush()) {
-                    SDL_Rect lockRect = SDL_Rect.malloc(stack);
+                    final SDL_Rect lockRect = SDL_Rect.malloc(stack);
                     lockRect.set(0, safeTop, textureWidth, safeBottom - safeTop); // Use
                                                                                   // textureWidth!
 
                     if (SDL_LockTexture(texture, lockRect, pixels, pitch)) {
-                        long pixelBufferAddress = pixels.get(0);
-                        int currentPitch = pitch.get(0);
-                        int storageLength = bitmap.getIntStorage().length;
+                        final long pixelBufferAddress = pixels.get(0);
+                        final int currentPitch = pitch.get(0);
+                        final int storageLength = bitmap.getIntStorage().length;
 
                         if (currentPitch == textureWidth * Integer.BYTES) {
-                            int srcOffsetInts = safeTop * textureWidth;
-                            int numIntsToCopy = (safeBottom - safeTop) * textureWidth;
+                            final int srcOffsetInts = safeTop * textureWidth;
+                            final int numIntsToCopy = (safeBottom - safeTop) * textureWidth;
 
-                            int maxSafeInts = Math.min(numIntsToCopy, storageLength - srcOffsetInts);
+                            final int maxSafeInts = Math.min(numIntsToCopy, storageLength - srcOffsetInts);
                             if (srcOffsetInts >= 0 && maxSafeInts > 0) {
                                 MemoryUtil.memCopy(bitmap.getIntStorage(), pixelBufferAddress, srcOffsetInts, maxSafeInts);
                             }
                         } else {
-                            int dirtyH = safeBottom - safeTop;
+                            final int dirtyH = safeBottom - safeTop;
                             for (int y = 0; y < dirtyH; y++) {
-                                int rowOffsetInts = (safeTop + y) * textureWidth;
+                                final int rowOffsetInts = (safeTop + y) * textureWidth;
                                 if (rowOffsetInts >= 0 && rowOffsetInts + textureWidth <= storageLength) {
                                     MemoryUtil.memCopy(bitmap.getIntStorage(), pixelBufferAddress + (y * currentPitch), rowOffsetInts, textureWidth);
                                 }
@@ -325,19 +300,21 @@ public final class SqueakDisplay {
 
     @TruffleBoundary
     public void close() {
-        EventQueue.INSTANCE.add(() -> {
-            if (texture != null) {
-                SDL_DestroyTexture(texture);
-            }
-            if (renderer != NULL) {
-                SDL_DestroyRenderer(renderer);
-            }
-            if (window != NULL) {
-                SDL_DestroyWindow(window);
-            }
-            System.out.println("Quitting SqueakVM");
-            SDL_Quit();
-        });
+        EventQueue.isRunning = false;
+    }
+
+    public void onClose() {
+        if (texture != null) {
+            SDL_DestroyTexture(texture);
+        }
+        if (renderer != NULL) {
+            SDL_DestroyRenderer(renderer);
+        }
+        if (window != NULL) {
+            SDL_DestroyWindow(window);
+        }
+        System.out.println("Quitting SqueakVM");
+        SDL_Quit();
     }
 
     public int getWindowWidth() {
@@ -560,7 +537,7 @@ public final class SqueakDisplay {
     public void addEvent(final long eventType, final long value3, final long value4, final long value5, final long value6, final long value7) {
         // Coalesce mouse events if the button state has not changed.
         if (eventType == EVENT_TYPE.MOUSE) {
-            long[] lastEvent = deferredEvents.pollLast();
+            final long[] lastEvent = deferredEvents.pollLast();
             if (lastEvent != null) {
                 if (lastEvent[0] == EVENT_TYPE.MOUSE && lastEvent[4] == value5) {
                     // Throw away event if it is a mouse event with same button state.

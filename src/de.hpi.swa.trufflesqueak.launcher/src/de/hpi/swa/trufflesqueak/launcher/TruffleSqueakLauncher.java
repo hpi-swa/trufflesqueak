@@ -6,12 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.launcher;
 
-import static org.lwjgl.sdl.SDLError.SDL_GetError;
-import static org.lwjgl.sdl.SDLEvents.SDL_PollEvent;
-import static org.lwjgl.sdl.SDLInit.SDL_INIT_VIDEO;
-import static org.lwjgl.sdl.SDLInit.SDL_Init;
-import static org.lwjgl.sdl.SDLStdinc.SDL_SetMemoryFunctions;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -22,7 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.locks.LockSupport;
 
 import org.graalvm.launcher.AbstractLanguageLauncher;
 import org.graalvm.maven.downloader.Main;
@@ -32,8 +25,6 @@ import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
-import org.lwjgl.sdl.SDL_Event;
-import org.lwjgl.system.MemoryUtil;
 
 import de.hpi.swa.trufflesqueak.shared.EventQueue;
 import de.hpi.swa.trufflesqueak.shared.SqueakImageLocator;
@@ -112,16 +103,6 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
             return;
         }
 
-        SDL_SetMemoryFunctions(
-                        MemoryUtil::nmemAllocChecked,
-                        MemoryUtil::nmemCallocChecked,
-                        MemoryUtil::nmemReallocChecked,
-                        MemoryUtil::nmemFree);
-
-        if (!SDL_Init(SDL_INIT_VIDEO)) {
-            throw new IllegalStateException("Unable to initialize SDL: " + SDL_GetError());
-        }
-
         // Run the Squeak VM in a background thread
         final Thread squeakVMThread = new Thread(() -> {
             int exitCode = -1; // Assume crash by default
@@ -145,23 +126,7 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
 
         squeakVMThread.start();
 
-        final SDL_Event event = SDL_Event.create();
-
-        while (true) {
-            Runnable r = EventQueue.INSTANCE.poll();
-            while (r != null) {
-                r.run();
-                r = EventQueue.INSTANCE.poll();
-            }
-
-            while (SDL_PollEvent(event)) {
-                // Route the event through the shared module to the VM
-                if (EventQueue.osEventHandler != null) {
-                    EventQueue.osEventHandler.accept(event);
-                }
-            }
-            LockSupport.parkNanos(1_000_000L);
-        }
+        EventQueue.run();
     }
 
     private int execute(final Context.Builder contextBuilder) {
