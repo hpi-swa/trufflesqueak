@@ -156,8 +156,15 @@ public final class SqueakDisplay {
 
     private static void checkSdlError(final boolean success) {
         if (!success) {
-            throw new IllegalStateException("SDL error encountered: " + SDL_GetError());
+            throw SqueakException.create("SDL error encountered: " + SDL_GetError());
         }
+    }
+
+    private static float checkSdlError(final float value) {
+        if (value == 0.0f) {
+            throw SqueakException.create("SDL error encountered: " + SDL_GetError());
+        }
+        return value;
     }
 
     public static SqueakDisplay create(final SqueakImageContext image) {
@@ -223,6 +230,9 @@ public final class SqueakDisplay {
                 textureWidth = sqWidth;
                 textureHeight = sqHeight;
                 texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, textureWidth, textureHeight);
+                if (texture == null) {
+                    throw SqueakException.create("Failed to create texture");
+                }
                 checkSdlError(SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST));
             }
 
@@ -262,9 +272,9 @@ public final class SqueakDisplay {
                 }
             }
 
-            SDL_RenderClear(renderer);
-            SDL_RenderTexture(renderer, texture, null, null);
-            SDL_RenderPresent(renderer);
+            checkSdlError(SDL_RenderClear(renderer));
+            checkSdlError(SDL_RenderTexture(renderer, texture, null, null));
+            checkSdlError(SDL_RenderPresent(renderer));
         }
     }
 
@@ -357,7 +367,7 @@ public final class SqueakDisplay {
             return;
         }
         EventQueue.INSTANCE.add(() -> {
-            SDL_SetWindowFullscreen(window, fullscreen);
+            checkSdlError(SDL_SetWindowFullscreen(window, fullscreen));
         });
     }
 
@@ -390,7 +400,7 @@ public final class SqueakDisplay {
                 if (targetLogicalWidth != osWindowWidth || targetLogicalHeight != osWindowHeight) {
                     osWindowWidth = targetLogicalWidth;
                     osWindowHeight = targetLogicalHeight;
-                    SDL_SetWindowSize(window, osWindowWidth, osWindowHeight);
+                    checkSdlError(SDL_SetWindowSize(window, osWindowWidth, osWindowHeight));
                 }
             });
         }
@@ -406,17 +416,17 @@ public final class SqueakDisplay {
 
         window = SDL_CreateWindow(DEFAULT_WINDOW_TITLE, osWindowWidth, osWindowHeight, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
         if (window == NULL) {
-            throw new RuntimeException("Failed to create SDL window: " + SDL_GetError());
+            throw SqueakException.create("Failed to create SDL window: " + SDL_GetError());
         }
 
         renderer = nSDL_CreateRenderer(window, NULL);
         if (renderer == NULL) {
-            throw new RuntimeException("Failed to create SDL renderer: " + SDL_GetError());
+            throw SqueakException.create("Failed to create SDL renderer: " + SDL_GetError());
         }
 
         checkSdlError(SDL_RaiseWindow(window));
-        scaleFactor = SDL_GetWindowDisplayScale(window);
-        SDL_StartTextInput(window);
+        scaleFactor = checkSdlError(SDL_GetWindowDisplayScale(window));
+        checkSdlError(SDL_StartTextInput(window));
         fullDamage();
     }
 
@@ -435,7 +445,7 @@ public final class SqueakDisplay {
 
         if (window != NULL) {
             EventQueue.INSTANCE.add(() -> {
-                SDL_SetWindowSize(window, osWindowWidth, osWindowHeight);
+                checkSdlError(SDL_SetWindowSize(window, osWindowWidth, osWindowHeight));
             });
         }
 
@@ -470,6 +480,9 @@ public final class SqueakDisplay {
                 copyIntoBuffer(maskWords, mask);
             }
             cursor = SDL_CreateCursor(data, mask, width, height, offsetX, offsetY);
+            if (cursor == NULL) {
+                throw SqueakException.create("Failed to create SDL cursor: " + SDL_GetError());
+            }
         }
         checkSdlError(SDL_SetCursor(cursor));
     }
@@ -509,7 +522,7 @@ public final class SqueakDisplay {
                 addWindowEvent(SqueakIOConstants.WINDOW.CLOSE);
                 break;
             case SDL_EVENT_WINDOW_DISPLAY_CHANGED:
-                scaleFactor = SDL_GetWindowDisplayScale(window);
+                scaleFactor = checkSdlError(SDL_GetWindowDisplayScale(window));
                 addWindowEvent(SqueakIOConstants.WINDOW.CHANGED_SCREEN);
                 break;
             case SDL_EVENT_WINDOW_RESIZED:
@@ -741,7 +754,7 @@ public final class SqueakDisplay {
             return;
         }
         EventQueue.INSTANCE.add(() -> {
-            SDL_SetWindowTitle(window, title);
+            checkSdlError(SDL_SetWindowTitle(window, title));
         });
     }
 
@@ -753,7 +766,11 @@ public final class SqueakDisplay {
     @TruffleBoundary
     public static String getClipboardData() {
         if (SDL_HasClipboardText()) {
-            return SDL_GetClipboardText();
+            final String text = SDL_GetClipboardText();
+            if (text != null) {
+                return text;
+            }
+            LogUtils.IO.warning("Failed to get clipboard data");
         }
         return "";
     }
