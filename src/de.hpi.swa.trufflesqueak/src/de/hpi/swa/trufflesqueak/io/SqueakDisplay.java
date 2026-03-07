@@ -61,7 +61,6 @@ import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
@@ -166,8 +165,8 @@ public final class SqueakDisplay {
         return new SqueakDisplay(image);
     }
 
-    private void ensureStagingPixels(int w, int h) {
-        int requiredLength = w * h;
+    private void ensureStagingPixels(final int w, final int h) {
+        final int requiredLength = w * h;
         if (stagingPixels.length != requiredLength) {
             stagingPixels = new int[requiredLength];
         }
@@ -224,7 +223,7 @@ public final class SqueakDisplay {
                 textureWidth = sqWidth;
                 textureHeight = sqHeight;
                 texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, textureWidth, textureHeight);
-                SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
+                checkSdlError(SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST));
             }
 
             try (MemoryStack stack = stackPush()) {
@@ -542,8 +541,8 @@ public final class SqueakDisplay {
         addKeyboardEvent(KEYBOARD_EVENT.DOWN, keyChar);
 
         final boolean isShortcut = (sdlModifiers & (SDLKeycode.SDL_KMOD_LCTRL | SDLKeycode.SDL_KMOD_RCTRL |
-                SDLKeycode.SDL_KMOD_LGUI | SDLKeycode.SDL_KMOD_RGUI |
-                SDLKeycode.SDL_KMOD_LALT | SDLKeycode.SDL_KMOD_RALT)) != 0;
+                        SDLKeycode.SDL_KMOD_LGUI | SDLKeycode.SDL_KMOD_RGUI |
+                        SDLKeycode.SDL_KMOD_LALT | SDLKeycode.SDL_KMOD_RALT)) != 0;
 
         if (isControlKey(sdlKeySym) || isShortcut) {
             if (keyChar <= 65535) {
@@ -586,24 +585,15 @@ public final class SqueakDisplay {
 
     private boolean isModifier(final int sdlKeySym) {
         return switch (sdlKeySym) {
-            case SDLKeycode.SDLK_LSHIFT, SDLKeycode.SDLK_RSHIFT,
-                 SDLKeycode.SDLK_LCTRL, SDLKeycode.SDLK_RCTRL,
-                 SDLKeycode.SDLK_LALT, SDLKeycode.SDLK_RALT,
-                 SDLKeycode.SDLK_LGUI, SDLKeycode.SDLK_RGUI -> true;
+            case SDLKeycode.SDLK_LSHIFT, SDLKeycode.SDLK_RSHIFT, SDLKeycode.SDLK_LCTRL, SDLKeycode.SDLK_RCTRL, SDLKeycode.SDLK_LALT, SDLKeycode.SDLK_RALT, SDLKeycode.SDLK_LGUI, SDLKeycode.SDLK_RGUI -> true;
             default -> false;
         };
     }
 
     private boolean isControlKey(final int sdlKeySym) {
         return switch (sdlKeySym) {
-            case SDLKeycode.SDLK_BACKSPACE, SDLKeycode.SDLK_TAB,
-                 SDLKeycode.SDLK_RETURN, SDLKeycode.SDLK_KP_ENTER,
-                 SDLKeycode.SDLK_ESCAPE, SDLKeycode.SDLK_PAGEUP,
-                 SDLKeycode.SDLK_PAGEDOWN, SDLKeycode.SDLK_END,
-                 SDLKeycode.SDLK_HOME, SDLKeycode.SDLK_LEFT,
-                 SDLKeycode.SDLK_UP, SDLKeycode.SDLK_RIGHT,
-                 SDLKeycode.SDLK_DOWN, SDLKeycode.SDLK_INSERT,
-                 SDLKeycode.SDLK_DELETE -> true;
+            case SDLKeycode.SDLK_BACKSPACE, SDLKeycode.SDLK_TAB, SDLKeycode.SDLK_RETURN, SDLKeycode.SDLK_KP_ENTER, SDLKeycode.SDLK_ESCAPE, SDLKeycode.SDLK_PAGEUP, SDLKeycode.SDLK_PAGEDOWN, SDLKeycode.SDLK_END, //
+                SDLKeycode.SDLK_HOME, SDLKeycode.SDLK_LEFT, SDLKeycode.SDLK_UP, SDLKeycode.SDLK_RIGHT, SDLKeycode.SDLK_DOWN, SDLKeycode.SDLK_INSERT, SDLKeycode.SDLK_DELETE -> true;
             default -> false;
         };
     }
