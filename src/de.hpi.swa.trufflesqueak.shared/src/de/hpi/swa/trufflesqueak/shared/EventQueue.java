@@ -6,7 +6,10 @@ import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_FINGER_MOTION;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_FINGER_UP;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_TEXT_EDITING;
 import static org.lwjgl.sdl.SDLEvents.SDL_PollEvent;
+import static org.lwjgl.sdl.SDLEvents.SDL_PushEvent;
+import static org.lwjgl.sdl.SDLEvents.SDL_RegisterEvents;
 import static org.lwjgl.sdl.SDLEvents.SDL_SetEventEnabled;
+import static org.lwjgl.sdl.SDLEvents.SDL_WaitEvent;
 import static org.lwjgl.sdl.SDLHints.SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK;
 import static org.lwjgl.sdl.SDLHints.SDL_SetHint;
 import static org.lwjgl.sdl.SDLInit.SDL_INIT_VIDEO;
@@ -29,20 +32,59 @@ public final class EventQueue extends ConcurrentLinkedQueue<Runnable> {
     public static volatile boolean isRunning = true;
     public static volatile Runnable onClose = null;
 
+    private static int wakeupEventType = -1;
+    private static volatile SDL_Event wakeupEvent = null;
+
+    // Override add/offer so that anytime a task is queued, we wake up SDL
+    @Override
+    public boolean add(Runnable r) {
+        boolean result = super.add(r);
+        wakeUpSdlLoop();
+        return result;
+    }
+
+    @Override
+    public boolean offer(Runnable r) {
+        boolean result = super.offer(r);
+        wakeUpSdlLoop();
+        return result;
+    }
+
+    private static void wakeUpSdlLoop() {
+        if (wakeupEvent != null) {
+            SDL_PushEvent(wakeupEvent);
+        }
+    }
+
     public static void run() {
         SDL_SetMemoryFunctions(
-                        MemoryUtil::nmemAllocChecked,
-                        MemoryUtil::nmemCallocChecked,
-                        MemoryUtil::nmemReallocChecked,
-                        MemoryUtil::nmemFree);
+                MemoryUtil::nmemAllocChecked,
+                MemoryUtil::nmemCallocChecked,
+                MemoryUtil::nmemReallocChecked,
+                MemoryUtil::nmemFree);
 
         if (!SDL_Init(SDL_INIT_VIDEO)) {
             throw new IllegalStateException("Unable to initialize SDL: " + SDL_GetError());
         }
 
+        // Register a custom user wake-up event
+        wakeupEventType = SDL_RegisterEvents(1);
+        checkSdlError(wakeupEventType != -1);
+
+        // Fully initialize the struct locally first
+        SDL_Event initEvent = SDL_Event.malloc();
+        initEvent.type(wakeupEventType);
+
+        // Publish it safely to other threads via the volatile write
+        wakeupEvent = initEvent;
+
+        // Push a wakeup event for any tasks that were queued prior to initialization
+        for (Runnable ignored : EventQueue.INSTANCE) {
+            SDL_PushEvent(wakeupEvent);
+        }
+
         // Enable VSync to accumulate damage and prevent tearing.
         checkSdlError(SDL_SetHint(SDLHints.SDL_HINT_RENDER_VSYNC, "1"));
-
         // Disable WM_PING, so the WM does not think it is hung.
         checkSdlError(SDL_SetHint(SDLHints.SDL_HINT_VIDEO_X11_NET_WM_PING, "0"));
         // Ctrl-Click on macOS is right click.
@@ -64,19 +106,33 @@ public final class EventQueue extends ConcurrentLinkedQueue<Runnable> {
         final SDL_Event event = SDL_Event.create();
 
         while (isRunning) {
-            Runnable r = EventQueue.INSTANCE.poll();
-            while (r != null) {
-                r.run();
-                r = EventQueue.INSTANCE.poll();
-            }
+            // Block until an event arrives (either OS event or the wake-up event)
+            if (SDL_WaitEvent(event)) {
 
-            while (SDL_PollEvent(event)) {
-                // Route the event through the shared module to the VM
-                osEventHandler.accept(event);
+                // Drain the SDL event queue
+                do {
+                    if (event.type() == wakeupEventType) {
+                        Runnable r = EventQueue.INSTANCE.poll();
+                        if (r != null) {
+                            r.run();
+                        }
+                    } else if (osEventHandler != null) {
+                        // Pass normal OS events to Squeak
+                        osEventHandler.accept(event);
+                    }
+                } while (SDL_PollEvent(event));
             }
         }
 
-        onClose.run();
+        // Cleanup the globally allocated wakeup event
+        if (wakeupEvent != null) {
+            wakeupEvent.free();
+            wakeupEvent = null;
+        }
+
+        if (onClose != null) {
+            onClose.run();
+        }
     }
 
     private static void checkSdlError(final boolean success) {

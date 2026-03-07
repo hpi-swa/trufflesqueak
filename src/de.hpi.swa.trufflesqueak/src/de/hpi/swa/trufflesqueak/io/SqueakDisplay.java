@@ -66,8 +66,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.sdl.SDLKeycode;
+import org.lwjgl.sdl.SDLMouse;
 import org.lwjgl.sdl.SDL_Event;
 import org.lwjgl.sdl.SDL_FRect;
+import org.lwjgl.sdl.SDL_MouseButtonEvent;
+import org.lwjgl.sdl.SDL_MouseMotionEvent;
+import org.lwjgl.sdl.SDL_MouseWheelEvent;
 import org.lwjgl.sdl.SDL_Point;
 import org.lwjgl.sdl.SDL_Rect;
 import org.lwjgl.sdl.SDL_Texture;
@@ -84,6 +88,9 @@ import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.EVENT_TYPE;
 import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.KEYBOARD;
+import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.KEYBOARD_EVENT;
+import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.MOUSE;
+import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.MOUSE_EVENT;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.FORM;
@@ -98,14 +105,10 @@ public final class SqueakDisplay {
 
     public final SqueakImageContext image;
 
-    // public for the Java-based UI for TruffleSqueak.
-    // public final Frame frame = new Frame(DEFAULT_WINDOW_TITLE);
     private long window = NULL;
     private long cursor = NULL;
     private long renderer = NULL;
     private SDL_Texture texture;
-    public final SqueakMouse mouse;
-    public final SqueakKeyboard keyboard;
 
     // Squeak bitmap (physical pixels)
     private volatile int width;
@@ -129,6 +132,9 @@ public final class SqueakDisplay {
     private int dirtyBottom = Integer.MIN_VALUE;
     private final AtomicBoolean frameRequested = new AtomicBoolean(false);
 
+    // Pre-allocated render task to eliminate per-frame GC allocations
+    private final Runnable renderTask = this::performRender;
+
     private final ConcurrentLinkedDeque<long[]> deferredEvents = new ConcurrentLinkedDeque<>();
 
     @CompilationFinal private int inputSemaphoreIndex = -1;
@@ -137,11 +143,7 @@ public final class SqueakDisplay {
     private boolean deferUpdates;
 
     private SqueakDisplay(final SqueakImageContext image) {
-// assert EventQueue.isDispatchThread();
         this.image = image;
-// frame.add(canvas);
-        mouse = new SqueakMouse(this);
-        keyboard = new SqueakKeyboard(this);
 
         // Register this display to receive events from the Launcher
         EventQueue.osEventHandler = this::processEvent;
@@ -180,100 +182,97 @@ public final class SqueakDisplay {
         }
     }
 
-    @TruffleBoundary
-    public void showDisplayRect(final int left, final int top, final int right, final int bottom) {
-        assert left <= right && top <= bottom;
-        paintImmediately(left, top, right, bottom);
-    }
-
-    private void paintImmediately(final int left, final int top, final int right, final int bottom) {
-        if (deferUpdates) {
-            return;
-        }
-        final int copyWidth = right - left;
-        final int copyHeight = bottom - top;
-
-        if (copyWidth <= 0 || copyHeight <= 0) {
-            return;
-        }
-
-        recordDamage(left, top, copyWidth, copyHeight);
-        render(false);
-    }
-
-    public void render(final boolean force) {
-        // Capture and strictly clamp the dirty band
+    private void performRender() {
+        // Capture and strictly clamp the dirty band at the exact moment of rendering
         final int safeTop = Math.max(0, dirtyTop);
         final int safeBottom = Math.min(height, dirtyBottom);
 
-        if (!force && (deferUpdates || safeTop >= safeBottom)) {
+        // We successfully claimed the bounds for this frame, safely reset the trackers
+        resetDamage();
+
+        // Render if there is actually a valid band to draw
+        if (renderer != NULL && safeTop < safeBottom) {
+            // LAZY TEXTURE SYNC: This absolutely guarantees the texture pitch matches Squeak's bitmap
+            if (textureWidth != width || textureHeight != height || texture == null) {
+                if (texture != null) {
+                    SDL_DestroyTexture(texture);
+                }
+                textureWidth = width;
+                textureHeight = height;
+                texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, textureWidth, textureHeight);
+                SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
+            }
+
+            try (MemoryStack stack = stackPush()) {
+                final SDL_Rect lockRect = SDL_Rect.malloc(stack);
+                lockRect.set(0, safeTop, textureWidth, safeBottom - safeTop); // Use textureWidth!
+
+                if (SDL_LockTexture(texture, lockRect, pixels, pitch)) {
+                    final long pixelBufferAddress = pixels.get(0);
+                    final int currentPitch = pitch.get(0);
+                    final int storageLength = bitmap.getIntStorage().length;
+
+                    if (currentPitch == textureWidth * Integer.BYTES) {
+                        final int srcOffsetInts = safeTop * textureWidth;
+                        final int numIntsToCopy = (safeBottom - safeTop) * textureWidth;
+
+                        final int maxSafeInts = Math.min(numIntsToCopy, storageLength - srcOffsetInts);
+                        if (srcOffsetInts >= 0 && maxSafeInts > 0) {
+                            MemoryUtil.memCopy(bitmap.getIntStorage(), pixelBufferAddress, srcOffsetInts, maxSafeInts);
+                        }
+                    } else {
+                        final int dirtyH = safeBottom - safeTop;
+                        for (int y = 0; y < dirtyH; y++) {
+                            final int rowOffsetInts = (safeTop + y) * textureWidth;
+                            if (rowOffsetInts >= 0 && rowOffsetInts + textureWidth <= storageLength) {
+                                MemoryUtil.memCopy(bitmap.getIntStorage(), pixelBufferAddress + (y * currentPitch), rowOffsetInts, textureWidth);
+                            }
+                        }
+                    }
+                    SDL_UnlockTexture(texture);
+                }
+            }
+
+            SDL_RenderClear(renderer);
+            SDL_RenderTexture(renderer, texture, null, null);
+            SDL_RenderPresent(renderer);
+        }
+
+        // Release the lock so the next frame can be scheduled
+        frameRequested.set(false);
+    }
+
+    public void render(final boolean force) {
+        if (!force && (deferUpdates || dirtyTop >= dirtyBottom)) {
             return;
         }
 
         // Try to queue a frame
         if (frameRequested.getAndSet(true)) {
             // A frame is already in flight.
-            // IMPORTANT: DO NOT reset damage! Let the next frame pick up this missed update.
             return;
         }
 
-        // We successfully claimed the frame. We can safely reset the damage trackers.
-        resetDamage();
+        // Enqueue the pre-allocated task (Zero allocations!)
+        EventQueue.INSTANCE.add(renderTask);
+    }
 
-        // Queue the render task using our safely clamped bounds
-        EventQueue.INSTANCE.add(() -> {
-            if (renderer != NULL) {
-                // LAZY TEXTURE SYNC: This absolutely guarantees the texture pitch matches Squeak's
-                // bitmap
-                if (textureWidth != width || textureHeight != height || texture == null) {
-                    if (texture != null) {
-                        SDL_DestroyTexture(texture);
-                    }
-                    textureWidth = width;
-                    textureHeight = height;
-                    texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, textureWidth, textureHeight);
-                    SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
-                }
+    @TruffleBoundary
+    public void showDisplayRect(final int left, final int top, final int right, final int bottom) {
+        assert left <= right && top <= bottom;
 
-                try (MemoryStack stack = stackPush()) {
-                    final SDL_Rect lockRect = SDL_Rect.malloc(stack);
-                    lockRect.set(0, safeTop, textureWidth, safeBottom - safeTop); // Use
-                                                                                  // textureWidth!
+        if (deferUpdates) {
+            return;
+        }
 
-                    if (SDL_LockTexture(texture, lockRect, pixels, pitch)) {
-                        final long pixelBufferAddress = pixels.get(0);
-                        final int currentPitch = pitch.get(0);
-                        final int storageLength = bitmap.getIntStorage().length;
+        final int copyWidth = right - left;
+        final int copyHeight = bottom - top;
+        if (copyWidth <= 0 || copyHeight <= 0) {
+            return;
+        }
 
-                        if (currentPitch == textureWidth * Integer.BYTES) {
-                            final int srcOffsetInts = safeTop * textureWidth;
-                            final int numIntsToCopy = (safeBottom - safeTop) * textureWidth;
-
-                            final int maxSafeInts = Math.min(numIntsToCopy, storageLength - srcOffsetInts);
-                            if (srcOffsetInts >= 0 && maxSafeInts > 0) {
-                                MemoryUtil.memCopy(bitmap.getIntStorage(), pixelBufferAddress, srcOffsetInts, maxSafeInts);
-                            }
-                        } else {
-                            final int dirtyH = safeBottom - safeTop;
-                            for (int y = 0; y < dirtyH; y++) {
-                                final int rowOffsetInts = (safeTop + y) * textureWidth;
-                                if (rowOffsetInts >= 0 && rowOffsetInts + textureWidth <= storageLength) {
-                                    MemoryUtil.memCopy(bitmap.getIntStorage(), pixelBufferAddress + (y * currentPitch), rowOffsetInts, textureWidth);
-                                }
-                            }
-                        }
-                        SDL_UnlockTexture(texture);
-                    }
-                }
-
-                SDL_RenderClear(renderer);
-                SDL_RenderTexture(renderer, texture, null, null);
-                SDL_RenderPresent(renderer);
-            }
-
-            // Release the lock so the next frame can be scheduled
-            frameRequested.set(false);
-        });
+        recordDamage(left, top, copyWidth, copyHeight);
+        render(false);
     }
 
     private void recordDamage(final int x, final int y, final int w, final int h) {
@@ -352,8 +351,7 @@ public final class SqueakDisplay {
             osWindowHeight = (int) Math.ceil(height / getDisplayScale());
             EventQueue.INSTANCE.add(this::init);
         } else {
-            // Prevent the shrink loop: only resize OS window if Squeak explicitly requested a
-            // different logical size
+            // Prevent the shrink loop: only resize OS window if Squeak explicitly requested a different logical size
             final int targetLogicalWidth = (int) Math.ceil(width / getDisplayScale());
             final int targetLogicalHeight = (int) Math.ceil(height / getDisplayScale());
 
@@ -393,11 +391,9 @@ public final class SqueakDisplay {
 
     @TruffleBoundary
     public void resizeTo(final int newWidth, final int newHeight) {
-        // The Squeak interpreter is explicitly requesting a new physical size
         width = newWidth;
         height = newHeight;
 
-        // Calculate the logical size needed for the OS window
         final int targetLogicalWidth = (int) Math.ceil(width / getDisplayScale());
         final int targetLogicalHeight = (int) Math.ceil(height / getDisplayScale());
 
@@ -410,7 +406,6 @@ public final class SqueakDisplay {
             });
         }
 
-        // Ensure the entire new area gets drawn on the next frame
         fullDamage();
     }
 
@@ -447,11 +442,6 @@ public final class SqueakDisplay {
     }
 
     private static void copyIntoBuffer(final int[] words, final ByteBuffer buffer) {
-        /*
-         * In Squeak, only the upper 16bits of the cursor form seem to count (I'm guessing because
-         * the code was ported over from 16-bit machines), so this ignores the lower 16-bits of each
-         * word.
-         */
         for (int word : words) {
             buffer.put((byte) (word >> 24));
             buffer.put((byte) (word >> 16));
@@ -462,26 +452,25 @@ public final class SqueakDisplay {
     public void processEvent(final SDL_Event event) {
         switch (event.type()) {
             case SDL_EVENT_KEY_DOWN:
-                // Note the removal of keysym() here!
-                keyboard.processKeyDown(event.key().key(), event.key().mod());
+                processKeyDown(event.key().key(), event.key().mod());
                 break;
             case SDL_EVENT_KEY_UP:
-                keyboard.processKeyUp(event.key().key(), event.key().mod());
+                processKeyUp(event.key().key(), event.key().mod());
                 break;
             case SDL_EVENT_TEXT_INPUT:
-                keyboard.processTextInput(event.text().textString());
+                processTextInput(event.text().textString());
                 break;
             case SDL_EVENT_MOUSE_MOTION:
-                mouse.processMouseMotion(event.motion(), scaleFactor);
+                processMouseMotion(event.motion(), scaleFactor);
                 break;
             case SDL_EVENT_MOUSE_BUTTON_DOWN:
-                mouse.processMouseButtonDown(event.button(), scaleFactor);
+                processMouseButtonDown(event.button(), scaleFactor);
                 break;
             case SDL_EVENT_MOUSE_BUTTON_UP:
-                mouse.processMouseButtonUp(event.button(), scaleFactor);
+                processMouseButtonUp(event.button(), scaleFactor);
                 break;
             case SDL_EVENT_MOUSE_WHEEL:
-                mouse.processMouseWheel(event.wheel(), scaleFactor);
+                processMouseWheel(event.wheel(), scaleFactor);
                 break;
             case SDL_EVENT_QUIT, SDL_EVENT_WINDOW_CLOSE_REQUESTED:
                 addWindowEvent(SqueakIOConstants.WINDOW.CLOSE);
@@ -492,7 +481,6 @@ public final class SqueakDisplay {
                 break;
             case SDL_EVENT_WINDOW_RESIZED:
                 final SDL_WindowEvent we = event.window();
-                // SDL3 reports window sizes in logical coordinates
                 osWindowWidth = we.data1();
                 osWindowHeight = we.data2();
                 addWindowEvent(SqueakIOConstants.WINDOW.METRIC_CHANGE);
@@ -506,8 +494,166 @@ public final class SqueakDisplay {
         }
     }
 
+    // --- Keyboard processing methods ---
+
+    public void processKeyDown(final int sdlKeySym, final int sdlModifiers) {
+        recordModifiers(sdlModifiers);
+
+        if (isModifier(sdlKeySym)) {
+            return;
+        }
+
+        final int keyChar = toSqueakKey(sdlKeySym);
+
+        addKeyboardEvent(KEYBOARD_EVENT.DOWN, keyChar);
+
+        final boolean isShortcut = (sdlModifiers & (SDLKeycode.SDL_KMOD_LCTRL | SDLKeycode.SDL_KMOD_RCTRL |
+                SDLKeycode.SDL_KMOD_LGUI | SDLKeycode.SDL_KMOD_RGUI |
+                SDLKeycode.SDL_KMOD_LALT | SDLKeycode.SDL_KMOD_RALT)) != 0;
+
+        if (isControlKey(sdlKeySym) || isShortcut) {
+            if (keyChar <= 255) {
+                addKeyboardEvent(KEYBOARD_EVENT.CHAR, keyChar);
+            }
+        }
+
+        if (isShortcut && keyChar == '.') {
+            image.interrupt.setInterruptPending();
+        }
+    }
+
+    public void processKeyUp(final int sdlKeySym, final int sdlModifiers) {
+        recordModifiers(sdlModifiers);
+
+        if (isModifier(sdlKeySym)) {
+            return;
+        }
+
+        final int keyChar = toSqueakKey(sdlKeySym);
+        addKeyboardEvent(KEYBOARD_EVENT.UP, keyChar);
+    }
+
+    public void processTextInput(final String text) {
+        final int currentModifiers = buttons >> 3;
+        final boolean isShortcut = (currentModifiers & (KEYBOARD.CTRL | KEYBOARD.CMD | KEYBOARD.ALT)) != 0;
+
+        if (isShortcut || text == null || text.isEmpty()) {
+            return;
+        }
+
+        for (int i = 0; i < text.length(); i++) {
+            addKeyboardEvent(KEYBOARD_EVENT.CHAR, text.charAt(i));
+        }
+    }
+
+    private void addKeyboardEvent(final long eventType, final int keyCharOrCode) {
+        addEvent(EVENT_TYPE.KEYBOARD, keyCharOrCode, eventType, buttons >> 3, keyCharOrCode);
+    }
+
+    private boolean isModifier(final int sdlKeySym) {
+        return switch (sdlKeySym) {
+            case SDLKeycode.SDLK_LSHIFT, SDLKeycode.SDLK_RSHIFT,
+                 SDLKeycode.SDLK_LCTRL, SDLKeycode.SDLK_RCTRL,
+                 SDLKeycode.SDLK_LALT, SDLKeycode.SDLK_RALT,
+                 SDLKeycode.SDLK_LGUI, SDLKeycode.SDLK_RGUI -> true;
+            default -> false;
+        };
+    }
+
+    private boolean isControlKey(final int sdlKeySym) {
+        return switch (sdlKeySym) {
+            case SDLKeycode.SDLK_BACKSPACE, SDLKeycode.SDLK_TAB,
+                 SDLKeycode.SDLK_RETURN, SDLKeycode.SDLK_KP_ENTER,
+                 SDLKeycode.SDLK_ESCAPE, SDLKeycode.SDLK_PAGEUP,
+                 SDLKeycode.SDLK_PAGEDOWN, SDLKeycode.SDLK_END,
+                 SDLKeycode.SDLK_HOME, SDLKeycode.SDLK_LEFT,
+                 SDLKeycode.SDLK_UP, SDLKeycode.SDLK_RIGHT,
+                 SDLKeycode.SDLK_DOWN, SDLKeycode.SDLK_INSERT,
+                 SDLKeycode.SDLK_DELETE -> true;
+            default -> false;
+        };
+    }
+
+    private static int toSqueakKey(final int sdlKeySym) {
+        return switch (sdlKeySym) {
+            case SDLKeycode.SDLK_BACKSPACE -> 8;
+            case SDLKeycode.SDLK_TAB -> 9;
+            case SDLKeycode.SDLK_RETURN, SDLKeycode.SDLK_KP_ENTER -> 13;
+            case SDLKeycode.SDLK_ESCAPE -> 27;
+            case SDLKeycode.SDLK_SPACE -> 32;
+            case SDLKeycode.SDLK_PAGEUP -> 11;
+            case SDLKeycode.SDLK_PAGEDOWN -> 12;
+            case SDLKeycode.SDLK_END -> 4;
+            case SDLKeycode.SDLK_HOME -> 1;
+            case SDLKeycode.SDLK_LEFT -> 28;
+            case SDLKeycode.SDLK_UP -> 30;
+            case SDLKeycode.SDLK_RIGHT -> 29;
+            case SDLKeycode.SDLK_DOWN -> 31;
+            case SDLKeycode.SDLK_INSERT -> 5;
+            case SDLKeycode.SDLK_DELETE -> 127;
+            case SDLKeycode.SDLK_KP_0 -> '0';
+            case SDLKeycode.SDLK_KP_1 -> '1';
+            case SDLKeycode.SDLK_KP_2 -> '2';
+            case SDLKeycode.SDLK_KP_3 -> '3';
+            case SDLKeycode.SDLK_KP_4 -> '4';
+            case SDLKeycode.SDLK_KP_5 -> '5';
+            case SDLKeycode.SDLK_KP_6 -> '6';
+            case SDLKeycode.SDLK_KP_7 -> '7';
+            case SDLKeycode.SDLK_KP_8 -> '8';
+            case SDLKeycode.SDLK_KP_9 -> '9';
+            case SDLKeycode.SDLK_KP_DIVIDE -> '/';
+            case SDLKeycode.SDLK_KP_MULTIPLY -> '*';
+            case SDLKeycode.SDLK_KP_MINUS -> '-';
+            case SDLKeycode.SDLK_KP_PLUS -> '+';
+            case SDLKeycode.SDLK_KP_PERIOD -> '.';
+            default -> sdlKeySym;
+        };
+    }
+
+    // --- Mouse processing methods ---
+
+    public void processMouseMotion(final SDL_MouseMotionEvent event, final float scaleFactor) {
+        recordMouseEvent(MOUSE_EVENT.MOVE, event.x() * scaleFactor, event.y() * scaleFactor, 0);
+    }
+
+    public void processMouseButtonDown(final SDL_MouseButtonEvent event, final float scaleFactor) {
+        recordMouseEvent(MOUSE_EVENT.DOWN, event.x() * scaleFactor, event.y() * scaleFactor, event.button());
+    }
+
+    public void processMouseButtonUp(final SDL_MouseButtonEvent event, final float scaleFactor) {
+        recordMouseEvent(MOUSE_EVENT.UP, event.x() * scaleFactor, event.y() * scaleFactor, event.button());
+    }
+
+    public void processMouseWheel(final SDL_MouseWheelEvent event, final float scaleFactor) {
+        addEvent(EVENT_TYPE.MOUSE_WHEEL, 0L, (long) (event.y() * scaleFactor * MOUSE.WHEEL_DELTA_FACTOR), buttons >> 3, 0L);
+    }
+
+    private void recordMouseEvent(final MOUSE_EVENT type, final float x, final float y, final int sdlButton) {
+        final int currentButtons = buttons & MOUSE.ALL;
+
+        final int newButtonState = switch (type) {
+            case DOWN -> currentButtons | mapButton(sdlButton);
+            case MOVE -> currentButtons;
+            case UP -> currentButtons & ~mapButton(sdlButton);
+        };
+
+        buttons = newButtonState | (buttons & ~MOUSE.ALL);
+
+        addEvent(EVENT_TYPE.MOUSE, (int) x, (int) y, buttons & MOUSE.ALL, buttons >> 3);
+    }
+
+    private static int mapButton(final int sdlButton) {
+        return switch (sdlButton) {
+            case SDLMouse.SDL_BUTTON_LEFT -> MOUSE.RED;
+            case SDLMouse.SDL_BUTTON_MIDDLE -> MOUSE.YELLOW;
+            case SDLMouse.SDL_BUTTON_RIGHT -> MOUSE.BLUE;
+            default -> 0;
+        };
+    }
+
+    // --- Event queue methods ---
+
     public int recordModifiers(final int sdlModifiers) {
-        // Changed SDLKeymod to SDLKeycode
         final int shiftValue = (sdlModifiers & (SDLKeycode.SDL_KMOD_LSHIFT | SDLKeycode.SDL_KMOD_RSHIFT)) != 0 ? KEYBOARD.SHIFT : 0;
         final int ctrlValue = (sdlModifiers & (SDLKeycode.SDL_KMOD_LCTRL | SDLKeycode.SDL_KMOD_RCTRL)) != 0 ? KEYBOARD.CTRL : 0;
         final int optValue = (sdlModifiers & (SDLKeycode.SDL_KMOD_LALT | SDLKeycode.SDL_KMOD_RALT)) != 0 ? KEYBOARD.ALT : 0;
@@ -535,15 +681,12 @@ public final class SqueakDisplay {
     }
 
     public void addEvent(final long eventType, final long value3, final long value4, final long value5, final long value6, final long value7) {
-        // Coalesce mouse events if the button state has not changed.
         if (eventType == EVENT_TYPE.MOUSE) {
             final long[] lastEvent = deferredEvents.pollLast();
             if (lastEvent != null) {
                 if (lastEvent[0] == EVENT_TYPE.MOUSE && lastEvent[4] == value5) {
                     // Throw away event if it is a mouse event with same button state.
-                    // We will fall through and add a new one below.
                 } else {
-                    // Otherwise, add this event back and add a mouse event below.
                     deferredEvents.addLast(lastEvent);
                 }
             }
