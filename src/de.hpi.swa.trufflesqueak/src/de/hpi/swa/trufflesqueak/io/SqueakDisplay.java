@@ -68,7 +68,6 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.sdl.SDLKeycode;
 import org.lwjgl.sdl.SDLMouse;
 import org.lwjgl.sdl.SDL_Event;
-import org.lwjgl.sdl.SDL_FRect;
 import org.lwjgl.sdl.SDL_MouseButtonEvent;
 import org.lwjgl.sdl.SDL_MouseMotionEvent;
 import org.lwjgl.sdl.SDL_MouseWheelEvent;
@@ -111,9 +110,20 @@ public final class SqueakDisplay {
     private SDL_Texture texture;
 
     // Squeak bitmap (physical pixels)
-    private volatile int width;
-    private volatile int height;
-    private volatile NativeObject bitmap;
+    private int width;
+    private int height;
+    private NativeObject bitmap;
+
+    // Async Staging Buffer (Decouples Squeak thread from GPU thread)
+    private int[] stagingPixels = new int[0];
+
+    // Dirty 2D bounding box for coalescing damage
+    private int dirtyLeft = Integer.MAX_VALUE;
+    private int dirtyTop = Integer.MAX_VALUE;
+    private int dirtyRight = Integer.MIN_VALUE;
+    private int dirtyBottom = Integer.MIN_VALUE;
+
+    private boolean frameRequested = false;
 
     // UI Thread Tracking (Texture & Logical Window)
     private int textureWidth = -1;
@@ -125,12 +135,6 @@ public final class SqueakDisplay {
     final IntBuffer pitch = BufferUtils.createIntBuffer(1);
 
     private float scaleFactor;
-    private static final int BPP = Integer.BYTES;
-
-    // Dirty band tracking
-    private int dirtyTop = Integer.MAX_VALUE;
-    private int dirtyBottom = Integer.MIN_VALUE;
-    private final AtomicBoolean frameRequested = new AtomicBoolean(false);
 
     // Pre-allocated render task to eliminate per-frame GC allocations
     private final Runnable renderTask = this::performRender;
@@ -145,7 +149,6 @@ public final class SqueakDisplay {
     private SqueakDisplay(final SqueakImageContext image) {
         this.image = image;
 
-        // Register this display to receive events from the Launcher
         EventQueue.osEventHandler = this::processEvent;
         EventQueue.onClose = this::onClose;
 
@@ -158,20 +161,16 @@ public final class SqueakDisplay {
         }
     }
 
-    private static long checkSdlError(final long resultPointer) {
-        if (resultPointer == 0) {
-            throw new IllegalStateException("SDL error encountered: " + SDL_GetError());
-        }
-        return resultPointer;
-    }
-
     public static SqueakDisplay create(final SqueakImageContext image) {
         CompilerAsserts.neverPartOfCompilation();
         return new SqueakDisplay(image);
     }
 
-    private static void tryToSetTaskbarIcon() {
-        // TODO
+    private void ensureStagingPixels(int w, int h) {
+        int requiredLength = w * h;
+        if (stagingPixels.length != requiredLength) {
+            stagingPixels = new int[requiredLength];
+        }
     }
 
     public double getDisplayScale() {
@@ -182,53 +181,84 @@ public final class SqueakDisplay {
         }
     }
 
+    public void render(final boolean force) {
+        synchronized (this) {
+            // Strictly synchronized bounds check
+            if (!force && (deferUpdates || dirtyTop >= dirtyBottom || dirtyLeft >= dirtyRight)) {
+                return;
+            }
+
+            if (frameRequested) {
+                return; // A frame is already queued
+            }
+
+            // Claim the frame
+            frameRequested = true;
+        }
+
+        // Add to the queue safely outside the lock to keep the critical section tiny
+        EventQueue.INSTANCE.add(renderTask);
+    }
+
     private void performRender() {
-        // Capture and strictly clamp the dirty band at the exact moment of rendering
-        final int safeTop = Math.max(0, dirtyTop);
-        final int safeBottom = Math.min(height, dirtyBottom);
+        final int safeTop, safeBottom;
+        final int sqWidth, sqHeight;
 
-        // We successfully claimed the bounds for this frame, safely reset the trackers
-        resetDamage();
+        // Atomically capture the vertical bounds and dimensions.
+        synchronized (this) {
+            sqWidth = width;
+            sqHeight = height;
 
-        // Render if there is actually a valid band to draw
+            safeTop = Math.max(0, dirtyTop);
+            safeBottom = Math.min(sqHeight, dirtyBottom);
+            resetDamage();
+            frameRequested = false;
+        }
+
+        // Prepare SDL Texture
         if (renderer != NULL && safeTop < safeBottom) {
-            // LAZY TEXTURE SYNC: This absolutely guarantees the texture pitch matches Squeak's bitmap
-            if (textureWidth != width || textureHeight != height || texture == null) {
+            if (textureWidth != sqWidth || textureHeight != sqHeight || texture == null) {
                 if (texture != null) {
                     SDL_DestroyTexture(texture);
                 }
-                textureWidth = width;
-                textureHeight = height;
+                textureWidth = sqWidth;
+                textureHeight = sqHeight;
                 texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, textureWidth, textureHeight);
                 SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
             }
 
             try (MemoryStack stack = stackPush()) {
                 final SDL_Rect lockRect = SDL_Rect.malloc(stack);
-                lockRect.set(0, safeTop, textureWidth, safeBottom - safeTop); // Use textureWidth!
+
+                // Lock the dirty rows
+                lockRect.set(0, safeTop, sqWidth, safeBottom - safeTop);
 
                 if (SDL_LockTexture(texture, lockRect, pixels, pitch)) {
                     final long pixelBufferAddress = pixels.get(0);
-                    final int currentPitch = pitch.get(0);
-                    final int storageLength = bitmap.getIntStorage().length;
+                    final int currentPitchBytes = pitch.get(0);
 
-                    if (currentPitch == textureWidth * Integer.BYTES) {
-                        final int srcOffsetInts = safeTop * textureWidth;
-                        final int numIntsToCopy = (safeBottom - safeTop) * textureWidth;
+                    final IntBuffer intBuf = MemoryUtil.memByteBuffer(pixelBufferAddress, (safeBottom - safeTop) * currentPitchBytes).asIntBuffer();
 
-                        final int maxSafeInts = Math.min(numIntsToCopy, storageLength - srcOffsetInts);
-                        if (srcOffsetInts >= 0 && maxSafeInts > 0) {
-                            MemoryUtil.memCopy(bitmap.getIntStorage(), pixelBufferAddress, srcOffsetInts, maxSafeInts);
-                        }
-                    } else {
-                        final int dirtyH = safeBottom - safeTop;
-                        for (int y = 0; y < dirtyH; y++) {
-                            final int rowOffsetInts = (safeTop + y) * textureWidth;
-                            if (rowOffsetInts >= 0 && rowOffsetInts + textureWidth <= storageLength) {
-                                MemoryUtil.memCopy(bitmap.getIntStorage(), pixelBufferAddress + (y * currentPitch), rowOffsetInts, textureWidth);
+                    if (stagingPixels.length >= sqWidth * sqHeight) {
+
+                        // Check if the GPU driver perfectly packed the rows (no padding)
+                        if (currentPitchBytes == sqWidth * Integer.BYTES) {
+
+                            // Single, uninterrupted native memory blast
+                            final int startOffset = safeTop * sqWidth;
+                            final int totalInts = (safeBottom - safeTop) * sqWidth;
+                            intBuf.put(stagingPixels, startOffset, totalInts);
+
+                        } else {
+                            // FALLBACK: The GPU padded the rows. We must copy row-by-row.
+                            final int currentPitchInts = currentPitchBytes / Integer.BYTES;
+                            for (int y = safeTop; y < safeBottom; y++) {
+                                intBuf.position((y - safeTop) * currentPitchInts);
+                                intBuf.put(stagingPixels, y * sqWidth, sqWidth);
                             }
                         }
                     }
+
                     SDL_UnlockTexture(texture);
                 }
             }
@@ -237,24 +267,6 @@ public final class SqueakDisplay {
             SDL_RenderTexture(renderer, texture, null, null);
             SDL_RenderPresent(renderer);
         }
-
-        // Release the lock so the next frame can be scheduled
-        frameRequested.set(false);
-    }
-
-    public void render(final boolean force) {
-        if (!force && (deferUpdates || dirtyTop >= dirtyBottom)) {
-            return;
-        }
-
-        // Try to queue a frame
-        if (frameRequested.getAndSet(true)) {
-            // A frame is already in flight.
-            return;
-        }
-
-        // Enqueue the pre-allocated task (Zero allocations!)
-        EventQueue.INSTANCE.add(renderTask);
     }
 
     @TruffleBoundary
@@ -265,36 +277,52 @@ public final class SqueakDisplay {
             return;
         }
 
-        final int copyWidth = right - left;
-        final int copyHeight = bottom - top;
-        if (copyWidth <= 0 || copyHeight <= 0) {
-            return;
+        synchronized (this) {
+            final int currentWidth = width;
+            final int currentHeight = height;
+
+            final int safeLeft = Math.max(0, left);
+            final int safeTop = Math.max(0, top);
+            final int safeRight = Math.min(currentWidth, right);
+            final int safeBottom = Math.min(currentHeight, bottom);
+
+            if (safeLeft >= safeRight || safeTop >= safeBottom) {
+                return;
+            }
+
+            ensureStagingPixels(currentWidth, currentHeight);
+            final int[] sqPixels = bitmap.getIntStorage();
+
+            if (sqPixels.length >= currentWidth * currentHeight) {
+                final int startOffset = safeTop * currentWidth;
+                final int totalLengthToCopy = (safeBottom - safeTop) * currentWidth;
+                System.arraycopy(sqPixels, startOffset, stagingPixels, startOffset, totalLengthToCopy);
+            }
+
+            recordDamage(safeLeft, safeTop, safeRight, safeBottom);
         }
 
-        recordDamage(left, top, copyWidth, copyHeight);
         render(false);
     }
 
-    private void recordDamage(final int x, final int y, final int w, final int h) {
-        final int clippedTop = Math.max(0, y);
-        final int clippedBottom = Math.min(height, y + h);
-
-        dirtyTop = Math.min(dirtyTop, clippedTop);
-        dirtyBottom = Math.max(dirtyBottom, clippedBottom);
+    private void recordDamage(final int left, final int top, final int right, final int bottom) {
+        dirtyLeft = Math.min(dirtyLeft, Math.max(0, left));
+        dirtyTop = Math.min(dirtyTop, Math.max(0, top));
+        dirtyRight = Math.max(dirtyRight, Math.min(width, right));
+        dirtyBottom = Math.max(dirtyBottom, Math.min(height, bottom));
     }
 
     private void resetDamage() {
+        dirtyLeft = Integer.MAX_VALUE;
         dirtyTop = Integer.MAX_VALUE;
+        dirtyRight = Integer.MIN_VALUE;
         dirtyBottom = Integer.MIN_VALUE;
     }
 
     private void fullDamage() {
-        dirtyTop = 0;
-        dirtyBottom = height;
-    }
-
-    private static void debug(final String name, final SDL_FRect rect) {
-        System.out.println(name + ": x=" + rect.x() + ", y=" + rect.y() + ", w=" + rect.w() + ", h=" + rect.h());
+        synchronized (this) { // Explicit block instead of method modifier
+            recordDamage(0, 0, width, height);
+        }
     }
 
     @TruffleBoundary
@@ -336,22 +364,26 @@ public final class SqueakDisplay {
 
     @TruffleBoundary
     public void open(final PointersObject sqDisplay) {
-        bitmap = (NativeObject) sqDisplay.instVarAt0Slow(FORM.BITS);
-        if (!bitmap.isIntType()) {
+        final NativeObject newBitmap = (NativeObject) sqDisplay.instVarAt0Slow(FORM.BITS);
+        if (!newBitmap.isIntType()) {
             throw SqueakException.create("Display bitmap expected to be a words object");
         }
 
-        // Squeak thread updates physical dimensions instantly
-        width = (int) (long) sqDisplay.instVarAt0Slow(FORM.WIDTH);
-        height = (int) (long) sqDisplay.instVarAt0Slow(FORM.HEIGHT);
+        final int newWidth = (int) (long) sqDisplay.instVarAt0Slow(FORM.WIDTH);
+        final int newHeight = (int) (long) sqDisplay.instVarAt0Slow(FORM.HEIGHT);
+
+        // Safely update the dimensions and bitmap reference together
+        synchronized (this) {
+            bitmap = newBitmap;
+            width = newWidth;
+            height = newHeight;
+        }
 
         if (window == NULL) {
-            // Initial boot
             osWindowWidth = (int) Math.ceil(width / getDisplayScale());
             osWindowHeight = (int) Math.ceil(height / getDisplayScale());
             EventQueue.INSTANCE.add(this::init);
         } else {
-            // Prevent the shrink loop: only resize OS window if Squeak explicitly requested a different logical size
             final int targetLogicalWidth = (int) Math.ceil(width / getDisplayScale());
             final int targetLogicalHeight = (int) Math.ceil(height / getDisplayScale());
 
@@ -391,11 +423,13 @@ public final class SqueakDisplay {
 
     @TruffleBoundary
     public void resizeTo(final int newWidth, final int newHeight) {
-        width = newWidth;
-        height = newHeight;
+        synchronized (this) {
+            width = newWidth;
+            height = newHeight;
+        }
 
-        final int targetLogicalWidth = (int) Math.ceil(width / getDisplayScale());
-        final int targetLogicalHeight = (int) Math.ceil(height / getDisplayScale());
+        final int targetLogicalWidth = (int) Math.ceil(newWidth / getDisplayScale());
+        final int targetLogicalHeight = (int) Math.ceil(newHeight / getDisplayScale());
 
         osWindowWidth = targetLogicalWidth;
         osWindowHeight = targetLogicalHeight;
@@ -512,7 +546,7 @@ public final class SqueakDisplay {
                 SDLKeycode.SDL_KMOD_LALT | SDLKeycode.SDL_KMOD_RALT)) != 0;
 
         if (isControlKey(sdlKeySym) || isShortcut) {
-            if (keyChar <= 255) {
+            if (keyChar <= 65535) {
                 addKeyboardEvent(KEYBOARD_EVENT.CHAR, keyChar);
             }
         }
@@ -653,7 +687,7 @@ public final class SqueakDisplay {
 
     // --- Event queue methods ---
 
-    public int recordModifiers(final int sdlModifiers) {
+    public void recordModifiers(final int sdlModifiers) {
         final int shiftValue = (sdlModifiers & (SDLKeycode.SDL_KMOD_LSHIFT | SDLKeycode.SDL_KMOD_RSHIFT)) != 0 ? KEYBOARD.SHIFT : 0;
         final int ctrlValue = (sdlModifiers & (SDLKeycode.SDL_KMOD_LCTRL | SDLKeycode.SDL_KMOD_RCTRL)) != 0 ? KEYBOARD.CTRL : 0;
         final int optValue = (sdlModifiers & (SDLKeycode.SDL_KMOD_LALT | SDLKeycode.SDL_KMOD_RALT)) != 0 ? KEYBOARD.ALT : 0;
@@ -661,7 +695,6 @@ public final class SqueakDisplay {
 
         final int modifiers = shiftValue + ctrlValue + optValue + cmdValue;
         buttons = buttons & ~KEYBOARD.ALL | modifiers;
-        return modifiers;
     }
 
     public long[] getNextEvent() {
