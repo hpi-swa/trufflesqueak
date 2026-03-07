@@ -248,7 +248,7 @@ public final class SqueakDisplay {
 
                     final IntBuffer intBuf = MemoryUtil.memByteBuffer(pixelBufferAddress, (safeBottom - safeTop) * currentPitchBytes).asIntBuffer();
 
-                    if (stagingPixels.length >= sqWidth * sqHeight) {
+                    if (bitmap.getIntLength() >= sqWidth * sqHeight) {
 
                         // Check if the GPU driver perfectly packed the rows (no padding)
                         if (currentPitchBytes == sqWidth * Integer.BYTES) {
@@ -256,14 +256,14 @@ public final class SqueakDisplay {
                             // Single, uninterrupted native memory blast
                             final int startOffset = safeTop * sqWidth;
                             final int totalInts = (safeBottom - safeTop) * sqWidth;
-                            intBuf.put(stagingPixels, startOffset, totalInts);
+                            intBuf.put(bitmap.getIntStorage(), startOffset, totalInts);
 
                         } else {
                             // FALLBACK: The GPU padded the rows. We must copy row-by-row.
                             final int currentPitchInts = currentPitchBytes / Integer.BYTES;
                             for (int y = safeTop; y < safeBottom; y++) {
                                 intBuf.position((y - safeTop) * currentPitchInts);
-                                intBuf.put(stagingPixels, y * sqWidth, sqWidth);
+                                intBuf.put(bitmap.getIntStorage(), y * sqWidth, sqWidth);
                             }
                         }
                     }
@@ -299,13 +299,14 @@ public final class SqueakDisplay {
                 return;
             }
 
-            ensureStagingPixels(currentWidth, currentHeight);
+            // ensureStagingPixels(currentWidth, currentHeight);
             final int[] sqPixels = bitmap.getIntStorage();
 
             if (sqPixels.length >= currentWidth * currentHeight) {
                 final int startOffset = safeTop * currentWidth;
                 final int totalLengthToCopy = (safeBottom - safeTop) * currentWidth;
-                System.arraycopy(sqPixels, startOffset, stagingPixels, startOffset, totalLengthToCopy);
+                // System.arraycopy(sqPixels, startOffset, stagingPixels, startOffset,
+                // totalLengthToCopy);
             }
 
             recordDamage(safeLeft, safeTop, safeRight, safeBottom);
