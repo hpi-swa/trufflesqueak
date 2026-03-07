@@ -18,7 +18,6 @@ import static org.lwjgl.sdl.SDLStdinc.SDL_SetMemoryFunctions;
 import static org.lwjgl.system.MemoryStack.stackPush;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
 
 import org.lwjgl.sdl.SDLHints;
@@ -29,11 +28,13 @@ import org.lwjgl.system.MemoryUtil;
 public final class EventQueue extends ConcurrentLinkedQueue<Runnable> {
     public static final EventQueue INSTANCE = new EventQueue();
 
-    public static final CountDownLatch start = new CountDownLatch(1);
+    public static volatile Runnable renderTask = null;
     public static volatile Consumer<SDL_Event> osEventHandler = null;
     public static volatile boolean isRunning = true;
     public static volatile Runnable onClose = null;
 
+    private static volatile SDL_Event startEvent = null;
+    private static volatile SDL_Event renderEvent = null;
     private static volatile SDL_Event wakeupEvent = null;
 
     // Override add/offer so that anytime a task is queued, we wake up SDL
@@ -51,10 +52,16 @@ public final class EventQueue extends ConcurrentLinkedQueue<Runnable> {
         return result;
     }
 
+    public static void start() {
+        SDL_PushEvent(startEvent);
+    }
+
+    public static void requestFrame() {
+        SDL_PushEvent(renderEvent);
+    }
+
     private static void wakeUpSdlLoop() {
-        if (wakeupEvent != null) {
-            SDL_PushEvent(wakeupEvent);
-        }
+        SDL_PushEvent(wakeupEvent);
     }
 
     public static void run() {
@@ -68,6 +75,11 @@ public final class EventQueue extends ConcurrentLinkedQueue<Runnable> {
             throw new IllegalStateException("Unable to initialize SDL: " + SDL_GetError());
         }
 
+        final int startEventType = SDL_RegisterEvents(1);
+        checkSdlError(startEventType != -1);
+        startEvent = SDL_Event.malloc();
+        startEvent.type(startEventType);
+
         // Register a custom user wake-up event
         final int wakeupEventType = SDL_RegisterEvents(1);
         checkSdlError(wakeupEventType != -1);
@@ -78,6 +90,11 @@ public final class EventQueue extends ConcurrentLinkedQueue<Runnable> {
 
         // Publish it safely to other threads via the volatile write
         wakeupEvent = initEvent;
+
+        final int renderEventType = SDL_RegisterEvents(1);
+        checkSdlError(renderEventType != -1);
+        renderEvent = SDL_Event.malloc();
+        renderEvent.type(renderEventType);
 
         // Push a wakeup event for any tasks that were queued prior to initialization
         for (Runnable ignored : EventQueue.INSTANCE) {
@@ -97,27 +114,32 @@ public final class EventQueue extends ConcurrentLinkedQueue<Runnable> {
         SDL_SetEventEnabled(SDL_EVENT_FINGER_UP, false);
         SDL_SetEventEnabled(SDL_EVENT_FINGER_MOTION, false);
 
-        try {
-            start.await();
-            System.out.println("Waiting thread: Latch opened, proceeding!");
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-
         try (MemoryStack stack = stackPush()) {
             final SDL_Event event = SDL_Event.malloc(stack);
+
+            waitForStartEvent: while (true) {
+                if (SDL_WaitEvent(event)) {
+                    do {
+                        if (event.type() == startEventType) {
+                            break waitForStartEvent;
+                        }
+                    } while (SDL_PollEvent(event));
+                }
+            }
+
             while (isRunning) {
                 // Block until an event arrives (either OS event or the wake-up event)
                 if (SDL_WaitEvent(event)) {
-
                     // Drain the SDL event queue
                     do {
-                        if (event.type() == wakeupEventType) {
+                        if (event.type() == renderEventType) {
+                            renderTask.run();
+                        } else if (event.type() == wakeupEventType) {
                             final Runnable r = EventQueue.INSTANCE.poll();
                             if (r != null) {
                                 r.run();
                             }
-                        } else if (osEventHandler != null) {
+                        } else {
                             // Pass normal OS events to Squeak
                             osEventHandler.accept(event);
                         }
@@ -126,9 +148,7 @@ public final class EventQueue extends ConcurrentLinkedQueue<Runnable> {
             }
         }
 
-        if (onClose != null) {
-            onClose.run();
-        }
+        onClose.run();
     }
 
     private static void checkSdlError(final boolean success) {

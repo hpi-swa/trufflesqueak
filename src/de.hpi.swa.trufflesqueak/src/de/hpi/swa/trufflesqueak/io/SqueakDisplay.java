@@ -135,9 +135,6 @@ public final class SqueakDisplay {
 
     private float scaleFactor;
 
-    // Pre-allocated render task to eliminate per-frame GC allocations
-    private final Runnable renderTask = this::performRender;
-
     private final ConcurrentLinkedDeque<long[]> deferredEvents = new ConcurrentLinkedDeque<>();
 
     @CompilationFinal private int inputSemaphoreIndex = -1;
@@ -148,10 +145,11 @@ public final class SqueakDisplay {
     private SqueakDisplay(final SqueakImageContext image) {
         this.image = image;
 
+        EventQueue.renderTask = this::performRender;
         EventQueue.osEventHandler = this::processEvent;
         EventQueue.onClose = this::onClose;
 
-        EventQueue.start.countDown();
+        EventQueue.start();
     }
 
     private static void checkSdlError(final boolean success) {
@@ -202,8 +200,7 @@ public final class SqueakDisplay {
             frameRequested = true;
         }
 
-        // Add to the queue safely outside the lock to keep the critical section tiny
-        EventQueue.INSTANCE.add(renderTask);
+        EventQueue.requestFrame();
     }
 
     private void performRender() {
