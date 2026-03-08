@@ -43,12 +43,15 @@ import static org.lwjgl.sdl.SDLRender.SDL_SetTextureScaleMode;
 import static org.lwjgl.sdl.SDLRender.SDL_TEXTUREACCESS_STREAMING;
 import static org.lwjgl.sdl.SDLRender.SDL_UnlockTexture;
 import static org.lwjgl.sdl.SDLRender.nSDL_CreateRenderer;
+import static org.lwjgl.sdl.SDLSurface.SDL_CreateSurfaceFrom;
+import static org.lwjgl.sdl.SDLSurface.SDL_DestroySurface;
 import static org.lwjgl.sdl.SDLSurface.SDL_SCALEMODE_NEAREST;
 import static org.lwjgl.sdl.SDLVideo.SDL_CreateWindow;
 import static org.lwjgl.sdl.SDLVideo.SDL_DestroyWindow;
 import static org.lwjgl.sdl.SDLVideo.SDL_GetWindowDisplayScale;
 import static org.lwjgl.sdl.SDLVideo.SDL_RaiseWindow;
 import static org.lwjgl.sdl.SDLVideo.SDL_SetWindowFullscreen;
+import static org.lwjgl.sdl.SDLVideo.SDL_SetWindowIcon;
 import static org.lwjgl.sdl.SDLVideo.SDL_SetWindowSize;
 import static org.lwjgl.sdl.SDLVideo.SDL_SetWindowTitle;
 import static org.lwjgl.sdl.SDLVideo.SDL_WINDOW_HIGH_PIXEL_DENSITY;
@@ -57,7 +60,9 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -67,12 +72,14 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.sdl.SDLKeycode;
 import org.lwjgl.sdl.SDLMouse;
+import org.lwjgl.sdl.SDLSurface;
 import org.lwjgl.sdl.SDL_Event;
 import org.lwjgl.sdl.SDL_MouseButtonEvent;
 import org.lwjgl.sdl.SDL_MouseMotionEvent;
 import org.lwjgl.sdl.SDL_MouseWheelEvent;
 import org.lwjgl.sdl.SDL_Point;
 import org.lwjgl.sdl.SDL_Rect;
+import org.lwjgl.sdl.SDL_Surface;
 import org.lwjgl.sdl.SDL_Texture;
 import org.lwjgl.sdl.SDL_WindowEvent;
 import org.lwjgl.system.MemoryStack;
@@ -97,6 +104,8 @@ import de.hpi.swa.trufflesqueak.nodes.plugins.HostWindowPlugin;
 import de.hpi.swa.trufflesqueak.shared.EventQueue;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
+
+import javax.imageio.ImageIO;
 
 public final class SqueakDisplay {
     private static final String DEFAULT_WINDOW_TITLE = "TruffleSqueak";
@@ -439,10 +448,65 @@ public final class SqueakDisplay {
             throw SqueakException.create("Failed to create SDL renderer: " + SDL_GetError());
         }
 
+        tryToSetTaskbarIcon();
+
         checkSdlError(SDL_RaiseWindow(window));
         scaleFactor = checkSdlError(SDL_GetWindowDisplayScale(window));
         checkSdlError(SDL_StartTextInput(window));
         fullDamage();
+    }
+
+    private void tryToSetTaskbarIcon() {
+        if (window == NULL) {
+            return;
+        }
+
+        final String resourcePath = "/trufflesqueak-icon.png";
+
+        try (InputStream is = SqueakDisplay.class.getResourceAsStream(resourcePath)) {
+            if (is == null) {
+                LogUtils.IO.warning("Icon resource not found: " + resourcePath);
+                return;
+            }
+
+            // Read the PNG into standard Java memory
+            final BufferedImage image = ImageIO.read(is);
+            final int width = image.getWidth();
+            final int height = image.getHeight();
+
+            // Extract ARGB pixels
+            final int[] pixels = new int[width * height];
+            image.getRGB(0, 0, width, height, pixels, 0, width);
+
+            // Move pixels to native off-heap memory
+            ByteBuffer pixelBuffer = null;
+            try {
+                pixelBuffer = MemoryUtil.memAlloc(pixels.length * Integer.BYTES);
+                pixelBuffer.asIntBuffer().put(pixels);
+
+                // Wrap the native memory in an SDL_Surface
+                final SDL_Surface iconSurface = SDL_CreateSurfaceFrom(
+                        width,
+                        height,
+                        SDL_PIXELFORMAT_ARGB8888, // Matches Java's getRGB format
+                        pixelBuffer,
+                        width * Integer.BYTES
+                );
+
+                if (iconSurface != null) {
+                    SDL_SetWindowIcon(window, iconSurface);
+                    SDL_DestroySurface(iconSurface);
+                } else {
+                    LogUtils.IO.warning("Failed to create SDL icon surface: " + SDL_GetError());
+                }
+            } finally {
+                if (pixelBuffer != null) {
+                    MemoryUtil.memFree(pixelBuffer);
+                }
+            }
+        } catch (Exception e) {
+            LogUtils.IO.warning(e.toString());
+        }
     }
 
     @TruffleBoundary
@@ -568,17 +632,16 @@ public final class SqueakDisplay {
 
         addKeyboardEvent(KEYBOARD_EVENT.DOWN, keyChar);
 
-        final boolean isShortcut = (sdlModifiers & (SDLKeycode.SDL_KMOD_LCTRL | SDLKeycode.SDL_KMOD_RCTRL |
-                        SDLKeycode.SDL_KMOD_LGUI | SDLKeycode.SDL_KMOD_RGUI |
-                        SDLKeycode.SDL_KMOD_LALT | SDLKeycode.SDL_KMOD_RALT)) != 0;
+        final boolean isCommandOrCtrl = (sdlModifiers & (SDLKeycode.SDL_KMOD_LCTRL | SDLKeycode.SDL_KMOD_RCTRL |
+                SDLKeycode.SDL_KMOD_LGUI | SDLKeycode.SDL_KMOD_RGUI)) != 0;
 
-        if (isControlKey(sdlKeySym) || isShortcut) {
+        if (isControlKey(sdlKeySym) || isCommandOrCtrl) {
             if (keyChar <= 65535) {
                 addKeyboardEvent(KEYBOARD_EVENT.CHAR, keyChar);
             }
         }
 
-        if (isShortcut && keyChar == '.') {
+        if (isCommandOrCtrl && keyChar == '.') {
             image.interrupt.setInterruptPending();
         }
     }
@@ -596,9 +659,10 @@ public final class SqueakDisplay {
 
     public void processTextInput(final String text) {
         final int currentModifiers = buttons >> 3;
-        final boolean isShortcut = (currentModifiers & (KEYBOARD.CTRL | KEYBOARD.CMD | KEYBOARD.ALT)) != 0;
 
-        if (isShortcut || text == null || text.isEmpty()) {
+        final boolean isCommandOrCtrl = (currentModifiers & (KEYBOARD.CTRL | KEYBOARD.CMD)) != 0;
+
+        if (isCommandOrCtrl || text == null || text.isEmpty()) {
             return;
         }
 
@@ -799,7 +863,8 @@ public final class SqueakDisplay {
 
     @TruffleBoundary
     public static void beep() {
-        Toolkit.getDefaultToolkit().beep();
+        // ToDo: either ignore this or use something else -- this ruins menubar!
+        // Toolkit.getDefaultToolkit().beep();
     }
 
     private void installWindowAdapter() {
