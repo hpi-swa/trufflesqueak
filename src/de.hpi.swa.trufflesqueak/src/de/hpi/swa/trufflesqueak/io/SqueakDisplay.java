@@ -28,9 +28,6 @@ import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_WINDOW_CLOSE_REQUESTED;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_WINDOW_DISPLAY_CHANGED;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_WINDOW_MOUSE_LEAVE;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_WINDOW_RESIZED;
-import static org.lwjgl.sdl.SDLHints.SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK;
-import static org.lwjgl.sdl.SDLHints.SDL_HINT_RENDER_VSYNC;
-import static org.lwjgl.sdl.SDLHints.SDL_SetHint;
 import static org.lwjgl.sdl.SDLInit.SDL_Quit;
 import static org.lwjgl.sdl.SDLInit.SDL_RunOnMainThread;
 import static org.lwjgl.sdl.SDLKeyboard.SDL_StartTextInput;
@@ -165,7 +162,7 @@ public final class SqueakDisplay {
             final int sqWidth, sqHeight;
 
             // Atomically capture the vertical bounds and dimensions.
-            synchronized (this) {
+            synchronized (SqueakDisplay.this) {
                 sqWidth = width;
                 sqHeight = height;
 
@@ -448,12 +445,6 @@ public final class SqueakDisplay {
             SDL_RunOnMainThread(new SDL_MainThreadCallback() {
                 @Override
                 public void invoke(final long userdata) {
-                    checkSdlError(SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1"));
-                    checkSdlError(SDL_SetHint(SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK, "1"));
-
-                    // Force SDL to treat the app as a foreground process on macOS
-                    org.lwjgl.sdl.SDLHints.SDL_SetHint("SDL_MAC_BACKGROUND_APP", "0");
-
                     window = SDL_CreateWindow(title, osWindowWidth, osWindowHeight, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
                     if (window == NULL) {
                         throw SqueakException.create("Failed to create SDL window: " + SDL_GetError());
