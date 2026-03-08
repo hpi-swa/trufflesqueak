@@ -6,19 +6,20 @@ import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_FINGER_MOTION;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_FINGER_UP;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_TEXT_EDITING;
 import static org.lwjgl.sdl.SDLEvents.SDL_PollEvent;
-import static org.lwjgl.sdl.SDLEvents.SDL_PushEvent;
-import static org.lwjgl.sdl.SDLEvents.SDL_RegisterEvents;
 import static org.lwjgl.sdl.SDLEvents.SDL_SetEventEnabled;
 import static org.lwjgl.sdl.SDLEvents.SDL_WaitEvent;
 import static org.lwjgl.sdl.SDLHints.SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK;
 import static org.lwjgl.sdl.SDLHints.SDL_SetHint;
 import static org.lwjgl.sdl.SDLInit.SDL_INIT_VIDEO;
 import static org.lwjgl.sdl.SDLInit.SDL_Init;
+import static org.lwjgl.sdl.SDLInit.SDL_PROP_APP_METADATA_COPYRIGHT_STRING;
+import static org.lwjgl.sdl.SDLInit.SDL_PROP_APP_METADATA_CREATOR_STRING;
+import static org.lwjgl.sdl.SDLInit.SDL_PROP_APP_METADATA_URL_STRING;
+import static org.lwjgl.sdl.SDLInit.SDL_SetAppMetadata;
+import static org.lwjgl.sdl.SDLInit.SDL_SetAppMetadataProperty;
 import static org.lwjgl.sdl.SDLStdinc.SDL_SetMemoryFunctions;
 import static org.lwjgl.system.MemoryStack.stackPush;
 
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import org.lwjgl.sdl.SDLHints;
@@ -26,49 +27,12 @@ import org.lwjgl.sdl.SDL_Event;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
-public final class PlatformEventLoop extends ConcurrentLinkedQueue<Runnable> {
-    public static final PlatformEventLoop INSTANCE = new PlatformEventLoop();
-
-    public static volatile Runnable renderTask = null;
+public final class PlatformEventLoop {
     public static volatile Consumer<SDL_Event> osEventHandler = null;
-    public static volatile boolean isRunning = true;
-    public static volatile Runnable onClose = null;
-
-    private static final AtomicBoolean wakeupPending = new AtomicBoolean(false);
-
-    private static volatile SDL_Event startEvent = null;
-    private static volatile SDL_Event renderEvent = null;
-    private static volatile SDL_Event wakeupEvent = null;
-
-    // Override add/offer so that anytime a task is queued, we wake up SDL
-    @Override
-    public boolean add(final Runnable r) {
-        final boolean result = super.add(r);
-        wakeUpSdlLoop();
-        return result;
-    }
-
-    @Override
-    public boolean offer(final Runnable r) {
-        final boolean result = super.offer(r);
-        wakeUpSdlLoop();
-        return result;
-    }
+    public static volatile boolean isRunning = false;
 
     public static void start() {
-        SDL_PushEvent(startEvent);
-    }
-
-    public static void requestFrame() {
-        SDL_PushEvent(renderEvent);
-    }
-
-    private static void wakeUpSdlLoop() {
-        if (wakeupEvent != null) {
-            if (!wakeupPending.getAndSet(true)) {
-                SDL_PushEvent(wakeupEvent);
-            }
-        }
+        isRunning = true;
     }
 
     public static void run() {
@@ -78,34 +42,13 @@ public final class PlatformEventLoop extends ConcurrentLinkedQueue<Runnable> {
                         MemoryUtil::nmemReallocChecked,
                         MemoryUtil::nmemFree);
 
+        checkSdlError(SDL_SetAppMetadata("TruffleSqueak", SqueakLanguageConfig.VERSION, "de.hpi.swa.trufflesqueak"));
+        checkSdlError(SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_URL_STRING, SqueakLanguageConfig.WEBSITE));
+        checkSdlError(SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_CREATOR_STRING, "TruffleSqueak"));
+        checkSdlError(SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_COPYRIGHT_STRING, "License terms: " + SqueakLanguageConfig.WEBSITE));
+
         if (!SDL_Init(SDL_INIT_VIDEO)) {
             throw new IllegalStateException("Unable to initialize SDL: " + SDL_GetError());
-        }
-
-        final int startEventType = SDL_RegisterEvents(1);
-        checkSdlError(startEventType != -1);
-        startEvent = SDL_Event.malloc();
-        startEvent.type(startEventType);
-
-        // Register a custom user wake-up event
-        final int wakeupEventType = SDL_RegisterEvents(1);
-        checkSdlError(wakeupEventType != -1);
-
-        // Fully initialize the struct locally first
-        final SDL_Event initEvent = SDL_Event.malloc();
-        initEvent.type(wakeupEventType);
-
-        // Publish it safely to other threads via the volatile write
-        wakeupEvent = initEvent;
-
-        final int renderEventType = SDL_RegisterEvents(1);
-        checkSdlError(renderEventType != -1);
-        renderEvent = SDL_Event.malloc();
-        renderEvent.type(renderEventType);
-
-        // Push a wakeup event for any tasks that were queued prior to initialization
-        if (!PlatformEventLoop.INSTANCE.isEmpty()) {
-            wakeUpSdlLoop();
         }
 
         // Enable VSync to accumulate damage and prevent tearing.
@@ -124,46 +67,19 @@ public final class PlatformEventLoop extends ConcurrentLinkedQueue<Runnable> {
         try (MemoryStack stack = stackPush()) {
             final SDL_Event event = SDL_Event.malloc(stack);
 
-            waitForStartEvent: while (true) {
+            while (!isRunning) {
                 if (SDL_WaitEvent(event)) {
-                    do {
-                        if (event.type() == startEventType) {
-                            break waitForStartEvent;
-                        }
-                    } while (SDL_PollEvent(event));
-                }
-            }
-
-            while (isRunning) {
-                // Block until an event arrives (either OS event or the wake-up event)
-                if (SDL_WaitEvent(event)) {
-                    boolean needsRender = false;
-
-                    // Drain the SDL event queue completely first
-                    do {
-                        if (event.type() == renderEventType) {
-                            needsRender = true;
-                        } else if (event.type() == wakeupEventType) {
-                            wakeupPending.set(false);
-                            Runnable r;
-                            while ((r = PlatformEventLoop.INSTANCE.poll()) != null) {
-                                r.run();
-                            }
-                        } else {
-                            // Pass normal OS events to Squeak
-                            osEventHandler.accept(event);
-                        }
-                    } while (SDL_PollEvent(event));
-
-                    // Only lock the GPU and draw AFTER all state is updated
-                    if (needsRender) {
-                        renderTask.run();
+                    while (SDL_PollEvent(event)) {
+                        // ignore all events
                     }
                 }
             }
+            while (isRunning) {
+                while (SDL_PollEvent(event)) {
+                    osEventHandler.accept(event);
+                }
+            }
         }
-
-        onClose.run();
     }
 
     private static void checkSdlError(final boolean success) {

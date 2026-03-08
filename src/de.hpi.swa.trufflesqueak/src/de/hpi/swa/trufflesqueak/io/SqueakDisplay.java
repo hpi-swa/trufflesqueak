@@ -32,6 +32,7 @@ import static org.lwjgl.sdl.SDLHints.SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK
 import static org.lwjgl.sdl.SDLHints.SDL_HINT_RENDER_VSYNC;
 import static org.lwjgl.sdl.SDLHints.SDL_SetHint;
 import static org.lwjgl.sdl.SDLInit.SDL_Quit;
+import static org.lwjgl.sdl.SDLInit.SDL_RunOnMainThread;
 import static org.lwjgl.sdl.SDLKeyboard.SDL_StartTextInput;
 import static org.lwjgl.sdl.SDLMouse.SDL_CreateCursor;
 import static org.lwjgl.sdl.SDLMouse.SDL_DestroyCursor;
@@ -76,6 +77,7 @@ import javax.imageio.ImageIO;
 import org.lwjgl.sdl.SDLKeycode;
 import org.lwjgl.sdl.SDLMouse;
 import org.lwjgl.sdl.SDL_Event;
+import org.lwjgl.sdl.SDL_MainThreadCallback;
 import org.lwjgl.sdl.SDL_MouseButtonEvent;
 import org.lwjgl.sdl.SDL_MouseMotionEvent;
 import org.lwjgl.sdl.SDL_MouseWheelEvent;
@@ -107,20 +109,20 @@ import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 
 public final class SqueakDisplay {
-    private static final String DEFAULT_WINDOW_TITLE = "TruffleSqueak";
-    @CompilationFinal(dimensions = 1) private static final int[] CURSOR_COLORS = {0x00000000, 0xFF0000FF, 0xFFFFFFFF, 0xFF000000};
-
     public final SqueakImageContext image;
 
     private long window = NULL;
     private long cursor = NULL;
     private long renderer = NULL;
     private SDL_Texture texture;
+    private String title = "TruffleSqueak";
 
     // Squeak bitmap (physical pixels)
     private int width;
     private int height;
     private NativeObject bitmap;
+
+    private CursorData cursorData;
 
     // Async Staging Buffer (Decouples Squeak thread from GPU thread)
     private long stagingAddress = NULL;
@@ -153,12 +155,109 @@ public final class SqueakDisplay {
 
     private final List<String> dropFilesAccumulator = new ArrayList<>();
 
+    record CursorData(int[] cursorWords, int[] maskWords, int width, int height, int offsetX, int offsetY) {
+    }
+
+    private final SDL_MainThreadCallback performRenderTask = new SDL_MainThreadCallback() {
+        @Override
+        public void invoke(final long userdata) {
+            final int safeTop, safeBottom;
+            final int sqWidth, sqHeight;
+
+            // Atomically capture the vertical bounds and dimensions.
+            synchronized (this) {
+                sqWidth = width;
+                sqHeight = height;
+
+                safeTop = Math.max(0, dirtyTop);
+                safeBottom = Math.min(sqHeight, dirtyBottom);
+                resetDamage();
+                frameRequested = false;
+            }
+
+            // Prepare SDL Texture
+            if (renderer != NULL && safeTop < safeBottom) {
+                if (textureWidth != sqWidth || textureHeight != sqHeight || texture == null) {
+                    if (texture != null) {
+                        SDL_DestroyTexture(texture);
+                    }
+                    textureWidth = sqWidth;
+                    textureHeight = sqHeight;
+                    texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, textureWidth, textureHeight);
+                    if (texture == null) {
+                        throw SqueakException.create("Failed to create texture");
+                    }
+                    checkSdlError(SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST));
+                }
+
+                try (MemoryStack stack = stackPush()) {
+                    final SDL_Rect dirtyRect = SDL_Rect.malloc(stack);
+                    dirtyRect.set(0, safeTop, sqWidth, safeBottom - safeTop);
+                    final int offset = safeTop * stagingPitchBytes;
+                    if (!nSDL_UpdateTexture(texture.address(), dirtyRect.address(), stagingAddress + offset, stagingPitchBytes)) {
+                        return; // FIXME: invalid pixels
+                    }
+                }
+
+                checkSdlError(SDL_RenderClear(renderer));
+                checkSdlError(SDL_RenderTexture(renderer, texture, null, null));
+                checkSdlError(SDL_RenderPresent(renderer));
+            }
+        }
+    };
+
+    private final SDL_MainThreadCallback setFullscreenTask = new SDL_MainThreadCallback() {
+        @Override
+        public void invoke(final long userdata) {
+            checkSdlError(SDL_SetWindowFullscreen(window, userdata == 1));
+        }
+    };
+
+    private final SDL_MainThreadCallback resizeTask = new SDL_MainThreadCallback() {
+        @Override
+        public void invoke(final long userdata) {
+            checkSdlError(SDL_SetWindowSize(window, osWindowWidth, osWindowHeight));
+        }
+    };
+
+    private final SDL_MainThreadCallback updateTitleTask = new SDL_MainThreadCallback() {
+        @Override
+        public void invoke(final long userdata) {
+            checkSdlError(SDL_SetWindowTitle(window, title));
+        }
+    };
+
+    private final SDL_MainThreadCallback setCursorTask = new SDL_MainThreadCallback() {
+        @Override
+        public void invoke(final long userdata) {
+            if (cursorData == null) {
+                return;
+            }
+            if (cursor != NULL) {
+                SDL_DestroyCursor(cursor);
+            }
+            try (MemoryStack stack = stackPush()) {
+                final int numBytes = cursorData.cursorWords.length * Short.BYTES;
+                final ByteBuffer data = stack.calloc(numBytes);
+                final ByteBuffer mask = stack.calloc(numBytes);
+                copyIntoBuffer(cursorData.cursorWords, data);
+                if (cursorData.maskWords != null) {
+                    copyIntoBuffer(cursorData.maskWords, mask);
+                }
+                cursor = SDL_CreateCursor(data, mask, cursorData.width, cursorData.height, cursorData.offsetX, cursorData.offsetY);
+                if (cursor == NULL) {
+                    throw SqueakException.create("Failed to create SDL cursor: " + SDL_GetError());
+                }
+            }
+            checkSdlError(SDL_SetCursor(cursor));
+            cursorData = null;
+        }
+    };
+
     private SqueakDisplay(final SqueakImageContext image) {
         this.image = image;
 
-        PlatformEventLoop.renderTask = this::performRender;
         PlatformEventLoop.osEventHandler = this::processEvent;
-        PlatformEventLoop.onClose = this::onClose;
 
         PlatformEventLoop.start();
     }
@@ -216,52 +315,7 @@ public final class SqueakDisplay {
             frameRequested = true;
         }
 
-        PlatformEventLoop.requestFrame();
-    }
-
-    private void performRender() {
-        final int safeTop, safeBottom;
-        final int sqWidth, sqHeight;
-
-        // Atomically capture the vertical bounds and dimensions.
-        synchronized (this) {
-            sqWidth = width;
-            sqHeight = height;
-
-            safeTop = Math.max(0, dirtyTop);
-            safeBottom = Math.min(sqHeight, dirtyBottom);
-            resetDamage();
-            frameRequested = false;
-        }
-
-        // Prepare SDL Texture
-        if (renderer != NULL && safeTop < safeBottom) {
-            if (textureWidth != sqWidth || textureHeight != sqHeight || texture == null) {
-                if (texture != null) {
-                    SDL_DestroyTexture(texture);
-                }
-                textureWidth = sqWidth;
-                textureHeight = sqHeight;
-                texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, textureWidth, textureHeight);
-                if (texture == null) {
-                    throw SqueakException.create("Failed to create texture");
-                }
-                checkSdlError(SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST));
-            }
-
-            try (MemoryStack stack = stackPush()) {
-                final SDL_Rect dirtyRect = SDL_Rect.malloc(stack);
-                dirtyRect.set(0, safeTop, sqWidth, safeBottom - safeTop);
-                final int offset = safeTop * stagingPitchBytes;
-                if (!nSDL_UpdateTexture(texture.address(), dirtyRect.address(), stagingAddress + offset, stagingPitchBytes)) {
-                    return; // FIXME: invalid pixels
-                }
-            }
-
-            checkSdlError(SDL_RenderClear(renderer));
-            checkSdlError(SDL_RenderTexture(renderer, texture, null, null));
-            checkSdlError(SDL_RenderPresent(renderer));
-        }
+        SDL_RunOnMainThread(performRenderTask, NULL, false);
     }
 
     @TruffleBoundary
@@ -334,24 +388,25 @@ public final class SqueakDisplay {
 
     @TruffleBoundary
     public void close() {
-        PlatformEventLoop.isRunning = false;
-    }
-
-    public void onClose() {
-        if (stagingAddress != NULL) {
-            MemoryUtil.nmemFree(stagingAddress);
-        }
-        if (texture != null) {
-            SDL_DestroyTexture(texture);
-        }
-        if (renderer != NULL) {
-            SDL_DestroyRenderer(renderer);
-        }
-        if (window != NULL) {
-            SDL_DestroyWindow(window);
-        }
-        SDL_Quit();
-        System.out.println("Quitting SqueakVM");
+        SDL_RunOnMainThread(new SDL_MainThreadCallback() {
+            @Override
+            public void invoke(final long userdata) {
+                if (stagingAddress != NULL) {
+                    MemoryUtil.nmemFree(stagingAddress);
+                }
+                if (texture != null) {
+                    SDL_DestroyTexture(texture);
+                }
+                if (renderer != NULL) {
+                    SDL_DestroyRenderer(renderer);
+                }
+                if (window != NULL) {
+                    SDL_DestroyWindow(window);
+                }
+                SDL_Quit();
+                System.out.println("Quitting SqueakVM");
+            }
+        }, NULL, true);
     }
 
     public int getWindowWidth() {
@@ -367,9 +422,7 @@ public final class SqueakDisplay {
         if (window == NULL) {
             return;
         }
-        PlatformEventLoop.INSTANCE.add(() -> {
-            checkSdlError(SDL_SetWindowFullscreen(window, fullscreen));
-        });
+        SDL_RunOnMainThread(setFullscreenTask, fullscreen ? 1 : 0, false);
     }
 
     @TruffleBoundary
@@ -392,48 +445,45 @@ public final class SqueakDisplay {
         if (window == NULL) {
             osWindowWidth = (int) Math.ceil(width / getDisplayScale());
             osWindowHeight = (int) Math.ceil(height / getDisplayScale());
-            PlatformEventLoop.INSTANCE.add(this::init);
+            SDL_RunOnMainThread(new SDL_MainThreadCallback() {
+                @Override
+                public void invoke(final long userdata) {
+                    checkSdlError(SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1"));
+                    checkSdlError(SDL_SetHint(SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK, "1"));
+
+                    // Force SDL to treat the app as a foreground process on macOS
+                    org.lwjgl.sdl.SDLHints.SDL_SetHint("SDL_MAC_BACKGROUND_APP", "0");
+
+                    window = SDL_CreateWindow(title, osWindowWidth, osWindowHeight, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
+                    if (window == NULL) {
+                        throw SqueakException.create("Failed to create SDL window: " + SDL_GetError());
+                    }
+
+                    renderer = nSDL_CreateRenderer(window, NULL);
+                    if (renderer == NULL) {
+                        throw SqueakException.create("Failed to create SDL renderer: " + SDL_GetError());
+                    }
+
+                    tryToSetTaskbarIcon();
+
+                    checkSdlError(SDL_RaiseWindow(window));
+                    scaleFactor = checkSdlError(SDL_GetWindowDisplayScale(window));
+                    checkSdlError(SDL_StartTextInput(window));
+                    fullDamage();
+                }
+            }, NULL, true);
         } else {
             final int targetLogicalWidth = (int) Math.ceil(width / getDisplayScale());
             final int targetLogicalHeight = (int) Math.ceil(height / getDisplayScale());
-
-            PlatformEventLoop.INSTANCE.add(() -> {
-                if (targetLogicalWidth != osWindowWidth || targetLogicalHeight != osWindowHeight) {
-                    osWindowWidth = targetLogicalWidth;
-                    osWindowHeight = targetLogicalHeight;
-                    checkSdlError(SDL_SetWindowSize(window, osWindowWidth, osWindowHeight));
-                }
-            });
+            if (targetLogicalWidth != osWindowWidth || targetLogicalHeight != osWindowHeight) {
+                osWindowWidth = targetLogicalWidth;
+                osWindowHeight = targetLogicalHeight;
+                SDL_RunOnMainThread(resizeTask, NULL, true);
+            }
         }
 
         final String imageFileName = new File(image.getImagePath()).getName();
-        final String title = imageFileName.contains(SqueakLanguageConfig.IMPLEMENTATION_NAME) ? imageFileName : imageFileName + " running on " + SqueakLanguageConfig.IMPLEMENTATION_NAME;
-        setWindowTitle(title);
-    }
-
-    public void init() {
-        checkSdlError(SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1"));
-        checkSdlError(SDL_SetHint(SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK, "1"));
-
-        // Force SDL to treat the app as a foreground process on macOS
-        org.lwjgl.sdl.SDLHints.SDL_SetHint("SDL_MAC_BACKGROUND_APP", "0");
-
-        window = SDL_CreateWindow(DEFAULT_WINDOW_TITLE, osWindowWidth, osWindowHeight, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
-        if (window == NULL) {
-            throw SqueakException.create("Failed to create SDL window: " + SDL_GetError());
-        }
-
-        renderer = nSDL_CreateRenderer(window, NULL);
-        if (renderer == NULL) {
-            throw SqueakException.create("Failed to create SDL renderer: " + SDL_GetError());
-        }
-
-        tryToSetTaskbarIcon();
-
-        checkSdlError(SDL_RaiseWindow(window));
-        scaleFactor = checkSdlError(SDL_GetWindowDisplayScale(window));
-        checkSdlError(SDL_StartTextInput(window));
-        fullDamage();
+        setWindowTitle(imageFileName.contains(SqueakLanguageConfig.IMPLEMENTATION_NAME) ? imageFileName : imageFileName + " running on " + SqueakLanguageConfig.IMPLEMENTATION_NAME);
     }
 
     private void tryToSetTaskbarIcon() {
@@ -502,9 +552,7 @@ public final class SqueakDisplay {
         osWindowHeight = targetLogicalHeight;
 
         if (window != NULL) {
-            PlatformEventLoop.INSTANCE.add(() -> {
-                checkSdlError(SDL_SetWindowSize(window, osWindowWidth, osWindowHeight));
-            });
+            SDL_RunOnMainThread(resizeTask, NULL, true);
         }
 
         fullDamage();
@@ -517,32 +565,11 @@ public final class SqueakDisplay {
 
     @TruffleBoundary
     public void setCursor(final int[] cursorWords, final int[] maskWords, final int width, final int height, final int offsetX, final int offsetY) {
+        cursorData = new CursorData(cursorWords, maskWords, width, height, offsetX, offsetY);
         if (window == NULL) {
             return;
         }
-        PlatformEventLoop.INSTANCE.add(() -> {
-            setSDLCursor(cursorWords, maskWords, width, height, offsetX, offsetY);
-        });
-    }
-
-    private void setSDLCursor(final int[] cursorWords, final int[] maskWords, final int width, final int height, final int offsetX, final int offsetY) {
-        if (cursor != NULL) {
-            SDL_DestroyCursor(cursor);
-        }
-        try (MemoryStack stack = stackPush()) {
-            final int numBytes = cursorWords.length * 2;
-            final ByteBuffer data = stack.calloc(numBytes);
-            final ByteBuffer mask = stack.calloc(numBytes);
-            copyIntoBuffer(cursorWords, data);
-            if (maskWords != null) {
-                copyIntoBuffer(maskWords, mask);
-            }
-            cursor = SDL_CreateCursor(data, mask, width, height, offsetX, offsetY);
-            if (cursor == NULL) {
-                throw SqueakException.create("Failed to create SDL cursor: " + SDL_GetError());
-            }
-        }
-        checkSdlError(SDL_SetCursor(cursor));
+        SDL_RunOnMainThread(setCursorTask, NULL, false);
     }
 
     private static void copyIntoBuffer(final int[] words, final ByteBuffer buffer) {
@@ -845,9 +872,8 @@ public final class SqueakDisplay {
         if (window == NULL) {
             return;
         }
-        PlatformEventLoop.INSTANCE.add(() -> {
-            checkSdlError(SDL_SetWindowTitle(window, title));
-        });
+        this.title = title;
+        SDL_RunOnMainThread(updateTitleTask, NULL, false);
     }
 
     public void setInputSemaphoreIndex(final int interruptSemaphoreIndex) {
