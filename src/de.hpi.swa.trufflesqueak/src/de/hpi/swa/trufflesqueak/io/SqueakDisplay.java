@@ -11,9 +11,9 @@ import static org.lwjgl.sdl.SDLClipboard.SDL_HasClipboardText;
 import static org.lwjgl.sdl.SDLClipboard.SDL_SetClipboardText;
 import static org.lwjgl.sdl.SDLError.SDL_GetError;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_DROP_BEGIN;
+import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_DROP_COMPLETE;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_DROP_FILE;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_DROP_POSITION;
-import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_DROP_COMPLETE;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_KEY_DOWN;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_KEY_UP;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_MOUSE_BUTTON_DOWN;
@@ -40,14 +40,13 @@ import static org.lwjgl.sdl.SDLPixels.SDL_PIXELFORMAT_ARGB8888;
 import static org.lwjgl.sdl.SDLRender.SDL_CreateTexture;
 import static org.lwjgl.sdl.SDLRender.SDL_DestroyRenderer;
 import static org.lwjgl.sdl.SDLRender.SDL_DestroyTexture;
-import static org.lwjgl.sdl.SDLRender.SDL_LockTexture;
 import static org.lwjgl.sdl.SDLRender.SDL_RenderClear;
 import static org.lwjgl.sdl.SDLRender.SDL_RenderPresent;
 import static org.lwjgl.sdl.SDLRender.SDL_RenderTexture;
 import static org.lwjgl.sdl.SDLRender.SDL_SetTextureScaleMode;
 import static org.lwjgl.sdl.SDLRender.SDL_TEXTUREACCESS_STREAMING;
-import static org.lwjgl.sdl.SDLRender.SDL_UnlockTexture;
 import static org.lwjgl.sdl.SDLRender.nSDL_CreateRenderer;
+import static org.lwjgl.sdl.SDLRender.nSDL_UpdateTexture;
 import static org.lwjgl.sdl.SDLSurface.SDL_CreateSurfaceFrom;
 import static org.lwjgl.sdl.SDLSurface.SDL_DestroySurface;
 import static org.lwjgl.sdl.SDLSurface.SDL_SCALEMODE_NEAREST;
@@ -73,7 +72,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
-import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
+import javax.imageio.ImageIO;
+
 import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.sdl.SDLKeycode;
@@ -108,8 +108,7 @@ import de.hpi.swa.trufflesqueak.nodes.plugins.HostWindowPlugin;
 import de.hpi.swa.trufflesqueak.shared.PlatformEventLoop;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
-
-import javax.imageio.ImageIO;
+import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class SqueakDisplay {
     private static final String DEFAULT_WINDOW_TITLE = "TruffleSqueak";
@@ -258,34 +257,11 @@ public final class SqueakDisplay {
             }
 
             try (MemoryStack stack = stackPush()) {
-                final SDL_Rect lockRect = SDL_Rect.malloc(stack);
-
-                // Lock the dirty rows
-                lockRect.set(0, safeTop, sqWidth, safeBottom - safeTop);
-
-                if (SDL_LockTexture(texture, lockRect, pixels, pitch)) {
-                    final long pixelBufferAddress = pixels.get(0);
-                    final int currentPitchBytes = pitch.get(0);
-                    final int rowBytes = sqWidth * Integer.BYTES;
-
-                    if (bitmap.getIntLength() >= sqWidth * sqHeight) {
-                        // Check if the GPU driver perfectly packed the rows
-                        if (currentPitchBytes == rowBytes) {
-                            final long srcAddress = stagingAddress + ((long) safeTop * rowBytes);
-                            final long totalBytes = (long) (safeBottom - safeTop) * rowBytes;
-                            UnsafeUtils.copyNativeToNative(srcAddress, pixelBufferAddress, totalBytes);
-                        } else {
-                            // FALLBACK: The GPU padded the rows. Copy row-by-row natively.
-                            for (int y = safeTop; y < safeBottom; y++) {
-                                final long srcAddress = stagingAddress + ((long) y * rowBytes);
-                                final long dstAddress = pixelBufferAddress + ((long) (y - safeTop) * currentPitchBytes);
-                                UnsafeUtils.copyNativeToNative(srcAddress, dstAddress, rowBytes);
-                            }
-                        }
-                    }
-
-                    SDL_UnlockTexture(texture);
-                }
+                final SDL_Rect dirtyRect = SDL_Rect.malloc(stack);
+                dirtyRect.set(0, safeTop, sqWidth, safeBottom - safeTop);
+                final int pitch = sqWidth * Integer.BYTES;
+                final int offset = safeTop * pitch;
+                checkSdlError(nSDL_UpdateTexture(texture.address(), dirtyRect.address(), stagingAddress + (offset), pitch));
             }
 
             checkSdlError(SDL_RenderClear(renderer));
@@ -380,8 +356,8 @@ public final class SqueakDisplay {
         if (window != NULL) {
             SDL_DestroyWindow(window);
         }
-        System.out.println("Quitting SqueakVM");
         SDL_Quit();
+        System.out.println("Quitting SqueakVM");
     }
 
     public int getWindowWidth() {
@@ -496,12 +472,11 @@ public final class SqueakDisplay {
 
                 // Wrap the native memory in an SDL_Surface
                 final SDL_Surface iconSurface = SDL_CreateSurfaceFrom(
-                        width,
-                        height,
-                        SDL_PIXELFORMAT_ARGB8888, // Matches Java's getRGB format
-                        pixelBuffer,
-                        width * Integer.BYTES
-                );
+                                width,
+                                height,
+                                SDL_PIXELFORMAT_ARGB8888, // Matches Java's getRGB format
+                                pixelBuffer,
+                                width * Integer.BYTES);
 
                 if (iconSurface != null) {
                     SDL_SetWindowIcon(window, iconSurface);
@@ -677,7 +652,7 @@ public final class SqueakDisplay {
         addKeyboardEvent(KEYBOARD_EVENT.DOWN, keyChar);
 
         final boolean isCommandOrCtrl = (sdlModifiers & (SDLKeycode.SDL_KMOD_LCTRL | SDLKeycode.SDL_KMOD_RCTRL |
-                SDLKeycode.SDL_KMOD_LGUI | SDLKeycode.SDL_KMOD_RGUI)) != 0;
+                        SDLKeycode.SDL_KMOD_LGUI | SDLKeycode.SDL_KMOD_RGUI)) != 0;
 
         if (isControlKey(sdlKeySym) || isCommandOrCtrl) {
             if (keyChar <= 65535) {
