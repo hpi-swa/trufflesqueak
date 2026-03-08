@@ -67,15 +67,12 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 import javax.imageio.ImageIO;
 
-import org.lwjgl.BufferUtils;
-import org.lwjgl.PointerBuffer;
 import org.lwjgl.sdl.SDLKeycode;
 import org.lwjgl.sdl.SDLMouse;
 import org.lwjgl.sdl.SDL_Event;
@@ -144,9 +141,6 @@ public final class SqueakDisplay {
     private int textureHeight = -1;
     private int osWindowWidth;
     private int osWindowHeight;
-
-    private final PointerBuffer pixels = BufferUtils.createPointerBuffer(1);
-    final IntBuffer pitch = BufferUtils.createIntBuffer(1);
 
     private float scaleFactor;
 
@@ -258,9 +252,10 @@ public final class SqueakDisplay {
             try (MemoryStack stack = stackPush()) {
                 final SDL_Rect dirtyRect = SDL_Rect.malloc(stack);
                 dirtyRect.set(0, safeTop, sqWidth, safeBottom - safeTop);
-                final int pitch = sqWidth * Integer.BYTES;
-                final int offset = safeTop * pitch;
-                checkSdlError(nSDL_UpdateTexture(texture.address(), dirtyRect.address(), stagingAddress + (offset), pitch));
+                final int offset = safeTop * stagingPitchBytes;
+                if (!nSDL_UpdateTexture(texture.address(), dirtyRect.address(), stagingAddress + offset, stagingPitchBytes)) {
+                    return; // FIXME: invalid pixels
+                }
             }
 
             checkSdlError(SDL_RenderClear(renderer));
