@@ -108,7 +108,6 @@ import de.hpi.swa.trufflesqueak.nodes.plugins.HostWindowPlugin;
 import de.hpi.swa.trufflesqueak.shared.PlatformEventLoop;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
-import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class SqueakDisplay {
     private static final String DEFAULT_WINDOW_TITLE = "TruffleSqueak";
@@ -301,13 +300,13 @@ public final class SqueakDisplay {
                 if (safeLeft == 0 && safeRight == currentWidth) {
                     final int startOffsetInts = safeTop * currentWidth;
                     final int totalInts = (safeBottom - safeTop) * currentWidth;
-                    UnsafeUtils.copyIntsToNative(sqPixels, startOffsetInts, stagingAddress + ((long) startOffsetInts * Integer.BYTES), totalInts);
+                    MemoryUtil.memCopy(sqPixels, stagingAddress + ((long) startOffsetInts * Integer.BYTES), startOffsetInts, totalInts);
                 } else {
                     // Row-by-Row Path (GraalVM will unroll/vectorize this loop)
                     for (int y = safeTop; y < safeBottom; y++) {
                         final int srcOffsetInts = y * currentWidth + safeLeft;
                         final long dstAddress = stagingAddress + ((long) y * stagingPitchBytes) + ((long) safeLeft * Integer.BYTES);
-                        UnsafeUtils.copyIntsToNative(sqPixels, srcOffsetInts, dstAddress, rowInts);
+                        MemoryUtil.memCopy(sqPixels, dstAddress, srcOffsetInts, rowInts);
                     }
                 }
             }
