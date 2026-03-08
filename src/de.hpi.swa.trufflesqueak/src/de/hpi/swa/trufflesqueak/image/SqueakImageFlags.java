@@ -11,9 +11,10 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Idempotent;
 
 public final class SqueakImageFlags {
+    private static final int PREEMPTION_DOES_NOT_YIELD = 0x010;
     private static final int NUMERIC_PRIMS_MIX_ARITHMETIC = 0x100;
     private static final int NUMERIC_PRIMS_MIX_COMPARISON = 0x800;
-    private static final int PREEMPTION_DOES_NOT_YIELD = 0x010;
+    private static final int UPSCALE_DISPLAY_IF_HIGH_DPI = 0x400;
 
     @CompilationFinal private long oldBaseAddress = -1;
     @CompilationFinal private long headerFlags;
@@ -107,5 +108,10 @@ public final class SqueakImageFlags {
     @Idempotent
     public boolean preemptionYields() {
         return preemptionYields;
+    }
+
+    @Idempotent
+    public boolean upscaleDisplayIfHighDPI() {
+        return (headerFlags & UPSCALE_DISPLAY_IF_HIGH_DPI) == 0;
     }
 }

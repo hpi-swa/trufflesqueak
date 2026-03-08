@@ -445,7 +445,11 @@ public final class SqueakDisplay {
             SDL_RunOnMainThread(new SDL_MainThreadCallback() {
                 @Override
                 public void invoke(final long userdata) {
-                    window = SDL_CreateWindow(title, osWindowWidth, osWindowHeight, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
+                    long windowFlags = SDL_WINDOW_RESIZABLE;
+                    if (image.flags.upscaleDisplayIfHighDPI()) {
+                        windowFlags |= SDL_WINDOW_HIGH_PIXEL_DENSITY;
+                    }
+                    window = SDL_CreateWindow(title, osWindowWidth, osWindowHeight, windowFlags);
                     if (window == NULL) {
                         throw SqueakException.create("Failed to create SDL window: " + SDL_GetError());
                     }
