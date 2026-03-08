@@ -368,6 +368,7 @@ suite = {
             "default_vm_args": [
                 "--vm.-add-exports=java.base/jdk.internal.module=de.hpi.swa.trufflesqueak",
                 "--vm.-enable-native-access=org.lwjgl",
+                "-Djava.awt.headless=true",
                 "--vm.XstartOnFirstThread",
             ],
         },

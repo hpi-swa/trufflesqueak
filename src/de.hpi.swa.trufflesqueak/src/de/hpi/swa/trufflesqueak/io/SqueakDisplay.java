@@ -445,6 +445,9 @@ public final class SqueakDisplay {
         checkSdlError(SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1"));
         checkSdlError(SDL_SetHint(SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK, "1"));
 
+        // Force SDL to treat the app as a foreground process on macOS
+        org.lwjgl.sdl.SDLHints.SDL_SetHint("SDL_MAC_BACKGROUND_APP", "0");
+
         window = SDL_CreateWindow(DEFAULT_WINDOW_TITLE, osWindowWidth, osWindowHeight, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
         if (window == NULL) {
             throw SqueakException.create("Failed to create SDL window: " + SDL_GetError());
