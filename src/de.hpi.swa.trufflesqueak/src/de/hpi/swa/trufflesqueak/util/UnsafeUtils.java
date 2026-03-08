@@ -109,6 +109,16 @@ public final class UnsafeUtils {
         UNSAFE.freeMemory(address);
     }
 
+    public static void copyIntsToNative(final int[] src, final long srcPos, final long destAddress, final long length) {
+        assert inBounds(srcPos, length, src.length);
+        UNSAFE.copyMemory(src, Unsafe.ARRAY_INT_BASE_OFFSET + srcPos * Unsafe.ARRAY_INT_INDEX_SCALE,
+                null, destAddress, Integer.BYTES * length);
+    }
+
+    public static void copyNativeToNative(final long srcAddress, final long destAddress, final long numBytes) {
+        UNSAFE.copyMemory(null, srcAddress, null, destAddress, numBytes);
+    }
+
     public static long fromLongsOffset(final long offset) {
         return (offset - Unsafe.ARRAY_LONG_BASE_OFFSET) / Unsafe.ARRAY_LONG_INDEX_SCALE;
     }

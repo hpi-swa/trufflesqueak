@@ -62,6 +62,7 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
+import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.sdl.SDLKeycode;
@@ -114,7 +115,9 @@ public final class SqueakDisplay {
     private NativeObject bitmap;
 
     // Async Staging Buffer (Decouples Squeak thread from GPU thread)
-    private int[] stagingPixels = new int[0];
+    private long stagingAddress = NULL;
+    private int stagingCapacity = 0;
+    private int stagingPitchBytes = 0;
 
     // Dirty 2D bounding box for coalescing damage
     private int dirtyLeft = Integer.MAX_VALUE;
@@ -171,10 +174,15 @@ public final class SqueakDisplay {
     }
 
     private void ensureStagingPixels(final int w, final int h) {
-        final int requiredLength = w * h;
-        if (stagingPixels.length != requiredLength) {
-            stagingPixels = new int[requiredLength];
+        final int requiredBytes = w * h * Integer.BYTES;
+        if (stagingAddress == NULL || stagingCapacity < requiredBytes) {
+            if (stagingAddress != NULL) {
+                MemoryUtil.nmemFree(stagingAddress);
+            }
+            stagingAddress = MemoryUtil.nmemAlloc(requiredBytes);
+            stagingCapacity = requiredBytes;
         }
+        stagingPitchBytes = w * Integer.BYTES;
     }
 
     public double getDisplayScale() {
@@ -242,25 +250,20 @@ public final class SqueakDisplay {
                 if (SDL_LockTexture(texture, lockRect, pixels, pitch)) {
                     final long pixelBufferAddress = pixels.get(0);
                     final int currentPitchBytes = pitch.get(0);
-
-                    final IntBuffer intBuf = MemoryUtil.memByteBuffer(pixelBufferAddress, (safeBottom - safeTop) * currentPitchBytes).asIntBuffer();
+                    final int rowBytes = sqWidth * Integer.BYTES;
 
                     if (bitmap.getIntLength() >= sqWidth * sqHeight) {
-
-                        // Check if the GPU driver perfectly packed the rows (no padding)
-                        if (currentPitchBytes == sqWidth * Integer.BYTES) {
-
-                            // Single, uninterrupted native memory blast
-                            final int startOffset = safeTop * sqWidth;
-                            final int totalInts = (safeBottom - safeTop) * sqWidth;
-                            intBuf.put(bitmap.getIntStorage(), startOffset, totalInts);
-
+                        // Check if the GPU driver perfectly packed the rows
+                        if (currentPitchBytes == rowBytes) {
+                            final long srcAddress = stagingAddress + ((long) safeTop * rowBytes);
+                            final long totalBytes = (long) (safeBottom - safeTop) * rowBytes;
+                            UnsafeUtils.copyNativeToNative(srcAddress, pixelBufferAddress, totalBytes);
                         } else {
-                            // FALLBACK: The GPU padded the rows. We must copy row-by-row.
-                            final int currentPitchInts = currentPitchBytes / Integer.BYTES;
+                            // FALLBACK: The GPU padded the rows. Copy row-by-row natively.
                             for (int y = safeTop; y < safeBottom; y++) {
-                                intBuf.position((y - safeTop) * currentPitchInts);
-                                intBuf.put(bitmap.getIntStorage(), y * sqWidth, sqWidth);
+                                final long srcAddress = stagingAddress + ((long) y * rowBytes);
+                                final long dstAddress = pixelBufferAddress + ((long) (y - safeTop) * currentPitchBytes);
+                                UnsafeUtils.copyNativeToNative(srcAddress, dstAddress, rowBytes);
                             }
                         }
                     }
@@ -296,14 +299,25 @@ public final class SqueakDisplay {
                 return;
             }
 
-            // ensureStagingPixels(currentWidth, currentHeight);
+            ensureStagingPixels(currentWidth, currentHeight);
             final int[] sqPixels = bitmap.getIntStorage();
 
             if (sqPixels.length >= currentWidth * currentHeight) {
-                final int startOffset = safeTop * currentWidth;
-                final int totalLengthToCopy = (safeBottom - safeTop) * currentWidth;
-                // System.arraycopy(sqPixels, startOffset, stagingPixels, startOffset,
-                // totalLengthToCopy);
+                final int rowInts = safeRight - safeLeft;
+
+                // Fast Path: Full width update (One massive memory blast)
+                if (safeLeft == 0 && safeRight == currentWidth) {
+                    final int startOffsetInts = safeTop * currentWidth;
+                    final int totalInts = (safeBottom - safeTop) * currentWidth;
+                    UnsafeUtils.copyIntsToNative(sqPixels, startOffsetInts, stagingAddress + ((long) startOffsetInts * Integer.BYTES), totalInts);
+                } else {
+                    // Row-by-Row Path (GraalVM will unroll/vectorize this loop)
+                    for (int y = safeTop; y < safeBottom; y++) {
+                        final int srcOffsetInts = y * currentWidth + safeLeft;
+                        final long dstAddress = stagingAddress + ((long) y * stagingPitchBytes) + ((long) safeLeft * Integer.BYTES);
+                        UnsafeUtils.copyIntsToNative(sqPixels, srcOffsetInts, dstAddress, rowInts);
+                    }
+                }
             }
 
             recordDamage(safeLeft, safeTop, safeRight, safeBottom);
@@ -338,6 +352,9 @@ public final class SqueakDisplay {
     }
 
     public void onClose() {
+        if (stagingAddress != NULL) {
+            MemoryUtil.nmemFree(stagingAddress);
+        }
         if (texture != null) {
             SDL_DestroyTexture(texture);
         }

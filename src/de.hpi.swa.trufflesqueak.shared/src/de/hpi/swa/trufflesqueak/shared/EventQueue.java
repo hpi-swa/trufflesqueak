@@ -18,6 +18,7 @@ import static org.lwjgl.sdl.SDLStdinc.SDL_SetMemoryFunctions;
 import static org.lwjgl.system.MemoryStack.stackPush;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import org.lwjgl.sdl.SDLHints;
@@ -32,6 +33,8 @@ public final class EventQueue extends ConcurrentLinkedQueue<Runnable> {
     public static volatile Consumer<SDL_Event> osEventHandler = null;
     public static volatile boolean isRunning = true;
     public static volatile Runnable onClose = null;
+
+    private static final AtomicBoolean wakeupPending = new AtomicBoolean(false);
 
     private static volatile SDL_Event startEvent = null;
     private static volatile SDL_Event renderEvent = null;
@@ -61,7 +64,11 @@ public final class EventQueue extends ConcurrentLinkedQueue<Runnable> {
     }
 
     private static void wakeUpSdlLoop() {
-        SDL_PushEvent(wakeupEvent);
+        if (wakeupEvent != null) {
+            if (!wakeupPending.getAndSet(true)) {
+                SDL_PushEvent(wakeupEvent);
+            }
+        }
     }
 
     public static void run() {
@@ -97,8 +104,8 @@ public final class EventQueue extends ConcurrentLinkedQueue<Runnable> {
         renderEvent.type(renderEventType);
 
         // Push a wakeup event for any tasks that were queued prior to initialization
-        for (Runnable ignored : EventQueue.INSTANCE) {
-            SDL_PushEvent(wakeupEvent);
+        if (!EventQueue.INSTANCE.isEmpty()) {
+            wakeUpSdlLoop();
         }
 
         // Enable VSync to accumulate damage and prevent tearing.
@@ -130,13 +137,16 @@ public final class EventQueue extends ConcurrentLinkedQueue<Runnable> {
             while (isRunning) {
                 // Block until an event arrives (either OS event or the wake-up event)
                 if (SDL_WaitEvent(event)) {
-                    // Drain the SDL event queue
+                    boolean needsRender = false;
+
+                    // Drain the SDL event queue completely first
                     do {
                         if (event.type() == renderEventType) {
-                            renderTask.run();
+                            needsRender = true;
                         } else if (event.type() == wakeupEventType) {
-                            final Runnable r = EventQueue.INSTANCE.poll();
-                            if (r != null) {
+                            wakeupPending.set(false);
+                            Runnable r;
+                            while ((r = EventQueue.INSTANCE.poll()) != null) {
                                 r.run();
                             }
                         } else {
@@ -144,6 +154,11 @@ public final class EventQueue extends ConcurrentLinkedQueue<Runnable> {
                             osEventHandler.accept(event);
                         }
                     } while (SDL_PollEvent(event));
+
+                    // Only lock the GPU and draw AFTER all state is updated
+                    if (needsRender) {
+                        renderTask.run();
+                    }
                 }
             }
         }
