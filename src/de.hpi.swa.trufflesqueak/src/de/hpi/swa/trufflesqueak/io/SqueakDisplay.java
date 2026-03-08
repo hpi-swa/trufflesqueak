@@ -336,6 +336,8 @@ public final class SqueakDisplay {
                 return;
             }
 
+            // TODO: on SVM, we should be able to use PinnedObject to get a fixed pointer into the
+            // bitmap, which makes the staging pixel redundant.
             ensureStagingPixels(currentWidth, currentHeight);
             final int[] sqPixels = bitmap.getIntStorage();
 
