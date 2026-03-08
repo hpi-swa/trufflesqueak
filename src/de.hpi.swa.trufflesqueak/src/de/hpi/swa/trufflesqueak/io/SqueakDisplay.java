@@ -82,7 +82,6 @@ import org.lwjgl.sdl.SDL_Event;
 import org.lwjgl.sdl.SDL_MouseButtonEvent;
 import org.lwjgl.sdl.SDL_MouseMotionEvent;
 import org.lwjgl.sdl.SDL_MouseWheelEvent;
-import org.lwjgl.sdl.SDL_Point;
 import org.lwjgl.sdl.SDL_Rect;
 import org.lwjgl.sdl.SDL_Surface;
 import org.lwjgl.sdl.SDL_Texture;
@@ -106,7 +105,7 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.FORM;
 import de.hpi.swa.trufflesqueak.nodes.plugins.HostWindowPlugin;
-import de.hpi.swa.trufflesqueak.shared.EventQueue;
+import de.hpi.swa.trufflesqueak.shared.PlatformEventLoop;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 
@@ -165,11 +164,11 @@ public final class SqueakDisplay {
     private SqueakDisplay(final SqueakImageContext image) {
         this.image = image;
 
-        EventQueue.renderTask = this::performRender;
-        EventQueue.osEventHandler = this::processEvent;
-        EventQueue.onClose = this::onClose;
+        PlatformEventLoop.renderTask = this::performRender;
+        PlatformEventLoop.osEventHandler = this::processEvent;
+        PlatformEventLoop.onClose = this::onClose;
 
-        EventQueue.start();
+        PlatformEventLoop.start();
     }
 
     private static void checkSdlError(final boolean success) {
@@ -225,7 +224,7 @@ public final class SqueakDisplay {
             frameRequested = true;
         }
 
-        EventQueue.requestFrame();
+        PlatformEventLoop.requestFrame();
     }
 
     private void performRender() {
@@ -365,7 +364,7 @@ public final class SqueakDisplay {
 
     @TruffleBoundary
     public void close() {
-        EventQueue.isRunning = false;
+        PlatformEventLoop.isRunning = false;
     }
 
     public void onClose() {
@@ -398,7 +397,7 @@ public final class SqueakDisplay {
         if (window == NULL) {
             return;
         }
-        EventQueue.INSTANCE.add(() -> {
+        PlatformEventLoop.INSTANCE.add(() -> {
             checkSdlError(SDL_SetWindowFullscreen(window, fullscreen));
         });
     }
@@ -423,12 +422,12 @@ public final class SqueakDisplay {
         if (window == NULL) {
             osWindowWidth = (int) Math.ceil(width / getDisplayScale());
             osWindowHeight = (int) Math.ceil(height / getDisplayScale());
-            EventQueue.INSTANCE.add(this::init);
+            PlatformEventLoop.INSTANCE.add(this::init);
         } else {
             final int targetLogicalWidth = (int) Math.ceil(width / getDisplayScale());
             final int targetLogicalHeight = (int) Math.ceil(height / getDisplayScale());
 
-            EventQueue.INSTANCE.add(() -> {
+            PlatformEventLoop.INSTANCE.add(() -> {
                 if (targetLogicalWidth != osWindowWidth || targetLogicalHeight != osWindowHeight) {
                     osWindowWidth = targetLogicalWidth;
                     osWindowHeight = targetLogicalHeight;
@@ -531,7 +530,7 @@ public final class SqueakDisplay {
         osWindowHeight = targetLogicalHeight;
 
         if (window != NULL) {
-            EventQueue.INSTANCE.add(() -> {
+            PlatformEventLoop.INSTANCE.add(() -> {
                 checkSdlError(SDL_SetWindowSize(window, osWindowWidth, osWindowHeight));
             });
         }
@@ -549,7 +548,7 @@ public final class SqueakDisplay {
         if (window == NULL) {
             return;
         }
-        EventQueue.INSTANCE.add(() -> {
+        PlatformEventLoop.INSTANCE.add(() -> {
             setSDLCursor(cursorWords, maskWords, width, height, offsetX, offsetY);
         });
     }
@@ -874,7 +873,7 @@ public final class SqueakDisplay {
         if (window == NULL) {
             return;
         }
-        EventQueue.INSTANCE.add(() -> {
+        PlatformEventLoop.INSTANCE.add(() -> {
             checkSdlError(SDL_SetWindowTitle(window, title));
         });
     }
@@ -907,9 +906,5 @@ public final class SqueakDisplay {
     public static void beep() {
         // ToDo: either ignore this or use something else -- this ruins menubar!
         // Toolkit.getDefaultToolkit().beep();
-    }
-
-    private void installDropTargetListener() {
-        // TODO
     }
 }

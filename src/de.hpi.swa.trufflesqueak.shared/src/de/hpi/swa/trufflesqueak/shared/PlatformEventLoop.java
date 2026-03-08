@@ -26,8 +26,8 @@ import org.lwjgl.sdl.SDL_Event;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
-public final class EventQueue extends ConcurrentLinkedQueue<Runnable> {
-    public static final EventQueue INSTANCE = new EventQueue();
+public final class PlatformEventLoop extends ConcurrentLinkedQueue<Runnable> {
+    public static final PlatformEventLoop INSTANCE = new PlatformEventLoop();
 
     public static volatile Runnable renderTask = null;
     public static volatile Consumer<SDL_Event> osEventHandler = null;
@@ -104,7 +104,7 @@ public final class EventQueue extends ConcurrentLinkedQueue<Runnable> {
         renderEvent.type(renderEventType);
 
         // Push a wakeup event for any tasks that were queued prior to initialization
-        if (!EventQueue.INSTANCE.isEmpty()) {
+        if (!PlatformEventLoop.INSTANCE.isEmpty()) {
             wakeUpSdlLoop();
         }
 
@@ -146,7 +146,7 @@ public final class EventQueue extends ConcurrentLinkedQueue<Runnable> {
                         } else if (event.type() == wakeupEventType) {
                             wakeupPending.set(false);
                             Runnable r;
-                            while ((r = EventQueue.INSTANCE.poll()) != null) {
+                            while ((r = PlatformEventLoop.INSTANCE.poll()) != null) {
                                 r.run();
                             }
                         } else {

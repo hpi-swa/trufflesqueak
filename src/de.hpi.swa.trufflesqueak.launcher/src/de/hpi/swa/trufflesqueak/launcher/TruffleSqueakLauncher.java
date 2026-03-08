@@ -26,7 +26,7 @@ import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 
-import de.hpi.swa.trufflesqueak.shared.EventQueue;
+import de.hpi.swa.trufflesqueak.shared.PlatformEventLoop;
 import de.hpi.swa.trufflesqueak.shared.SqueakImageLocator;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageOptions;
@@ -126,7 +126,7 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
 
         squeakVMThread.start();
 
-        EventQueue.run();
+        PlatformEventLoop.run();
     }
 
     private int execute(final Context.Builder contextBuilder) {
