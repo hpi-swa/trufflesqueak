@@ -10,6 +10,10 @@ import static org.lwjgl.sdl.SDLClipboard.SDL_GetClipboardText;
 import static org.lwjgl.sdl.SDLClipboard.SDL_HasClipboardText;
 import static org.lwjgl.sdl.SDLClipboard.SDL_SetClipboardText;
 import static org.lwjgl.sdl.SDLError.SDL_GetError;
+import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_DROP_BEGIN;
+import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_DROP_FILE;
+import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_DROP_POSITION;
+import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_DROP_COMPLETE;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_KEY_DOWN;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_KEY_UP;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_MOUSE_BUTTON_DOWN;
@@ -22,6 +26,7 @@ import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_RENDER_TARGETS_RESET;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_TEXT_INPUT;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_WINDOW_CLOSE_REQUESTED;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_WINDOW_DISPLAY_CHANGED;
+import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_WINDOW_MOUSE_LEAVE;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_WINDOW_RESIZED;
 import static org.lwjgl.sdl.SDLHints.SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK;
 import static org.lwjgl.sdl.SDLHints.SDL_HINT_RENDER_VSYNC;
@@ -59,12 +64,13 @@ import static org.lwjgl.sdl.SDLVideo.SDL_WINDOW_RESIZABLE;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
@@ -72,7 +78,6 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.sdl.SDLKeycode;
 import org.lwjgl.sdl.SDLMouse;
-import org.lwjgl.sdl.SDLSurface;
 import org.lwjgl.sdl.SDL_Event;
 import org.lwjgl.sdl.SDL_MouseButtonEvent;
 import org.lwjgl.sdl.SDL_MouseMotionEvent;
@@ -134,6 +139,7 @@ public final class SqueakDisplay {
     private int dirtyRight = Integer.MIN_VALUE;
     private int dirtyBottom = Integer.MIN_VALUE;
 
+    private boolean deferUpdates;
     private boolean frameRequested = false;
 
     // UI Thread Tracking (Texture & Logical Window)
@@ -152,7 +158,9 @@ public final class SqueakDisplay {
     @CompilationFinal private int inputSemaphoreIndex = -1;
 
     public int buttons;
-    private boolean deferUpdates;
+    private boolean isDragActive = false;
+
+    private final List<String> dropFilesAccumulator = new ArrayList<>();
 
     private SqueakDisplay(final SqueakImageContext image) {
         this.image = image;
@@ -567,7 +575,7 @@ public final class SqueakDisplay {
     }
 
     private static void copyIntoBuffer(final int[] words, final ByteBuffer buffer) {
-        for (int word : words) {
+        for (final int word : words) {
             buffer.put((byte) (word >> 24));
             buffer.put((byte) (word >> 16));
         }
@@ -596,6 +604,40 @@ public final class SqueakDisplay {
                 break;
             case SDL_EVENT_MOUSE_WHEEL:
                 processMouseWheel(event.wheel(), scaleFactor);
+                break;
+            case SDL_EVENT_DROP_BEGIN:
+                isDragActive = true;
+                dropFilesAccumulator.clear();
+                addDragEvent(SqueakIOConstants.DRAG.ENTER, 0, 0);
+                break;
+            case SDL_EVENT_DROP_POSITION: {
+                final int x = (int) (event.drop().x() * scaleFactor);
+                final int y = (int) (event.drop().y() * scaleFactor);
+                addDragEvent(SqueakIOConstants.DRAG.MOVE, x, y);
+                break;
+            }
+            case SDL_EVENT_DROP_FILE: {
+                // Accumulate the canonical-style path provided by SDL
+                final String droppedFile = event.drop().dataString();
+                if (droppedFile != null) {
+                    dropFilesAccumulator.add(droppedFile);
+                }
+                break;
+            }
+            case SDL_EVENT_DROP_COMPLETE: {
+                isDragActive = false;
+                image.dropPluginFileList = dropFilesAccumulator.toArray(new String[0]);
+                final int x = (int) (event.drop().x() * scaleFactor);
+                final int y = (int) (event.drop().y() * scaleFactor);
+                addDragEvent(SqueakIOConstants.DRAG.DROP, x, y);
+                dropFilesAccumulator.clear();
+                break;
+            }
+            case SDL_EVENT_WINDOW_MOUSE_LEAVE:
+                if (isDragActive) {
+                    addDragEvent(SqueakIOConstants.DRAG.LEAVE, 0, 0);
+                    isDragActive = false;
+                }
                 break;
             case SDL_EVENT_QUIT, SDL_EVENT_WINDOW_CLOSE_REQUESTED:
                 addWindowEvent(SqueakIOConstants.WINDOW.CLOSE);
@@ -787,8 +829,8 @@ public final class SqueakDisplay {
         addEvent(eventType, value3, value4, value5, value6, 0L);
     }
 
-    private void addDragEvent(final long type, final SDL_Point location) {
-        addEvent(EVENT_TYPE.DRAG_DROP_FILES, type, (long) location.x(), (long) location.y(), buttons >> 3, image.dropPluginFileList.length);
+    private void addDragEvent(final long type, final int x, final int y) {
+        addEvent(EVENT_TYPE.DRAG_DROP_FILES, type, x, y, buttons >> 3, image.dropPluginFileList.length);
     }
 
     private void addWindowEvent(final long type) {
@@ -865,10 +907,6 @@ public final class SqueakDisplay {
     public static void beep() {
         // ToDo: either ignore this or use something else -- this ruins menubar!
         // Toolkit.getDefaultToolkit().beep();
-    }
-
-    private void installWindowAdapter() {
-        // TODO
     }
 
     private void installDropTargetListener() {
