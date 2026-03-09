@@ -4,11 +4,12 @@ import static org.lwjgl.sdl.SDLError.SDL_GetError;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_FINGER_DOWN;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_FINGER_MOTION;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_FINGER_UP;
-import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_TEXT_EDITING;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_FIRST;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_LAST;
+import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_TEXT_EDITING;
 import static org.lwjgl.sdl.SDLEvents.SDL_GETEVENT;
 import static org.lwjgl.sdl.SDLEvents.SDL_PeepEvents;
+import static org.lwjgl.sdl.SDLEvents.SDL_PumpEvents;
 import static org.lwjgl.sdl.SDLEvents.SDL_SetEventEnabled;
 import static org.lwjgl.sdl.SDLEvents.SDL_WaitEventTimeout;
 import static org.lwjgl.sdl.SDLHints.SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK;
@@ -94,6 +95,7 @@ public final class PlatformEventLoop {
                     osEventHandler.accept(firstEvent);
 
                     // Batch process all other waiting events.
+                    SDL_PumpEvents();
                     int eventsRead;
                     while ((eventsRead = SDL_PeepEvents(eventBuffer, SDL_GETEVENT, SDL_EVENT_FIRST, SDL_EVENT_LAST)) > 0) {
                         for (int i = 0; i < eventsRead; i++) {
