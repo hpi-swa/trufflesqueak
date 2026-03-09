@@ -28,6 +28,7 @@ import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_WINDOW_CLOSE_REQUESTED;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_WINDOW_DISPLAY_CHANGED;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_WINDOW_MOUSE_LEAVE;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_WINDOW_RESIZED;
+import static org.lwjgl.sdl.SDLIOStream.SDL_IOFromMem;
 import static org.lwjgl.sdl.SDLInit.SDL_Quit;
 import static org.lwjgl.sdl.SDLInit.SDL_RunOnMainThread;
 import static org.lwjgl.sdl.SDLKeyboard.SDL_StartTextInput;
@@ -45,8 +46,8 @@ import static org.lwjgl.sdl.SDLRender.SDL_SetTextureScaleMode;
 import static org.lwjgl.sdl.SDLRender.SDL_TEXTUREACCESS_STREAMING;
 import static org.lwjgl.sdl.SDLRender.nSDL_CreateRenderer;
 import static org.lwjgl.sdl.SDLRender.nSDL_UpdateTexture;
-import static org.lwjgl.sdl.SDLSurface.SDL_CreateSurfaceFrom;
 import static org.lwjgl.sdl.SDLSurface.SDL_DestroySurface;
+import static org.lwjgl.sdl.SDLSurface.SDL_LoadBMP_IO;
 import static org.lwjgl.sdl.SDLSurface.SDL_SCALEMODE_NEAREST;
 import static org.lwjgl.sdl.SDLVideo.SDL_CreateWindow;
 import static org.lwjgl.sdl.SDLVideo.SDL_DestroyWindow;
@@ -61,15 +62,15 @@ import static org.lwjgl.sdl.SDLVideo.SDL_WINDOW_RESIZABLE;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
-import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
-
-import javax.imageio.ImageIO;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.lwjgl.sdl.SDLKeycode;
 import org.lwjgl.sdl.SDLMouse;
@@ -477,8 +478,7 @@ public final class SqueakDisplay {
                         throw SqueakException.create("Failed to create SDL renderer: " + SDL_GetError());
                     }
 
-                    tryToSetTaskbarIcon();
-
+                    setWindowIcon(window);
                     checkSdlError(SDL_RaiseWindow(window));
                     scaleFactor = checkSdlError(SDL_GetWindowDisplayScale(window));
                     checkSdlError(SDL_StartTextInput(window));
@@ -499,55 +499,32 @@ public final class SqueakDisplay {
         setWindowTitle(imageFileName.contains(SqueakLanguageConfig.IMPLEMENTATION_NAME) ? imageFileName : imageFileName + " running on " + SqueakLanguageConfig.IMPLEMENTATION_NAME);
     }
 
-    private void tryToSetTaskbarIcon() {
-        if (window == NULL) {
-            return;
-        }
-
-        final String resourcePath = "/trufflesqueak-icon.png";
-
-        try (InputStream is = SqueakDisplay.class.getResourceAsStream(resourcePath)) {
-            if (is == null) {
-                LogUtils.IO.warning("Icon resource not found: " + resourcePath);
+    private static void setWindowIcon(final long window) {
+        try (InputStream is = SqueakDisplay.class.getResourceAsStream("/trufflesqueak-icon.zip");
+                        ZipInputStream zis = new ZipInputStream(is)) {
+            final ZipEntry entry = zis.getNextEntry();
+            if (entry == null || !entry.getName().endsWith(".bmp")) {
+                System.out.println("The zip archive is empty or doesn't contain .bmp file.");
                 return;
             }
-
-            // Read the PNG into standard Java memory
-            final BufferedImage image = ImageIO.read(is);
-            final int width = image.getWidth();
-            final int height = image.getHeight();
-
-            // Extract ARGB pixels
-            final int[] pixels = new int[width * height];
-            image.getRGB(0, 0, width, height, pixels, 0, width);
-
-            // Move pixels to native off-heap memory
-            ByteBuffer pixelBuffer = null;
-            try {
-                pixelBuffer = MemoryUtil.memAlloc(pixels.length * Integer.BYTES);
-                pixelBuffer.asIntBuffer().put(pixels);
-
-                // Wrap the native memory in an SDL_Surface
-                final SDL_Surface iconSurface = SDL_CreateSurfaceFrom(
-                                width,
-                                height,
-                                SDL_PIXELFORMAT_ARGB8888, // Matches Java's getRGB format
-                                pixelBuffer,
-                                width * Integer.BYTES);
-
-                if (iconSurface != null) {
-                    SDL_SetWindowIcon(window, iconSurface);
-                    SDL_DestroySurface(iconSurface);
-                } else {
-                    LogUtils.IO.warning("Failed to create SDL icon surface: " + SDL_GetError());
-                }
-            } finally {
-                if (pixelBuffer != null) {
-                    MemoryUtil.memFree(pixelBuffer);
-                }
+            final byte[] imageBytes = zis.readAllBytes();
+            final ByteBuffer imageBuffer = MemoryUtil.memAlloc(imageBytes.length);
+            imageBuffer.put(imageBytes).flip();
+            final long ioStream = SDL_IOFromMem(imageBuffer);
+            if (ioStream == NULL) {
+                System.out.println("Failed to create SDL ioStream: " + SDL_GetError());
+                return;
             }
-        } catch (Exception e) {
-            LogUtils.IO.warning(e.toString());
+            final SDL_Surface iconSurface = SDL_LoadBMP_IO(ioStream, true);
+            MemoryUtil.memFree(imageBuffer);
+            if (iconSurface != null) {
+                SDL_SetWindowIcon(window, iconSurface);
+                SDL_DestroySurface(iconSurface);
+            } else {
+                System.out.println("Failed to create SDL icon surface: " + SDL_GetError());
+            }
+        } catch (final IOException e) {
+            System.out.println("Failed to load and set icon: " + e);
         }
     }
 
