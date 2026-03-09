@@ -5,7 +5,10 @@ import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_FINGER_DOWN;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_FINGER_MOTION;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_FINGER_UP;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_TEXT_EDITING;
-import static org.lwjgl.sdl.SDLEvents.SDL_PollEvent;
+import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_FIRST;
+import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_LAST;
+import static org.lwjgl.sdl.SDLEvents.SDL_GETEVENT;
+import static org.lwjgl.sdl.SDLEvents.SDL_PeepEvents;
 import static org.lwjgl.sdl.SDLEvents.SDL_SetEventEnabled;
 import static org.lwjgl.sdl.SDLEvents.SDL_WaitEventTimeout;
 import static org.lwjgl.sdl.SDLHints.SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK;
@@ -29,7 +32,11 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
 public final class PlatformEventLoop {
+    // This sets the upper bound on physical screen redraws.
     private static final int EVENT_WAIT_TIMEOUT_MS = 5;
+
+    private static final int EVENT_FETCH_BATCH_SIZE = 32;
+
     public static volatile Consumer<SDL_Event> osEventHandler = null;
     public static volatile boolean isRunning = false;
 
@@ -67,20 +74,32 @@ public final class PlatformEventLoop {
         SDL_SetEventEnabled(SDL_EVENT_FINGER_MOTION, false);
 
         try (MemoryStack stack = stackPush()) {
-            final SDL_Event event = SDL_Event.malloc(stack);
 
+            // Allocate a contiguous buffer for fetching multiple events
+            final SDL_Event.Buffer eventBuffer = SDL_Event.malloc(EVENT_FETCH_BATCH_SIZE, stack);
+
+            // We use the first slot of the buffer for the blocking wait call
+            final SDL_Event firstEvent = eventBuffer.get(0);
+
+            // Initial drain before running
             while (!isRunning) {
-                if (SDL_WaitEventTimeout(event, EVENT_WAIT_TIMEOUT_MS)) {
-                    while (SDL_PollEvent(event)) {
-                        // ignore all events
-                    }
-                }
+                SDL_WaitEventTimeout(firstEvent, EVENT_WAIT_TIMEOUT_MS);
             }
+
+            // The main high-performance loop
             while (isRunning) {
-                if (SDL_WaitEventTimeout(event, EVENT_WAIT_TIMEOUT_MS)) {
-                    do {
-                        osEventHandler.accept(event);
-                    } while (SDL_PollEvent(event));
+                // Sleep until at least one event arrives, putting it in firstEvent
+                if (SDL_WaitEventTimeout(firstEvent, EVENT_WAIT_TIMEOUT_MS)) {
+
+                    osEventHandler.accept(firstEvent);
+
+                    // Batch process all other waiting events.
+                    int eventsRead;
+                    while ((eventsRead = SDL_PeepEvents(eventBuffer, SDL_GETEVENT, SDL_EVENT_FIRST, SDL_EVENT_LAST)) > 0) {
+                        for (int i = 0; i < eventsRead; i++) {
+                            osEventHandler.accept(eventBuffer.get(i));
+                        }
+                    }
                 }
             }
         }
