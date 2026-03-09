@@ -151,7 +151,7 @@ suite = {
                             "classifier": "natives-linux",
                             "version": "3.4.1",
                         },
-                        "digest": "sha256:x",
+                        "digest": "sha256:5dfee41aba83762229b27f969e0b567d68bc9cedda1edcaf82b91dc99fe34677",
                     },
                     "aarch64": {
                         "maven": {
@@ -160,7 +160,7 @@ suite = {
                             "classifier": "natives-linux-arm64",
                             "version": "3.4.1",
                         },
-                        "digest": "sha256:x",
+                        "digest": "sha256:8a1112ee7599aff95de4364ae7048329d92975380122c519feee31342bdb678b",
                     },
                 },
                 "darwin": {
@@ -182,7 +182,7 @@ suite = {
                             "classifier": "natives-windows",
                             "version": "3.4.1",
                         },
-                        "digest": "sha256:x",
+                        "digest": "sha256:21872776b9be0a93c746d6f28797c12ac47a75e0f0188e5a4fad0c20c9a6a07e",
                     },
                 },
             },
@@ -208,7 +208,7 @@ suite = {
                             "classifier": "natives-linux",
                             "version": "3.4.1",
                         },
-                        "digest": "sha256:x",
+                        "digest": "sha256:740fdd20b4ad78a0604ffdf17a9f6fd1f926373a6f01db3a4a01e4b8de60f41a",
                     },
                     "aarch64": {
                         "maven": {
@@ -217,7 +217,7 @@ suite = {
                             "classifier": "natives-linux-arm64",
                             "version": "3.4.1",
                         },
-                        "digest": "sha256:x",
+                        "digest": "sha256:8aa7ce580ea64fea11d4a5edf49d7ba885d43a6b424e53b22c43534f82331734",
                     },
                 },
                 "darwin": {
@@ -239,7 +239,7 @@ suite = {
                             "classifier": "natives-windows",
                             "version": "3.4.1",
                         },
-                        "digest": "sha256:x",
+                        "digest": "sha256:1441c37843555f9c90297148a0abbd674d838ad22202e174a00d83c624b19c06",
                     },
                 },
             },
