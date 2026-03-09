@@ -158,28 +158,38 @@ public final class SqueakDisplay {
     private final SDL_MainThreadCallback performRenderTask = new SDL_MainThreadCallback() {
         @Override
         public void invoke(final long userdata) {
-            final int safeTop, safeBottom;
-            final int sqWidth, sqHeight;
-
-            // Atomically capture the vertical bounds and dimensions.
-            synchronized (SqueakDisplay.this) {
-                sqWidth = width;
-                sqHeight = height;
-
-                safeTop = Math.max(0, dirtyTop);
-                safeBottom = Math.min(sqHeight, dirtyBottom);
-                resetDamage();
-                frameRequested = false;
+            if (renderer == NULL) {
+                return;
             }
 
-            // Prepare SDL Texture
-            if (renderer != NULL && safeTop < safeBottom) {
-                if (textureWidth != sqWidth || textureHeight != sqHeight || texture == null) {
+            // Lock the instance to safely read bounds and upload the texture
+            synchronized (SqueakDisplay.this) {
+                final int safeTop = Math.max(0, dirtyTop);
+                final int safeBottom = Math.min(height, dirtyBottom);
+                int safeLeft = Math.max(0, dirtyLeft);
+                int safeRight = Math.min(width, dirtyRight);
+
+                resetDamage();
+                frameRequested = false;
+
+                if (safeTop >= safeBottom || safeLeft >= safeRight) {
+                    return;
+                }
+
+                // If the damage is more than 75% of the screen width, force it to 100% width.
+                // This allows the graphics driver to use a contiguous DMA fast-path.
+                if ((safeRight - safeLeft) >= (width * 3) / 4) {
+                    safeLeft = 0;
+                    safeRight = width;
+                }
+
+                // Prepare SDL Texture
+                if (textureWidth != width || textureHeight != height || texture == null) {
                     if (texture != null) {
                         SDL_DestroyTexture(texture);
                     }
-                    textureWidth = sqWidth;
-                    textureHeight = sqHeight;
+                    textureWidth = width;
+                    textureHeight = height;
                     texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, textureWidth, textureHeight);
                     if (texture == null) {
                         throw SqueakException.create("Failed to create texture");
@@ -187,19 +197,20 @@ public final class SqueakDisplay {
                     checkSdlError(SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST));
                 }
 
+                // Upload the texture
                 try (MemoryStack stack = stackPush()) {
                     final SDL_Rect dirtyRect = SDL_Rect.malloc(stack);
-                    dirtyRect.set(0, safeTop, sqWidth, safeBottom - safeTop);
-                    final int offset = safeTop * stagingPitchBytes;
-                    if (!nSDL_UpdateTexture(texture.address(), dirtyRect.address(), stagingAddress + offset, stagingPitchBytes)) {
+                    dirtyRect.set(safeLeft, safeTop, safeRight - safeLeft, safeBottom - safeTop);
+                    final long pixelStartOffset = ((long) safeTop * stagingPitchBytes) + ((long) safeLeft * Integer.BYTES);
+                    if (!nSDL_UpdateTexture(texture.address(), dirtyRect.address(), stagingAddress + pixelStartOffset, stagingPitchBytes)) {
                         return; // FIXME: invalid pixels
                     }
                 }
-
-                checkSdlError(SDL_RenderClear(renderer));
-                checkSdlError(SDL_RenderTexture(renderer, texture, null, null));
-                checkSdlError(SDL_RenderPresent(renderer));
             }
+
+            checkSdlError(SDL_RenderClear(renderer));
+            checkSdlError(SDL_RenderTexture(renderer, texture, null, null));
+            checkSdlError(SDL_RenderPresent(renderer));
         }
     };
 
@@ -338,23 +349,28 @@ public final class SqueakDisplay {
 
             // TODO: on SVM, we should be able to use PinnedObject to get a fixed pointer into the
             // bitmap, which makes the staging pixel redundant.
+            // SS: I think this could result in visual tearing since Squeak would be able to change
+            // the pixels during the time interval before the pixels are pushed to the screen.
             ensureStagingPixels(currentWidth, currentHeight);
             final int[] sqPixels = bitmap.getIntStorage();
 
             if (sqPixels.length >= currentWidth * currentHeight) {
                 final int rowInts = safeRight - safeLeft;
 
-                // Fast Path: Full width update (One massive memory blast)
-                if (safeLeft == 0 && safeRight == currentWidth) {
+                // Fast Path: one single transfer if more than 75% screen width
+                if (rowInts >= (currentWidth * 3) / 4) {
                     final int startOffsetInts = safeTop * currentWidth;
                     final int totalInts = (safeBottom - safeTop) * currentWidth;
                     MemoryUtil.memCopy(sqPixels, stagingAddress + ((long) startOffsetInts * Integer.BYTES), startOffsetInts, totalInts);
                 } else {
-                    // Row-by-Row Path (GraalVM will unroll/vectorize this loop)
+                    // Row-by-Row Path
+                    int srcOffsetInts = safeTop * currentWidth + safeLeft;
+                    long dstAddress = stagingAddress + ((long) safeTop * stagingPitchBytes) + ((long) safeLeft * Integer.BYTES);
+
                     for (int y = safeTop; y < safeBottom; y++) {
-                        final int srcOffsetInts = y * currentWidth + safeLeft;
-                        final long dstAddress = stagingAddress + ((long) y * stagingPitchBytes) + ((long) safeLeft * Integer.BYTES);
                         MemoryUtil.memCopy(sqPixels, dstAddress, srcOffsetInts, rowInts);
+                        srcOffsetInts += currentWidth;
+                        dstAddress += stagingPitchBytes;
                     }
                 }
             }
