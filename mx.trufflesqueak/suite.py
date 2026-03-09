@@ -585,17 +585,69 @@ suite = {
             "fileListPurpose": "native-image-resources",
             "native": True,
             "platformDependent": True,
-            "layout": {
-                "lib/": [
-                    "dependency:de.hpi.swa.trufflesqueak.ffi.native/*",
-                    {
-                        "source_type": "extracted-dependency",
-                        "dependency": "OSVM_PLUGINS",
-                        "path": "*",
+            "os_arch": {
+                "linux": {
+                    "amd64": {
+                        "layout": {
+                            "lib/": [
+                                "dependency:de.hpi.swa.trufflesqueak.ffi.native/*",
+                                {
+                                    "source_type": "extracted-dependency",
+                                    "dependency": "OSVM_PLUGINS",
+                                    "path": "*",
+                                },
+                                "extracted-dependency:LWJGL_PLATFORM/linux/x64/org/lwjgl/liblwjgl.so",
+                                "extracted-dependency:LWJGL_SDL_PLATFORM/linux/x64/org/lwjgl/sdl/libSDL3.so",
+                            ],
+                        },
                     },
-                    "extracted-dependency:LWJGL_PLATFORM/macos/arm64/org/lwjgl/liblwjgl.dylib",
-                    "extracted-dependency:LWJGL_SDL_PLATFORM/macos/arm64/org/lwjgl/sdl/libSDL3.dylib",
-                ],
+                    "aarch64": {
+                        "layout": {
+                            "lib/": [
+                                "dependency:de.hpi.swa.trufflesqueak.ffi.native/*",
+                                {
+                                    "source_type": "extracted-dependency",
+                                    "dependency": "OSVM_PLUGINS",
+                                    "path": "*",
+                                },
+                                "extracted-dependency:LWJGL_PLATFORM/linux/arm64/org/lwjgl/liblwjgl.so",
+                                "extracted-dependency:LWJGL_SDL_PLATFORM/linux/arm64/org/lwjgl/sdl/libSDL3.so",
+                            ],
+                        },
+                    },
+                },
+                "darwin": {
+                    "aarch64": {
+                        "layout": {
+                            "lib/": [
+                                "dependency:de.hpi.swa.trufflesqueak.ffi.native/*",
+                                {
+                                    "source_type": "extracted-dependency",
+                                    "dependency": "OSVM_PLUGINS",
+                                    "path": "*",
+                                },
+                                "extracted-dependency:LWJGL_PLATFORM/macos/arm64/org/lwjgl/liblwjgl.dylib",
+                                "extracted-dependency:LWJGL_SDL_PLATFORM/macos/arm64/org/lwjgl/sdl/libSDL3.dylib",
+                            ],
+                        },
+                    },
+                },
+                "windows": {
+                    "amd64": {
+                        "layout": {
+                            "lib/": [
+                                "dependency:de.hpi.swa.trufflesqueak.ffi.native/*",
+                                {
+                                    "source_type": "extracted-dependency",
+                                    "dependency": "OSVM_PLUGINS",
+                                    "path": "*",
+                                },
+                                "extracted-dependency:LWJGL_PLATFORM/windows/x64/org/lwjgl/lwjgl.dll",
+                                "extracted-dependency:LWJGL_SDL_PLATFORM/windows/x64/org/lwjgl/sdl/SDL3.dll",
+                            ],
+                        },
+                    },
+                },
             },
             "license": ["MIT"],
             "maven": False,
