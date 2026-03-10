@@ -13,7 +13,7 @@ import static org.lwjgl.sdl.SDLEvents.SDL_PeepEvents;
 import static org.lwjgl.sdl.SDLEvents.SDL_PushEvent;
 import static org.lwjgl.sdl.SDLEvents.SDL_SetEventEnabled;
 import static org.lwjgl.sdl.SDLEvents.SDL_WaitEvent;
-import static org.lwjgl.sdl.SDLEvents.SDL_WaitEventTimeout;
+import static org.lwjgl.sdl.SDLHints.SDL_HINT_MAC_BACKGROUND_APP;
 import static org.lwjgl.sdl.SDLHints.SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK;
 import static org.lwjgl.sdl.SDLHints.SDL_HINT_RENDER_VSYNC;
 import static org.lwjgl.sdl.SDLHints.SDL_HINT_VIDEO_X11_NET_WM_PING;
@@ -28,6 +28,7 @@ import static org.lwjgl.sdl.SDLInit.SDL_SetAppMetadataProperty;
 import static org.lwjgl.sdl.SDLStdinc.SDL_SetMemoryFunctions;
 import static org.lwjgl.system.MemoryStack.stackPush;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
 
 import org.lwjgl.sdl.SDL_Event;
@@ -40,9 +41,15 @@ public final class PlatformEventLoop {
 
     private static final int EVENT_FETCH_BATCH_SIZE = 32;
 
+    private static final CountDownLatch startLatch = new CountDownLatch(1);
+    private static volatile boolean isRunning = false;
+
     public static volatile Consumer<SDL_Event> osEventHandler = null;
     public static volatile Runnable renderFrameIfNeeded = null;
-    public static volatile boolean isRunning = false;
+
+    public static void start() {
+        startLatch.countDown(); // Just unblock the main thread!
+    }
 
     // Break the main thread's wait from any background thread
     public static void wakeUp() {
@@ -56,11 +63,15 @@ public final class PlatformEventLoop {
         }
     }
 
-    public static void start() {
-        isRunning = true;
-    }
-
     public static void run() {
+        // Wait until start() is called.
+        try {
+            startLatch.await();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return;
+        }
+
         SDL_SetMemoryFunctions(
                         MemoryUtil::nmemAllocChecked,
                         MemoryUtil::nmemCallocChecked,
@@ -72,22 +83,30 @@ public final class PlatformEventLoop {
         checkSdlError(SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_CREATOR_STRING, "TruffleSqueak"));
         checkSdlError(SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_COPYRIGHT_STRING, "License terms: " + SqueakLanguageConfig.WEBSITE));
 
-        if (!SDL_Init(SDL_INIT_VIDEO)) {
-            throw new IllegalStateException("Unable to initialize SDL: " + SDL_GetError());
-        }
-
         // Enable VSync to accumulate damage and prevent tearing.
         checkSdlError(SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1"));
         // Disable WM_PING, so the WM does not think it is hung.
         checkSdlError(SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_PING, "0"));
         // Ctrl-Click on macOS is right click.
         checkSdlError(SDL_SetHint(SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK, "1"));
+        // Make sure that macOS does not think we're a background task.
+        checkSdlError(SDL_SetHint(SDL_HINT_MAC_BACKGROUND_APP, "0"));
+
+        // Initialize SDL.
+        if (!SDL_Init(SDL_INIT_VIDEO)) {
+            throw new IllegalStateException("Unable to initialize SDL: " + SDL_GetError());
+        }
 
         // Disable unneeded events to avoid issues (e.g. double clicks).
         SDL_SetEventEnabled(SDL_EVENT_TEXT_EDITING, false);
         SDL_SetEventEnabled(SDL_EVENT_FINGER_DOWN, false);
         SDL_SetEventEnabled(SDL_EVENT_FINGER_UP, false);
         SDL_SetEventEnabled(SDL_EVENT_FINGER_MOTION, false);
+
+        // Fire an immediate wake-up ping just in case Squeak tried to render
+        // while we were booting up SDL, ensuring it doesn't get stuck waiting.
+        isRunning = true;
+        wakeUp();
 
         try (MemoryStack stack = stackPush()) {
 
@@ -96,11 +115,6 @@ public final class PlatformEventLoop {
 
             // We use the first slot of the buffer for the blocking wait call
             final SDL_Event firstEvent = eventBuffer.get(0);
-
-            // Initial drain before running
-            while (!isRunning) {
-                SDL_WaitEventTimeout(firstEvent, EVENT_WAIT_TIMEOUT_MS);
-            }
 
             // The main event loop evaluation order: callbacks, OS events, render
             // Loop is triggered by an OS event or a wakeUp() ping (not by callbacks).

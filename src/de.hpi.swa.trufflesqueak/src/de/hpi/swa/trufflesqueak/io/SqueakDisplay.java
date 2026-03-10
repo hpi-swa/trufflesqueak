@@ -51,6 +51,8 @@ import static org.lwjgl.sdl.SDLSurface.SDL_LoadBMP_IO;
 import static org.lwjgl.sdl.SDLSurface.SDL_SCALEMODE_NEAREST;
 import static org.lwjgl.sdl.SDLVideo.SDL_CreateWindow;
 import static org.lwjgl.sdl.SDLVideo.SDL_DestroyWindow;
+import static org.lwjgl.sdl.SDLVideo.SDL_GetDesktopDisplayMode;
+import static org.lwjgl.sdl.SDLVideo.SDL_GetPrimaryDisplay;
 import static org.lwjgl.sdl.SDLVideo.SDL_GetWindowDisplayScale;
 import static org.lwjgl.sdl.SDLVideo.SDL_RaiseWindow;
 import static org.lwjgl.sdl.SDLVideo.SDL_SetWindowFullscreen;
@@ -74,6 +76,7 @@ import java.util.zip.ZipInputStream;
 
 import org.lwjgl.sdl.SDLKeycode;
 import org.lwjgl.sdl.SDLMouse;
+import org.lwjgl.sdl.SDL_DisplayMode;
 import org.lwjgl.sdl.SDL_Event;
 import org.lwjgl.sdl.SDL_MainThreadCallback;
 import org.lwjgl.sdl.SDL_MouseButtonEvent;
@@ -850,9 +853,7 @@ public final class SqueakDisplay {
     }
 
     public void setDeferUpdates(final boolean flag) {
-        if (flag) {
-            System.out.println("setDeferUpdates: " + flag);
-        }
+        // ToDo: It appears that deferUpdates is never set to true.
         deferUpdates = flag;
     }
 
@@ -897,5 +898,16 @@ public final class SqueakDisplay {
     public static void beep() {
         // ToDo: either ignore this or use something else -- this ruins menubar!
         // Toolkit.getDefaultToolkit().beep();
+    }
+
+    public static int[] getPrimaryDisplayDimensions() {
+        final int displayId = SDL_GetPrimaryDisplay();
+        if (displayId != 0) {
+            final SDL_DisplayMode mode = SDL_GetDesktopDisplayMode(displayId);
+            if (mode != null) {
+                return new int[]{mode.w(), mode.h()};
+            }
+        }
+        return new int[]{0, 0};
     }
 }

@@ -6,12 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.util;
 
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferInt;
-import java.awt.image.DirectColorModel;
-import java.awt.image.Raster;
-import java.awt.image.SampleModel;
-import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.GarbageCollectorMXBean;
@@ -236,12 +230,15 @@ public final class MiscUtils {
 
     /* Wraps bitmap in a BufferedImage for efficient drawing. */
     @TruffleBoundary
-    public static BufferedImage new32BitBufferedImage(final int[] words, final int width, final int height, final boolean withAlpha) {
+    public static /*BufferedImage*/ Object new32BitBufferedImage(final int[] words, final int width, final int height, final boolean withAlpha) {
         /**
          * {@link ColorModel#getRGBdefault()} with alpha = 1.0. Transparency not needed at this
          * point. More importantly for the {@link JPEGReadWriter2Plugin}, {@link BufferedImage}s
          * without alpha channel can be exported as JPEG.
          */
+        // ToDo: Disable for now while trying to fix the menu bar.
+        return null;
+        /*
         final DirectColorModel cm = new DirectColorModel(
                         32,
                         0x00ff0000, // Red
@@ -253,6 +250,7 @@ public final class MiscUtils {
         final DataBufferInt db = new DataBufferInt(words, words.length);
         final WritableRaster raster = Raster.createWritableRaster(sm, db, null);
         return new BufferedImage(cm, raster, true, null);
+        */
     }
 
     @TruffleBoundary

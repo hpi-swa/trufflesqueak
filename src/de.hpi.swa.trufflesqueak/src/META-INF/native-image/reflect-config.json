@@ -141,5 +141,10 @@
   {
     "name": "sun.security.provider.SHA2$SHA256",
     "methods": [{ "name": "<init>", "parameterTypes": [ ] }]
+  },
+  {
+    "name": "org.lwjgl.sdl.SDL_MainThreadCallbackI",
+    "allDeclaredMethods": true,
+    "allPublicMethods": true
   }
 ]

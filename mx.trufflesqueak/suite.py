@@ -386,6 +386,8 @@ suite = {
                 "-Dorg.graalvm.launcher.class=de.hpi.swa.trufflesqueak.launcher.TruffleSqueakLauncher",
                 "-H:+IncludeNodeSourcePositions",  # for improved stack traces on deopts
                 "-H:+DetectUserDirectoriesInImageHeap",
+                # Tell GraalVM to relax and automatically handle LWJGL's initialization
+                "-H:-AssertInitializationSpecifiedForAllClasses",
             ],
             "dynamicBuildArgs": "libsmalltalkvm_build_args",
         },
@@ -406,6 +408,7 @@ suite = {
                     "jdk.unsupported",  # sun.misc.Unsafe
                 ],
             },
+            "useModulePath": True,
             "dependencies": [
                 "de.hpi.swa.trufflesqueak",
             ],
@@ -521,6 +524,7 @@ suite = {
                     "de.hpi.swa.trufflesqueak.shared",
                 ],
             },
+            "useModulePath": True,
             "exclude": [
                 "LWJGL",
                 "LWJGL_SDL",
