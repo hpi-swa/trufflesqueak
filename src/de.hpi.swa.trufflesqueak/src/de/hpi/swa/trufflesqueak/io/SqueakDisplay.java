@@ -156,65 +156,6 @@ public final class SqueakDisplay {
     record CursorData(int[] cursorWords, int[] maskWords, int width, int height, int offsetX, int offsetY) {
     }
 
-    private final SDL_MainThreadCallback performRenderTask = new SDL_MainThreadCallback() {
-        @Override
-        public void invoke(final long userdata) {
-            if (renderer == NULL) {
-                return;
-            }
-
-            // Lock the instance to safely read bounds and upload the texture
-            synchronized (SqueakDisplay.this) {
-                final int safeTop = Math.max(0, dirtyTop);
-                final int safeBottom = Math.min(height, dirtyBottom);
-                int safeLeft = Math.max(0, dirtyLeft);
-                int safeRight = Math.min(width, dirtyRight);
-
-                resetDamage();
-                frameRequested = false;
-
-                if (safeTop >= safeBottom || safeLeft >= safeRight) {
-                    return;
-                }
-
-                // If the damage is more than 75% of the screen width, force it to 100% width.
-                // This allows the graphics driver to use a contiguous DMA fast-path.
-                if ((safeRight - safeLeft) >= (width * 3) / 4) {
-                    safeLeft = 0;
-                    safeRight = width;
-                }
-
-                // Prepare SDL Texture
-                if (textureWidth != width || textureHeight != height || texture == null) {
-                    if (texture != null) {
-                        SDL_DestroyTexture(texture);
-                    }
-                    textureWidth = width;
-                    textureHeight = height;
-                    texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, textureWidth, textureHeight);
-                    if (texture == null) {
-                        throw SqueakException.create("Failed to create texture");
-                    }
-                    checkSdlError(SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST));
-                }
-
-                // Upload the texture
-                try (MemoryStack stack = stackPush()) {
-                    final SDL_Rect dirtyRect = SDL_Rect.malloc(stack);
-                    dirtyRect.set(safeLeft, safeTop, safeRight - safeLeft, safeBottom - safeTop);
-                    final long pixelStartOffset = ((long) safeTop * stagingPitchBytes) + ((long) safeLeft * Integer.BYTES);
-                    if (!nSDL_UpdateTexture(texture.address(), dirtyRect.address(), stagingAddress + pixelStartOffset, stagingPitchBytes)) {
-                        return; // FIXME: invalid pixels
-                    }
-                }
-            }
-
-            checkSdlError(SDL_RenderClear(renderer));
-            checkSdlError(SDL_RenderTexture(renderer, texture, null, null));
-            checkSdlError(SDL_RenderPresent(renderer));
-        }
-    };
-
     private final SDL_MainThreadCallback setFullscreenTask = new SDL_MainThreadCallback() {
         @Override
         public void invoke(final long userdata) {
@@ -267,6 +208,7 @@ public final class SqueakDisplay {
         this.image = image;
 
         PlatformEventLoop.osEventHandler = this::processEvent;
+        PlatformEventLoop.renderFrameIfNeeded = this::performRenderIfNeeded;
 
         PlatformEventLoop.start();
     }
@@ -309,6 +251,66 @@ public final class SqueakDisplay {
         }
     }
 
+    // Called by the Main Thread at the end of the event loop
+    private void performRenderIfNeeded() {
+        if (renderer == NULL) {
+            return;
+        }
+
+        // Lock the instance to safely read bounds and upload the texture
+        synchronized (this) {
+            if (!frameRequested) {
+                return;
+            }
+
+            final int safeTop = Math.max(0, dirtyTop);
+            final int safeBottom = Math.min(height, dirtyBottom);
+            int safeLeft = Math.max(0, dirtyLeft);
+            int safeRight = Math.min(width, dirtyRight);
+
+            resetDamage();
+            frameRequested = false;
+
+            if (safeTop >= safeBottom || safeLeft >= safeRight) {
+                return;
+            }
+
+            // GPU Threshold Blast
+            if ((safeRight - safeLeft) >= (width * 3) / 4) {
+                safeLeft = 0;
+                safeRight = width;
+            }
+
+            // Prepare SDL Texture
+            if (textureWidth != width || textureHeight != height || texture == null) {
+                if (texture != null) {
+                    SDL_DestroyTexture(texture);
+                }
+                textureWidth = width;
+                textureHeight = height;
+                texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, textureWidth, textureHeight);
+                if (texture == null) {
+                    throw SqueakException.create("Failed to create texture");
+                }
+                checkSdlError(SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST));
+            }
+
+            // Upload the texture
+            try (MemoryStack stack = stackPush()) {
+                final SDL_Rect dirtyRect = SDL_Rect.malloc(stack);
+                dirtyRect.set(safeLeft, safeTop, safeRight - safeLeft, safeBottom - safeTop);
+                final long pixelStartOffset = ((long) safeTop * stagingPitchBytes) + ((long) safeLeft * Integer.BYTES);
+                if (!nSDL_UpdateTexture(texture.address(), dirtyRect.address(), stagingAddress + pixelStartOffset, stagingPitchBytes)) {
+                    return; // FIXME: invalid pixels
+                }
+            }
+        }
+
+        checkSdlError(SDL_RenderClear(renderer));
+        checkSdlError(SDL_RenderTexture(renderer, texture, null, null));
+        checkSdlError(SDL_RenderPresent(renderer));
+    }
+
     public void render(final boolean force) {
         synchronized (this) {
             // Strictly synchronized bounds check
@@ -317,14 +319,15 @@ public final class SqueakDisplay {
             }
 
             if (frameRequested) {
-                return; // A frame is already queued
+                return;
             }
 
             // Claim the frame
             frameRequested = true;
         }
 
-        SDL_RunOnMainThread(performRenderTask, NULL, false);
+        // Wake the event loop to render the frame
+        PlatformEventLoop.wakeUp();
     }
 
     @TruffleBoundary

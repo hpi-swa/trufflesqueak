@@ -7,10 +7,12 @@ import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_FINGER_UP;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_FIRST;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_LAST;
 import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_TEXT_EDITING;
+import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_USER;
 import static org.lwjgl.sdl.SDLEvents.SDL_GETEVENT;
 import static org.lwjgl.sdl.SDLEvents.SDL_PeepEvents;
-import static org.lwjgl.sdl.SDLEvents.SDL_PumpEvents;
+import static org.lwjgl.sdl.SDLEvents.SDL_PushEvent;
 import static org.lwjgl.sdl.SDLEvents.SDL_SetEventEnabled;
+import static org.lwjgl.sdl.SDLEvents.SDL_WaitEvent;
 import static org.lwjgl.sdl.SDLEvents.SDL_WaitEventTimeout;
 import static org.lwjgl.sdl.SDLHints.SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK;
 import static org.lwjgl.sdl.SDLHints.SDL_HINT_RENDER_VSYNC;
@@ -39,7 +41,20 @@ public final class PlatformEventLoop {
     private static final int EVENT_FETCH_BATCH_SIZE = 32;
 
     public static volatile Consumer<SDL_Event> osEventHandler = null;
+    public static volatile Runnable renderFrameIfNeeded = null;
     public static volatile boolean isRunning = false;
+
+    // Break the main thread's wait from any background thread
+    public static void wakeUp() {
+        if (!isRunning) {
+            return;
+        }
+        try (MemoryStack stack = stackPush()) {
+            final SDL_Event wakeupEvent = SDL_Event.calloc(stack);
+            wakeupEvent.type(SDL_EVENT_USER);  // osEventHandler will ignore event
+            SDL_PushEvent(wakeupEvent);
+        }
+    }
 
     public static void start() {
         isRunning = true;
@@ -87,20 +102,24 @@ public final class PlatformEventLoop {
                 SDL_WaitEventTimeout(firstEvent, EVENT_WAIT_TIMEOUT_MS);
             }
 
-            // The main high-performance loop
+            // The main event loop evaluation order: callbacks, OS events, render
+            // Loop is triggered by an OS event or a wakeUp() ping (not by callbacks).
             while (isRunning) {
-                // Sleep until at least one event arrives, putting it in firstEvent
-                if (SDL_WaitEventTimeout(firstEvent, EVENT_WAIT_TIMEOUT_MS)) {
-
-                    osEventHandler.accept(firstEvent);
-
-                    // Batch process all other waiting events.
-                    SDL_PumpEvents();
+                // Sleep until an event (or wakeUp() ping) arrives.
+                // All main thread callbacks are executed when the event or wake-up enqueues.
+                if (SDL_WaitEvent(firstEvent)) {
                     int eventsRead;
+                    // Now, process the first and all other waiting OS events
+                    osEventHandler.accept(firstEvent);
                     while ((eventsRead = SDL_PeepEvents(eventBuffer, SDL_GETEVENT, SDL_EVENT_FIRST, SDL_EVENT_LAST)) > 0) {
                         for (int i = 0; i < eventsRead; i++) {
                             osEventHandler.accept(eventBuffer.get(i));
                         }
+                    }
+                    // All OS events processed; now render to the screen, if needed.
+                    // If a render occurs, our thread will sleep until there is a vsync.
+                    if (renderFrameIfNeeded != null) {
+                        renderFrameIfNeeded.run();
                     }
                 }
             }
