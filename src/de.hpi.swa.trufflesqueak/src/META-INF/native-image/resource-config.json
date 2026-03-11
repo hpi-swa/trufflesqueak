@@ -11,5 +11,5 @@
       { "pattern": "\\Qcom/oracle/truffle/nfi/backend/libffi/LibFFILanguage.class\\E" }
     ]
   },
-  "bundles": [{ "name": "sun.awt.resources.awt", "classNames": ["sun.awt.resources.awt"] }]
+  "bundles": []
 }

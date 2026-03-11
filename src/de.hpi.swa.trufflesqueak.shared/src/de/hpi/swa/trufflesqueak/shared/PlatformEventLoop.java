@@ -36,9 +36,6 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
 public final class PlatformEventLoop {
-    // This sets the upper bound on physical screen redraws.
-    private static final int EVENT_WAIT_TIMEOUT_MS = 5;
-
     private static final int EVENT_FETCH_BATCH_SIZE = 32;
 
     private static final CountDownLatch startLatch = new CountDownLatch(1);
