@@ -298,12 +298,12 @@ suite = {
             "relative_extracted_lib_paths": {
                 "truffle.attach.library": "../jvmlibs/<lib:truffleattach>",
                 "truffle.nfi.library": "../jvmlibs/<lib:trufflenfi>",
+                "java.library.path": "../lib",
             },
             "liblang_relpath": "../lib/<lib:smalltalkvm>",
             "default_vm_args": [
                 "--vm.-add-exports=java.base/jdk.internal.module=de.hpi.swa.trufflesqueak",
                 "--vm.-enable-native-access=de.hpi.swa.trufflesqueak.shared",
-                "--vm.Djava.library.path=<path:TRUFFLESQUEAK_HOME>/lib",
                 "--vm.XstartOnFirstThread",
             ],
         },
