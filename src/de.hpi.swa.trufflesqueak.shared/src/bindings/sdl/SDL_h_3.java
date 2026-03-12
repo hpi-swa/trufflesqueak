@@ -12,10 +12,843 @@ import java.util.stream.*;
 import static java.lang.foreign.ValueLayout.*;
 import static java.lang.foreign.MemoryLayout.PathElement.*;
 
-class SDL_h_3 extends SDL_h_4 {
+public class SDL_h_3 extends SDL_h_4 {
 
     SDL_h_3() {
         // Should not be called directly
+    }
+
+    private static class SDL_ultoa {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            SDL_h.C_POINTER,
+            SDL_h.C_LONG,
+            SDL_h.C_POINTER,
+            SDL_h.C_INT
+        );
+
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ultoa");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+    }
+
+    /**
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * extern char *SDL_ultoa(unsigned long value, char *str, int radix)
+     * }
+     */
+    public static FunctionDescriptor SDL_ultoa$descriptor() {
+        return SDL_ultoa.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * extern char *SDL_ultoa(unsigned long value, char *str, int radix)
+     * }
+     */
+    public static MethodHandle SDL_ultoa$handle() {
+        return SDL_ultoa.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * extern char *SDL_ultoa(unsigned long value, char *str, int radix)
+     * }
+     */
+    public static MemorySegment SDL_ultoa$address() {
+        return SDL_ultoa.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * extern char *SDL_ultoa(unsigned long value, char *str, int radix)
+     * }
+     */
+    public static MemorySegment SDL_ultoa(long value, MemorySegment str, int radix) {
+        var mh$ = SDL_ultoa.HANDLE;
+        try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("SDL_ultoa", value, str, radix);
+            }
+            return (MemorySegment)mh$.invokeExact(value, str, radix);
+        } catch (Throwable ex$) {
+           throw new AssertionError("should not reach here", ex$);
+        }
+    }
+
+    private static class SDL_lltoa {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            SDL_h.C_POINTER,
+            SDL_h.C_LONG_LONG,
+            SDL_h.C_POINTER,
+            SDL_h.C_INT
+        );
+
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_lltoa");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+    }
+
+    /**
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * extern char *SDL_lltoa(long long value, char *str, int radix)
+     * }
+     */
+    public static FunctionDescriptor SDL_lltoa$descriptor() {
+        return SDL_lltoa.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * extern char *SDL_lltoa(long long value, char *str, int radix)
+     * }
+     */
+    public static MethodHandle SDL_lltoa$handle() {
+        return SDL_lltoa.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * extern char *SDL_lltoa(long long value, char *str, int radix)
+     * }
+     */
+    public static MemorySegment SDL_lltoa$address() {
+        return SDL_lltoa.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * extern char *SDL_lltoa(long long value, char *str, int radix)
+     * }
+     */
+    public static MemorySegment SDL_lltoa(long value, MemorySegment str, int radix) {
+        var mh$ = SDL_lltoa.HANDLE;
+        try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("SDL_lltoa", value, str, radix);
+            }
+            return (MemorySegment)mh$.invokeExact(value, str, radix);
+        } catch (Throwable ex$) {
+           throw new AssertionError("should not reach here", ex$);
+        }
+    }
+
+    private static class SDL_ulltoa {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            SDL_h.C_POINTER,
+            SDL_h.C_LONG_LONG,
+            SDL_h.C_POINTER,
+            SDL_h.C_INT
+        );
+
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ulltoa");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+    }
+
+    /**
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * extern char *SDL_ulltoa(unsigned long long value, char *str, int radix)
+     * }
+     */
+    public static FunctionDescriptor SDL_ulltoa$descriptor() {
+        return SDL_ulltoa.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * extern char *SDL_ulltoa(unsigned long long value, char *str, int radix)
+     * }
+     */
+    public static MethodHandle SDL_ulltoa$handle() {
+        return SDL_ulltoa.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * extern char *SDL_ulltoa(unsigned long long value, char *str, int radix)
+     * }
+     */
+    public static MemorySegment SDL_ulltoa$address() {
+        return SDL_ulltoa.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * extern char *SDL_ulltoa(unsigned long long value, char *str, int radix)
+     * }
+     */
+    public static MemorySegment SDL_ulltoa(long value, MemorySegment str, int radix) {
+        var mh$ = SDL_ulltoa.HANDLE;
+        try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("SDL_ulltoa", value, str, radix);
+            }
+            return (MemorySegment)mh$.invokeExact(value, str, radix);
+        } catch (Throwable ex$) {
+           throw new AssertionError("should not reach here", ex$);
+        }
+    }
+
+    private static class SDL_atoi {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            SDL_h.C_INT,
+            SDL_h.C_POINTER
+        );
+
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_atoi");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+    }
+
+    /**
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * extern int SDL_atoi(const char *str)
+     * }
+     */
+    public static FunctionDescriptor SDL_atoi$descriptor() {
+        return SDL_atoi.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * extern int SDL_atoi(const char *str)
+     * }
+     */
+    public static MethodHandle SDL_atoi$handle() {
+        return SDL_atoi.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * extern int SDL_atoi(const char *str)
+     * }
+     */
+    public static MemorySegment SDL_atoi$address() {
+        return SDL_atoi.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * extern int SDL_atoi(const char *str)
+     * }
+     */
+    public static int SDL_atoi(MemorySegment str) {
+        var mh$ = SDL_atoi.HANDLE;
+        try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("SDL_atoi", str);
+            }
+            return (int)mh$.invokeExact(str);
+        } catch (Throwable ex$) {
+           throw new AssertionError("should not reach here", ex$);
+        }
+    }
+
+    private static class SDL_atof {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            SDL_h.C_DOUBLE,
+            SDL_h.C_POINTER
+        );
+
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_atof");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+    }
+
+    /**
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * extern double SDL_atof(const char *str)
+     * }
+     */
+    public static FunctionDescriptor SDL_atof$descriptor() {
+        return SDL_atof.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * extern double SDL_atof(const char *str)
+     * }
+     */
+    public static MethodHandle SDL_atof$handle() {
+        return SDL_atof.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * extern double SDL_atof(const char *str)
+     * }
+     */
+    public static MemorySegment SDL_atof$address() {
+        return SDL_atof.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * extern double SDL_atof(const char *str)
+     * }
+     */
+    public static double SDL_atof(MemorySegment str) {
+        var mh$ = SDL_atof.HANDLE;
+        try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("SDL_atof", str);
+            }
+            return (double)mh$.invokeExact(str);
+        } catch (Throwable ex$) {
+           throw new AssertionError("should not reach here", ex$);
+        }
+    }
+
+    private static class SDL_strtol {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            SDL_h.C_LONG,
+            SDL_h.C_POINTER,
+            SDL_h.C_POINTER,
+            SDL_h.C_INT
+        );
+
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_strtol");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+    }
+
+    /**
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * extern long SDL_strtol(const char *str, char **endp, int base)
+     * }
+     */
+    public static FunctionDescriptor SDL_strtol$descriptor() {
+        return SDL_strtol.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * extern long SDL_strtol(const char *str, char **endp, int base)
+     * }
+     */
+    public static MethodHandle SDL_strtol$handle() {
+        return SDL_strtol.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * extern long SDL_strtol(const char *str, char **endp, int base)
+     * }
+     */
+    public static MemorySegment SDL_strtol$address() {
+        return SDL_strtol.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * extern long SDL_strtol(const char *str, char **endp, int base)
+     * }
+     */
+    public static long SDL_strtol(MemorySegment str, MemorySegment endp, int base) {
+        var mh$ = SDL_strtol.HANDLE;
+        try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("SDL_strtol", str, endp, base);
+            }
+            return (long)mh$.invokeExact(str, endp, base);
+        } catch (Throwable ex$) {
+           throw new AssertionError("should not reach here", ex$);
+        }
+    }
+
+    private static class SDL_strtoul {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            SDL_h.C_LONG,
+            SDL_h.C_POINTER,
+            SDL_h.C_POINTER,
+            SDL_h.C_INT
+        );
+
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_strtoul");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+    }
+
+    /**
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * extern unsigned long SDL_strtoul(const char *str, char **endp, int base)
+     * }
+     */
+    public static FunctionDescriptor SDL_strtoul$descriptor() {
+        return SDL_strtoul.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * extern unsigned long SDL_strtoul(const char *str, char **endp, int base)
+     * }
+     */
+    public static MethodHandle SDL_strtoul$handle() {
+        return SDL_strtoul.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * extern unsigned long SDL_strtoul(const char *str, char **endp, int base)
+     * }
+     */
+    public static MemorySegment SDL_strtoul$address() {
+        return SDL_strtoul.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * extern unsigned long SDL_strtoul(const char *str, char **endp, int base)
+     * }
+     */
+    public static long SDL_strtoul(MemorySegment str, MemorySegment endp, int base) {
+        var mh$ = SDL_strtoul.HANDLE;
+        try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("SDL_strtoul", str, endp, base);
+            }
+            return (long)mh$.invokeExact(str, endp, base);
+        } catch (Throwable ex$) {
+           throw new AssertionError("should not reach here", ex$);
+        }
+    }
+
+    private static class SDL_strtoll {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            SDL_h.C_LONG_LONG,
+            SDL_h.C_POINTER,
+            SDL_h.C_POINTER,
+            SDL_h.C_INT
+        );
+
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_strtoll");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+    }
+
+    /**
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * extern long long SDL_strtoll(const char *str, char **endp, int base)
+     * }
+     */
+    public static FunctionDescriptor SDL_strtoll$descriptor() {
+        return SDL_strtoll.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * extern long long SDL_strtoll(const char *str, char **endp, int base)
+     * }
+     */
+    public static MethodHandle SDL_strtoll$handle() {
+        return SDL_strtoll.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * extern long long SDL_strtoll(const char *str, char **endp, int base)
+     * }
+     */
+    public static MemorySegment SDL_strtoll$address() {
+        return SDL_strtoll.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * extern long long SDL_strtoll(const char *str, char **endp, int base)
+     * }
+     */
+    public static long SDL_strtoll(MemorySegment str, MemorySegment endp, int base) {
+        var mh$ = SDL_strtoll.HANDLE;
+        try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("SDL_strtoll", str, endp, base);
+            }
+            return (long)mh$.invokeExact(str, endp, base);
+        } catch (Throwable ex$) {
+           throw new AssertionError("should not reach here", ex$);
+        }
+    }
+
+    private static class SDL_strtoull {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            SDL_h.C_LONG_LONG,
+            SDL_h.C_POINTER,
+            SDL_h.C_POINTER,
+            SDL_h.C_INT
+        );
+
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_strtoull");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+    }
+
+    /**
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * extern unsigned long long SDL_strtoull(const char *str, char **endp, int base)
+     * }
+     */
+    public static FunctionDescriptor SDL_strtoull$descriptor() {
+        return SDL_strtoull.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * extern unsigned long long SDL_strtoull(const char *str, char **endp, int base)
+     * }
+     */
+    public static MethodHandle SDL_strtoull$handle() {
+        return SDL_strtoull.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * extern unsigned long long SDL_strtoull(const char *str, char **endp, int base)
+     * }
+     */
+    public static MemorySegment SDL_strtoull$address() {
+        return SDL_strtoull.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * extern unsigned long long SDL_strtoull(const char *str, char **endp, int base)
+     * }
+     */
+    public static long SDL_strtoull(MemorySegment str, MemorySegment endp, int base) {
+        var mh$ = SDL_strtoull.HANDLE;
+        try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("SDL_strtoull", str, endp, base);
+            }
+            return (long)mh$.invokeExact(str, endp, base);
+        } catch (Throwable ex$) {
+           throw new AssertionError("should not reach here", ex$);
+        }
+    }
+
+    private static class SDL_strtod {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            SDL_h.C_DOUBLE,
+            SDL_h.C_POINTER,
+            SDL_h.C_POINTER
+        );
+
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_strtod");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+    }
+
+    /**
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * extern double SDL_strtod(const char *str, char **endp)
+     * }
+     */
+    public static FunctionDescriptor SDL_strtod$descriptor() {
+        return SDL_strtod.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * extern double SDL_strtod(const char *str, char **endp)
+     * }
+     */
+    public static MethodHandle SDL_strtod$handle() {
+        return SDL_strtod.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * extern double SDL_strtod(const char *str, char **endp)
+     * }
+     */
+    public static MemorySegment SDL_strtod$address() {
+        return SDL_strtod.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * extern double SDL_strtod(const char *str, char **endp)
+     * }
+     */
+    public static double SDL_strtod(MemorySegment str, MemorySegment endp) {
+        var mh$ = SDL_strtod.HANDLE;
+        try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("SDL_strtod", str, endp);
+            }
+            return (double)mh$.invokeExact(str, endp);
+        } catch (Throwable ex$) {
+           throw new AssertionError("should not reach here", ex$);
+        }
+    }
+
+    private static class SDL_strcmp {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            SDL_h.C_INT,
+            SDL_h.C_POINTER,
+            SDL_h.C_POINTER
+        );
+
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_strcmp");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+    }
+
+    /**
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * extern int SDL_strcmp(const char *str1, const char *str2)
+     * }
+     */
+    public static FunctionDescriptor SDL_strcmp$descriptor() {
+        return SDL_strcmp.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * extern int SDL_strcmp(const char *str1, const char *str2)
+     * }
+     */
+    public static MethodHandle SDL_strcmp$handle() {
+        return SDL_strcmp.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * extern int SDL_strcmp(const char *str1, const char *str2)
+     * }
+     */
+    public static MemorySegment SDL_strcmp$address() {
+        return SDL_strcmp.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * extern int SDL_strcmp(const char *str1, const char *str2)
+     * }
+     */
+    public static int SDL_strcmp(MemorySegment str1, MemorySegment str2) {
+        var mh$ = SDL_strcmp.HANDLE;
+        try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("SDL_strcmp", str1, str2);
+            }
+            return (int)mh$.invokeExact(str1, str2);
+        } catch (Throwable ex$) {
+           throw new AssertionError("should not reach here", ex$);
+        }
+    }
+
+    private static class SDL_strncmp {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            SDL_h.C_INT,
+            SDL_h.C_POINTER,
+            SDL_h.C_POINTER,
+            SDL_h.C_LONG
+        );
+
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_strncmp");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+    }
+
+    /**
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * extern int SDL_strncmp(const char *str1, const char *str2, size_t maxlen)
+     * }
+     */
+    public static FunctionDescriptor SDL_strncmp$descriptor() {
+        return SDL_strncmp.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * extern int SDL_strncmp(const char *str1, const char *str2, size_t maxlen)
+     * }
+     */
+    public static MethodHandle SDL_strncmp$handle() {
+        return SDL_strncmp.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * extern int SDL_strncmp(const char *str1, const char *str2, size_t maxlen)
+     * }
+     */
+    public static MemorySegment SDL_strncmp$address() {
+        return SDL_strncmp.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * extern int SDL_strncmp(const char *str1, const char *str2, size_t maxlen)
+     * }
+     */
+    public static int SDL_strncmp(MemorySegment str1, MemorySegment str2, long maxlen) {
+        var mh$ = SDL_strncmp.HANDLE;
+        try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("SDL_strncmp", str1, str2, maxlen);
+            }
+            return (int)mh$.invokeExact(str1, str2, maxlen);
+        } catch (Throwable ex$) {
+           throw new AssertionError("should not reach here", ex$);
+        }
+    }
+
+    private static class SDL_strcasecmp {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            SDL_h.C_INT,
+            SDL_h.C_POINTER,
+            SDL_h.C_POINTER
+        );
+
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_strcasecmp");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+    }
+
+    /**
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * extern int SDL_strcasecmp(const char *str1, const char *str2)
+     * }
+     */
+    public static FunctionDescriptor SDL_strcasecmp$descriptor() {
+        return SDL_strcasecmp.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * extern int SDL_strcasecmp(const char *str1, const char *str2)
+     * }
+     */
+    public static MethodHandle SDL_strcasecmp$handle() {
+        return SDL_strcasecmp.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * extern int SDL_strcasecmp(const char *str1, const char *str2)
+     * }
+     */
+    public static MemorySegment SDL_strcasecmp$address() {
+        return SDL_strcasecmp.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * extern int SDL_strcasecmp(const char *str1, const char *str2)
+     * }
+     */
+    public static int SDL_strcasecmp(MemorySegment str1, MemorySegment str2) {
+        var mh$ = SDL_strcasecmp.HANDLE;
+        try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("SDL_strcasecmp", str1, str2);
+            }
+            return (int)mh$.invokeExact(str1, str2);
+        } catch (Throwable ex$) {
+           throw new AssertionError("should not reach here", ex$);
+        }
+    }
+
+    private static class SDL_strncasecmp {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            SDL_h.C_INT,
+            SDL_h.C_POINTER,
+            SDL_h.C_POINTER,
+            SDL_h.C_LONG
+        );
+
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_strncasecmp");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+    }
+
+    /**
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * extern int SDL_strncasecmp(const char *str1, const char *str2, size_t maxlen)
+     * }
+     */
+    public static FunctionDescriptor SDL_strncasecmp$descriptor() {
+        return SDL_strncasecmp.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * extern int SDL_strncasecmp(const char *str1, const char *str2, size_t maxlen)
+     * }
+     */
+    public static MethodHandle SDL_strncasecmp$handle() {
+        return SDL_strncasecmp.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * extern int SDL_strncasecmp(const char *str1, const char *str2, size_t maxlen)
+     * }
+     */
+    public static MemorySegment SDL_strncasecmp$address() {
+        return SDL_strncasecmp.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * extern int SDL_strncasecmp(const char *str1, const char *str2, size_t maxlen)
+     * }
+     */
+    public static int SDL_strncasecmp(MemorySegment str1, MemorySegment str2, long maxlen) {
+        var mh$ = SDL_strncasecmp.HANDLE;
+        try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("SDL_strncasecmp", str1, str2, maxlen);
+            }
+            return (int)mh$.invokeExact(str1, str2, maxlen);
+        } catch (Throwable ex$) {
+           throw new AssertionError("should not reach here", ex$);
+        }
     }
 
     private static class SDL_strpbrk {
@@ -25,7 +858,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_strpbrk");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_strpbrk");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -72,8 +905,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_strpbrk", str, breakset);
             }
             return (MemorySegment)mh$.invokeExact(str, breakset);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -86,7 +917,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_StepUTF8");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_StepUTF8");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -133,8 +964,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_StepUTF8", pstr, pslen);
             }
             return (int)mh$.invokeExact(pstr, pslen);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -147,7 +976,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_StepBackUTF8");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_StepBackUTF8");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -194,8 +1023,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_StepBackUTF8", start, pstr);
             }
             return (int)mh$.invokeExact(start, pstr);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -208,7 +1035,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_UCS4ToUTF8");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_UCS4ToUTF8");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -255,8 +1082,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_UCS4ToUTF8", codepoint, dst);
             }
             return (MemorySegment)mh$.invokeExact(codepoint, dst);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -274,7 +1099,7 @@ class SDL_h_3 extends SDL_h_4 {
                 SDL_h.C_POINTER,
                 SDL_h.C_POINTER
             );
-        private static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_sscanf");
+        private static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_sscanf");
 
         private final MethodHandle handle;
         private final FunctionDescriptor descriptor;
@@ -343,7 +1168,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_vsscanf");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_vsscanf");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -390,8 +1215,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_vsscanf", text, fmt, ap);
             }
             return (int)mh$.invokeExact(text, fmt, ap);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -410,7 +1233,7 @@ class SDL_h_3 extends SDL_h_4 {
                 SDL_h.C_LONG,
                 SDL_h.C_POINTER
             );
-        private static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_snprintf");
+        private static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_snprintf");
 
         private final MethodHandle handle;
         private final FunctionDescriptor descriptor;
@@ -484,7 +1307,7 @@ class SDL_h_3 extends SDL_h_4 {
                 SDL_h.C_LONG,
                 SDL_h.C_POINTER
             );
-        private static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_swprintf");
+        private static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_swprintf");
 
         private final MethodHandle handle;
         private final FunctionDescriptor descriptor;
@@ -554,7 +1377,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_vsnprintf");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_vsnprintf");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -601,8 +1424,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_vsnprintf", text, maxlen, fmt, ap);
             }
             return (int)mh$.invokeExact(text, maxlen, fmt, ap);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -617,7 +1438,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_vswprintf");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_vswprintf");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -664,8 +1485,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_vswprintf", text, maxlen, fmt, ap);
             }
             return (int)mh$.invokeExact(text, maxlen, fmt, ap);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -683,7 +1502,7 @@ class SDL_h_3 extends SDL_h_4 {
                 SDL_h.C_POINTER,
                 SDL_h.C_POINTER
             );
-        private static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_asprintf");
+        private static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_asprintf");
 
         private final MethodHandle handle;
         private final FunctionDescriptor descriptor;
@@ -752,7 +1571,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_vasprintf");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_vasprintf");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -799,8 +1618,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_vasprintf", strp, fmt, ap);
             }
             return (int)mh$.invokeExact(strp, fmt, ap);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -811,7 +1628,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_LONG_LONG
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_srand");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_srand");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -858,8 +1675,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_srand", seed);
             }
             mh$.invokeExact(seed);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -871,7 +1686,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_rand");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_rand");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -918,8 +1733,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_rand", n);
             }
             return (int)mh$.invokeExact(n);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -929,7 +1742,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_FLOAT    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_randf");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_randf");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -976,8 +1789,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_randf");
             }
             return (float)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -987,7 +1798,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_INT    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_rand_bits");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_rand_bits");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -1034,8 +1845,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_rand_bits");
             }
             return (int)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -1048,7 +1857,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_rand_r");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_rand_r");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -1095,8 +1904,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_rand_r", state, n);
             }
             return (int)mh$.invokeExact(state, n);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -1108,7 +1915,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_randf_r");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_randf_r");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -1155,8 +1962,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_randf_r", state);
             }
             return (float)mh$.invokeExact(state);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -1168,7 +1973,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_rand_bits_r");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_rand_bits_r");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -1215,8 +2020,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_rand_bits_r", state);
             }
             return (int)mh$.invokeExact(state);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -1228,7 +2031,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_DOUBLE
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_acos");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_acos");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -1275,8 +2078,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_acos", x);
             }
             return (double)mh$.invokeExact(x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -1288,7 +2089,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_FLOAT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_acosf");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_acosf");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -1335,8 +2136,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_acosf", x);
             }
             return (float)mh$.invokeExact(x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -1348,7 +2147,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_DOUBLE
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_asin");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_asin");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -1395,8 +2194,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_asin", x);
             }
             return (double)mh$.invokeExact(x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -1408,7 +2205,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_FLOAT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_asinf");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_asinf");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -1455,8 +2252,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_asinf", x);
             }
             return (float)mh$.invokeExact(x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -1468,7 +2263,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_DOUBLE
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_atan");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_atan");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -1515,8 +2310,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_atan", x);
             }
             return (double)mh$.invokeExact(x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -1528,7 +2321,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_FLOAT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_atanf");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_atanf");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -1575,8 +2368,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_atanf", x);
             }
             return (float)mh$.invokeExact(x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -1589,7 +2380,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_DOUBLE
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_atan2");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_atan2");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -1636,8 +2427,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_atan2", y, x);
             }
             return (double)mh$.invokeExact(y, x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -1650,7 +2439,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_FLOAT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_atan2f");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_atan2f");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -1697,8 +2486,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_atan2f", y, x);
             }
             return (float)mh$.invokeExact(y, x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -1710,7 +2497,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_DOUBLE
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ceil");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ceil");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -1757,8 +2544,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ceil", x);
             }
             return (double)mh$.invokeExact(x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -1770,7 +2555,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_FLOAT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ceilf");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ceilf");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -1817,8 +2602,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ceilf", x);
             }
             return (float)mh$.invokeExact(x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -1831,7 +2614,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_DOUBLE
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_copysign");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_copysign");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -1878,8 +2661,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_copysign", x, y);
             }
             return (double)mh$.invokeExact(x, y);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -1892,7 +2673,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_FLOAT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_copysignf");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_copysignf");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -1939,8 +2720,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_copysignf", x, y);
             }
             return (float)mh$.invokeExact(x, y);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -1952,7 +2731,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_DOUBLE
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_cos");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_cos");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -1999,8 +2778,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_cos", x);
             }
             return (double)mh$.invokeExact(x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -2012,7 +2789,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_FLOAT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_cosf");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_cosf");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -2059,8 +2836,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_cosf", x);
             }
             return (float)mh$.invokeExact(x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -2072,7 +2847,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_DOUBLE
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_exp");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_exp");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -2119,8 +2894,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_exp", x);
             }
             return (double)mh$.invokeExact(x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -2132,7 +2905,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_FLOAT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_expf");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_expf");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -2179,8 +2952,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_expf", x);
             }
             return (float)mh$.invokeExact(x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -2192,7 +2963,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_DOUBLE
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_fabs");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_fabs");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -2239,8 +3010,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_fabs", x);
             }
             return (double)mh$.invokeExact(x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -2252,7 +3021,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_FLOAT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_fabsf");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_fabsf");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -2299,8 +3068,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_fabsf", x);
             }
             return (float)mh$.invokeExact(x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -2312,7 +3079,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_DOUBLE
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_floor");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_floor");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -2359,8 +3126,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_floor", x);
             }
             return (double)mh$.invokeExact(x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -2372,7 +3137,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_FLOAT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_floorf");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_floorf");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -2419,8 +3184,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_floorf", x);
             }
             return (float)mh$.invokeExact(x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -2432,7 +3195,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_DOUBLE
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_trunc");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_trunc");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -2479,8 +3242,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_trunc", x);
             }
             return (double)mh$.invokeExact(x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -2492,7 +3253,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_FLOAT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_truncf");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_truncf");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -2539,8 +3300,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_truncf", x);
             }
             return (float)mh$.invokeExact(x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -2553,7 +3312,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_DOUBLE
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_fmod");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_fmod");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -2600,8 +3359,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_fmod", x, y);
             }
             return (double)mh$.invokeExact(x, y);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -2614,7 +3371,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_FLOAT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_fmodf");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_fmodf");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -2661,8 +3418,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_fmodf", x, y);
             }
             return (float)mh$.invokeExact(x, y);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -2674,7 +3429,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_DOUBLE
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_isinf");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_isinf");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -2721,8 +3476,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_isinf", x);
             }
             return (int)mh$.invokeExact(x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -2734,7 +3487,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_FLOAT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_isinff");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_isinff");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -2781,8 +3534,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_isinff", x);
             }
             return (int)mh$.invokeExact(x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -2794,7 +3545,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_DOUBLE
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_isnan");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_isnan");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -2841,8 +3592,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_isnan", x);
             }
             return (int)mh$.invokeExact(x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -2854,7 +3603,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_FLOAT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_isnanf");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_isnanf");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -2901,8 +3650,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_isnanf", x);
             }
             return (int)mh$.invokeExact(x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -2914,7 +3661,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_DOUBLE
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_log");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_log");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -2961,8 +3708,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_log", x);
             }
             return (double)mh$.invokeExact(x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -2974,7 +3719,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_FLOAT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_logf");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_logf");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -3021,8 +3766,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_logf", x);
             }
             return (float)mh$.invokeExact(x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -3034,7 +3777,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_DOUBLE
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_log10");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_log10");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -3081,8 +3824,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_log10", x);
             }
             return (double)mh$.invokeExact(x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -3094,7 +3835,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_FLOAT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_log10f");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_log10f");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -3141,8 +3882,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_log10f", x);
             }
             return (float)mh$.invokeExact(x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -3155,7 +3894,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_modf");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_modf");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -3202,8 +3941,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_modf", x, y);
             }
             return (double)mh$.invokeExact(x, y);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -3216,7 +3953,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_modff");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_modff");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -3263,8 +4000,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_modff", x, y);
             }
             return (float)mh$.invokeExact(x, y);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -3277,7 +4012,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_DOUBLE
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_pow");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_pow");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -3324,8 +4059,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_pow", x, y);
             }
             return (double)mh$.invokeExact(x, y);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -3338,7 +4071,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_FLOAT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_powf");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_powf");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -3385,8 +4118,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_powf", x, y);
             }
             return (float)mh$.invokeExact(x, y);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -3398,7 +4129,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_DOUBLE
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_round");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_round");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -3445,8 +4176,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_round", x);
             }
             return (double)mh$.invokeExact(x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -3458,7 +4187,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_FLOAT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_roundf");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_roundf");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -3505,8 +4234,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_roundf", x);
             }
             return (float)mh$.invokeExact(x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -3518,7 +4245,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_DOUBLE
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_lround");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_lround");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -3565,8 +4292,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_lround", x);
             }
             return (long)mh$.invokeExact(x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -3578,7 +4303,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_FLOAT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_lroundf");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_lroundf");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -3625,8 +4350,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_lroundf", x);
             }
             return (long)mh$.invokeExact(x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -3639,7 +4362,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_scalbn");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_scalbn");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -3686,8 +4409,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_scalbn", x, n);
             }
             return (double)mh$.invokeExact(x, n);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -3700,7 +4421,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_scalbnf");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_scalbnf");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -3747,8 +4468,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_scalbnf", x, n);
             }
             return (float)mh$.invokeExact(x, n);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -3760,7 +4479,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_DOUBLE
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_sin");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_sin");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -3807,8 +4526,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_sin", x);
             }
             return (double)mh$.invokeExact(x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -3820,7 +4537,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_FLOAT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_sinf");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_sinf");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -3867,8 +4584,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_sinf", x);
             }
             return (float)mh$.invokeExact(x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -3880,7 +4595,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_DOUBLE
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_sqrt");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_sqrt");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -3927,8 +4642,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_sqrt", x);
             }
             return (double)mh$.invokeExact(x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -3940,7 +4653,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_FLOAT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_sqrtf");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_sqrtf");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -3987,8 +4700,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_sqrtf", x);
             }
             return (float)mh$.invokeExact(x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -4000,7 +4711,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_DOUBLE
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_tan");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_tan");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -4047,8 +4758,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_tan", x);
             }
             return (double)mh$.invokeExact(x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -4060,7 +4769,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_FLOAT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_tanf");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_tanf");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -4107,8 +4816,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_tanf", x);
             }
             return (float)mh$.invokeExact(x);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -4127,7 +4834,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_iconv_open");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_iconv_open");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -4174,8 +4881,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_iconv_open", tocode, fromcode);
             }
             return (MemorySegment)mh$.invokeExact(tocode, fromcode);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -4187,7 +4892,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_iconv_close");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_iconv_close");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -4234,8 +4939,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_iconv_close", cd);
             }
             return (int)mh$.invokeExact(cd);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -4251,7 +4954,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_iconv");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_iconv");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -4298,8 +5001,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_iconv", cd, inbuf, inbytesleft, outbuf, outbytesleft);
             }
             return (long)mh$.invokeExact(cd, inbuf, inbytesleft, outbuf, outbytesleft);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -4314,7 +5015,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_LONG
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_iconv_string");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_iconv_string");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -4361,8 +5062,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_iconv_string", tocode, fromcode, inbuf, inbytesleft);
             }
             return (MemorySegment)mh$.invokeExact(tocode, fromcode, inbuf, inbytesleft);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -4422,7 +5121,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ReportAssertion");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ReportAssertion");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -4469,8 +5168,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ReportAssertion", data, func, file, line);
             }
             return (int)mh$.invokeExact(data, func, file, line);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -4482,7 +5179,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetAssertionHandler");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetAssertionHandler");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -4529,8 +5226,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetAssertionHandler", handler, userdata);
             }
             mh$.invokeExact(handler, userdata);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -4540,7 +5235,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_POINTER    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetDefaultAssertionHandler");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetDefaultAssertionHandler");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -4587,8 +5282,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetDefaultAssertionHandler");
             }
             return (MemorySegment)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -4600,7 +5293,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetAssertionHandler");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetAssertionHandler");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -4647,8 +5340,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetAssertionHandler", puserdata);
             }
             return (MemorySegment)mh$.invokeExact(puserdata);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -4658,7 +5349,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_POINTER    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetAssertionReport");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetAssertionReport");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -4705,8 +5396,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetAssertionReport");
             }
             return (MemorySegment)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -4715,7 +5404,7 @@ class SDL_h_3 extends SDL_h_4 {
     private static class SDL_ResetAssertionReport {
         public static final FunctionDescriptor DESC = FunctionDescriptor.ofVoid(    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ResetAssertionReport");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ResetAssertionReport");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -4762,8 +5451,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ResetAssertionReport");
             }
             mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -4830,7 +5517,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_AsyncIOFromFile");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_AsyncIOFromFile");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -4877,8 +5564,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_AsyncIOFromFile", file, mode);
             }
             return (MemorySegment)mh$.invokeExact(file, mode);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -4890,7 +5575,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetAsyncIOSize");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetAsyncIOSize");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -4937,8 +5622,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetAsyncIOSize", asyncio);
             }
             return (long)mh$.invokeExact(asyncio);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -4955,7 +5638,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ReadAsyncIO");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ReadAsyncIO");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -5002,8 +5685,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ReadAsyncIO", asyncio, ptr, offset, size, queue, userdata);
             }
             return (boolean)mh$.invokeExact(asyncio, ptr, offset, size, queue, userdata);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -5020,7 +5701,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_WriteAsyncIO");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_WriteAsyncIO");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -5067,8 +5748,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_WriteAsyncIO", asyncio, ptr, offset, size, queue, userdata);
             }
             return (boolean)mh$.invokeExact(asyncio, ptr, offset, size, queue, userdata);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -5083,7 +5762,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_CloseAsyncIO");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_CloseAsyncIO");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -5130,8 +5809,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_CloseAsyncIO", asyncio, flush, queue, userdata);
             }
             return (boolean)mh$.invokeExact(asyncio, flush, queue, userdata);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -5141,7 +5818,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_POINTER    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_CreateAsyncIOQueue");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_CreateAsyncIOQueue");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -5188,8 +5865,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_CreateAsyncIOQueue");
             }
             return (MemorySegment)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -5200,7 +5875,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_DestroyAsyncIOQueue");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_DestroyAsyncIOQueue");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -5247,8 +5922,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_DestroyAsyncIOQueue", queue);
             }
             mh$.invokeExact(queue);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -5261,7 +5934,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetAsyncIOResult");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetAsyncIOResult");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -5308,8 +5981,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetAsyncIOResult", queue, outcome);
             }
             return (boolean)mh$.invokeExact(queue, outcome);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -5323,7 +5994,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_WaitAsyncIOResult");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_WaitAsyncIOResult");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -5370,8 +6041,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_WaitAsyncIOResult", queue, outcome, timeoutMS);
             }
             return (boolean)mh$.invokeExact(queue, outcome, timeoutMS);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -5382,7 +6051,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SignalAsyncIOQueue");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SignalAsyncIOQueue");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -5429,8 +6098,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SignalAsyncIOQueue", queue);
             }
             mh$.invokeExact(queue);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -5444,7 +6111,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_LoadFileAsync");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_LoadFileAsync");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -5491,8 +6158,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_LoadFileAsync", file, queue, userdata);
             }
             return (boolean)mh$.invokeExact(file, queue, userdata);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -5510,7 +6175,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_TryLockSpinlock");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_TryLockSpinlock");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -5557,8 +6222,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_TryLockSpinlock", lock);
             }
             return (boolean)mh$.invokeExact(lock);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -5569,7 +6232,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_LockSpinlock");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_LockSpinlock");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -5616,8 +6279,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_LockSpinlock", lock);
             }
             mh$.invokeExact(lock);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -5628,7 +6289,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_UnlockSpinlock");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_UnlockSpinlock");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -5675,8 +6336,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_UnlockSpinlock", lock);
             }
             mh$.invokeExact(lock);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -5685,7 +6344,7 @@ class SDL_h_3 extends SDL_h_4 {
     private static class SDL_MemoryBarrierReleaseFunction {
         public static final FunctionDescriptor DESC = FunctionDescriptor.ofVoid(    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_MemoryBarrierReleaseFunction");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_MemoryBarrierReleaseFunction");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -5732,8 +6391,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_MemoryBarrierReleaseFunction");
             }
             mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -5742,7 +6399,7 @@ class SDL_h_3 extends SDL_h_4 {
     private static class SDL_MemoryBarrierAcquireFunction {
         public static final FunctionDescriptor DESC = FunctionDescriptor.ofVoid(    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_MemoryBarrierAcquireFunction");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_MemoryBarrierAcquireFunction");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -5789,8 +6446,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_MemoryBarrierAcquireFunction");
             }
             mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -5804,7 +6459,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_CompareAndSwapAtomicInt");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_CompareAndSwapAtomicInt");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -5851,8 +6506,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_CompareAndSwapAtomicInt", a, oldval, newval);
             }
             return (boolean)mh$.invokeExact(a, oldval, newval);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -5865,7 +6518,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetAtomicInt");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetAtomicInt");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -5912,8 +6565,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetAtomicInt", a, v);
             }
             return (int)mh$.invokeExact(a, v);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -5925,7 +6576,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetAtomicInt");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetAtomicInt");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -5972,8 +6623,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetAtomicInt", a);
             }
             return (int)mh$.invokeExact(a);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -5986,7 +6635,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_AddAtomicInt");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_AddAtomicInt");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -6033,8 +6682,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_AddAtomicInt", a, v);
             }
             return (int)mh$.invokeExact(a, v);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -6048,7 +6695,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_CompareAndSwapAtomicU32");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_CompareAndSwapAtomicU32");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -6095,8 +6742,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_CompareAndSwapAtomicU32", a, oldval, newval);
             }
             return (boolean)mh$.invokeExact(a, oldval, newval);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -6109,7 +6754,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetAtomicU32");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetAtomicU32");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -6156,8 +6801,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetAtomicU32", a, v);
             }
             return (int)mh$.invokeExact(a, v);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -6169,7 +6812,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetAtomicU32");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetAtomicU32");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -6216,8 +6859,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetAtomicU32", a);
             }
             return (int)mh$.invokeExact(a);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -6230,7 +6871,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_AddAtomicU32");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_AddAtomicU32");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -6277,8 +6918,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_AddAtomicU32", a, v);
             }
             return (int)mh$.invokeExact(a, v);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -6292,7 +6931,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_CompareAndSwapAtomicPointer");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_CompareAndSwapAtomicPointer");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -6339,8 +6978,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_CompareAndSwapAtomicPointer", a, oldval, newval);
             }
             return (boolean)mh$.invokeExact(a, oldval, newval);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -6353,7 +6990,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetAtomicPointer");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetAtomicPointer");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -6400,8 +7037,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetAtomicPointer", a, v);
             }
             return (MemorySegment)mh$.invokeExact(a, v);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -6413,7 +7048,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetAtomicPointer");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetAtomicPointer");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -6460,8 +7095,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetAtomicPointer", a);
             }
             return (MemorySegment)mh$.invokeExact(a);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -6478,7 +7111,7 @@ class SDL_h_3 extends SDL_h_4 {
                 SDL_h.C_BOOL,
                 SDL_h.C_POINTER
             );
-        private static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetError");
+        private static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetError");
 
         private final MethodHandle handle;
         private final FunctionDescriptor descriptor;
@@ -6546,7 +7179,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetErrorV");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetErrorV");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -6593,8 +7226,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetErrorV", fmt, ap);
             }
             return (boolean)mh$.invokeExact(fmt, ap);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -6604,7 +7235,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_BOOL    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_OutOfMemory");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_OutOfMemory");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -6651,8 +7282,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_OutOfMemory");
             }
             return (boolean)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -6662,7 +7291,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_POINTER    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetError");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetError");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -6709,8 +7338,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetError");
             }
             return (MemorySegment)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -6720,7 +7347,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_BOOL    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ClearError");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ClearError");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -6767,8 +7394,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ClearError");
             }
             return (boolean)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -6838,7 +7463,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_INT    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetGlobalProperties");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetGlobalProperties");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -6885,8 +7510,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetGlobalProperties");
             }
             return (int)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -6896,7 +7519,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_INT    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_CreateProperties");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_CreateProperties");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -6943,8 +7566,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_CreateProperties");
             }
             return (int)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -6957,7 +7578,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_CopyProperties");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_CopyProperties");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -7004,8 +7625,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_CopyProperties", src, dst);
             }
             return (boolean)mh$.invokeExact(src, dst);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -7017,7 +7636,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_LockProperties");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_LockProperties");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -7064,8 +7683,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_LockProperties", props);
             }
             return (boolean)mh$.invokeExact(props);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -7076,7 +7693,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_UnlockProperties");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_UnlockProperties");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -7123,8 +7740,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_UnlockProperties", props);
             }
             mh$.invokeExact(props);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -7140,7 +7755,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetPointerPropertyWithCleanup");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetPointerPropertyWithCleanup");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -7187,8 +7802,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetPointerPropertyWithCleanup", props, name, value, cleanup, userdata);
             }
             return (boolean)mh$.invokeExact(props, name, value, cleanup, userdata);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -7202,7 +7815,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetPointerProperty");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetPointerProperty");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -7249,8 +7862,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetPointerProperty", props, name, value);
             }
             return (boolean)mh$.invokeExact(props, name, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -7264,7 +7875,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetStringProperty");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetStringProperty");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -7311,8 +7922,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetStringProperty", props, name, value);
             }
             return (boolean)mh$.invokeExact(props, name, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -7326,7 +7935,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_LONG_LONG
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetNumberProperty");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetNumberProperty");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -7373,8 +7982,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetNumberProperty", props, name, value);
             }
             return (boolean)mh$.invokeExact(props, name, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -7388,7 +7995,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_FLOAT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetFloatProperty");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetFloatProperty");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -7435,8 +8042,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetFloatProperty", props, name, value);
             }
             return (boolean)mh$.invokeExact(props, name, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -7450,7 +8055,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_BOOL
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetBooleanProperty");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetBooleanProperty");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -7497,8 +8102,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetBooleanProperty", props, name, value);
             }
             return (boolean)mh$.invokeExact(props, name, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -7511,7 +8114,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_HasProperty");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_HasProperty");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -7558,8 +8161,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_HasProperty", props, name);
             }
             return (boolean)mh$.invokeExact(props, name);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -7572,7 +8173,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetPropertyType");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetPropertyType");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -7619,8 +8220,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetPropertyType", props, name);
             }
             return (int)mh$.invokeExact(props, name);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -7634,7 +8233,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetPointerProperty");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetPointerProperty");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -7681,8 +8280,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetPointerProperty", props, name, default_value);
             }
             return (MemorySegment)mh$.invokeExact(props, name, default_value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -7696,7 +8293,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetStringProperty");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetStringProperty");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -7743,8 +8340,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetStringProperty", props, name, default_value);
             }
             return (MemorySegment)mh$.invokeExact(props, name, default_value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -7758,7 +8353,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_LONG_LONG
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetNumberProperty");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetNumberProperty");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -7805,8 +8400,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetNumberProperty", props, name, default_value);
             }
             return (long)mh$.invokeExact(props, name, default_value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -7820,7 +8413,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_FLOAT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetFloatProperty");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetFloatProperty");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -7867,8 +8460,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetFloatProperty", props, name, default_value);
             }
             return (float)mh$.invokeExact(props, name, default_value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -7882,7 +8473,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_BOOL
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetBooleanProperty");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetBooleanProperty");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -7929,8 +8520,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetBooleanProperty", props, name, default_value);
             }
             return (boolean)mh$.invokeExact(props, name, default_value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -7943,7 +8532,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ClearProperty");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ClearProperty");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -7990,8 +8579,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ClearProperty", props, name);
             }
             return (boolean)mh$.invokeExact(props, name);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -8005,7 +8592,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_EnumerateProperties");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_EnumerateProperties");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -8052,8 +8639,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_EnumerateProperties", props, callback, userdata);
             }
             return (boolean)mh$.invokeExact(props, callback, userdata);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -8064,7 +8649,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_DestroyProperties");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_DestroyProperties");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -8111,8 +8696,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_DestroyProperties", props);
             }
             mh$.invokeExact(props);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -8206,7 +8789,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_CreateThreadRuntime");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_CreateThreadRuntime");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -8253,8 +8836,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_CreateThreadRuntime", fn, name, data, pfnBeginThread, pfnEndThread);
             }
             return (MemorySegment)mh$.invokeExact(fn, name, data, pfnBeginThread, pfnEndThread);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -8268,7 +8849,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_CreateThreadWithPropertiesRuntime");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_CreateThreadWithPropertiesRuntime");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -8315,8 +8896,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_CreateThreadWithPropertiesRuntime", props, pfnBeginThread, pfnEndThread);
             }
             return (MemorySegment)mh$.invokeExact(props, pfnBeginThread, pfnEndThread);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -8328,7 +8907,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetThreadName");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetThreadName");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -8375,8 +8954,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetThreadName", thread);
             }
             return (MemorySegment)mh$.invokeExact(thread);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -8386,7 +8963,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_LONG_LONG    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetCurrentThreadID");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetCurrentThreadID");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -8433,8 +9010,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetCurrentThreadID");
             }
             return (long)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -8446,7 +9021,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetThreadID");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetThreadID");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -8493,8 +9068,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetThreadID", thread);
             }
             return (long)mh$.invokeExact(thread);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -8506,7 +9079,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetCurrentThreadPriority");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetCurrentThreadPriority");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -8553,8 +9126,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetCurrentThreadPriority", priority);
             }
             return (boolean)mh$.invokeExact(priority);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -8566,7 +9137,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_WaitThread");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_WaitThread");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -8613,8 +9184,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_WaitThread", thread, status);
             }
             mh$.invokeExact(thread, status);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -8626,7 +9195,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetThreadState");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetThreadState");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -8673,8 +9242,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetThreadState", thread);
             }
             return (int)mh$.invokeExact(thread);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -8685,7 +9252,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_DetachThread");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_DetachThread");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -8732,8 +9299,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_DetachThread", thread);
             }
             mh$.invokeExact(thread);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -8745,7 +9310,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetTLS");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetTLS");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -8792,8 +9357,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetTLS", id);
             }
             return (MemorySegment)mh$.invokeExact(id);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -8807,7 +9370,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetTLS");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetTLS");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -8854,8 +9417,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetTLS", id, value, destructor);
             }
             return (boolean)mh$.invokeExact(id, value, destructor);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -8864,7 +9425,7 @@ class SDL_h_3 extends SDL_h_4 {
     private static class SDL_CleanupTLS {
         public static final FunctionDescriptor DESC = FunctionDescriptor.ofVoid(    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_CleanupTLS");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_CleanupTLS");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -8911,8 +9472,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_CleanupTLS");
             }
             mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -8922,7 +9481,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_POINTER    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_CreateMutex");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_CreateMutex");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -8969,8 +9528,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_CreateMutex");
             }
             return (MemorySegment)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -8981,7 +9538,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_LockMutex");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_LockMutex");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -9028,8 +9585,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_LockMutex", mutex);
             }
             mh$.invokeExact(mutex);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -9041,7 +9596,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_TryLockMutex");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_TryLockMutex");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -9088,8 +9643,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_TryLockMutex", mutex);
             }
             return (boolean)mh$.invokeExact(mutex);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -9100,7 +9653,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_UnlockMutex");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_UnlockMutex");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -9147,8 +9700,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_UnlockMutex", mutex);
             }
             mh$.invokeExact(mutex);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -9159,7 +9710,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_DestroyMutex");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_DestroyMutex");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -9206,8 +9757,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_DestroyMutex", mutex);
             }
             mh$.invokeExact(mutex);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -9217,7 +9766,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_POINTER    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_CreateRWLock");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_CreateRWLock");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -9264,8 +9813,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_CreateRWLock");
             }
             return (MemorySegment)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -9276,7 +9823,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_LockRWLockForReading");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_LockRWLockForReading");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -9323,8 +9870,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_LockRWLockForReading", rwlock);
             }
             mh$.invokeExact(rwlock);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -9335,7 +9880,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_LockRWLockForWriting");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_LockRWLockForWriting");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -9382,8 +9927,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_LockRWLockForWriting", rwlock);
             }
             mh$.invokeExact(rwlock);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -9395,7 +9938,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_TryLockRWLockForReading");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_TryLockRWLockForReading");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -9442,8 +9985,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_TryLockRWLockForReading", rwlock);
             }
             return (boolean)mh$.invokeExact(rwlock);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -9455,7 +9996,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_TryLockRWLockForWriting");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_TryLockRWLockForWriting");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -9502,8 +10043,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_TryLockRWLockForWriting", rwlock);
             }
             return (boolean)mh$.invokeExact(rwlock);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -9514,7 +10053,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_UnlockRWLock");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_UnlockRWLock");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -9561,8 +10100,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_UnlockRWLock", rwlock);
             }
             mh$.invokeExact(rwlock);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -9573,7 +10110,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_DestroyRWLock");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_DestroyRWLock");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -9620,8 +10157,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_DestroyRWLock", rwlock);
             }
             mh$.invokeExact(rwlock);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -9633,7 +10168,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_CreateSemaphore");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_CreateSemaphore");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -9680,8 +10215,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_CreateSemaphore", initial_value);
             }
             return (MemorySegment)mh$.invokeExact(initial_value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -9692,7 +10225,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_DestroySemaphore");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_DestroySemaphore");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -9739,8 +10272,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_DestroySemaphore", sem);
             }
             mh$.invokeExact(sem);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -9751,7 +10282,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_WaitSemaphore");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_WaitSemaphore");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -9798,8 +10329,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_WaitSemaphore", sem);
             }
             mh$.invokeExact(sem);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -9811,7 +10340,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_TryWaitSemaphore");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_TryWaitSemaphore");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -9858,8 +10387,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_TryWaitSemaphore", sem);
             }
             return (boolean)mh$.invokeExact(sem);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -9872,7 +10399,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_WaitSemaphoreTimeout");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_WaitSemaphoreTimeout");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -9919,8 +10446,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_WaitSemaphoreTimeout", sem, timeoutMS);
             }
             return (boolean)mh$.invokeExact(sem, timeoutMS);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -9931,7 +10456,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SignalSemaphore");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SignalSemaphore");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -9978,8 +10503,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SignalSemaphore", sem);
             }
             mh$.invokeExact(sem);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -9991,7 +10514,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetSemaphoreValue");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetSemaphoreValue");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -10038,8 +10561,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetSemaphoreValue", sem);
             }
             return (int)mh$.invokeExact(sem);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -10049,7 +10570,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_POINTER    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_CreateCondition");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_CreateCondition");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -10096,8 +10617,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_CreateCondition");
             }
             return (MemorySegment)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -10108,7 +10627,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_DestroyCondition");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_DestroyCondition");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -10155,8 +10674,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_DestroyCondition", cond);
             }
             mh$.invokeExact(cond);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -10167,7 +10684,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SignalCondition");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SignalCondition");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -10214,8 +10731,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SignalCondition", cond);
             }
             mh$.invokeExact(cond);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -10226,7 +10741,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_BroadcastCondition");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_BroadcastCondition");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -10273,8 +10788,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_BroadcastCondition", cond);
             }
             mh$.invokeExact(cond);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -10286,7 +10799,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_WaitCondition");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_WaitCondition");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -10333,8 +10846,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_WaitCondition", cond, mutex);
             }
             mh$.invokeExact(cond, mutex);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -10348,7 +10859,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_WaitConditionTimeout");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_WaitConditionTimeout");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -10395,8 +10906,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_WaitConditionTimeout", cond, mutex, timeoutMS);
             }
             return (boolean)mh$.invokeExact(cond, mutex, timeoutMS);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -10444,7 +10953,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ShouldInit");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ShouldInit");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -10491,8 +11000,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ShouldInit", state);
             }
             return (boolean)mh$.invokeExact(state);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -10504,7 +11011,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ShouldQuit");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ShouldQuit");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -10551,8 +11058,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ShouldQuit", state);
             }
             return (boolean)mh$.invokeExact(state);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -10564,7 +11069,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_BOOL
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetInitialized");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetInitialized");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -10611,8 +11116,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetInitialized", state, initialized);
             }
             mh$.invokeExact(state, initialized);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -10706,7 +11209,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_IOFromFile");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_IOFromFile");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -10753,8 +11256,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_IOFromFile", file, mode);
             }
             return (MemorySegment)mh$.invokeExact(file, mode);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -10767,7 +11268,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_LONG
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_IOFromMem");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_IOFromMem");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -10814,8 +11315,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_IOFromMem", mem, size);
             }
             return (MemorySegment)mh$.invokeExact(mem, size);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -10828,7 +11327,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_LONG
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_IOFromConstMem");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_IOFromConstMem");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -10875,8 +11374,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_IOFromConstMem", mem, size);
             }
             return (MemorySegment)mh$.invokeExact(mem, size);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -10886,7 +11383,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_POINTER    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_IOFromDynamicMem");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_IOFromDynamicMem");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -10933,8 +11430,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_IOFromDynamicMem");
             }
             return (MemorySegment)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -10947,7 +11442,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_OpenIO");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_OpenIO");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -10994,8 +11489,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_OpenIO", iface, userdata);
             }
             return (MemorySegment)mh$.invokeExact(iface, userdata);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -11007,7 +11500,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_CloseIO");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_CloseIO");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -11054,8 +11547,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_CloseIO", context);
             }
             return (boolean)mh$.invokeExact(context);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -11067,7 +11558,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetIOProperties");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetIOProperties");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -11114,8 +11605,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetIOProperties", context);
             }
             return (int)mh$.invokeExact(context);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -11127,7 +11616,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetIOStatus");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetIOStatus");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -11174,8 +11663,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetIOStatus", context);
             }
             return (int)mh$.invokeExact(context);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -11187,7 +11674,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetIOSize");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetIOSize");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -11234,8 +11721,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetIOSize", context);
             }
             return (long)mh$.invokeExact(context);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -11249,7 +11734,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SeekIO");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SeekIO");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -11296,8 +11781,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SeekIO", context, offset, whence);
             }
             return (long)mh$.invokeExact(context, offset, whence);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -11309,7 +11792,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_TellIO");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_TellIO");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -11356,8 +11839,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_TellIO", context);
             }
             return (long)mh$.invokeExact(context);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -11371,7 +11852,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_LONG
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ReadIO");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ReadIO");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -11418,8 +11899,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ReadIO", context, ptr, size);
             }
             return (long)mh$.invokeExact(context, ptr, size);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -11433,7 +11912,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_LONG
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_WriteIO");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_WriteIO");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -11480,8 +11959,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_WriteIO", context, ptr, size);
             }
             return (long)mh$.invokeExact(context, ptr, size);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -11499,7 +11976,7 @@ class SDL_h_3 extends SDL_h_4 {
                 SDL_h.C_POINTER,
                 SDL_h.C_POINTER
             );
-        private static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_IOprintf");
+        private static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_IOprintf");
 
         private final MethodHandle handle;
         private final FunctionDescriptor descriptor;
@@ -11568,7 +12045,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_IOvprintf");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_IOvprintf");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -11615,8 +12092,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_IOvprintf", context, fmt, ap);
             }
             return (long)mh$.invokeExact(context, fmt, ap);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -11628,7 +12103,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_FlushIO");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_FlushIO");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -11675,8 +12150,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_FlushIO", context);
             }
             return (boolean)mh$.invokeExact(context);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -11690,7 +12163,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_BOOL
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_LoadFile_IO");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_LoadFile_IO");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -11737,8 +12210,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_LoadFile_IO", src, datasize, closeio);
             }
             return (MemorySegment)mh$.invokeExact(src, datasize, closeio);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -11751,7 +12222,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_LoadFile");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_LoadFile");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -11798,8 +12269,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_LoadFile", file, datasize);
             }
             return (MemorySegment)mh$.invokeExact(file, datasize);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -11814,7 +12283,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_BOOL
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SaveFile_IO");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SaveFile_IO");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -11861,8 +12330,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SaveFile_IO", src, data, datasize, closeio);
             }
             return (boolean)mh$.invokeExact(src, data, datasize, closeio);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -11876,7 +12343,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_LONG
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SaveFile");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SaveFile");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -11923,8 +12390,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SaveFile", file, data, datasize);
             }
             return (boolean)mh$.invokeExact(file, data, datasize);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -11937,7 +12402,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ReadU8");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ReadU8");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -11984,8 +12449,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ReadU8", src, value);
             }
             return (boolean)mh$.invokeExact(src, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -11998,7 +12461,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ReadS8");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ReadS8");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -12045,8 +12508,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ReadS8", src, value);
             }
             return (boolean)mh$.invokeExact(src, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -12059,7 +12520,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ReadU16LE");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ReadU16LE");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -12106,8 +12567,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ReadU16LE", src, value);
             }
             return (boolean)mh$.invokeExact(src, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -12120,7 +12579,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ReadS16LE");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ReadS16LE");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -12167,8 +12626,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ReadS16LE", src, value);
             }
             return (boolean)mh$.invokeExact(src, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -12181,7 +12638,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ReadU16BE");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ReadU16BE");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -12228,8 +12685,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ReadU16BE", src, value);
             }
             return (boolean)mh$.invokeExact(src, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -12242,7 +12697,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ReadS16BE");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ReadS16BE");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -12289,8 +12744,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ReadS16BE", src, value);
             }
             return (boolean)mh$.invokeExact(src, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -12303,7 +12756,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ReadU32LE");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ReadU32LE");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -12350,8 +12803,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ReadU32LE", src, value);
             }
             return (boolean)mh$.invokeExact(src, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -12364,7 +12815,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ReadS32LE");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ReadS32LE");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -12411,8 +12862,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ReadS32LE", src, value);
             }
             return (boolean)mh$.invokeExact(src, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -12425,7 +12874,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ReadU32BE");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ReadU32BE");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -12472,8 +12921,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ReadU32BE", src, value);
             }
             return (boolean)mh$.invokeExact(src, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -12486,7 +12933,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ReadS32BE");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ReadS32BE");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -12533,8 +12980,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ReadS32BE", src, value);
             }
             return (boolean)mh$.invokeExact(src, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -12547,7 +12992,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ReadU64LE");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ReadU64LE");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -12594,8 +13039,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ReadU64LE", src, value);
             }
             return (boolean)mh$.invokeExact(src, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -12608,7 +13051,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ReadS64LE");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ReadS64LE");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -12655,8 +13098,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ReadS64LE", src, value);
             }
             return (boolean)mh$.invokeExact(src, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -12669,7 +13110,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ReadU64BE");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ReadU64BE");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -12716,8 +13157,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ReadU64BE", src, value);
             }
             return (boolean)mh$.invokeExact(src, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -12730,7 +13169,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ReadS64BE");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ReadS64BE");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -12777,8 +13216,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ReadS64BE", src, value);
             }
             return (boolean)mh$.invokeExact(src, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -12791,7 +13228,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_CHAR
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_WriteU8");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_WriteU8");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -12838,8 +13275,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_WriteU8", dst, value);
             }
             return (boolean)mh$.invokeExact(dst, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -12852,7 +13287,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_CHAR
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_WriteS8");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_WriteS8");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -12899,8 +13334,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_WriteS8", dst, value);
             }
             return (boolean)mh$.invokeExact(dst, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -12913,7 +13346,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_SHORT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_WriteU16LE");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_WriteU16LE");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -12960,8 +13393,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_WriteU16LE", dst, value);
             }
             return (boolean)mh$.invokeExact(dst, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -12974,7 +13405,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_SHORT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_WriteS16LE");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_WriteS16LE");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -13021,8 +13452,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_WriteS16LE", dst, value);
             }
             return (boolean)mh$.invokeExact(dst, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -13035,7 +13464,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_SHORT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_WriteU16BE");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_WriteU16BE");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -13082,8 +13511,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_WriteU16BE", dst, value);
             }
             return (boolean)mh$.invokeExact(dst, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -13096,7 +13523,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_SHORT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_WriteS16BE");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_WriteS16BE");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -13143,8 +13570,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_WriteS16BE", dst, value);
             }
             return (boolean)mh$.invokeExact(dst, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -13157,7 +13582,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_WriteU32LE");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_WriteU32LE");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -13204,8 +13629,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_WriteU32LE", dst, value);
             }
             return (boolean)mh$.invokeExact(dst, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -13218,7 +13641,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_WriteS32LE");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_WriteS32LE");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -13265,8 +13688,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_WriteS32LE", dst, value);
             }
             return (boolean)mh$.invokeExact(dst, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -13279,7 +13700,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_WriteU32BE");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_WriteU32BE");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -13326,8 +13747,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_WriteU32BE", dst, value);
             }
             return (boolean)mh$.invokeExact(dst, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -13340,7 +13759,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_WriteS32BE");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_WriteS32BE");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -13387,8 +13806,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_WriteS32BE", dst, value);
             }
             return (boolean)mh$.invokeExact(dst, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -13401,7 +13818,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_LONG_LONG
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_WriteU64LE");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_WriteU64LE");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -13448,8 +13865,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_WriteU64LE", dst, value);
             }
             return (boolean)mh$.invokeExact(dst, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -13462,7 +13877,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_LONG_LONG
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_WriteS64LE");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_WriteS64LE");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -13509,8 +13924,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_WriteS64LE", dst, value);
             }
             return (boolean)mh$.invokeExact(dst, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -13523,7 +13936,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_LONG_LONG
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_WriteU64BE");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_WriteU64BE");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -13570,8 +13983,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_WriteU64BE", dst, value);
             }
             return (boolean)mh$.invokeExact(dst, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -13584,7 +13995,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_LONG_LONG
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_WriteS64BE");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_WriteS64BE");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -13631,8 +14042,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_WriteS64BE", dst, value);
             }
             return (boolean)mh$.invokeExact(dst, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -13756,7 +14165,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_INT    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetNumAudioDrivers");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetNumAudioDrivers");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -13803,8 +14212,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetNumAudioDrivers");
             }
             return (int)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -13816,7 +14223,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetAudioDriver");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetAudioDriver");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -13863,8 +14270,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetAudioDriver", index);
             }
             return (MemorySegment)mh$.invokeExact(index);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -13874,7 +14279,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_POINTER    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetCurrentAudioDriver");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetCurrentAudioDriver");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -13921,8 +14326,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetCurrentAudioDriver");
             }
             return (MemorySegment)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -13934,7 +14337,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetAudioPlaybackDevices");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetAudioPlaybackDevices");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -13981,8 +14384,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetAudioPlaybackDevices", count);
             }
             return (MemorySegment)mh$.invokeExact(count);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -13994,7 +14395,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetAudioRecordingDevices");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetAudioRecordingDevices");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -14041,8 +14442,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetAudioRecordingDevices", count);
             }
             return (MemorySegment)mh$.invokeExact(count);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -14054,7 +14453,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetAudioDeviceName");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetAudioDeviceName");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -14101,8 +14500,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetAudioDeviceName", devid);
             }
             return (MemorySegment)mh$.invokeExact(devid);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -14116,7 +14513,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetAudioDeviceFormat");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetAudioDeviceFormat");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -14163,8 +14560,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetAudioDeviceFormat", devid, spec, sample_frames);
             }
             return (boolean)mh$.invokeExact(devid, spec, sample_frames);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -14177,7 +14572,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetAudioDeviceChannelMap");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetAudioDeviceChannelMap");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -14224,8 +14619,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetAudioDeviceChannelMap", devid, count);
             }
             return (MemorySegment)mh$.invokeExact(devid, count);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -14238,7 +14631,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_OpenAudioDevice");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_OpenAudioDevice");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -14285,8 +14678,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_OpenAudioDevice", devid, spec);
             }
             return (int)mh$.invokeExact(devid, spec);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -14298,7 +14689,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_IsAudioDevicePhysical");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_IsAudioDevicePhysical");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -14345,8 +14736,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_IsAudioDevicePhysical", devid);
             }
             return (boolean)mh$.invokeExact(devid);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -14358,7 +14747,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_IsAudioDevicePlayback");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_IsAudioDevicePlayback");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -14405,8 +14794,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_IsAudioDevicePlayback", devid);
             }
             return (boolean)mh$.invokeExact(devid);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -14418,7 +14805,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_PauseAudioDevice");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_PauseAudioDevice");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -14465,8 +14852,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_PauseAudioDevice", devid);
             }
             return (boolean)mh$.invokeExact(devid);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -14478,7 +14863,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ResumeAudioDevice");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ResumeAudioDevice");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -14525,8 +14910,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ResumeAudioDevice", devid);
             }
             return (boolean)mh$.invokeExact(devid);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -14538,7 +14921,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_AudioDevicePaused");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_AudioDevicePaused");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -14585,8 +14968,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_AudioDevicePaused", devid);
             }
             return (boolean)mh$.invokeExact(devid);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -14598,7 +14979,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetAudioDeviceGain");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetAudioDeviceGain");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -14645,8 +15026,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetAudioDeviceGain", devid);
             }
             return (float)mh$.invokeExact(devid);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -14659,7 +15038,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_FLOAT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetAudioDeviceGain");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetAudioDeviceGain");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -14706,8 +15085,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetAudioDeviceGain", devid, gain);
             }
             return (boolean)mh$.invokeExact(devid, gain);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -14718,7 +15095,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_CloseAudioDevice");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_CloseAudioDevice");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -14765,8 +15142,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_CloseAudioDevice", devid);
             }
             mh$.invokeExact(devid);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -14780,7 +15155,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_BindAudioStreams");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_BindAudioStreams");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -14827,8 +15202,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_BindAudioStreams", devid, streams, num_streams);
             }
             return (boolean)mh$.invokeExact(devid, streams, num_streams);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -14841,7 +15214,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_BindAudioStream");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_BindAudioStream");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -14888,8 +15261,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_BindAudioStream", devid, stream);
             }
             return (boolean)mh$.invokeExact(devid, stream);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -14901,7 +15272,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_UnbindAudioStreams");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_UnbindAudioStreams");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -14948,8 +15319,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_UnbindAudioStreams", streams, num_streams);
             }
             mh$.invokeExact(streams, num_streams);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -14960,7 +15329,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_UnbindAudioStream");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_UnbindAudioStream");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -15007,8 +15376,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_UnbindAudioStream", stream);
             }
             mh$.invokeExact(stream);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -15020,7 +15387,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetAudioStreamDevice");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetAudioStreamDevice");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -15067,8 +15434,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetAudioStreamDevice", stream);
             }
             return (int)mh$.invokeExact(stream);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -15081,7 +15446,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_CreateAudioStream");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_CreateAudioStream");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -15128,8 +15493,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_CreateAudioStream", src_spec, dst_spec);
             }
             return (MemorySegment)mh$.invokeExact(src_spec, dst_spec);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -15141,7 +15504,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetAudioStreamProperties");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetAudioStreamProperties");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -15188,8 +15551,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetAudioStreamProperties", stream);
             }
             return (int)mh$.invokeExact(stream);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -15203,7 +15564,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetAudioStreamFormat");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetAudioStreamFormat");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -15250,8 +15611,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetAudioStreamFormat", stream, src_spec, dst_spec);
             }
             return (boolean)mh$.invokeExact(stream, src_spec, dst_spec);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -15265,7 +15624,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetAudioStreamFormat");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetAudioStreamFormat");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -15312,8 +15671,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetAudioStreamFormat", stream, src_spec, dst_spec);
             }
             return (boolean)mh$.invokeExact(stream, src_spec, dst_spec);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -15325,7 +15682,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetAudioStreamFrequencyRatio");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetAudioStreamFrequencyRatio");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -15372,8 +15729,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetAudioStreamFrequencyRatio", stream);
             }
             return (float)mh$.invokeExact(stream);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -15386,7 +15741,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_FLOAT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetAudioStreamFrequencyRatio");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetAudioStreamFrequencyRatio");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -15433,8 +15788,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetAudioStreamFrequencyRatio", stream, ratio);
             }
             return (boolean)mh$.invokeExact(stream, ratio);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -15446,7 +15799,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetAudioStreamGain");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetAudioStreamGain");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -15493,8 +15846,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetAudioStreamGain", stream);
             }
             return (float)mh$.invokeExact(stream);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -15507,7 +15858,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_FLOAT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetAudioStreamGain");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetAudioStreamGain");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -15554,8 +15905,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetAudioStreamGain", stream, gain);
             }
             return (boolean)mh$.invokeExact(stream, gain);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -15568,7 +15917,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetAudioStreamInputChannelMap");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetAudioStreamInputChannelMap");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -15615,8 +15964,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetAudioStreamInputChannelMap", stream, count);
             }
             return (MemorySegment)mh$.invokeExact(stream, count);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -15629,7 +15976,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetAudioStreamOutputChannelMap");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetAudioStreamOutputChannelMap");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -15676,8 +16023,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetAudioStreamOutputChannelMap", stream, count);
             }
             return (MemorySegment)mh$.invokeExact(stream, count);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -15691,7 +16036,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetAudioStreamInputChannelMap");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetAudioStreamInputChannelMap");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -15738,8 +16083,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetAudioStreamInputChannelMap", stream, chmap, count);
             }
             return (boolean)mh$.invokeExact(stream, chmap, count);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -15753,7 +16096,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetAudioStreamOutputChannelMap");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetAudioStreamOutputChannelMap");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -15800,8 +16143,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetAudioStreamOutputChannelMap", stream, chmap, count);
             }
             return (boolean)mh$.invokeExact(stream, chmap, count);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -15815,7 +16156,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_PutAudioStreamData");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_PutAudioStreamData");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -15862,8 +16203,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_PutAudioStreamData", stream, buf, len);
             }
             return (boolean)mh$.invokeExact(stream, buf, len);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -15879,7 +16218,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_PutAudioStreamDataNoCopy");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_PutAudioStreamDataNoCopy");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -15926,8 +16265,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_PutAudioStreamDataNoCopy", stream, buf, len, callback, userdata);
             }
             return (boolean)mh$.invokeExact(stream, buf, len, callback, userdata);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -15942,7 +16279,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_PutAudioStreamPlanarData");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_PutAudioStreamPlanarData");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -15989,8 +16326,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_PutAudioStreamPlanarData", stream, channel_buffers, num_channels, num_samples);
             }
             return (boolean)mh$.invokeExact(stream, channel_buffers, num_channels, num_samples);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -16004,7 +16339,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetAudioStreamData");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetAudioStreamData");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -16051,8 +16386,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetAudioStreamData", stream, buf, len);
             }
             return (int)mh$.invokeExact(stream, buf, len);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -16064,7 +16397,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetAudioStreamAvailable");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetAudioStreamAvailable");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -16111,8 +16444,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetAudioStreamAvailable", stream);
             }
             return (int)mh$.invokeExact(stream);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -16124,7 +16455,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetAudioStreamQueued");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetAudioStreamQueued");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -16171,8 +16502,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetAudioStreamQueued", stream);
             }
             return (int)mh$.invokeExact(stream);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -16184,7 +16513,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_FlushAudioStream");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_FlushAudioStream");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -16231,8 +16560,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_FlushAudioStream", stream);
             }
             return (boolean)mh$.invokeExact(stream);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -16244,7 +16571,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ClearAudioStream");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ClearAudioStream");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -16291,8 +16618,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ClearAudioStream", stream);
             }
             return (boolean)mh$.invokeExact(stream);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -16304,7 +16629,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_PauseAudioStreamDevice");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_PauseAudioStreamDevice");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -16351,8 +16676,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_PauseAudioStreamDevice", stream);
             }
             return (boolean)mh$.invokeExact(stream);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -16364,7 +16687,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ResumeAudioStreamDevice");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ResumeAudioStreamDevice");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -16411,8 +16734,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ResumeAudioStreamDevice", stream);
             }
             return (boolean)mh$.invokeExact(stream);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -16424,7 +16745,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_AudioStreamDevicePaused");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_AudioStreamDevicePaused");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -16471,8 +16792,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_AudioStreamDevicePaused", stream);
             }
             return (boolean)mh$.invokeExact(stream);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -16484,7 +16803,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_LockAudioStream");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_LockAudioStream");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -16531,8 +16850,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_LockAudioStream", stream);
             }
             return (boolean)mh$.invokeExact(stream);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -16544,7 +16861,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_UnlockAudioStream");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_UnlockAudioStream");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -16591,8 +16908,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_UnlockAudioStream", stream);
             }
             return (boolean)mh$.invokeExact(stream);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -16606,7 +16921,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetAudioStreamGetCallback");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetAudioStreamGetCallback");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -16653,8 +16968,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetAudioStreamGetCallback", stream, callback, userdata);
             }
             return (boolean)mh$.invokeExact(stream, callback, userdata);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -16668,7 +16981,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetAudioStreamPutCallback");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetAudioStreamPutCallback");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -16715,8 +17028,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetAudioStreamPutCallback", stream, callback, userdata);
             }
             return (boolean)mh$.invokeExact(stream, callback, userdata);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -16727,7 +17038,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_DestroyAudioStream");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_DestroyAudioStream");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -16774,8 +17085,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_DestroyAudioStream", stream);
             }
             mh$.invokeExact(stream);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -16790,7 +17099,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_OpenAudioDeviceStream");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_OpenAudioDeviceStream");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -16837,8 +17146,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_OpenAudioDeviceStream", devid, spec, callback, userdata);
             }
             return (MemorySegment)mh$.invokeExact(devid, spec, callback, userdata);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -16852,7 +17159,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetAudioPostmixCallback");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetAudioPostmixCallback");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -16899,8 +17206,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetAudioPostmixCallback", devid, callback, userdata);
             }
             return (boolean)mh$.invokeExact(devid, callback, userdata);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -16916,7 +17221,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_LoadWAV_IO");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_LoadWAV_IO");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -16963,8 +17268,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_LoadWAV_IO", src, closeio, spec, audio_buf, audio_len);
             }
             return (boolean)mh$.invokeExact(src, closeio, spec, audio_buf, audio_len);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -16979,7 +17282,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_LoadWAV");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_LoadWAV");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -17026,8 +17329,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_LoadWAV", path, spec, audio_buf, audio_len);
             }
             return (boolean)mh$.invokeExact(path, spec, audio_buf, audio_len);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -17043,7 +17344,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_FLOAT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_MixAudio");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_MixAudio");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -17090,8 +17391,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_MixAudio", dst, src, format, len, volume);
             }
             return (boolean)mh$.invokeExact(dst, src, format, len, volume);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -17108,7 +17407,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ConvertAudioSamples");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ConvertAudioSamples");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -17155,8 +17454,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ConvertAudioSamples", src_spec, src_data, src_len, dst_spec, dst_data, dst_len);
             }
             return (boolean)mh$.invokeExact(src_spec, src_data, src_len, dst_spec, dst_data, dst_len);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -17168,7 +17465,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetAudioFormatName");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetAudioFormatName");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -17215,8 +17512,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetAudioFormatName", format);
             }
             return (MemorySegment)mh$.invokeExact(format);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -17228,7 +17523,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetSilenceValueForFormat");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetSilenceValueForFormat");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -17275,8 +17570,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetSilenceValueForFormat", format);
             }
             return (int)mh$.invokeExact(format);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -17434,7 +17727,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ComposeCustomBlendMode");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ComposeCustomBlendMode");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -17481,8 +17774,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ComposeCustomBlendMode", srcColorFactor, dstColorFactor, colorOperation, srcAlphaFactor, dstAlphaFactor, alphaOperation);
             }
             return (int)mh$.invokeExact(srcColorFactor, dstColorFactor, colorOperation, srcAlphaFactor, dstAlphaFactor, alphaOperation);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -19159,7 +19450,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetPixelFormatName");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetPixelFormatName");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -19206,8 +19497,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetPixelFormatName", format);
             }
             return (MemorySegment)mh$.invokeExact(format);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -19224,7 +19513,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetMasksForPixelFormat");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetMasksForPixelFormat");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -19271,8 +19560,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetMasksForPixelFormat", format, bpp, Rmask, Gmask, Bmask, Amask);
             }
             return (boolean)mh$.invokeExact(format, bpp, Rmask, Gmask, Bmask, Amask);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -19288,7 +19575,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetPixelFormatForMasks");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetPixelFormatForMasks");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -19335,8 +19622,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetPixelFormatForMasks", bpp, Rmask, Gmask, Bmask, Amask);
             }
             return (int)mh$.invokeExact(bpp, Rmask, Gmask, Bmask, Amask);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -19348,7 +19633,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetPixelFormatDetails");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetPixelFormatDetails");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -19395,8 +19680,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetPixelFormatDetails", format);
             }
             return (MemorySegment)mh$.invokeExact(format);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -19408,7 +19691,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_CreatePalette");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_CreatePalette");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -19455,8 +19738,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_CreatePalette", ncolors);
             }
             return (MemorySegment)mh$.invokeExact(ncolors);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -19471,7 +19752,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetPaletteColors");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetPaletteColors");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -19518,8 +19799,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetPaletteColors", palette, colors, firstcolor, ncolors);
             }
             return (boolean)mh$.invokeExact(palette, colors, firstcolor, ncolors);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -19530,7 +19809,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_DestroyPalette");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_DestroyPalette");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -19577,8 +19856,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_DestroyPalette", palette);
             }
             mh$.invokeExact(palette);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -19594,7 +19871,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_CHAR
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_MapRGB");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_MapRGB");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -19641,8 +19918,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_MapRGB", format, palette, r, g, b);
             }
             return (int)mh$.invokeExact(format, palette, r, g, b);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -19659,7 +19934,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_CHAR
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_MapRGBA");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_MapRGBA");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -19706,8 +19981,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_MapRGBA", format, palette, r, g, b, a);
             }
             return (int)mh$.invokeExact(format, palette, r, g, b, a);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -19723,7 +19996,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetRGB");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetRGB");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -19770,8 +20043,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetRGB", pixelvalue, format, palette, r, g, b);
             }
             mh$.invokeExact(pixelvalue, format, palette, r, g, b);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -19788,7 +20059,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetRGBA");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetRGBA");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -19835,8 +20106,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetRGBA", pixelvalue, format, palette, r, g, b, a);
             }
             mh$.invokeExact(pixelvalue, format, palette, r, g, b, a);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -19849,7 +20118,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_HasRectIntersection");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_HasRectIntersection");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -19896,8 +20165,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_HasRectIntersection", A, B);
             }
             return (boolean)mh$.invokeExact(A, B);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -19911,7 +20178,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetRectIntersection");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetRectIntersection");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -19958,8 +20225,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetRectIntersection", A, B, result);
             }
             return (boolean)mh$.invokeExact(A, B, result);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -19973,7 +20238,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetRectUnion");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetRectUnion");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -20020,8 +20285,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetRectUnion", A, B, result);
             }
             return (boolean)mh$.invokeExact(A, B, result);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -20036,7 +20299,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetRectEnclosingPoints");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetRectEnclosingPoints");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -20083,8 +20346,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetRectEnclosingPoints", points, count, clip, result);
             }
             return (boolean)mh$.invokeExact(points, count, clip, result);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -20100,7 +20361,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetRectAndLineIntersection");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetRectAndLineIntersection");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -20147,8 +20408,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetRectAndLineIntersection", rect, X1, Y1, X2, Y2);
             }
             return (boolean)mh$.invokeExact(rect, X1, Y1, X2, Y2);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -20161,7 +20420,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_HasRectIntersectionFloat");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_HasRectIntersectionFloat");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -20208,8 +20467,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_HasRectIntersectionFloat", A, B);
             }
             return (boolean)mh$.invokeExact(A, B);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -20223,7 +20480,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetRectIntersectionFloat");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetRectIntersectionFloat");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -20270,8 +20527,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetRectIntersectionFloat", A, B, result);
             }
             return (boolean)mh$.invokeExact(A, B, result);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -20285,7 +20540,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetRectUnionFloat");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetRectUnionFloat");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -20332,8 +20587,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetRectUnionFloat", A, B, result);
             }
             return (boolean)mh$.invokeExact(A, B, result);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -20348,7 +20601,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetRectEnclosingPointsFloat");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetRectEnclosingPointsFloat");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -20395,8 +20648,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetRectEnclosingPointsFloat", points, count, clip, result);
             }
             return (boolean)mh$.invokeExact(points, count, clip, result);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -20412,7 +20663,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetRectAndLineIntersectionFloat");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetRectAndLineIntersectionFloat");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -20459,8 +20710,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetRectAndLineIntersectionFloat", rect, X1, Y1, X2, Y2);
             }
             return (boolean)mh$.invokeExact(rect, X1, Y1, X2, Y2);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -20552,7 +20801,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_CreateSurface");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_CreateSurface");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -20599,8 +20848,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_CreateSurface", width, height, format);
             }
             return (MemorySegment)mh$.invokeExact(width, height, format);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -20616,7 +20863,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_CreateSurfaceFrom");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_CreateSurfaceFrom");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -20663,8 +20910,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_CreateSurfaceFrom", width, height, format, pixels, pitch);
             }
             return (MemorySegment)mh$.invokeExact(width, height, format, pixels, pitch);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -20675,7 +20920,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_DestroySurface");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_DestroySurface");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -20722,8 +20967,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_DestroySurface", surface);
             }
             mh$.invokeExact(surface);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -20735,7 +20978,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetSurfaceProperties");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetSurfaceProperties");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -20782,8 +21025,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetSurfaceProperties", surface);
             }
             return (int)mh$.invokeExact(surface);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -20796,7 +21037,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetSurfaceColorspace");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetSurfaceColorspace");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -20843,8 +21084,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetSurfaceColorspace", surface, colorspace);
             }
             return (boolean)mh$.invokeExact(surface, colorspace);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -20856,7 +21095,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetSurfaceColorspace");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetSurfaceColorspace");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -20903,8 +21142,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetSurfaceColorspace", surface);
             }
             return (int)mh$.invokeExact(surface);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -20916,7 +21153,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_CreateSurfacePalette");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_CreateSurfacePalette");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -20963,8 +21200,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_CreateSurfacePalette", surface);
             }
             return (MemorySegment)mh$.invokeExact(surface);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -20977,7 +21212,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetSurfacePalette");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetSurfacePalette");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -21024,8 +21259,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetSurfacePalette", surface, palette);
             }
             return (boolean)mh$.invokeExact(surface, palette);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -21037,7 +21270,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetSurfacePalette");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetSurfacePalette");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -21084,8 +21317,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetSurfacePalette", surface);
             }
             return (MemorySegment)mh$.invokeExact(surface);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -21098,7 +21329,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_AddSurfaceAlternateImage");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_AddSurfaceAlternateImage");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -21145,8 +21376,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_AddSurfaceAlternateImage", surface, image);
             }
             return (boolean)mh$.invokeExact(surface, image);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -21158,7 +21387,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SurfaceHasAlternateImages");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SurfaceHasAlternateImages");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -21205,8 +21434,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SurfaceHasAlternateImages", surface);
             }
             return (boolean)mh$.invokeExact(surface);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -21219,7 +21446,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetSurfaceImages");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetSurfaceImages");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -21266,8 +21493,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetSurfaceImages", surface, count);
             }
             return (MemorySegment)mh$.invokeExact(surface, count);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -21278,7 +21503,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_RemoveSurfaceAlternateImages");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_RemoveSurfaceAlternateImages");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -21325,8 +21550,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_RemoveSurfaceAlternateImages", surface);
             }
             mh$.invokeExact(surface);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -21338,7 +21561,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_LockSurface");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_LockSurface");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -21385,8 +21608,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_LockSurface", surface);
             }
             return (boolean)mh$.invokeExact(surface);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -21397,7 +21618,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_UnlockSurface");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_UnlockSurface");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -21444,8 +21665,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_UnlockSurface", surface);
             }
             mh$.invokeExact(surface);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -21458,7 +21677,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_BOOL
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_LoadSurface_IO");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_LoadSurface_IO");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -21505,8 +21724,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_LoadSurface_IO", src, closeio);
             }
             return (MemorySegment)mh$.invokeExact(src, closeio);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -21518,7 +21735,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_LoadSurface");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_LoadSurface");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -21565,8 +21782,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_LoadSurface", file);
             }
             return (MemorySegment)mh$.invokeExact(file);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -21579,7 +21794,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_BOOL
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_LoadBMP_IO");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_LoadBMP_IO");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -21626,8 +21841,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_LoadBMP_IO", src, closeio);
             }
             return (MemorySegment)mh$.invokeExact(src, closeio);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -21639,7 +21852,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_LoadBMP");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_LoadBMP");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -21686,8 +21899,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_LoadBMP", file);
             }
             return (MemorySegment)mh$.invokeExact(file);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -21701,7 +21912,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_BOOL
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SaveBMP_IO");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SaveBMP_IO");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -21748,8 +21959,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SaveBMP_IO", surface, dst, closeio);
             }
             return (boolean)mh$.invokeExact(surface, dst, closeio);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -21762,7 +21971,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SaveBMP");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SaveBMP");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -21809,8 +22018,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SaveBMP", surface, file);
             }
             return (boolean)mh$.invokeExact(surface, file);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -21823,7 +22030,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_BOOL
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_LoadPNG_IO");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_LoadPNG_IO");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -21870,8 +22077,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_LoadPNG_IO", src, closeio);
             }
             return (MemorySegment)mh$.invokeExact(src, closeio);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -21883,7 +22088,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_LoadPNG");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_LoadPNG");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -21930,8 +22135,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_LoadPNG", file);
             }
             return (MemorySegment)mh$.invokeExact(file);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -21945,7 +22148,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_BOOL
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SavePNG_IO");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SavePNG_IO");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -21992,8 +22195,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SavePNG_IO", surface, dst, closeio);
             }
             return (boolean)mh$.invokeExact(surface, dst, closeio);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -22006,7 +22207,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SavePNG");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SavePNG");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -22053,8 +22254,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SavePNG", surface, file);
             }
             return (boolean)mh$.invokeExact(surface, file);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -22067,7 +22266,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_BOOL
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetSurfaceRLE");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetSurfaceRLE");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -22114,8 +22313,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetSurfaceRLE", surface, enabled);
             }
             return (boolean)mh$.invokeExact(surface, enabled);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -22127,7 +22324,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SurfaceHasRLE");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SurfaceHasRLE");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -22174,8 +22371,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SurfaceHasRLE", surface);
             }
             return (boolean)mh$.invokeExact(surface);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -22189,7 +22384,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetSurfaceColorKey");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetSurfaceColorKey");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -22236,8 +22431,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetSurfaceColorKey", surface, enabled, key);
             }
             return (boolean)mh$.invokeExact(surface, enabled, key);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -22249,7 +22442,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SurfaceHasColorKey");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SurfaceHasColorKey");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -22296,8 +22489,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SurfaceHasColorKey", surface);
             }
             return (boolean)mh$.invokeExact(surface);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -22310,7 +22501,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetSurfaceColorKey");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetSurfaceColorKey");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -22357,8 +22548,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetSurfaceColorKey", surface, key);
             }
             return (boolean)mh$.invokeExact(surface, key);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -22373,7 +22562,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_CHAR
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetSurfaceColorMod");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetSurfaceColorMod");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -22420,8 +22609,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetSurfaceColorMod", surface, r, g, b);
             }
             return (boolean)mh$.invokeExact(surface, r, g, b);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -22436,7 +22623,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetSurfaceColorMod");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetSurfaceColorMod");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -22483,8 +22670,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetSurfaceColorMod", surface, r, g, b);
             }
             return (boolean)mh$.invokeExact(surface, r, g, b);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -22497,7 +22682,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_CHAR
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetSurfaceAlphaMod");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetSurfaceAlphaMod");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -22544,8 +22729,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetSurfaceAlphaMod", surface, alpha);
             }
             return (boolean)mh$.invokeExact(surface, alpha);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -22558,7 +22741,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetSurfaceAlphaMod");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetSurfaceAlphaMod");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -22605,8 +22788,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetSurfaceAlphaMod", surface, alpha);
             }
             return (boolean)mh$.invokeExact(surface, alpha);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -22619,7 +22800,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetSurfaceBlendMode");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetSurfaceBlendMode");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -22666,8 +22847,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetSurfaceBlendMode", surface, blendMode);
             }
             return (boolean)mh$.invokeExact(surface, blendMode);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -22680,7 +22859,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetSurfaceBlendMode");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetSurfaceBlendMode");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -22727,8 +22906,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetSurfaceBlendMode", surface, blendMode);
             }
             return (boolean)mh$.invokeExact(surface, blendMode);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -22741,7 +22918,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetSurfaceClipRect");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetSurfaceClipRect");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -22788,8 +22965,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetSurfaceClipRect", surface, rect);
             }
             return (boolean)mh$.invokeExact(surface, rect);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -22802,7 +22977,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetSurfaceClipRect");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetSurfaceClipRect");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -22849,8 +23024,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetSurfaceClipRect", surface, rect);
             }
             return (boolean)mh$.invokeExact(surface, rect);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -22863,7 +23036,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_FlipSurface");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_FlipSurface");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -22910,8 +23083,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_FlipSurface", surface, flip);
             }
             return (boolean)mh$.invokeExact(surface, flip);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -22924,7 +23095,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_FLOAT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_RotateSurface");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_RotateSurface");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -22971,8 +23142,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_RotateSurface", surface, angle);
             }
             return (MemorySegment)mh$.invokeExact(surface, angle);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -22984,7 +23153,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_DuplicateSurface");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_DuplicateSurface");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -23031,8 +23200,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_DuplicateSurface", surface);
             }
             return (MemorySegment)mh$.invokeExact(surface);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -23047,7 +23214,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ScaleSurface");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ScaleSurface");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -23094,8 +23261,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ScaleSurface", surface, width, height, scaleMode);
             }
             return (MemorySegment)mh$.invokeExact(surface, width, height, scaleMode);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -23108,7 +23273,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ConvertSurface");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ConvertSurface");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -23155,8 +23320,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ConvertSurface", surface, format);
             }
             return (MemorySegment)mh$.invokeExact(surface, format);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -23172,7 +23335,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ConvertSurfaceAndColorspace");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ConvertSurfaceAndColorspace");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -23219,8 +23382,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ConvertSurfaceAndColorspace", surface, format, palette, colorspace, props);
             }
             return (MemorySegment)mh$.invokeExact(surface, format, palette, colorspace, props);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -23239,7 +23400,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ConvertPixels");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ConvertPixels");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -23286,8 +23447,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ConvertPixels", width, height, src_format, src, src_pitch, dst_format, dst, dst_pitch);
             }
             return (boolean)mh$.invokeExact(width, height, src_format, src, src_pitch, dst_format, dst, dst_pitch);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -23310,7 +23469,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ConvertPixelsAndColorspace");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ConvertPixelsAndColorspace");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -23357,8 +23516,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ConvertPixelsAndColorspace", width, height, src_format, src_colorspace, src_properties, src, src_pitch, dst_format, dst_colorspace, dst_properties, dst, dst_pitch);
             }
             return (boolean)mh$.invokeExact(width, height, src_format, src_colorspace, src_properties, src, src_pitch, dst_format, dst_colorspace, dst_properties, dst, dst_pitch);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -23378,7 +23535,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_BOOL
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_PremultiplyAlpha");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_PremultiplyAlpha");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -23425,8 +23582,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_PremultiplyAlpha", width, height, src_format, src, src_pitch, dst_format, dst, dst_pitch, linear);
             }
             return (boolean)mh$.invokeExact(width, height, src_format, src, src_pitch, dst_format, dst, dst_pitch, linear);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -23439,7 +23594,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_BOOL
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_PremultiplySurfaceAlpha");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_PremultiplySurfaceAlpha");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -23486,8 +23641,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_PremultiplySurfaceAlpha", surface, linear);
             }
             return (boolean)mh$.invokeExact(surface, linear);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -23503,7 +23656,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_FLOAT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ClearSurface");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ClearSurface");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -23550,8 +23703,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ClearSurface", surface, r, g, b, a);
             }
             return (boolean)mh$.invokeExact(surface, r, g, b, a);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -23565,7 +23716,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_FillSurfaceRect");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_FillSurfaceRect");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -23612,8 +23763,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_FillSurfaceRect", dst, rect, color);
             }
             return (boolean)mh$.invokeExact(dst, rect, color);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -23628,7 +23777,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_FillSurfaceRects");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_FillSurfaceRects");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -23675,8 +23824,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_FillSurfaceRects", dst, rects, count, color);
             }
             return (boolean)mh$.invokeExact(dst, rects, count, color);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -23691,7 +23838,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_BlitSurface");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_BlitSurface");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -23738,8 +23885,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_BlitSurface", src, srcrect, dst, dstrect);
             }
             return (boolean)mh$.invokeExact(src, srcrect, dst, dstrect);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -23754,7 +23899,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_BlitSurfaceUnchecked");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_BlitSurfaceUnchecked");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -23801,8 +23946,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_BlitSurfaceUnchecked", src, srcrect, dst, dstrect);
             }
             return (boolean)mh$.invokeExact(src, srcrect, dst, dstrect);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -23818,7 +23961,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_BlitSurfaceScaled");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_BlitSurfaceScaled");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -23865,8 +24008,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_BlitSurfaceScaled", src, srcrect, dst, dstrect, scaleMode);
             }
             return (boolean)mh$.invokeExact(src, srcrect, dst, dstrect, scaleMode);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -23882,7 +24023,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_BlitSurfaceUncheckedScaled");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_BlitSurfaceUncheckedScaled");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -23929,8 +24070,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_BlitSurfaceUncheckedScaled", src, srcrect, dst, dstrect, scaleMode);
             }
             return (boolean)mh$.invokeExact(src, srcrect, dst, dstrect, scaleMode);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -23946,7 +24085,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_StretchSurface");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_StretchSurface");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -23993,8 +24132,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_StretchSurface", src, srcrect, dst, dstrect, scaleMode);
             }
             return (boolean)mh$.invokeExact(src, srcrect, dst, dstrect, scaleMode);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -24009,7 +24146,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_BlitSurfaceTiled");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_BlitSurfaceTiled");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -24056,8 +24193,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_BlitSurfaceTiled", src, srcrect, dst, dstrect);
             }
             return (boolean)mh$.invokeExact(src, srcrect, dst, dstrect);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -24074,7 +24209,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_BlitSurfaceTiledWithScale");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_BlitSurfaceTiledWithScale");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -24121,8 +24256,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_BlitSurfaceTiledWithScale", src, srcrect, scale, scaleMode, dst, dstrect);
             }
             return (boolean)mh$.invokeExact(src, srcrect, scale, scaleMode, dst, dstrect);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -24143,7 +24276,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_BlitSurface9Grid");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_BlitSurface9Grid");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -24190,8 +24323,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_BlitSurface9Grid", src, srcrect, left_width, right_width, top_height, bottom_height, scale, scaleMode, dst, dstrect);
             }
             return (boolean)mh$.invokeExact(src, srcrect, left_width, right_width, top_height, bottom_height, scale, scaleMode, dst, dstrect);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -24206,7 +24337,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_CHAR
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_MapSurfaceRGB");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_MapSurfaceRGB");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -24253,8 +24384,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_MapSurfaceRGB", surface, r, g, b);
             }
             return (int)mh$.invokeExact(surface, r, g, b);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -24270,7 +24399,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_CHAR
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_MapSurfaceRGBA");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_MapSurfaceRGBA");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -24317,8 +24446,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_MapSurfaceRGBA", surface, r, g, b, a);
             }
             return (int)mh$.invokeExact(surface, r, g, b, a);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -24336,7 +24463,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ReadSurfacePixel");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ReadSurfacePixel");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -24383,8 +24510,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ReadSurfacePixel", surface, x, y, r, g, b, a);
             }
             return (boolean)mh$.invokeExact(surface, x, y, r, g, b, a);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -24402,7 +24527,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ReadSurfacePixelFloat");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ReadSurfacePixelFloat");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -24449,8 +24574,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ReadSurfacePixelFloat", surface, x, y, r, g, b, a);
             }
             return (boolean)mh$.invokeExact(surface, x, y, r, g, b, a);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -24468,7 +24591,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_CHAR
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_WriteSurfacePixel");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_WriteSurfacePixel");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -24515,8 +24638,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_WriteSurfacePixel", surface, x, y, r, g, b, a);
             }
             return (boolean)mh$.invokeExact(surface, x, y, r, g, b, a);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -24534,7 +24655,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_FLOAT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_WriteSurfacePixelFloat");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_WriteSurfacePixelFloat");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -24581,8 +24702,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_WriteSurfacePixelFloat", surface, x, y, r, g, b, a);
             }
             return (boolean)mh$.invokeExact(surface, x, y, r, g, b, a);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -24652,7 +24771,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_INT    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetNumCameraDrivers");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetNumCameraDrivers");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -24699,8 +24818,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetNumCameraDrivers");
             }
             return (int)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -24712,7 +24829,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetCameraDriver");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetCameraDriver");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -24759,8 +24876,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetCameraDriver", index);
             }
             return (MemorySegment)mh$.invokeExact(index);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -24770,7 +24885,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_POINTER    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetCurrentCameraDriver");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetCurrentCameraDriver");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -24817,8 +24932,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetCurrentCameraDriver");
             }
             return (MemorySegment)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -24830,7 +24943,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetCameras");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetCameras");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -24877,8 +24990,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetCameras", count);
             }
             return (MemorySegment)mh$.invokeExact(count);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -24891,7 +25002,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetCameraSupportedFormats");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetCameraSupportedFormats");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -24938,8 +25049,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetCameraSupportedFormats", instance_id, count);
             }
             return (MemorySegment)mh$.invokeExact(instance_id, count);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -24951,7 +25060,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetCameraName");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetCameraName");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -24998,8 +25107,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetCameraName", instance_id);
             }
             return (MemorySegment)mh$.invokeExact(instance_id);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -25011,7 +25118,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetCameraPosition");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetCameraPosition");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -25058,8 +25165,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetCameraPosition", instance_id);
             }
             return (int)mh$.invokeExact(instance_id);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -25072,7 +25177,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_OpenCamera");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_OpenCamera");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -25119,8 +25224,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_OpenCamera", instance_id, spec);
             }
             return (MemorySegment)mh$.invokeExact(instance_id, spec);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -25132,7 +25235,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetCameraPermissionState");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetCameraPermissionState");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -25179,8 +25282,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetCameraPermissionState", camera);
             }
             return (int)mh$.invokeExact(camera);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -25192,7 +25293,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetCameraID");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetCameraID");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -25239,8 +25340,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetCameraID", camera);
             }
             return (int)mh$.invokeExact(camera);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -25252,7 +25351,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetCameraProperties");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetCameraProperties");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -25299,8 +25398,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetCameraProperties", camera);
             }
             return (int)mh$.invokeExact(camera);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -25313,7 +25410,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetCameraFormat");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetCameraFormat");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -25360,8 +25457,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetCameraFormat", camera, spec);
             }
             return (boolean)mh$.invokeExact(camera, spec);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -25374,7 +25469,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_AcquireCameraFrame");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_AcquireCameraFrame");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -25421,8 +25516,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_AcquireCameraFrame", camera, timestampNS);
             }
             return (MemorySegment)mh$.invokeExact(camera, timestampNS);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -25434,7 +25527,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ReleaseCameraFrame");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ReleaseCameraFrame");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -25481,8 +25574,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ReleaseCameraFrame", camera, frame);
             }
             mh$.invokeExact(camera, frame);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -25493,7 +25584,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_CloseCamera");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_CloseCamera");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -25540,8 +25631,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_CloseCamera", camera);
             }
             mh$.invokeExact(camera);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -25553,7 +25642,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetClipboardText");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetClipboardText");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -25600,8 +25689,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetClipboardText", text);
             }
             return (boolean)mh$.invokeExact(text);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -25611,7 +25698,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_POINTER    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetClipboardText");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetClipboardText");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -25658,8 +25745,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetClipboardText");
             }
             return (MemorySegment)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -25669,7 +25754,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_BOOL    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_HasClipboardText");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_HasClipboardText");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -25716,8 +25801,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_HasClipboardText");
             }
             return (boolean)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -25729,7 +25812,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetPrimarySelectionText");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetPrimarySelectionText");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -25776,8 +25859,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetPrimarySelectionText", text);
             }
             return (boolean)mh$.invokeExact(text);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -25787,7 +25868,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_POINTER    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetPrimarySelectionText");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetPrimarySelectionText");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -25834,8 +25915,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetPrimarySelectionText");
             }
             return (MemorySegment)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -25845,7 +25924,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_BOOL    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_HasPrimarySelectionText");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_HasPrimarySelectionText");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -25892,8 +25971,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_HasPrimarySelectionText");
             }
             return (boolean)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -25909,7 +25986,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_LONG
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetClipboardData");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetClipboardData");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -25956,8 +26033,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetClipboardData", callback, cleanup, userdata, mime_types, num_mime_types);
             }
             return (boolean)mh$.invokeExact(callback, cleanup, userdata, mime_types, num_mime_types);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -25967,7 +26042,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_BOOL    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ClearClipboardData");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ClearClipboardData");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -26014,8 +26089,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ClearClipboardData");
             }
             return (boolean)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -26028,7 +26101,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetClipboardData");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetClipboardData");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -26075,8 +26148,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetClipboardData", mime_type, size);
             }
             return (MemorySegment)mh$.invokeExact(mime_type, size);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -26088,7 +26159,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_HasClipboardData");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_HasClipboardData");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -26135,8 +26206,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_HasClipboardData", mime_type);
             }
             return (boolean)mh$.invokeExact(mime_type);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -26148,7 +26217,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetClipboardMimeTypes");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetClipboardMimeTypes");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -26195,8 +26264,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetClipboardMimeTypes", num_mime_types);
             }
             return (MemorySegment)mh$.invokeExact(num_mime_types);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -26206,7 +26273,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_INT    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetNumLogicalCPUCores");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetNumLogicalCPUCores");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -26253,8 +26320,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetNumLogicalCPUCores");
             }
             return (int)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -26264,7 +26329,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_INT    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetCPUCacheLineSize");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetCPUCacheLineSize");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -26311,8 +26376,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetCPUCacheLineSize");
             }
             return (int)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -26322,7 +26385,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_BOOL    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_HasAltiVec");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_HasAltiVec");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -26369,8 +26432,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_HasAltiVec");
             }
             return (boolean)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -26380,7 +26441,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_BOOL    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_HasMMX");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_HasMMX");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -26427,8 +26488,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_HasMMX");
             }
             return (boolean)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -26438,7 +26497,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_BOOL    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_HasSSE");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_HasSSE");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -26485,8 +26544,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_HasSSE");
             }
             return (boolean)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -26496,7 +26553,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_BOOL    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_HasSSE2");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_HasSSE2");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -26543,8 +26600,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_HasSSE2");
             }
             return (boolean)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -26554,7 +26609,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_BOOL    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_HasSSE3");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_HasSSE3");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -26601,8 +26656,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_HasSSE3");
             }
             return (boolean)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -26612,7 +26665,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_BOOL    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_HasSSE41");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_HasSSE41");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -26659,8 +26712,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_HasSSE41");
             }
             return (boolean)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -26670,7 +26721,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_BOOL    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_HasSSE42");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_HasSSE42");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -26717,8 +26768,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_HasSSE42");
             }
             return (boolean)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -26728,7 +26777,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_BOOL    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_HasAVX");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_HasAVX");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -26775,8 +26824,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_HasAVX");
             }
             return (boolean)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -26786,7 +26833,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_BOOL    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_HasAVX2");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_HasAVX2");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -26833,8 +26880,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_HasAVX2");
             }
             return (boolean)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -26844,7 +26889,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_BOOL    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_HasAVX512F");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_HasAVX512F");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -26891,8 +26936,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_HasAVX512F");
             }
             return (boolean)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -26902,7 +26945,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_BOOL    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_HasARMSIMD");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_HasARMSIMD");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -26949,8 +26992,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_HasARMSIMD");
             }
             return (boolean)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -26960,7 +27001,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_BOOL    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_HasNEON");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_HasNEON");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -27007,8 +27048,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_HasNEON");
             }
             return (boolean)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -27018,7 +27057,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_BOOL    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_HasLSX");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_HasLSX");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -27065,8 +27104,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_HasLSX");
             }
             return (boolean)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -27076,7 +27113,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_BOOL    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_HasLASX");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_HasLASX");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -27123,8 +27160,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_HasLASX");
             }
             return (boolean)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -27134,7 +27169,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_INT    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetSystemRAM");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetSystemRAM");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -27181,8 +27216,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetSystemRAM");
             }
             return (int)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -27192,7 +27225,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_LONG    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetSIMDAlignment");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetSIMDAlignment");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -27239,8 +27272,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetSIMDAlignment");
             }
             return (long)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -27250,7 +27281,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_INT    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetSystemPageSize");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetSystemPageSize");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -27297,8 +27328,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetSystemPageSize");
             }
             return (int)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -27791,7 +27820,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_INT    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetNumVideoDrivers");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetNumVideoDrivers");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -27838,8 +27867,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetNumVideoDrivers");
             }
             return (int)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -27851,7 +27878,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetVideoDriver");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetVideoDriver");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -27898,8 +27925,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetVideoDriver", index);
             }
             return (MemorySegment)mh$.invokeExact(index);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -27909,7 +27934,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_POINTER    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetCurrentVideoDriver");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetCurrentVideoDriver");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -27956,8 +27981,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetCurrentVideoDriver");
             }
             return (MemorySegment)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -27967,7 +27990,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_INT    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetSystemTheme");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetSystemTheme");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -28014,8 +28037,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetSystemTheme");
             }
             return (int)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -28027,7 +28048,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetDisplays");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetDisplays");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -28074,8 +28095,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetDisplays", count);
             }
             return (MemorySegment)mh$.invokeExact(count);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -28085,7 +28104,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_INT    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetPrimaryDisplay");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetPrimaryDisplay");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -28132,8 +28151,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetPrimaryDisplay");
             }
             return (int)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -28145,7 +28162,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetDisplayProperties");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetDisplayProperties");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -28192,8 +28209,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetDisplayProperties", displayID);
             }
             return (int)mh$.invokeExact(displayID);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -28205,7 +28220,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetDisplayName");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetDisplayName");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -28252,8 +28267,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetDisplayName", displayID);
             }
             return (MemorySegment)mh$.invokeExact(displayID);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -28266,7 +28279,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetDisplayBounds");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetDisplayBounds");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -28313,8 +28326,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetDisplayBounds", displayID, rect);
             }
             return (boolean)mh$.invokeExact(displayID, rect);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -28327,7 +28338,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetDisplayUsableBounds");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetDisplayUsableBounds");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -28374,8 +28385,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetDisplayUsableBounds", displayID, rect);
             }
             return (boolean)mh$.invokeExact(displayID, rect);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -28387,7 +28396,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetNaturalDisplayOrientation");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetNaturalDisplayOrientation");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -28434,8 +28443,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetNaturalDisplayOrientation", displayID);
             }
             return (int)mh$.invokeExact(displayID);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -28447,7 +28454,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetCurrentDisplayOrientation");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetCurrentDisplayOrientation");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -28494,8 +28501,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetCurrentDisplayOrientation", displayID);
             }
             return (int)mh$.invokeExact(displayID);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -28507,7 +28512,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetDisplayContentScale");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetDisplayContentScale");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -28554,8 +28559,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetDisplayContentScale", displayID);
             }
             return (float)mh$.invokeExact(displayID);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -28568,7 +28571,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetFullscreenDisplayModes");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetFullscreenDisplayModes");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -28615,8 +28618,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetFullscreenDisplayModes", displayID, count);
             }
             return (MemorySegment)mh$.invokeExact(displayID, count);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -28633,7 +28634,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetClosestFullscreenDisplayMode");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetClosestFullscreenDisplayMode");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -28680,8 +28681,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetClosestFullscreenDisplayMode", displayID, w, h, refresh_rate, include_high_density_modes, closest);
             }
             return (boolean)mh$.invokeExact(displayID, w, h, refresh_rate, include_high_density_modes, closest);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -28693,7 +28692,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetDesktopDisplayMode");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetDesktopDisplayMode");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -28740,8 +28739,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetDesktopDisplayMode", displayID);
             }
             return (MemorySegment)mh$.invokeExact(displayID);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -28753,7 +28750,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetCurrentDisplayMode");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetCurrentDisplayMode");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -28800,8 +28797,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetCurrentDisplayMode", displayID);
             }
             return (MemorySegment)mh$.invokeExact(displayID);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -28813,7 +28808,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetDisplayForPoint");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetDisplayForPoint");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -28860,8 +28855,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetDisplayForPoint", point);
             }
             return (int)mh$.invokeExact(point);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -28873,7 +28866,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetDisplayForRect");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetDisplayForRect");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -28920,8 +28913,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetDisplayForRect", rect);
             }
             return (int)mh$.invokeExact(rect);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -28933,7 +28924,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetDisplayForWindow");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetDisplayForWindow");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -28980,8 +28971,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetDisplayForWindow", window);
             }
             return (int)mh$.invokeExact(window);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -28993,7 +28982,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetWindowPixelDensity");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetWindowPixelDensity");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -29040,8 +29029,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetWindowPixelDensity", window);
             }
             return (float)mh$.invokeExact(window);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -29053,7 +29040,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetWindowDisplayScale");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetWindowDisplayScale");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -29100,8 +29087,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetWindowDisplayScale", window);
             }
             return (float)mh$.invokeExact(window);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -29114,7 +29099,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetWindowFullscreenMode");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetWindowFullscreenMode");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -29161,8 +29146,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetWindowFullscreenMode", window, mode);
             }
             return (boolean)mh$.invokeExact(window, mode);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -29174,7 +29157,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetWindowFullscreenMode");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetWindowFullscreenMode");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -29221,8 +29204,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetWindowFullscreenMode", window);
             }
             return (MemorySegment)mh$.invokeExact(window);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -29235,7 +29216,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetWindowICCProfile");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetWindowICCProfile");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -29282,8 +29263,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetWindowICCProfile", window, size);
             }
             return (MemorySegment)mh$.invokeExact(window, size);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -29295,7 +29274,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetWindowPixelFormat");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetWindowPixelFormat");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -29342,8 +29321,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetWindowPixelFormat", window);
             }
             return (int)mh$.invokeExact(window);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -29355,7 +29332,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetWindows");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetWindows");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -29402,8 +29379,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetWindows", count);
             }
             return (MemorySegment)mh$.invokeExact(count);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -29418,7 +29393,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_LONG_LONG
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_CreateWindow");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_CreateWindow");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -29465,8 +29440,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_CreateWindow", title, w, h, flags);
             }
             return (MemorySegment)mh$.invokeExact(title, w, h, flags);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -29483,7 +29456,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_LONG_LONG
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_CreatePopupWindow");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_CreatePopupWindow");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -29530,8 +29503,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_CreatePopupWindow", parent, offset_x, offset_y, w, h, flags);
             }
             return (MemorySegment)mh$.invokeExact(parent, offset_x, offset_y, w, h, flags);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -29543,7 +29514,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_CreateWindowWithProperties");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_CreateWindowWithProperties");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -29590,8 +29561,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_CreateWindowWithProperties", props);
             }
             return (MemorySegment)mh$.invokeExact(props);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -29603,7 +29572,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetWindowID");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetWindowID");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -29650,8 +29619,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetWindowID", window);
             }
             return (int)mh$.invokeExact(window);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -29663,7 +29630,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetWindowFromID");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetWindowFromID");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -29710,8 +29677,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetWindowFromID", id);
             }
             return (MemorySegment)mh$.invokeExact(id);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -29723,7 +29688,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetWindowParent");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetWindowParent");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -29770,8 +29735,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetWindowParent", window);
             }
             return (MemorySegment)mh$.invokeExact(window);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -29783,7 +29746,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetWindowProperties");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetWindowProperties");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -29830,8 +29793,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetWindowProperties", window);
             }
             return (int)mh$.invokeExact(window);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -29843,7 +29804,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetWindowFlags");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetWindowFlags");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -29890,8 +29851,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetWindowFlags", window);
             }
             return (long)mh$.invokeExact(window);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -29904,7 +29863,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetWindowTitle");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetWindowTitle");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -29951,8 +29910,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetWindowTitle", window, title);
             }
             return (boolean)mh$.invokeExact(window, title);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -29964,7 +29921,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetWindowTitle");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetWindowTitle");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -30011,8 +29968,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetWindowTitle", window);
             }
             return (MemorySegment)mh$.invokeExact(window);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -30025,7 +29980,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetWindowIcon");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetWindowIcon");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -30072,8 +30027,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetWindowIcon", window, icon);
             }
             return (boolean)mh$.invokeExact(window, icon);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -30087,7 +30040,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetWindowPosition");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetWindowPosition");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -30134,8 +30087,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetWindowPosition", window, x, y);
             }
             return (boolean)mh$.invokeExact(window, x, y);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -30149,7 +30100,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetWindowPosition");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetWindowPosition");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -30196,8 +30147,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetWindowPosition", window, x, y);
             }
             return (boolean)mh$.invokeExact(window, x, y);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -30211,7 +30160,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetWindowSize");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetWindowSize");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -30258,8 +30207,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetWindowSize", window, w, h);
             }
             return (boolean)mh$.invokeExact(window, w, h);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -30273,7 +30220,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetWindowSize");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetWindowSize");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -30320,8 +30267,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetWindowSize", window, w, h);
             }
             return (boolean)mh$.invokeExact(window, w, h);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -30334,7 +30279,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetWindowSafeArea");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetWindowSafeArea");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -30381,8 +30326,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetWindowSafeArea", window, rect);
             }
             return (boolean)mh$.invokeExact(window, rect);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -30396,7 +30339,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_FLOAT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetWindowAspectRatio");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetWindowAspectRatio");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -30443,8 +30386,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetWindowAspectRatio", window, min_aspect, max_aspect);
             }
             return (boolean)mh$.invokeExact(window, min_aspect, max_aspect);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -30458,7 +30399,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetWindowAspectRatio");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetWindowAspectRatio");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -30505,8 +30446,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetWindowAspectRatio", window, min_aspect, max_aspect);
             }
             return (boolean)mh$.invokeExact(window, min_aspect, max_aspect);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -30522,7 +30461,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetWindowBordersSize");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetWindowBordersSize");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -30569,8 +30508,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetWindowBordersSize", window, top, left, bottom, right);
             }
             return (boolean)mh$.invokeExact(window, top, left, bottom, right);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -30584,7 +30521,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetWindowSizeInPixels");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetWindowSizeInPixels");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -30631,8 +30568,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetWindowSizeInPixels", window, w, h);
             }
             return (boolean)mh$.invokeExact(window, w, h);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -30646,7 +30581,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetWindowMinimumSize");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetWindowMinimumSize");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -30693,8 +30628,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetWindowMinimumSize", window, min_w, min_h);
             }
             return (boolean)mh$.invokeExact(window, min_w, min_h);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -30708,7 +30641,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetWindowMinimumSize");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetWindowMinimumSize");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -30755,8 +30688,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetWindowMinimumSize", window, w, h);
             }
             return (boolean)mh$.invokeExact(window, w, h);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -30770,7 +30701,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetWindowMaximumSize");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetWindowMaximumSize");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -30817,8 +30748,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetWindowMaximumSize", window, max_w, max_h);
             }
             return (boolean)mh$.invokeExact(window, max_w, max_h);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -30832,7 +30761,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetWindowMaximumSize");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetWindowMaximumSize");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -30879,8 +30808,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetWindowMaximumSize", window, w, h);
             }
             return (boolean)mh$.invokeExact(window, w, h);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -30893,7 +30820,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_BOOL
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetWindowBordered");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetWindowBordered");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -30940,8 +30867,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetWindowBordered", window, bordered);
             }
             return (boolean)mh$.invokeExact(window, bordered);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -30954,7 +30879,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_BOOL
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetWindowResizable");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetWindowResizable");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -31001,8 +30926,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetWindowResizable", window, resizable);
             }
             return (boolean)mh$.invokeExact(window, resizable);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -31015,7 +30938,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_BOOL
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetWindowAlwaysOnTop");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetWindowAlwaysOnTop");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -31062,8 +30985,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetWindowAlwaysOnTop", window, on_top);
             }
             return (boolean)mh$.invokeExact(window, on_top);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -31076,7 +30997,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_BOOL
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetWindowFillDocument");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetWindowFillDocument");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -31123,8 +31044,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetWindowFillDocument", window, fill);
             }
             return (boolean)mh$.invokeExact(window, fill);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -31136,7 +31055,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ShowWindow");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ShowWindow");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -31183,8 +31102,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ShowWindow", window);
             }
             return (boolean)mh$.invokeExact(window);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -31196,7 +31113,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_HideWindow");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_HideWindow");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -31243,8 +31160,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_HideWindow", window);
             }
             return (boolean)mh$.invokeExact(window);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -31256,7 +31171,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_RaiseWindow");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_RaiseWindow");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -31303,8 +31218,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_RaiseWindow", window);
             }
             return (boolean)mh$.invokeExact(window);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -31316,7 +31229,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_MaximizeWindow");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_MaximizeWindow");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -31363,8 +31276,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_MaximizeWindow", window);
             }
             return (boolean)mh$.invokeExact(window);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -31376,7 +31287,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_MinimizeWindow");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_MinimizeWindow");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -31423,8 +31334,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_MinimizeWindow", window);
             }
             return (boolean)mh$.invokeExact(window);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -31436,7 +31345,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_RestoreWindow");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_RestoreWindow");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -31483,8 +31392,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_RestoreWindow", window);
             }
             return (boolean)mh$.invokeExact(window);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -31497,7 +31404,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_BOOL
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetWindowFullscreen");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetWindowFullscreen");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -31544,8 +31451,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetWindowFullscreen", window, fullscreen);
             }
             return (boolean)mh$.invokeExact(window, fullscreen);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -31557,7 +31462,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SyncWindow");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SyncWindow");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -31604,8 +31509,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SyncWindow", window);
             }
             return (boolean)mh$.invokeExact(window);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -31617,7 +31520,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_WindowHasSurface");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_WindowHasSurface");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -31664,8 +31567,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_WindowHasSurface", window);
             }
             return (boolean)mh$.invokeExact(window);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -31677,7 +31578,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetWindowSurface");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetWindowSurface");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -31724,8 +31625,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetWindowSurface", window);
             }
             return (MemorySegment)mh$.invokeExact(window);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -31738,7 +31637,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetWindowSurfaceVSync");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetWindowSurfaceVSync");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -31785,8 +31684,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetWindowSurfaceVSync", window, vsync);
             }
             return (boolean)mh$.invokeExact(window, vsync);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -31799,7 +31696,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetWindowSurfaceVSync");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetWindowSurfaceVSync");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -31846,8 +31743,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetWindowSurfaceVSync", window, vsync);
             }
             return (boolean)mh$.invokeExact(window, vsync);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -31859,7 +31754,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_UpdateWindowSurface");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_UpdateWindowSurface");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -31906,8 +31801,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_UpdateWindowSurface", window);
             }
             return (boolean)mh$.invokeExact(window);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -31921,7 +31814,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_UpdateWindowSurfaceRects");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_UpdateWindowSurfaceRects");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -31968,8 +31861,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_UpdateWindowSurfaceRects", window, rects, numrects);
             }
             return (boolean)mh$.invokeExact(window, rects, numrects);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -31981,7 +31872,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_DestroyWindowSurface");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_DestroyWindowSurface");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -32028,8 +31919,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_DestroyWindowSurface", window);
             }
             return (boolean)mh$.invokeExact(window);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -32042,7 +31931,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_BOOL
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetWindowKeyboardGrab");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetWindowKeyboardGrab");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -32089,8 +31978,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetWindowKeyboardGrab", window, grabbed);
             }
             return (boolean)mh$.invokeExact(window, grabbed);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -32103,7 +31990,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_BOOL
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetWindowMouseGrab");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetWindowMouseGrab");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -32150,8 +32037,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetWindowMouseGrab", window, grabbed);
             }
             return (boolean)mh$.invokeExact(window, grabbed);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -32163,7 +32048,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetWindowKeyboardGrab");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetWindowKeyboardGrab");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -32210,8 +32095,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetWindowKeyboardGrab", window);
             }
             return (boolean)mh$.invokeExact(window);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -32223,7 +32106,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetWindowMouseGrab");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetWindowMouseGrab");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -32270,8 +32153,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetWindowMouseGrab", window);
             }
             return (boolean)mh$.invokeExact(window);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -32281,7 +32162,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_POINTER    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetGrabbedWindow");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetGrabbedWindow");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -32328,8 +32209,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetGrabbedWindow");
             }
             return (MemorySegment)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -32342,7 +32221,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetWindowMouseRect");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetWindowMouseRect");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -32389,8 +32268,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetWindowMouseRect", window, rect);
             }
             return (boolean)mh$.invokeExact(window, rect);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -32402,7 +32279,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetWindowMouseRect");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetWindowMouseRect");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -32449,8 +32326,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetWindowMouseRect", window);
             }
             return (MemorySegment)mh$.invokeExact(window);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -32463,7 +32338,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_FLOAT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetWindowOpacity");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetWindowOpacity");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -32510,8 +32385,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetWindowOpacity", window, opacity);
             }
             return (boolean)mh$.invokeExact(window, opacity);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -32523,7 +32396,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetWindowOpacity");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetWindowOpacity");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -32570,8 +32443,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetWindowOpacity", window);
             }
             return (float)mh$.invokeExact(window);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -32584,7 +32455,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetWindowParent");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetWindowParent");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -32631,8 +32502,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetWindowParent", window, parent);
             }
             return (boolean)mh$.invokeExact(window, parent);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -32645,7 +32514,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_BOOL
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetWindowModal");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetWindowModal");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -32692,8 +32561,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetWindowModal", window, modal);
             }
             return (boolean)mh$.invokeExact(window, modal);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -32706,7 +32573,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_BOOL
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetWindowFocusable");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetWindowFocusable");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -32753,8 +32620,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetWindowFocusable", window, focusable);
             }
             return (boolean)mh$.invokeExact(window, focusable);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -32768,7 +32633,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ShowWindowSystemMenu");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ShowWindowSystemMenu");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -32815,8 +32680,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ShowWindowSystemMenu", window, x, y);
             }
             return (boolean)mh$.invokeExact(window, x, y);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -32920,7 +32783,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetWindowHitTest");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetWindowHitTest");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -32967,8 +32830,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetWindowHitTest", window, callback, callback_data);
             }
             return (boolean)mh$.invokeExact(window, callback, callback_data);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -32981,7 +32842,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetWindowShape");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetWindowShape");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -33028,8 +32889,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetWindowShape", window, shape);
             }
             return (boolean)mh$.invokeExact(window, shape);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -33042,7 +32901,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_FlashWindow");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_FlashWindow");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -33089,8 +32948,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_FlashWindow", window, operation);
             }
             return (boolean)mh$.invokeExact(window, operation);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -33103,7 +32960,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetWindowProgressState");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetWindowProgressState");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -33150,8 +33007,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetWindowProgressState", window, state);
             }
             return (boolean)mh$.invokeExact(window, state);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -33163,7 +33018,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetWindowProgressState");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetWindowProgressState");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -33210,8 +33065,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetWindowProgressState", window);
             }
             return (int)mh$.invokeExact(window);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -33224,7 +33077,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_FLOAT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetWindowProgressValue");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetWindowProgressValue");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -33271,8 +33124,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetWindowProgressValue", window, value);
             }
             return (boolean)mh$.invokeExact(window, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -33284,7 +33135,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetWindowProgressValue");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetWindowProgressValue");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -33331,8 +33182,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetWindowProgressValue", window);
             }
             return (float)mh$.invokeExact(window);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -33343,7 +33192,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_DestroyWindow");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_DestroyWindow");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -33390,8 +33239,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_DestroyWindow", window);
             }
             mh$.invokeExact(window);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -33401,7 +33248,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_BOOL    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ScreenSaverEnabled");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ScreenSaverEnabled");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -33448,8 +33295,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ScreenSaverEnabled");
             }
             return (boolean)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -33459,7 +33304,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_BOOL    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_EnableScreenSaver");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_EnableScreenSaver");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -33506,8 +33351,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_EnableScreenSaver");
             }
             return (boolean)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -33517,7 +33360,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_BOOL    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_DisableScreenSaver");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_DisableScreenSaver");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -33564,8 +33407,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_DisableScreenSaver");
             }
             return (boolean)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -33577,7 +33418,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GL_LoadLibrary");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GL_LoadLibrary");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -33624,8 +33465,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GL_LoadLibrary", path);
             }
             return (boolean)mh$.invokeExact(path);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -33637,7 +33476,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GL_GetProcAddress");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GL_GetProcAddress");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -33684,8 +33523,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GL_GetProcAddress", proc);
             }
             return (MemorySegment)mh$.invokeExact(proc);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -33697,7 +33534,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_EGL_GetProcAddress");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_EGL_GetProcAddress");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -33744,8 +33581,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_EGL_GetProcAddress", proc);
             }
             return (MemorySegment)mh$.invokeExact(proc);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -33754,7 +33589,7 @@ class SDL_h_3 extends SDL_h_4 {
     private static class SDL_GL_UnloadLibrary {
         public static final FunctionDescriptor DESC = FunctionDescriptor.ofVoid(    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GL_UnloadLibrary");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GL_UnloadLibrary");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -33801,8 +33636,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GL_UnloadLibrary");
             }
             mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -33814,7 +33647,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GL_ExtensionSupported");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GL_ExtensionSupported");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -33861,8 +33694,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GL_ExtensionSupported", extension);
             }
             return (boolean)mh$.invokeExact(extension);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -33871,7 +33702,7 @@ class SDL_h_3 extends SDL_h_4 {
     private static class SDL_GL_ResetAttributes {
         public static final FunctionDescriptor DESC = FunctionDescriptor.ofVoid(    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GL_ResetAttributes");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GL_ResetAttributes");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -33918,8 +33749,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GL_ResetAttributes");
             }
             mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -33932,7 +33761,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GL_SetAttribute");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GL_SetAttribute");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -33979,8 +33808,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GL_SetAttribute", attr, value);
             }
             return (boolean)mh$.invokeExact(attr, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -33993,7 +33820,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GL_GetAttribute");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GL_GetAttribute");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -34040,8 +33867,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GL_GetAttribute", attr, value);
             }
             return (boolean)mh$.invokeExact(attr, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -34053,7 +33878,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GL_CreateContext");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GL_CreateContext");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -34100,8 +33925,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GL_CreateContext", window);
             }
             return (MemorySegment)mh$.invokeExact(window);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -34114,7 +33937,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GL_MakeCurrent");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GL_MakeCurrent");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -34161,8 +33984,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GL_MakeCurrent", window, context);
             }
             return (boolean)mh$.invokeExact(window, context);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -34172,7 +33993,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_POINTER    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GL_GetCurrentWindow");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GL_GetCurrentWindow");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -34219,8 +34040,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GL_GetCurrentWindow");
             }
             return (MemorySegment)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -34230,7 +34049,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_POINTER    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GL_GetCurrentContext");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GL_GetCurrentContext");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -34277,8 +34096,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GL_GetCurrentContext");
             }
             return (MemorySegment)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -34288,7 +34105,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_POINTER    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_EGL_GetCurrentDisplay");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_EGL_GetCurrentDisplay");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -34335,8 +34152,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_EGL_GetCurrentDisplay");
             }
             return (MemorySegment)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -34346,7 +34161,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_POINTER    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_EGL_GetCurrentConfig");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_EGL_GetCurrentConfig");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -34393,8 +34208,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_EGL_GetCurrentConfig");
             }
             return (MemorySegment)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -34406,7 +34219,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_EGL_GetWindowSurface");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_EGL_GetWindowSurface");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -34453,8 +34266,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_EGL_GetWindowSurface", window);
             }
             return (MemorySegment)mh$.invokeExact(window);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -34468,7 +34279,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_EGL_SetAttributeCallbacks");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_EGL_SetAttributeCallbacks");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -34515,8 +34326,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_EGL_SetAttributeCallbacks", platformAttribCallback, surfaceAttribCallback, contextAttribCallback, userdata);
             }
             mh$.invokeExact(platformAttribCallback, surfaceAttribCallback, contextAttribCallback, userdata);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -34528,7 +34337,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GL_SetSwapInterval");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GL_SetSwapInterval");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -34575,8 +34384,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GL_SetSwapInterval", interval);
             }
             return (boolean)mh$.invokeExact(interval);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -34588,7 +34395,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GL_GetSwapInterval");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GL_GetSwapInterval");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -34635,8 +34442,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GL_GetSwapInterval", interval);
             }
             return (boolean)mh$.invokeExact(interval);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -34648,7 +34453,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GL_SwapWindow");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GL_SwapWindow");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -34695,8 +34500,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GL_SwapWindow", window);
             }
             return (boolean)mh$.invokeExact(window);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -34708,7 +34511,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GL_DestroyContext");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GL_DestroyContext");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -34755,8 +34558,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GL_DestroyContext", context);
             }
             return (boolean)mh$.invokeExact(context);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -34773,7 +34574,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_BOOL
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ShowOpenFileDialog");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ShowOpenFileDialog");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -34820,8 +34621,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ShowOpenFileDialog", callback, userdata, window, filters, nfilters, default_location, allow_many);
             }
             mh$.invokeExact(callback, userdata, window, filters, nfilters, default_location, allow_many);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -34837,7 +34636,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ShowSaveFileDialog");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ShowSaveFileDialog");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -34884,8 +34683,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ShowSaveFileDialog", callback, userdata, window, filters, nfilters, default_location);
             }
             mh$.invokeExact(callback, userdata, window, filters, nfilters, default_location);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -34900,7 +34697,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_BOOL
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ShowOpenFolderDialog");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ShowOpenFolderDialog");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -34947,8 +34744,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ShowOpenFolderDialog", callback, userdata, window, default_location, allow_many);
             }
             mh$.invokeExact(callback, userdata, window, default_location, allow_many);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -34989,7 +34784,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ShowFileDialogWithProperties");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_ShowFileDialogWithProperties");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -35036,8 +34831,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_ShowFileDialogWithProperties", type, callback, userdata, props);
             }
             mh$.invokeExact(type, callback, userdata, props);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -35050,7 +34843,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GUIDToString");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GUIDToString");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -35097,8 +34890,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GUIDToString", guid, pszGUID, cbGUID);
             }
             mh$.invokeExact(guid, pszGUID, cbGUID);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -35110,7 +34901,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_StringToGUID");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_StringToGUID");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -35157,8 +34948,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_StringToGUID", allocator, pchGUID);
             }
             return (MemorySegment)mh$.invokeExact(allocator, pchGUID);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -35225,7 +35014,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetPowerInfo");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetPowerInfo");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -35272,8 +35061,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetPowerInfo", seconds, percent);
             }
             return (int)mh$.invokeExact(seconds, percent);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -35372,7 +35159,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetSensors");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetSensors");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -35419,8 +35206,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetSensors", count);
             }
             return (MemorySegment)mh$.invokeExact(count);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -35432,7 +35217,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetSensorNameForID");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetSensorNameForID");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -35479,8 +35264,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetSensorNameForID", instance_id);
             }
             return (MemorySegment)mh$.invokeExact(instance_id);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -35492,7 +35275,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetSensorTypeForID");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetSensorTypeForID");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -35539,8 +35322,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetSensorTypeForID", instance_id);
             }
             return (int)mh$.invokeExact(instance_id);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -35552,7 +35333,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetSensorNonPortableTypeForID");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetSensorNonPortableTypeForID");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -35599,8 +35380,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetSensorNonPortableTypeForID", instance_id);
             }
             return (int)mh$.invokeExact(instance_id);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -35612,7 +35391,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_OpenSensor");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_OpenSensor");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -35659,8 +35438,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_OpenSensor", instance_id);
             }
             return (MemorySegment)mh$.invokeExact(instance_id);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -35672,7 +35449,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetSensorFromID");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetSensorFromID");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -35719,8 +35496,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetSensorFromID", instance_id);
             }
             return (MemorySegment)mh$.invokeExact(instance_id);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -35732,7 +35507,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetSensorProperties");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetSensorProperties");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -35779,8 +35554,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetSensorProperties", sensor);
             }
             return (int)mh$.invokeExact(sensor);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -35792,7 +35565,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetSensorName");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetSensorName");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -35839,8 +35612,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetSensorName", sensor);
             }
             return (MemorySegment)mh$.invokeExact(sensor);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -35852,7 +35623,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetSensorType");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetSensorType");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -35899,8 +35670,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetSensorType", sensor);
             }
             return (int)mh$.invokeExact(sensor);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -35912,7 +35681,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetSensorNonPortableType");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetSensorNonPortableType");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -35959,8 +35728,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetSensorNonPortableType", sensor);
             }
             return (int)mh$.invokeExact(sensor);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -35972,7 +35739,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetSensorID");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetSensorID");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -36019,8 +35786,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetSensorID", sensor);
             }
             return (int)mh$.invokeExact(sensor);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -36034,7 +35799,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetSensorData");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetSensorData");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -36081,8 +35846,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetSensorData", sensor, data, num_values);
             }
             return (boolean)mh$.invokeExact(sensor, data, num_values);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -36093,7 +35856,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_CloseSensor");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_CloseSensor");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -36140,8 +35903,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_CloseSensor", sensor);
             }
             mh$.invokeExact(sensor);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -36150,7 +35911,7 @@ class SDL_h_3 extends SDL_h_4 {
     private static class SDL_UpdateSensors {
         public static final FunctionDescriptor DESC = FunctionDescriptor.ofVoid(    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_UpdateSensors");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_UpdateSensors");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -36197,8 +35958,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_UpdateSensors");
             }
             mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -36348,7 +36107,7 @@ class SDL_h_3 extends SDL_h_4 {
     private static class SDL_LockJoysticks {
         public static final FunctionDescriptor DESC = FunctionDescriptor.ofVoid(    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_LockJoysticks");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_LockJoysticks");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -36395,8 +36154,62 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_LockJoysticks");
             }
             mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
+        } catch (Throwable ex$) {
+           throw new AssertionError("should not reach here", ex$);
+        }
+    }
+
+    private static class SDL_TryLockJoysticks {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            SDL_h.C_BOOL    );
+
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_TryLockJoysticks");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+    }
+
+    /**
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * extern bool SDL_TryLockJoysticks()
+     * }
+     */
+    public static FunctionDescriptor SDL_TryLockJoysticks$descriptor() {
+        return SDL_TryLockJoysticks.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * extern bool SDL_TryLockJoysticks()
+     * }
+     */
+    public static MethodHandle SDL_TryLockJoysticks$handle() {
+        return SDL_TryLockJoysticks.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * extern bool SDL_TryLockJoysticks()
+     * }
+     */
+    public static MemorySegment SDL_TryLockJoysticks$address() {
+        return SDL_TryLockJoysticks.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * extern bool SDL_TryLockJoysticks()
+     * }
+     */
+    public static boolean SDL_TryLockJoysticks() {
+        var mh$ = SDL_TryLockJoysticks.HANDLE;
+        try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("SDL_TryLockJoysticks");
+            }
+            return (boolean)mh$.invokeExact();
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -36405,7 +36218,7 @@ class SDL_h_3 extends SDL_h_4 {
     private static class SDL_UnlockJoysticks {
         public static final FunctionDescriptor DESC = FunctionDescriptor.ofVoid(    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_UnlockJoysticks");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_UnlockJoysticks");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -36452,8 +36265,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_UnlockJoysticks");
             }
             mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -36463,7 +36274,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_BOOL    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_HasJoystick");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_HasJoystick");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -36510,8 +36321,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_HasJoystick");
             }
             return (boolean)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -36523,7 +36332,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetJoysticks");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetJoysticks");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -36570,8 +36379,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetJoysticks", count);
             }
             return (MemorySegment)mh$.invokeExact(count);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -36583,7 +36390,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetJoystickNameForID");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetJoystickNameForID");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -36630,8 +36437,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetJoystickNameForID", instance_id);
             }
             return (MemorySegment)mh$.invokeExact(instance_id);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -36643,7 +36448,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetJoystickPathForID");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetJoystickPathForID");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -36690,8 +36495,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetJoystickPathForID", instance_id);
             }
             return (MemorySegment)mh$.invokeExact(instance_id);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -36703,7 +36506,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetJoystickPlayerIndexForID");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetJoystickPlayerIndexForID");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -36750,8 +36553,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetJoystickPlayerIndexForID", instance_id);
             }
             return (int)mh$.invokeExact(instance_id);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -36763,7 +36564,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetJoystickGUIDForID");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetJoystickGUIDForID");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -36810,8 +36611,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetJoystickGUIDForID", allocator, instance_id);
             }
             return (MemorySegment)mh$.invokeExact(allocator, instance_id);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -36823,7 +36622,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetJoystickVendorForID");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetJoystickVendorForID");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -36870,8 +36669,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetJoystickVendorForID", instance_id);
             }
             return (short)mh$.invokeExact(instance_id);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -36883,7 +36680,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetJoystickProductForID");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetJoystickProductForID");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -36930,8 +36727,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetJoystickProductForID", instance_id);
             }
             return (short)mh$.invokeExact(instance_id);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -36943,7 +36738,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetJoystickProductVersionForID");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetJoystickProductVersionForID");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -36990,8 +36785,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetJoystickProductVersionForID", instance_id);
             }
             return (short)mh$.invokeExact(instance_id);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -37003,7 +36796,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetJoystickTypeForID");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetJoystickTypeForID");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -37050,8 +36843,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetJoystickTypeForID", instance_id);
             }
             return (int)mh$.invokeExact(instance_id);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -37063,7 +36854,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_OpenJoystick");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_OpenJoystick");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -37110,8 +36901,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_OpenJoystick", instance_id);
             }
             return (MemorySegment)mh$.invokeExact(instance_id);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -37123,7 +36912,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetJoystickFromID");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetJoystickFromID");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -37170,8 +36959,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetJoystickFromID", instance_id);
             }
             return (MemorySegment)mh$.invokeExact(instance_id);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -37183,7 +36970,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetJoystickFromPlayerIndex");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetJoystickFromPlayerIndex");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -37230,8 +37017,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetJoystickFromPlayerIndex", player_index);
             }
             return (MemorySegment)mh$.invokeExact(player_index);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -37243,7 +37028,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_AttachVirtualJoystick");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_AttachVirtualJoystick");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -37290,8 +37075,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_AttachVirtualJoystick", desc);
             }
             return (int)mh$.invokeExact(desc);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -37303,7 +37086,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_DetachVirtualJoystick");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_DetachVirtualJoystick");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -37350,8 +37133,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_DetachVirtualJoystick", instance_id);
             }
             return (boolean)mh$.invokeExact(instance_id);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -37363,7 +37144,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_IsJoystickVirtual");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_IsJoystickVirtual");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -37410,8 +37191,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_IsJoystickVirtual", instance_id);
             }
             return (boolean)mh$.invokeExact(instance_id);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -37425,7 +37204,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_SHORT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetJoystickVirtualAxis");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetJoystickVirtualAxis");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -37472,8 +37251,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetJoystickVirtualAxis", joystick, axis, value);
             }
             return (boolean)mh$.invokeExact(joystick, axis, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -37488,7 +37265,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_SHORT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetJoystickVirtualBall");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetJoystickVirtualBall");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -37535,8 +37312,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetJoystickVirtualBall", joystick, ball, xrel, yrel);
             }
             return (boolean)mh$.invokeExact(joystick, ball, xrel, yrel);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -37550,7 +37325,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_BOOL
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetJoystickVirtualButton");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetJoystickVirtualButton");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -37597,8 +37372,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetJoystickVirtualButton", joystick, button, down);
             }
             return (boolean)mh$.invokeExact(joystick, button, down);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -37612,7 +37385,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_CHAR
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetJoystickVirtualHat");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetJoystickVirtualHat");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -37659,8 +37432,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetJoystickVirtualHat", joystick, hat, value);
             }
             return (boolean)mh$.invokeExact(joystick, hat, value);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -37678,7 +37449,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_FLOAT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetJoystickVirtualTouchpad");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetJoystickVirtualTouchpad");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -37725,8 +37496,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetJoystickVirtualTouchpad", joystick, touchpad, finger, down, x, y, pressure);
             }
             return (boolean)mh$.invokeExact(joystick, touchpad, finger, down, x, y, pressure);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -37742,7 +37511,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SendJoystickVirtualSensorData");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SendJoystickVirtualSensorData");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -37789,8 +37558,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SendJoystickVirtualSensorData", joystick, type, sensor_timestamp, data, num_values);
             }
             return (boolean)mh$.invokeExact(joystick, type, sensor_timestamp, data, num_values);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -37802,7 +37569,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetJoystickProperties");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetJoystickProperties");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -37849,8 +37616,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetJoystickProperties", joystick);
             }
             return (int)mh$.invokeExact(joystick);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -37862,7 +37627,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetJoystickName");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetJoystickName");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -37909,8 +37674,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetJoystickName", joystick);
             }
             return (MemorySegment)mh$.invokeExact(joystick);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -37922,7 +37685,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetJoystickPath");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetJoystickPath");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -37969,8 +37732,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetJoystickPath", joystick);
             }
             return (MemorySegment)mh$.invokeExact(joystick);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -37982,7 +37743,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetJoystickPlayerIndex");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetJoystickPlayerIndex");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -38029,8 +37790,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetJoystickPlayerIndex", joystick);
             }
             return (int)mh$.invokeExact(joystick);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -38043,7 +37802,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetJoystickPlayerIndex");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetJoystickPlayerIndex");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -38090,8 +37849,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetJoystickPlayerIndex", joystick, player_index);
             }
             return (boolean)mh$.invokeExact(joystick, player_index);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -38103,7 +37860,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetJoystickGUID");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetJoystickGUID");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -38150,8 +37907,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetJoystickGUID", allocator, joystick);
             }
             return (MemorySegment)mh$.invokeExact(allocator, joystick);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -38163,7 +37918,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetJoystickVendor");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetJoystickVendor");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -38210,8 +37965,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetJoystickVendor", joystick);
             }
             return (short)mh$.invokeExact(joystick);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -38223,7 +37976,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetJoystickProduct");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetJoystickProduct");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -38270,8 +38023,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetJoystickProduct", joystick);
             }
             return (short)mh$.invokeExact(joystick);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -38283,7 +38034,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetJoystickProductVersion");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetJoystickProductVersion");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -38330,8 +38081,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetJoystickProductVersion", joystick);
             }
             return (short)mh$.invokeExact(joystick);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -38343,7 +38092,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetJoystickFirmwareVersion");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetJoystickFirmwareVersion");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -38390,8 +38139,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetJoystickFirmwareVersion", joystick);
             }
             return (short)mh$.invokeExact(joystick);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -38403,7 +38150,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetJoystickSerial");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetJoystickSerial");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -38450,8 +38197,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetJoystickSerial", joystick);
             }
             return (MemorySegment)mh$.invokeExact(joystick);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -38463,7 +38208,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetJoystickType");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetJoystickType");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -38510,8 +38255,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetJoystickType", joystick);
             }
             return (int)mh$.invokeExact(joystick);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -38526,7 +38269,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetJoystickGUIDInfo");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetJoystickGUIDInfo");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -38573,8 +38316,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetJoystickGUIDInfo", guid, vendor, product, version, crc16);
             }
             mh$.invokeExact(guid, vendor, product, version, crc16);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -38586,7 +38327,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_JoystickConnected");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_JoystickConnected");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -38633,8 +38374,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_JoystickConnected", joystick);
             }
             return (boolean)mh$.invokeExact(joystick);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -38646,7 +38385,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetJoystickID");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetJoystickID");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -38693,8 +38432,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetJoystickID", joystick);
             }
             return (int)mh$.invokeExact(joystick);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -38706,7 +38443,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetNumJoystickAxes");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetNumJoystickAxes");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -38753,8 +38490,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetNumJoystickAxes", joystick);
             }
             return (int)mh$.invokeExact(joystick);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -38766,7 +38501,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetNumJoystickBalls");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetNumJoystickBalls");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -38813,8 +38548,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetNumJoystickBalls", joystick);
             }
             return (int)mh$.invokeExact(joystick);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -38826,7 +38559,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetNumJoystickHats");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetNumJoystickHats");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -38873,8 +38606,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetNumJoystickHats", joystick);
             }
             return (int)mh$.invokeExact(joystick);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -38886,7 +38617,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetNumJoystickButtons");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetNumJoystickButtons");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -38933,8 +38664,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetNumJoystickButtons", joystick);
             }
             return (int)mh$.invokeExact(joystick);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -38945,7 +38674,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_BOOL
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetJoystickEventsEnabled");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetJoystickEventsEnabled");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -38992,8 +38721,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetJoystickEventsEnabled", enabled);
             }
             mh$.invokeExact(enabled);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -39003,7 +38730,7 @@ class SDL_h_3 extends SDL_h_4 {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_BOOL    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_JoystickEventsEnabled");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_JoystickEventsEnabled");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -39050,8 +38777,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_JoystickEventsEnabled");
             }
             return (boolean)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -39060,7 +38785,7 @@ class SDL_h_3 extends SDL_h_4 {
     private static class SDL_UpdateJoysticks {
         public static final FunctionDescriptor DESC = FunctionDescriptor.ofVoid(    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_UpdateJoysticks");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_UpdateJoysticks");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -39107,8 +38832,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_UpdateJoysticks");
             }
             mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -39121,7 +38844,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetJoystickAxis");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetJoystickAxis");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -39168,8 +38891,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetJoystickAxis", joystick, axis);
             }
             return (short)mh$.invokeExact(joystick, axis);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -39183,7 +38904,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetJoystickAxisInitialState");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetJoystickAxisInitialState");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -39230,8 +38951,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetJoystickAxisInitialState", joystick, axis, state);
             }
             return (boolean)mh$.invokeExact(joystick, axis, state);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -39246,7 +38965,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetJoystickBall");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetJoystickBall");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -39293,8 +39012,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetJoystickBall", joystick, ball, dx, dy);
             }
             return (boolean)mh$.invokeExact(joystick, ball, dx, dy);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -39307,7 +39024,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetJoystickHat");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetJoystickHat");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -39354,8 +39071,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetJoystickHat", joystick, hat);
             }
             return (byte)mh$.invokeExact(joystick, hat);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -39368,7 +39083,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetJoystickButton");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetJoystickButton");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -39415,8 +39130,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetJoystickButton", joystick, button);
             }
             return (boolean)mh$.invokeExact(joystick, button);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -39431,7 +39144,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_RumbleJoystick");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_RumbleJoystick");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -39478,8 +39191,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_RumbleJoystick", joystick, low_frequency_rumble, high_frequency_rumble, duration_ms);
             }
             return (boolean)mh$.invokeExact(joystick, low_frequency_rumble, high_frequency_rumble, duration_ms);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -39494,7 +39205,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_RumbleJoystickTriggers");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_RumbleJoystickTriggers");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -39541,8 +39252,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_RumbleJoystickTriggers", joystick, left_rumble, right_rumble, duration_ms);
             }
             return (boolean)mh$.invokeExact(joystick, left_rumble, right_rumble, duration_ms);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -39557,7 +39266,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_CHAR
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetJoystickLED");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SetJoystickLED");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -39604,8 +39313,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SetJoystickLED", joystick, red, green, blue);
             }
             return (boolean)mh$.invokeExact(joystick, red, green, blue);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -39619,7 +39326,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SendJoystickEffect");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_SendJoystickEffect");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -39666,8 +39373,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_SendJoystickEffect", joystick, data, size);
             }
             return (boolean)mh$.invokeExact(joystick, data, size);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -39678,7 +39383,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_CloseJoystick");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_CloseJoystick");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -39725,8 +39430,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_CloseJoystick", joystick);
             }
             mh$.invokeExact(joystick);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -39738,7 +39441,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetJoystickConnectionState");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetJoystickConnectionState");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -39785,8 +39488,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetJoystickConnectionState", joystick);
             }
             return (int)mh$.invokeExact(joystick);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -39799,7 +39500,7 @@ class SDL_h_3 extends SDL_h_4 {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetJoystickPowerInfo");
+        public static final MemorySegment ADDR = SDL_h.findOrThrow("SDL_GetJoystickPowerInfo");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -39846,8 +39547,6 @@ class SDL_h_3 extends SDL_h_4 {
                 traceDowncall("SDL_GetJoystickPowerInfo", joystick, percent);
             }
             return (int)mh$.invokeExact(joystick, percent);
-        } catch (Error | RuntimeException ex) {
-           throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
@@ -39932,141 +39631,6 @@ class SDL_h_3 extends SDL_h_4 {
      */
     public static int SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_LEFT() {
         return SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_LEFT;
-    }
-    private static final int SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_RIGHT = (int)9L;
-    /**
-     * {@snippet lang=c :
-     * enum SDL_GamepadType.SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_RIGHT = 9
-     * }
-     */
-    public static int SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_RIGHT() {
-        return SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_RIGHT;
-    }
-    private static final int SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_PAIR = (int)10L;
-    /**
-     * {@snippet lang=c :
-     * enum SDL_GamepadType.SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_PAIR = 10
-     * }
-     */
-    public static int SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_PAIR() {
-        return SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_PAIR;
-    }
-    private static final int SDL_GAMEPAD_TYPE_GAMECUBE = (int)11L;
-    /**
-     * {@snippet lang=c :
-     * enum SDL_GamepadType.SDL_GAMEPAD_TYPE_GAMECUBE = 11
-     * }
-     */
-    public static int SDL_GAMEPAD_TYPE_GAMECUBE() {
-        return SDL_GAMEPAD_TYPE_GAMECUBE;
-    }
-    private static final int SDL_GAMEPAD_TYPE_COUNT = (int)12L;
-    /**
-     * {@snippet lang=c :
-     * enum SDL_GamepadType.SDL_GAMEPAD_TYPE_COUNT = 12
-     * }
-     */
-    public static int SDL_GAMEPAD_TYPE_COUNT() {
-        return SDL_GAMEPAD_TYPE_COUNT;
-    }
-    private static final int SDL_GAMEPAD_BUTTON_INVALID = (int)-1L;
-    /**
-     * {@snippet lang=c :
-     * enum SDL_GamepadButton.SDL_GAMEPAD_BUTTON_INVALID = -1
-     * }
-     */
-    public static int SDL_GAMEPAD_BUTTON_INVALID() {
-        return SDL_GAMEPAD_BUTTON_INVALID;
-    }
-    private static final int SDL_GAMEPAD_BUTTON_SOUTH = (int)0L;
-    /**
-     * {@snippet lang=c :
-     * enum SDL_GamepadButton.SDL_GAMEPAD_BUTTON_SOUTH = 0
-     * }
-     */
-    public static int SDL_GAMEPAD_BUTTON_SOUTH() {
-        return SDL_GAMEPAD_BUTTON_SOUTH;
-    }
-    private static final int SDL_GAMEPAD_BUTTON_EAST = (int)1L;
-    /**
-     * {@snippet lang=c :
-     * enum SDL_GamepadButton.SDL_GAMEPAD_BUTTON_EAST = 1
-     * }
-     */
-    public static int SDL_GAMEPAD_BUTTON_EAST() {
-        return SDL_GAMEPAD_BUTTON_EAST;
-    }
-    private static final int SDL_GAMEPAD_BUTTON_WEST = (int)2L;
-    /**
-     * {@snippet lang=c :
-     * enum SDL_GamepadButton.SDL_GAMEPAD_BUTTON_WEST = 2
-     * }
-     */
-    public static int SDL_GAMEPAD_BUTTON_WEST() {
-        return SDL_GAMEPAD_BUTTON_WEST;
-    }
-    private static final int SDL_GAMEPAD_BUTTON_NORTH = (int)3L;
-    /**
-     * {@snippet lang=c :
-     * enum SDL_GamepadButton.SDL_GAMEPAD_BUTTON_NORTH = 3
-     * }
-     */
-    public static int SDL_GAMEPAD_BUTTON_NORTH() {
-        return SDL_GAMEPAD_BUTTON_NORTH;
-    }
-    private static final int SDL_GAMEPAD_BUTTON_BACK = (int)4L;
-    /**
-     * {@snippet lang=c :
-     * enum SDL_GamepadButton.SDL_GAMEPAD_BUTTON_BACK = 4
-     * }
-     */
-    public static int SDL_GAMEPAD_BUTTON_BACK() {
-        return SDL_GAMEPAD_BUTTON_BACK;
-    }
-    private static final int SDL_GAMEPAD_BUTTON_GUIDE = (int)5L;
-    /**
-     * {@snippet lang=c :
-     * enum SDL_GamepadButton.SDL_GAMEPAD_BUTTON_GUIDE = 5
-     * }
-     */
-    public static int SDL_GAMEPAD_BUTTON_GUIDE() {
-        return SDL_GAMEPAD_BUTTON_GUIDE;
-    }
-    private static final int SDL_GAMEPAD_BUTTON_START = (int)6L;
-    /**
-     * {@snippet lang=c :
-     * enum SDL_GamepadButton.SDL_GAMEPAD_BUTTON_START = 6
-     * }
-     */
-    public static int SDL_GAMEPAD_BUTTON_START() {
-        return SDL_GAMEPAD_BUTTON_START;
-    }
-    private static final int SDL_GAMEPAD_BUTTON_LEFT_STICK = (int)7L;
-    /**
-     * {@snippet lang=c :
-     * enum SDL_GamepadButton.SDL_GAMEPAD_BUTTON_LEFT_STICK = 7
-     * }
-     */
-    public static int SDL_GAMEPAD_BUTTON_LEFT_STICK() {
-        return SDL_GAMEPAD_BUTTON_LEFT_STICK;
-    }
-    private static final int SDL_GAMEPAD_BUTTON_RIGHT_STICK = (int)8L;
-    /**
-     * {@snippet lang=c :
-     * enum SDL_GamepadButton.SDL_GAMEPAD_BUTTON_RIGHT_STICK = 8
-     * }
-     */
-    public static int SDL_GAMEPAD_BUTTON_RIGHT_STICK() {
-        return SDL_GAMEPAD_BUTTON_RIGHT_STICK;
-    }
-    private static final int SDL_GAMEPAD_BUTTON_LEFT_SHOULDER = (int)9L;
-    /**
-     * {@snippet lang=c :
-     * enum SDL_GamepadButton.SDL_GAMEPAD_BUTTON_LEFT_SHOULDER = 9
-     * }
-     */
-    public static int SDL_GAMEPAD_BUTTON_LEFT_SHOULDER() {
-        return SDL_GAMEPAD_BUTTON_LEFT_SHOULDER;
     }
 }
 
