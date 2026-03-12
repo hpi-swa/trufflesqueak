@@ -6,63 +6,12 @@
  */
 package de.hpi.swa.trufflesqueak.io;
 
-import static org.lwjgl.sdl.SDLClipboard.SDL_GetClipboardText;
-import static org.lwjgl.sdl.SDLClipboard.SDL_HasClipboardText;
-import static org.lwjgl.sdl.SDLClipboard.SDL_SetClipboardText;
-import static org.lwjgl.sdl.SDLError.SDL_GetError;
-import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_DROP_BEGIN;
-import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_DROP_COMPLETE;
-import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_DROP_FILE;
-import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_DROP_POSITION;
-import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_KEY_DOWN;
-import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_KEY_UP;
-import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_MOUSE_BUTTON_DOWN;
-import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_MOUSE_BUTTON_UP;
-import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_MOUSE_MOTION;
-import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_MOUSE_WHEEL;
-import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_QUIT;
-import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_RENDER_DEVICE_RESET;
-import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_RENDER_TARGETS_RESET;
-import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_TEXT_INPUT;
-import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_WINDOW_CLOSE_REQUESTED;
-import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_WINDOW_DISPLAY_CHANGED;
-import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_WINDOW_MOUSE_LEAVE;
-import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_WINDOW_RESIZED;
-import static org.lwjgl.sdl.SDLIOStream.SDL_IOFromMem;
-import static org.lwjgl.sdl.SDLInit.SDL_Quit;
-import static org.lwjgl.sdl.SDLInit.SDL_RunOnMainThread;
-import static org.lwjgl.sdl.SDLKeyboard.SDL_StartTextInput;
-import static org.lwjgl.sdl.SDLMouse.SDL_CreateCursor;
-import static org.lwjgl.sdl.SDLMouse.SDL_DestroyCursor;
-import static org.lwjgl.sdl.SDLMouse.SDL_SetCursor;
-import static org.lwjgl.sdl.SDLPixels.SDL_PIXELFORMAT_ARGB8888;
-import static org.lwjgl.sdl.SDLRender.SDL_CreateTexture;
-import static org.lwjgl.sdl.SDLRender.SDL_DestroyRenderer;
-import static org.lwjgl.sdl.SDLRender.SDL_DestroyTexture;
-import static org.lwjgl.sdl.SDLRender.SDL_RenderClear;
-import static org.lwjgl.sdl.SDLRender.SDL_RenderPresent;
-import static org.lwjgl.sdl.SDLRender.SDL_RenderTexture;
-import static org.lwjgl.sdl.SDLRender.SDL_SetTextureScaleMode;
-import static org.lwjgl.sdl.SDLRender.SDL_TEXTUREACCESS_STREAMING;
-import static org.lwjgl.sdl.SDLRender.nSDL_CreateRenderer;
-import static org.lwjgl.sdl.SDLRender.nSDL_UpdateTexture;
-import static org.lwjgl.sdl.SDLSurface.SDL_DestroySurface;
-import static org.lwjgl.sdl.SDLSurface.SDL_LoadBMP_IO;
-import static org.lwjgl.sdl.SDLSurface.SDL_SCALEMODE_NEAREST;
-import static org.lwjgl.sdl.SDLVideo.SDL_CreateWindow;
-import static org.lwjgl.sdl.SDLVideo.SDL_DestroyWindow;
-import static org.lwjgl.sdl.SDLVideo.SDL_GetDesktopDisplayMode;
-import static org.lwjgl.sdl.SDLVideo.SDL_GetPrimaryDisplay;
-import static org.lwjgl.sdl.SDLVideo.SDL_GetWindowDisplayScale;
-import static org.lwjgl.sdl.SDLVideo.SDL_RaiseWindow;
-import static org.lwjgl.sdl.SDLVideo.SDL_SetWindowFullscreen;
-import static org.lwjgl.sdl.SDLVideo.SDL_SetWindowIcon;
-import static org.lwjgl.sdl.SDLVideo.SDL_SetWindowSize;
-import static org.lwjgl.sdl.SDLVideo.SDL_SetWindowTitle;
-import static org.lwjgl.sdl.SDLVideo.SDL_WINDOW_HIGH_PIXEL_DENSITY;
-import static org.lwjgl.sdl.SDLVideo.SDL_WINDOW_RESIZABLE;
-import static org.lwjgl.system.MemoryStack.stackPush;
-import static org.lwjgl.system.MemoryUtil.NULL;
+import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
+
+import bindings.sdl.*;
+import static bindings.sdl.SDL_h.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -73,21 +22,6 @@ import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-
-import org.lwjgl.sdl.SDLKeycode;
-import org.lwjgl.sdl.SDLMouse;
-import org.lwjgl.sdl.SDL_DisplayMode;
-import org.lwjgl.sdl.SDL_Event;
-import org.lwjgl.sdl.SDL_MainThreadCallback;
-import org.lwjgl.sdl.SDL_MouseButtonEvent;
-import org.lwjgl.sdl.SDL_MouseMotionEvent;
-import org.lwjgl.sdl.SDL_MouseWheelEvent;
-import org.lwjgl.sdl.SDL_Rect;
-import org.lwjgl.sdl.SDL_Surface;
-import org.lwjgl.sdl.SDL_Texture;
-import org.lwjgl.sdl.SDL_WindowEvent;
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.system.MemoryUtil;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -112,11 +46,97 @@ import de.hpi.swa.trufflesqueak.util.LogUtils;
 public final class SqueakDisplay {
     public final SqueakImageContext image;
 
-    private long window = NULL;
-    private long cursor = NULL;
-    private long renderer = NULL;
-    private SDL_Texture texture;
-    private String title = "TruffleSqueak";
+    // --- SDL3 Macro & Enum Constants (Bypassing jextract) ---
+    private static final int SDL_PIXELFORMAT_ARGB8888 = 0x16362004;
+    private static final int SDL_TEXTUREACCESS_STREAMING = 1;
+    private static final int SDL_SCALEMODE_NEAREST = 0;
+    private static final long SDL_WINDOW_RESIZABLE = 32L;
+    private static final long SDL_WINDOW_HIGH_PIXEL_DENSITY = 8192L;
+
+    // SDL Events
+    private static final int SDL_EVENT_QUIT = 0x100;
+    private static final int SDL_EVENT_WINDOW_CLOSE_REQUESTED = 0x203;
+    private static final int SDL_EVENT_WINDOW_RESIZED = 0x205;
+    private static final int SDL_EVENT_WINDOW_MOUSE_LEAVE = 0x20C;
+    private static final int SDL_EVENT_WINDOW_DISPLAY_CHANGED = 0x212;
+    private static final int SDL_EVENT_KEY_DOWN = 0x300;
+    private static final int SDL_EVENT_KEY_UP = 0x301;
+    private static final int SDL_EVENT_TEXT_INPUT = 0x303;
+    private static final int SDL_EVENT_MOUSE_MOTION = 0x400;
+    private static final int SDL_EVENT_MOUSE_BUTTON_DOWN = 0x401;
+    private static final int SDL_EVENT_MOUSE_BUTTON_UP = 0x402;
+    private static final int SDL_EVENT_MOUSE_WHEEL = 0x403;
+    private static final int SDL_EVENT_DROP_BEGIN = 0x1000;
+    private static final int SDL_EVENT_DROP_FILE = 0x1001;
+    private static final int SDL_EVENT_DROP_COMPLETE = 0x1003;
+    private static final int SDL_EVENT_DROP_POSITION = 0x1004;
+    private static final int SDL_EVENT_RENDER_TARGETS_RESET = 0x2000;
+    private static final int SDL_EVENT_RENDER_DEVICE_RESET = 0x2001;
+
+    // SDL Mouse Buttons
+    private static final int SDL_BUTTON_LEFT = 1;
+    private static final int SDL_BUTTON_MIDDLE = 2;
+    private static final int SDL_BUTTON_RIGHT = 3;
+
+    // SDL Keyboard Modifiers
+    private static final int SDL_KMOD_LSHIFT = 0x0001;
+    private static final int SDL_KMOD_RSHIFT = 0x0002;
+    private static final int SDL_KMOD_LCTRL = 0x0040;
+    private static final int SDL_KMOD_RCTRL = 0x0080;
+    private static final int SDL_KMOD_LALT = 0x0100;
+    private static final int SDL_KMOD_RALT = 0x0200;
+    private static final int SDL_KMOD_LGUI = 0x0400;
+    private static final int SDL_KMOD_RGUI = 0x0800;
+
+    // SDL Keycodes (ASCII)
+    private static final int SDLK_RETURN = '\r';
+    private static final int SDLK_ESCAPE = '\u001B';
+    private static final int SDLK_BACKSPACE = '\b';
+    private static final int SDLK_TAB = '\t';
+    private static final int SDLK_SPACE = ' ';
+
+    // SDL Keycodes (Extended Scancodes with 0x40000000 mask)
+    private static final int SDLK_INSERT = 0x40000049;
+    private static final int SDLK_HOME = 0x4000004A;
+    private static final int SDLK_PAGEUP = 0x4000004B;
+    private static final int SDLK_DELETE = 0x4000004C;
+    private static final int SDLK_END = 0x4000004D;
+    private static final int SDLK_PAGEDOWN = 0x4000004E;
+    private static final int SDLK_RIGHT = 0x4000004F;
+    private static final int SDLK_LEFT = 0x40000050;
+    private static final int SDLK_DOWN = 0x40000051;
+    private static final int SDLK_UP = 0x40000052;
+
+    private static final int SDLK_KP_DIVIDE = 0x40000054;
+    private static final int SDLK_KP_MULTIPLY = 0x40000055;
+    private static final int SDLK_KP_MINUS = 0x40000056;
+    private static final int SDLK_KP_PLUS = 0x40000057;
+    private static final int SDLK_KP_ENTER = 0x40000058;
+    private static final int SDLK_KP_1 = 0x40000059;
+    private static final int SDLK_KP_2 = 0x4000005A;
+    private static final int SDLK_KP_3 = 0x4000005B;
+    private static final int SDLK_KP_4 = 0x4000005C;
+    private static final int SDLK_KP_5 = 0x4000005D;
+    private static final int SDLK_KP_6 = 0x4000005E;
+    private static final int SDLK_KP_7 = 0x4000005F;
+    private static final int SDLK_KP_8 = 0x40000060;
+    private static final int SDLK_KP_9 = 0x40000061;
+    private static final int SDLK_KP_0 = 0x40000062;
+    private static final int SDLK_KP_PERIOD = 0x40000063;
+
+    private static final int SDLK_LCTRL = 0x400000E0;
+    private static final int SDLK_LSHIFT = 0x400000E1;
+    private static final int SDLK_LALT = 0x400000E2;
+    private static final int SDLK_LGUI = 0x400000E3;
+    private static final int SDLK_RCTRL = 0x400000E4;
+    private static final int SDLK_RSHIFT = 0x400000E5;
+    private static final int SDLK_RALT = 0x400000E6;
+    private static final int SDLK_RGUI = 0x400000E7;
+
+    private MemorySegment window = MemorySegment.NULL;
+    private MemorySegment cursor = MemorySegment.NULL;
+    private MemorySegment renderer = MemorySegment.NULL;
+    private MemorySegment texture = MemorySegment.NULL;
 
     // Squeak bitmap (physical pixels)
     private int width;
@@ -125,8 +145,9 @@ public final class SqueakDisplay {
 
     private CursorData cursorData;
 
-    // Async Staging Buffer (Decouples Squeak thread from GPU thread)
-    private long stagingAddress = NULL;
+    // Async Staging Buffer (Managed by Project Panama)
+    private MemorySegment stagingBuffer = MemorySegment.NULL;
+    private Arena stagingArena = null;
     private int stagingCapacity = 0;
     private int stagingPitchBytes = 0;
 
@@ -159,53 +180,47 @@ public final class SqueakDisplay {
     record CursorData(int[] cursorWords, int[] maskWords, int width, int height, int offsetX, int offsetY) {
     }
 
-    private final SDL_MainThreadCallback setFullscreenTask = new SDL_MainThreadCallback() {
-        @Override
-        public void invoke(final long userdata) {
-            checkSdlError(SDL_SetWindowFullscreen(window, userdata == 1));
-        }
-    };
+    private String title = "TruffleSqueak";
 
-    private final SDL_MainThreadCallback resizeTask = new SDL_MainThreadCallback() {
-        @Override
-        public void invoke(final long userdata) {
-            checkSdlError(SDL_SetWindowSize(window, osWindowWidth, osWindowHeight));
-        }
-    };
+    private final MemorySegment setFullscreenTask = SDL_MainThreadCallback.allocate((userdata) -> {
+        checkSdlError(SDL_SetWindowFullscreen(window, userdata.address() == 1L));
+    }, Arena.global());
 
-    private final SDL_MainThreadCallback updateTitleTask = new SDL_MainThreadCallback() {
-        @Override
-        public void invoke(final long userdata) {
-            checkSdlError(SDL_SetWindowTitle(window, title));
-        }
-    };
+    private final MemorySegment resizeTask = SDL_MainThreadCallback.allocate((userdata) -> {
+        checkSdlError(SDL_SetWindowSize(window, osWindowWidth, osWindowHeight));
+    }, Arena.global());
 
-    private final SDL_MainThreadCallback setCursorTask = new SDL_MainThreadCallback() {
-        @Override
-        public void invoke(final long userdata) {
-            if (cursorData == null) {
-                return;
-            }
-            if (cursor != NULL) {
-                SDL_DestroyCursor(cursor);
-            }
-            try (MemoryStack stack = stackPush()) {
-                final int numBytes = cursorData.cursorWords.length * Short.BYTES;
-                final ByteBuffer data = stack.calloc(numBytes);
-                final ByteBuffer mask = stack.calloc(numBytes);
-                copyIntoBuffer(cursorData.cursorWords, data);
-                if (cursorData.maskWords != null) {
-                    copyIntoBuffer(cursorData.maskWords, mask);
-                }
-                cursor = SDL_CreateCursor(data, mask, cursorData.width, cursorData.height, cursorData.offsetX, cursorData.offsetY);
-                if (cursor == NULL) {
-                    throw SqueakException.create("Failed to create SDL cursor: " + SDL_GetError());
-                }
-            }
-            checkSdlError(SDL_SetCursor(cursor));
-            cursorData = null;
+    private final MemorySegment updateTitleTask = SDL_MainThreadCallback.allocate((userdata) -> {
+        try (Arena arena = Arena.ofConfined()) {
+            checkSdlError(SDL_SetWindowTitle(window, arena.allocateFrom(title)));
         }
-    };
+    }, Arena.global());
+
+    private final MemorySegment setCursorTask = SDL_MainThreadCallback.allocate((userdata) -> {
+        if (cursorData == null) {
+            return;
+        }
+        if (cursor != MemorySegment.NULL) {
+            SDL_DestroyCursor(cursor);
+        }
+        try (Arena arena = Arena.ofConfined()) {
+            final int numBytes = cursorData.cursorWords.length * Short.BYTES;
+            final MemorySegment data = arena.allocate(numBytes);
+            final MemorySegment mask = arena.allocate(numBytes);
+
+            copyIntoSegment(cursorData.cursorWords, data);
+            if (cursorData.maskWords != null) {
+                copyIntoSegment(cursorData.maskWords, mask);
+            }
+
+            cursor = SDL_CreateCursor(data, mask, cursorData.width, cursorData.height, cursorData.offsetX, cursorData.offsetY);
+            if (cursor == MemorySegment.NULL) {
+                throw SqueakException.create("Failed to create SDL cursor: " + SDL_GetError().getString(0));
+            }
+        }
+        checkSdlError(SDL_SetCursor(cursor));
+        cursorData = null;
+    }, Arena.global());
 
     private SqueakDisplay(final SqueakImageContext image) {
         this.image = image;
@@ -218,13 +233,13 @@ public final class SqueakDisplay {
 
     private static void checkSdlError(final boolean success) {
         if (!success) {
-            throw SqueakException.create("SDL error encountered: " + SDL_GetError());
+            throw SqueakException.create("SDL error encountered: " + SDL_GetError().getString(0));
         }
     }
 
     private static float checkSdlError(final float value) {
         if (value == 0.0f) {
-            throw SqueakException.create("SDL error encountered: " + SDL_GetError());
+            throw SqueakException.create("SDL error encountered: " + SDL_GetError().getString(0));
         }
         return value;
     }
@@ -236,18 +251,19 @@ public final class SqueakDisplay {
 
     private void ensureStagingPixels(final int w, final int h) {
         final int requiredBytes = w * h * Integer.BYTES;
-        if (stagingAddress == NULL || stagingCapacity < requiredBytes) {
-            if (stagingAddress != NULL) {
-                MemoryUtil.nmemFree(stagingAddress);
+        if (stagingArena == null || stagingCapacity < requiredBytes) {
+            if (stagingArena != null) {
+                stagingArena.close(); // Instantly frees the old native memory
             }
-            stagingAddress = MemoryUtil.nmemAlloc(requiredBytes);
+            stagingArena = Arena.ofShared(); // Create a new native memory arena
+            stagingBuffer = stagingArena.allocate(requiredBytes);
             stagingCapacity = requiredBytes;
         }
         stagingPitchBytes = w * Integer.BYTES;
     }
 
     public double getDisplayScale() {
-        if (scaleFactor != NULL) {
+        if (scaleFactor != 0.0f) {
             return scaleFactor;
         } else {
             return 1.0d;
@@ -256,7 +272,7 @@ public final class SqueakDisplay {
 
     // Called by the Main Thread at the end of the event loop
     private void performRenderIfNeeded() {
-        if (renderer == NULL) {
+        if (renderer == MemorySegment.NULL) {
             return;
         }
 
@@ -299,18 +315,24 @@ public final class SqueakDisplay {
             }
 
             // Upload the texture
-            try (MemoryStack stack = stackPush()) {
-                final SDL_Rect dirtyRect = SDL_Rect.malloc(stack);
-                dirtyRect.set(safeLeft, safeTop, safeRight - safeLeft, safeBottom - safeTop);
-                final long pixelStartOffset = ((long) safeTop * stagingPitchBytes) + ((long) safeLeft * Integer.BYTES);
-                if (!nSDL_UpdateTexture(texture.address(), dirtyRect.address(), stagingAddress + pixelStartOffset, stagingPitchBytes)) {
+            try (Arena arena = Arena.ofConfined()) {
+                final MemorySegment dirtyRect = SDL_Rect.allocate(arena);
+                SDL_Rect.x(dirtyRect, safeLeft);
+                SDL_Rect.y(dirtyRect, safeTop);
+                SDL_Rect.w(dirtyRect, safeRight - safeLeft);
+                SDL_Rect.h(dirtyRect, safeBottom - safeTop);
+
+                final long pixelStartOffsetBytes = ((long) safeTop * stagingPitchBytes) + ((long) safeLeft * Integer.BYTES);
+                final MemorySegment pixelPointer = stagingBuffer.asSlice(pixelStartOffsetBytes);
+
+                if (!SDL_UpdateTexture(texture, dirtyRect, pixelPointer, stagingPitchBytes)) {
                     return; // FIXME: invalid pixels
                 }
             }
         }
 
         checkSdlError(SDL_RenderClear(renderer));
-        checkSdlError(SDL_RenderTexture(renderer, texture, null, null));
+        checkSdlError(SDL_RenderTexture(renderer, texture, MemorySegment.NULL, MemorySegment.NULL));
         checkSdlError(SDL_RenderPresent(renderer));
     }
 
@@ -364,20 +386,24 @@ public final class SqueakDisplay {
             if (sqPixels.length >= currentWidth * currentHeight) {
                 final int rowInts = safeRight - safeLeft;
 
+                // Wrap the Squeak pixel array into a Panama segment
+                MemorySegment srcSegment = MemorySegment.ofArray(sqPixels);
+
                 // Fast Path: one single transfer if more than 75% screen width
                 if (rowInts >= (currentWidth * 3) / 4) {
-                    final int startOffsetInts = safeTop * currentWidth;
-                    final int totalInts = (safeBottom - safeTop) * currentWidth;
-                    MemoryUtil.memCopy(sqPixels, stagingAddress + ((long) startOffsetInts * Integer.BYTES), startOffsetInts, totalInts);
+                    final long startOffsetBytes = (long) (safeTop * currentWidth) * Integer.BYTES;
+                    final long totalBytes = (long) ((safeBottom - safeTop) * currentWidth) * Integer.BYTES;
+                    MemorySegment.copy(srcSegment, startOffsetBytes, stagingBuffer, startOffsetBytes, totalBytes);
                 } else {
                     // Row-by-Row Path
-                    int srcOffsetInts = safeTop * currentWidth + safeLeft;
-                    long dstAddress = stagingAddress + ((long) safeTop * stagingPitchBytes) + ((long) safeLeft * Integer.BYTES);
+                    long srcOffsetBytes = (long) (safeTop * currentWidth + safeLeft) * Integer.BYTES;
+                    long dstOffsetBytes = ((long) safeTop * stagingPitchBytes) + ((long) safeLeft * Integer.BYTES);
+                    final long rowBytes = (long) rowInts * Integer.BYTES;
 
                     for (int y = safeTop; y < safeBottom; y++) {
-                        MemoryUtil.memCopy(sqPixels, dstAddress, srcOffsetInts, rowInts);
-                        srcOffsetInts += currentWidth;
-                        dstAddress += stagingPitchBytes;
+                        MemorySegment.copy(srcSegment, srcOffsetBytes, stagingBuffer, dstOffsetBytes, rowBytes);
+                        srcOffsetBytes += (long) currentWidth * Integer.BYTES;
+                        dstOffsetBytes += stagingPitchBytes;
                     }
                 }
             }
@@ -410,25 +436,24 @@ public final class SqueakDisplay {
 
     @TruffleBoundary
     public void close() {
-        SDL_RunOnMainThread(new SDL_MainThreadCallback() {
-            @Override
-            public void invoke(final long userdata) {
-                if (stagingAddress != NULL) {
-                    MemoryUtil.nmemFree(stagingAddress);
-                }
-                if (texture != null) {
-                    SDL_DestroyTexture(texture);
-                }
-                if (renderer != NULL) {
-                    SDL_DestroyRenderer(renderer);
-                }
-                if (window != NULL) {
-                    SDL_DestroyWindow(window);
-                }
-                SDL_Quit();
-                System.out.println("Quitting SqueakVM");
+        MemorySegment closeTask = SDL_MainThreadCallback.allocate((userdata) -> {
+            if (stagingArena != null) {
+                stagingArena.close();
             }
-        }, NULL, true);
+            if (texture != MemorySegment.NULL) {
+                SDL_DestroyTexture(texture);
+            }
+            if (renderer != MemorySegment.NULL) {
+                SDL_DestroyRenderer(renderer);
+            }
+            if (window != MemorySegment.NULL) {
+                SDL_DestroyWindow(window);
+            }
+            SDL_Quit();
+            System.out.println("Quitting SqueakVM");
+        }, Arena.global());
+
+        SDL_RunOnMainThread(closeTask, MemorySegment.NULL, true);
     }
 
     public int getWindowWidth() {
@@ -441,10 +466,11 @@ public final class SqueakDisplay {
 
     @TruffleBoundary
     public void setFullscreen(final boolean fullscreen) {
-        if (window == NULL) {
+        if (window == MemorySegment.NULL) {
             return;
         }
-        SDL_RunOnMainThread(setFullscreenTask, fullscreen ? 1 : 0, false);
+        // Use MemorySegment.ofAddress to pass the flag as a raw pointer value
+        SDL_RunOnMainThread(setFullscreenTask, MemorySegment.ofAddress(fullscreen ? 1L : 0L), false);
     }
 
     @TruffleBoundary
@@ -464,40 +490,43 @@ public final class SqueakDisplay {
             height = newHeight;
         }
 
-        if (window == NULL) {
+        if (window == MemorySegment.NULL) {
             osWindowWidth = (int) Math.ceil(width / getDisplayScale());
             osWindowHeight = (int) Math.ceil(height / getDisplayScale());
-            SDL_RunOnMainThread(new SDL_MainThreadCallback() {
-                @Override
-                public void invoke(final long userdata) {
-                    long windowFlags = SDL_WINDOW_RESIZABLE;
-                    if (image.flags.upscaleDisplayIfHighDPI()) {
-                        windowFlags |= SDL_WINDOW_HIGH_PIXEL_DENSITY;
-                    }
-                    window = SDL_CreateWindow(title, osWindowWidth, osWindowHeight, windowFlags);
-                    if (window == NULL) {
-                        throw SqueakException.create("Failed to create SDL window: " + SDL_GetError());
-                    }
 
-                    renderer = nSDL_CreateRenderer(window, NULL);
-                    if (renderer == NULL) {
-                        throw SqueakException.create("Failed to create SDL renderer: " + SDL_GetError());
-                    }
-
-                    setWindowIcon(window);
-                    checkSdlError(SDL_RaiseWindow(window));
-                    scaleFactor = checkSdlError(SDL_GetWindowDisplayScale(window));
-                    checkSdlError(SDL_StartTextInput(window));
-                    fullDamage();
+            MemorySegment openTask = SDL_MainThreadCallback.allocate((userdata) -> {
+                long windowFlags = SDL_WINDOW_RESIZABLE;
+                if (image.flags.upscaleDisplayIfHighDPI()) {
+                    windowFlags |= SDL_WINDOW_HIGH_PIXEL_DENSITY;
                 }
-            }, NULL, true);
+
+                try (Arena arena = Arena.ofConfined()) {
+                    window = SDL_CreateWindow(arena.allocateFrom(title), osWindowWidth, osWindowHeight, windowFlags);
+                    if (window == MemorySegment.NULL) {
+                        throw SqueakException.create("Failed to create SDL window: " + SDL_GetError().getString(0));
+                    }
+                }
+
+                renderer = SDL_CreateRenderer(window, MemorySegment.NULL);
+                if (renderer == MemorySegment.NULL) {
+                    throw SqueakException.create("Failed to create SDL renderer: " + SDL_GetError().getString(0));
+                }
+
+                setWindowIcon(window);
+                checkSdlError(SDL_RaiseWindow(window));
+                scaleFactor = checkSdlError(SDL_GetWindowDisplayScale(window));
+                checkSdlError(SDL_StartTextInput(window));
+                fullDamage();
+            }, Arena.global());
+
+            SDL_RunOnMainThread(openTask, MemorySegment.NULL, true);
         } else {
             final int targetLogicalWidth = (int) Math.ceil(width / getDisplayScale());
             final int targetLogicalHeight = (int) Math.ceil(height / getDisplayScale());
             if (targetLogicalWidth != osWindowWidth || targetLogicalHeight != osWindowHeight) {
                 osWindowWidth = targetLogicalWidth;
                 osWindowHeight = targetLogicalHeight;
-                SDL_RunOnMainThread(resizeTask, NULL, true);
+                SDL_RunOnMainThread(resizeTask, MemorySegment.NULL, true);
             }
         }
 
@@ -505,29 +534,31 @@ public final class SqueakDisplay {
         setWindowTitle(imageFileName.contains(SqueakLanguageConfig.IMPLEMENTATION_NAME) ? imageFileName : imageFileName + " running on " + SqueakLanguageConfig.IMPLEMENTATION_NAME);
     }
 
-    private static void setWindowIcon(final long window) {
+    private static void setWindowIcon(final MemorySegment window) {
         try (InputStream is = SqueakDisplay.class.getResourceAsStream("/trufflesqueak-icon.zip");
-                        ZipInputStream zis = new ZipInputStream(is)) {
+             ZipInputStream zis = new ZipInputStream(is)) {
             final ZipEntry entry = zis.getNextEntry();
             if (entry == null || !entry.getName().endsWith(".bmp")) {
                 System.out.println("The zip archive is empty or doesn't contain .bmp file.");
                 return;
             }
             final byte[] imageBytes = zis.readAllBytes();
-            final ByteBuffer imageBuffer = MemoryUtil.memAlloc(imageBytes.length);
-            imageBuffer.put(imageBytes).flip();
-            final long ioStream = SDL_IOFromMem(imageBuffer);
-            if (ioStream == NULL) {
-                System.out.println("Failed to create SDL ioStream: " + SDL_GetError());
-                return;
-            }
-            final SDL_Surface iconSurface = SDL_LoadBMP_IO(ioStream, true);
-            MemoryUtil.memFree(imageBuffer);
-            if (iconSurface != null) {
-                SDL_SetWindowIcon(window, iconSurface);
-                SDL_DestroySurface(iconSurface);
-            } else {
-                System.out.println("Failed to create SDL icon surface: " + SDL_GetError());
+
+            try (Arena arena = Arena.ofConfined()) {
+                final MemorySegment imageBuffer = arena.allocateFrom(ValueLayout.JAVA_BYTE, imageBytes);
+                final MemorySegment ioStream = SDL_IOFromMem(imageBuffer, imageBytes.length);
+                if (ioStream == MemorySegment.NULL) {
+                    System.out.println("Failed to create SDL ioStream: " + SDL_GetError().getString(0));
+                    return;
+                }
+
+                final MemorySegment iconSurface = SDL_LoadBMP_IO(ioStream, true);
+                if (iconSurface != MemorySegment.NULL) {
+                    SDL_SetWindowIcon(window, iconSurface);
+                    SDL_DestroySurface(iconSurface);
+                } else {
+                    System.out.println("Failed to create SDL icon surface: " + SDL_GetError().getString(0));
+                }
             }
         } catch (final IOException e) {
             System.out.println("Failed to load and set icon: " + e);
@@ -547,8 +578,8 @@ public final class SqueakDisplay {
         osWindowWidth = targetLogicalWidth;
         osWindowHeight = targetLogicalHeight;
 
-        if (window != NULL) {
-            SDL_RunOnMainThread(resizeTask, NULL, true);
+        if (window != MemorySegment.NULL) {
+            SDL_RunOnMainThread(resizeTask, MemorySegment.NULL, true);
         }
 
         fullDamage();
@@ -556,48 +587,52 @@ public final class SqueakDisplay {
 
     @TruffleBoundary
     public boolean isVisible() {
-        return window != NULL;
+        return window != MemorySegment.NULL;
     }
 
     @TruffleBoundary
     public void setCursor(final int[] cursorWords, final int[] maskWords, final int width, final int height, final int offsetX, final int offsetY) {
         cursorData = new CursorData(cursorWords, maskWords, width, height, offsetX, offsetY);
-        if (window == NULL) {
+        if (window == MemorySegment.NULL) {
             return;
         }
-        SDL_RunOnMainThread(setCursorTask, NULL, false);
+        SDL_RunOnMainThread(setCursorTask, MemorySegment.NULL, false);
     }
 
-    private static void copyIntoBuffer(final int[] words, final ByteBuffer buffer) {
-        for (final int word : words) {
-            buffer.put((byte) (word >> 24));
-            buffer.put((byte) (word >> 16));
+    private static void copyIntoSegment(final int[] words, final MemorySegment segment) {
+        for (int i = 0; i < words.length; i++) {
+            segment.set(ValueLayout.JAVA_BYTE, i * 2L, (byte) (words[i] >> 24));
+            segment.set(ValueLayout.JAVA_BYTE, i * 2L + 1, (byte) (words[i] >> 16));
         }
-        buffer.clear();
     }
 
-    public void processEvent(final SDL_Event event) {
-        switch (event.type()) {
+    public void processEvent(final MemorySegment event) {
+        int type = SDL_Event.type(event);
+
+        switch (type) {
             case SDL_EVENT_KEY_DOWN:
-                processKeyDown(event.key().key(), event.key().mod());
+                processKeyDown(SDL_KeyboardEvent.key(event), SDL_KeyboardEvent.mod(event));
                 break;
             case SDL_EVENT_KEY_UP:
-                processKeyUp(event.key().key(), event.key().mod());
+                processKeyUp(SDL_KeyboardEvent.key(event), SDL_KeyboardEvent.mod(event));
                 break;
             case SDL_EVENT_TEXT_INPUT:
-                processTextInput(event.text().textString());
+                MemorySegment textPtr = SDL_TextInputEvent.text(event);
+                if (textPtr != MemorySegment.NULL) {
+                    processTextInput(textPtr.getString(0));
+                }
                 break;
             case SDL_EVENT_MOUSE_MOTION:
-                processMouseMotion(event.motion(), scaleFactor);
+                processMouseMotion(event, scaleFactor);
                 break;
             case SDL_EVENT_MOUSE_BUTTON_DOWN:
-                processMouseButtonDown(event.button(), scaleFactor);
+                processMouseButtonDown(event, scaleFactor);
                 break;
             case SDL_EVENT_MOUSE_BUTTON_UP:
-                processMouseButtonUp(event.button(), scaleFactor);
+                processMouseButtonUp(event, scaleFactor);
                 break;
             case SDL_EVENT_MOUSE_WHEEL:
-                processMouseWheel(event.wheel(), scaleFactor);
+                processMouseWheel(event, scaleFactor);
                 break;
             case SDL_EVENT_DROP_BEGIN:
                 isDragActive = true;
@@ -605,24 +640,24 @@ public final class SqueakDisplay {
                 addDragEvent(SqueakIOConstants.DRAG.ENTER, 0, 0);
                 break;
             case SDL_EVENT_DROP_POSITION: {
-                final int x = (int) (event.drop().x() * scaleFactor);
-                final int y = (int) (event.drop().y() * scaleFactor);
+                final int x = (int) (SDL_DropEvent.x(event) * scaleFactor);
+                final int y = (int) (SDL_DropEvent.y(event) * scaleFactor);
                 addDragEvent(SqueakIOConstants.DRAG.MOVE, x, y);
                 break;
             }
             case SDL_EVENT_DROP_FILE: {
-                // Accumulate the canonical-style path provided by SDL
-                final String droppedFile = event.drop().dataString();
-                if (droppedFile != null) {
-                    dropFilesAccumulator.add(droppedFile);
+                // Read the C-string directly from the memory pointer
+                MemorySegment dataPtr = SDL_DropEvent.data(event);
+                if (dataPtr != MemorySegment.NULL) {
+                    dropFilesAccumulator.add(dataPtr.getString(0));
                 }
                 break;
             }
             case SDL_EVENT_DROP_COMPLETE: {
                 isDragActive = false;
                 image.dropPluginFileList = dropFilesAccumulator.toArray(new String[0]);
-                final int x = (int) (event.drop().x() * scaleFactor);
-                final int y = (int) (event.drop().y() * scaleFactor);
+                final int x = (int) (SDL_DropEvent.x(event) * scaleFactor);
+                final int y = (int) (SDL_DropEvent.y(event) * scaleFactor);
                 addDragEvent(SqueakIOConstants.DRAG.DROP, x, y);
                 dropFilesAccumulator.clear();
                 break;
@@ -641,9 +676,8 @@ public final class SqueakDisplay {
                 addWindowEvent(SqueakIOConstants.WINDOW.CHANGED_SCREEN);
                 break;
             case SDL_EVENT_WINDOW_RESIZED:
-                final SDL_WindowEvent we = event.window();
-                osWindowWidth = we.data1();
-                osWindowHeight = we.data2();
+                osWindowWidth = SDL_WindowEvent.data1(event);
+                osWindowHeight = SDL_WindowEvent.data2(event);
                 addWindowEvent(SqueakIOConstants.WINDOW.METRIC_CHANGE);
                 fullDamage();
                 render(true);
@@ -668,8 +702,8 @@ public final class SqueakDisplay {
 
         addKeyboardEvent(KEYBOARD_EVENT.DOWN, keyChar);
 
-        final boolean isCommandOrCtrl = (sdlModifiers & (SDLKeycode.SDL_KMOD_LCTRL | SDLKeycode.SDL_KMOD_RCTRL |
-                        SDLKeycode.SDL_KMOD_LGUI | SDLKeycode.SDL_KMOD_RGUI)) != 0;
+        final boolean isCommandOrCtrl = (sdlModifiers & (SDL_KMOD_LCTRL | SDL_KMOD_RCTRL |
+                        SDL_KMOD_LGUI | SDL_KMOD_RGUI)) != 0;
 
         if (isControlKey(sdlKeySym) || isCommandOrCtrl) {
             if (keyChar <= 65535) {
@@ -713,71 +747,71 @@ public final class SqueakDisplay {
 
     private boolean isModifier(final int sdlKeySym) {
         return switch (sdlKeySym) {
-            case SDLKeycode.SDLK_LSHIFT, SDLKeycode.SDLK_RSHIFT, SDLKeycode.SDLK_LCTRL, SDLKeycode.SDLK_RCTRL, SDLKeycode.SDLK_LALT, SDLKeycode.SDLK_RALT, SDLKeycode.SDLK_LGUI, SDLKeycode.SDLK_RGUI -> true;
+            case SDLK_LSHIFT, SDLK_RSHIFT, SDLK_LCTRL, SDLK_RCTRL, SDLK_LALT, SDLK_RALT, SDLK_LGUI, SDLK_RGUI -> true;
             default -> false;
         };
     }
 
     private boolean isControlKey(final int sdlKeySym) {
         return switch (sdlKeySym) {
-            case SDLKeycode.SDLK_BACKSPACE, SDLKeycode.SDLK_TAB, SDLKeycode.SDLK_RETURN, SDLKeycode.SDLK_KP_ENTER, SDLKeycode.SDLK_ESCAPE, SDLKeycode.SDLK_PAGEUP, SDLKeycode.SDLK_PAGEDOWN, SDLKeycode.SDLK_END, //
-                SDLKeycode.SDLK_HOME, SDLKeycode.SDLK_LEFT, SDLKeycode.SDLK_UP, SDLKeycode.SDLK_RIGHT, SDLKeycode.SDLK_DOWN, SDLKeycode.SDLK_INSERT, SDLKeycode.SDLK_DELETE -> true;
+            case SDLK_BACKSPACE, SDLK_TAB, SDLK_RETURN, SDLK_KP_ENTER, SDLK_ESCAPE, SDLK_PAGEUP, SDLK_PAGEDOWN, SDLK_END, //
+                SDLK_HOME, SDLK_LEFT, SDLK_UP, SDLK_RIGHT, SDLK_DOWN, SDLK_INSERT, SDLK_DELETE -> true;
             default -> false;
         };
     }
 
     private static int toSqueakKey(final int sdlKeySym) {
         return switch (sdlKeySym) {
-            case SDLKeycode.SDLK_BACKSPACE -> 8;
-            case SDLKeycode.SDLK_TAB -> 9;
-            case SDLKeycode.SDLK_RETURN, SDLKeycode.SDLK_KP_ENTER -> 13;
-            case SDLKeycode.SDLK_ESCAPE -> 27;
-            case SDLKeycode.SDLK_SPACE -> 32;
-            case SDLKeycode.SDLK_PAGEUP -> 11;
-            case SDLKeycode.SDLK_PAGEDOWN -> 12;
-            case SDLKeycode.SDLK_END -> 4;
-            case SDLKeycode.SDLK_HOME -> 1;
-            case SDLKeycode.SDLK_LEFT -> 28;
-            case SDLKeycode.SDLK_UP -> 30;
-            case SDLKeycode.SDLK_RIGHT -> 29;
-            case SDLKeycode.SDLK_DOWN -> 31;
-            case SDLKeycode.SDLK_INSERT -> 5;
-            case SDLKeycode.SDLK_DELETE -> 127;
-            case SDLKeycode.SDLK_KP_0 -> '0';
-            case SDLKeycode.SDLK_KP_1 -> '1';
-            case SDLKeycode.SDLK_KP_2 -> '2';
-            case SDLKeycode.SDLK_KP_3 -> '3';
-            case SDLKeycode.SDLK_KP_4 -> '4';
-            case SDLKeycode.SDLK_KP_5 -> '5';
-            case SDLKeycode.SDLK_KP_6 -> '6';
-            case SDLKeycode.SDLK_KP_7 -> '7';
-            case SDLKeycode.SDLK_KP_8 -> '8';
-            case SDLKeycode.SDLK_KP_9 -> '9';
-            case SDLKeycode.SDLK_KP_DIVIDE -> '/';
-            case SDLKeycode.SDLK_KP_MULTIPLY -> '*';
-            case SDLKeycode.SDLK_KP_MINUS -> '-';
-            case SDLKeycode.SDLK_KP_PLUS -> '+';
-            case SDLKeycode.SDLK_KP_PERIOD -> '.';
+            case SDLK_BACKSPACE -> 8;
+            case SDLK_TAB -> 9;
+            case SDLK_RETURN, SDLK_KP_ENTER -> 13;
+            case SDLK_ESCAPE -> 27;
+            case SDLK_SPACE -> 32;
+            case SDLK_PAGEUP -> 11;
+            case SDLK_PAGEDOWN -> 12;
+            case SDLK_END -> 4;
+            case SDLK_HOME -> 1;
+            case SDLK_LEFT -> 28;
+            case SDLK_UP -> 30;
+            case SDLK_RIGHT -> 29;
+            case SDLK_DOWN -> 31;
+            case SDLK_INSERT -> 5;
+            case SDLK_DELETE -> 127;
+            case SDLK_KP_0 -> '0';
+            case SDLK_KP_1 -> '1';
+            case SDLK_KP_2 -> '2';
+            case SDLK_KP_3 -> '3';
+            case SDLK_KP_4 -> '4';
+            case SDLK_KP_5 -> '5';
+            case SDLK_KP_6 -> '6';
+            case SDLK_KP_7 -> '7';
+            case SDLK_KP_8 -> '8';
+            case SDLK_KP_9 -> '9';
+            case SDLK_KP_DIVIDE -> '/';
+            case SDLK_KP_MULTIPLY -> '*';
+            case SDLK_KP_MINUS -> '-';
+            case SDLK_KP_PLUS -> '+';
+            case SDLK_KP_PERIOD -> '.';
             default -> sdlKeySym;
         };
     }
 
-    // --- Mouse processing methods ---
+// --- Mouse processing methods ---
 
-    public void processMouseMotion(final SDL_MouseMotionEvent event, final float scaleFactor) {
-        recordMouseEvent(MOUSE_EVENT.MOVE, event.x() * scaleFactor, event.y() * scaleFactor, 0);
+    public void processMouseMotion(final MemorySegment event, final float scaleFactor) {
+        recordMouseEvent(MOUSE_EVENT.MOVE, SDL_MouseMotionEvent.x(event) * scaleFactor, SDL_MouseMotionEvent.y(event) * scaleFactor, 0);
     }
 
-    public void processMouseButtonDown(final SDL_MouseButtonEvent event, final float scaleFactor) {
-        recordMouseEvent(MOUSE_EVENT.DOWN, event.x() * scaleFactor, event.y() * scaleFactor, event.button());
+    public void processMouseButtonDown(final MemorySegment event, final float scaleFactor) {
+        recordMouseEvent(MOUSE_EVENT.DOWN, SDL_MouseButtonEvent.x(event) * scaleFactor, SDL_MouseButtonEvent.y(event) * scaleFactor, SDL_MouseButtonEvent.button(event));
     }
 
-    public void processMouseButtonUp(final SDL_MouseButtonEvent event, final float scaleFactor) {
-        recordMouseEvent(MOUSE_EVENT.UP, event.x() * scaleFactor, event.y() * scaleFactor, event.button());
+    public void processMouseButtonUp(final MemorySegment event, final float scaleFactor) {
+        recordMouseEvent(MOUSE_EVENT.UP, SDL_MouseButtonEvent.x(event) * scaleFactor, SDL_MouseButtonEvent.y(event) * scaleFactor, SDL_MouseButtonEvent.button(event));
     }
 
-    public void processMouseWheel(final SDL_MouseWheelEvent event, final float scaleFactor) {
-        addEvent(EVENT_TYPE.MOUSE_WHEEL, 0L, (long) (event.y() * scaleFactor * MOUSE.WHEEL_DELTA_FACTOR), buttons >> 3, 0L);
+    public void processMouseWheel(final MemorySegment event, final float scaleFactor) {
+        addEvent(EVENT_TYPE.MOUSE_WHEEL, 0L, (long) (SDL_MouseWheelEvent.y(event) * scaleFactor * MOUSE.WHEEL_DELTA_FACTOR), buttons >> 3, 0L);
     }
 
     private void recordMouseEvent(final MOUSE_EVENT type, final float x, final float y, final int sdlButton) {
@@ -796,9 +830,9 @@ public final class SqueakDisplay {
 
     private static int mapButton(final int sdlButton) {
         return switch (sdlButton) {
-            case SDLMouse.SDL_BUTTON_LEFT -> MOUSE.RED;
-            case SDLMouse.SDL_BUTTON_MIDDLE -> MOUSE.YELLOW;
-            case SDLMouse.SDL_BUTTON_RIGHT -> MOUSE.BLUE;
+            case SDL_BUTTON_LEFT -> MOUSE.RED;
+            case SDL_BUTTON_MIDDLE -> MOUSE.YELLOW;
+            case SDL_BUTTON_RIGHT -> MOUSE.BLUE;
             default -> 0;
         };
     }
@@ -806,10 +840,10 @@ public final class SqueakDisplay {
     // --- Event queue methods ---
 
     public void recordModifiers(final int sdlModifiers) {
-        final int shiftValue = (sdlModifiers & (SDLKeycode.SDL_KMOD_LSHIFT | SDLKeycode.SDL_KMOD_RSHIFT)) != 0 ? KEYBOARD.SHIFT : 0;
-        final int ctrlValue = (sdlModifiers & (SDLKeycode.SDL_KMOD_LCTRL | SDLKeycode.SDL_KMOD_RCTRL)) != 0 ? KEYBOARD.CTRL : 0;
-        final int optValue = (sdlModifiers & (SDLKeycode.SDL_KMOD_LALT | SDLKeycode.SDL_KMOD_RALT)) != 0 ? KEYBOARD.ALT : 0;
-        final int cmdValue = (sdlModifiers & (SDLKeycode.SDL_KMOD_LGUI | SDLKeycode.SDL_KMOD_RGUI)) != 0 ? KEYBOARD.CMD : 0;
+        final int shiftValue = (sdlModifiers & (SDL_KMOD_LSHIFT | SDL_KMOD_RSHIFT)) != 0 ? KEYBOARD.SHIFT : 0;
+        final int ctrlValue = (sdlModifiers & (SDL_KMOD_LCTRL | SDL_KMOD_RCTRL)) != 0 ? KEYBOARD.CTRL : 0;
+        final int optValue = (sdlModifiers & (SDL_KMOD_LALT | SDL_KMOD_RALT)) != 0 ? KEYBOARD.ALT : 0;
+        final int cmdValue = (sdlModifiers & (SDL_KMOD_LGUI | SDL_KMOD_RGUI)) != 0 ? KEYBOARD.CMD : 0;
 
         final int modifiers = shiftValue + ctrlValue + optValue + cmdValue;
         buttons = buttons & ~KEYBOARD.ALL | modifiers;
@@ -863,11 +897,11 @@ public final class SqueakDisplay {
 
     @TruffleBoundary
     public void setWindowTitle(final String title) {
-        if (window == NULL) {
+        if (window == MemorySegment.NULL) {
             return;
         }
         this.title = title;
-        SDL_RunOnMainThread(updateTitleTask, NULL, false);
+        SDL_RunOnMainThread(updateTitleTask, MemorySegment.NULL, false);
     }
 
     public void setInputSemaphoreIndex(final int interruptSemaphoreIndex) {
@@ -878,9 +912,9 @@ public final class SqueakDisplay {
     @TruffleBoundary
     public static String getClipboardData() {
         if (SDL_HasClipboardText()) {
-            final String text = SDL_GetClipboardText();
-            if (text != null) {
-                return text;
+            final MemorySegment textPtr = SDL_GetClipboardText();
+            if (textPtr != MemorySegment.NULL) {
+                return textPtr.getString(0);
             }
             LogUtils.IO.warning("Failed to get clipboard data");
         }
@@ -889,8 +923,10 @@ public final class SqueakDisplay {
 
     @TruffleBoundary
     public static void setClipboardData(final String text) {
-        if (!SDL_SetClipboardText(text)) {
-            LogUtils.IO.warning("Failed to set clipboard text");
+        try (Arena arena = Arena.ofConfined()) {
+            if (!SDL_SetClipboardText(arena.allocateFrom(text))) {
+                LogUtils.IO.warning("Failed to set clipboard text");
+            }
         }
     }
 
@@ -903,9 +939,9 @@ public final class SqueakDisplay {
     public static int[] getPrimaryDisplayDimensions() {
         final int displayId = SDL_GetPrimaryDisplay();
         if (displayId != 0) {
-            final SDL_DisplayMode mode = SDL_GetDesktopDisplayMode(displayId);
-            if (mode != null) {
-                return new int[]{mode.w(), mode.h()};
+            final MemorySegment mode = SDL_GetDesktopDisplayMode(displayId);
+            if (mode != MemorySegment.NULL) {
+                return new int[]{SDL_DisplayMode.w(mode), SDL_DisplayMode.h(mode)};
             }
         }
         return new int[]{0, 0};

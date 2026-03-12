@@ -1,67 +1,84 @@
+/*
+ * Copyright (c) 2017-2026 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021-2026 Oracle and/or its affiliates
+ *
+ * Licensed under the MIT License.
+ */
 package de.hpi.swa.trufflesqueak.shared;
 
-import static org.lwjgl.sdl.SDLError.SDL_GetError;
-import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_FINGER_DOWN;
-import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_FINGER_MOTION;
-import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_FINGER_UP;
-import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_FIRST;
-import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_LAST;
-import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_TEXT_EDITING;
-import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_USER;
-import static org.lwjgl.sdl.SDLEvents.SDL_GETEVENT;
-import static org.lwjgl.sdl.SDLEvents.SDL_PeepEvents;
-import static org.lwjgl.sdl.SDLEvents.SDL_PushEvent;
-import static org.lwjgl.sdl.SDLEvents.SDL_SetEventEnabled;
-import static org.lwjgl.sdl.SDLEvents.SDL_WaitEvent;
-import static org.lwjgl.sdl.SDLHints.SDL_HINT_MAC_BACKGROUND_APP;
-import static org.lwjgl.sdl.SDLHints.SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK;
-import static org.lwjgl.sdl.SDLHints.SDL_HINT_RENDER_VSYNC;
-import static org.lwjgl.sdl.SDLHints.SDL_HINT_VIDEO_X11_NET_WM_PING;
-import static org.lwjgl.sdl.SDLHints.SDL_SetHint;
-import static org.lwjgl.sdl.SDLInit.SDL_INIT_VIDEO;
-import static org.lwjgl.sdl.SDLInit.SDL_Init;
-import static org.lwjgl.sdl.SDLInit.SDL_PROP_APP_METADATA_COPYRIGHT_STRING;
-import static org.lwjgl.sdl.SDLInit.SDL_PROP_APP_METADATA_CREATOR_STRING;
-import static org.lwjgl.sdl.SDLInit.SDL_PROP_APP_METADATA_URL_STRING;
-import static org.lwjgl.sdl.SDLInit.SDL_SetAppMetadata;
-import static org.lwjgl.sdl.SDLInit.SDL_SetAppMetadataProperty;
-import static org.lwjgl.sdl.SDLStdinc.SDL_SetMemoryFunctions;
-import static org.lwjgl.system.MemoryStack.stackPush;
-
+import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySegment;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
 
-import org.lwjgl.sdl.SDL_Event;
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.system.MemoryUtil;
+import bindings.sdl.*;
+import static bindings.sdl.SDL_h.*;
 
 public final class PlatformEventLoop {
-    private static final int EVENT_FETCH_BATCH_SIZE = 32;
+    static {
+        try {
+            // This pulls the path we just set in suite.py
+            String libPath = System.getProperty("java.library.path");
 
+            // Try to load by name (System will search java.library.path)
+            System.loadLibrary("SDL3");
+        } catch (UnsatisfiedLinkError e) {
+            // Fallback: If it fails, let's try to find it manually to give a better error
+            String libPath = System.getProperty("java.library.path");
+            throw new RuntimeException("FFI Error: libSDL3.dylib not found. \n" +
+                    "Search Path: " + libPath + "\n" +
+                    "Verify that libSDL3.dylib is in that folder.", e);
+        }
+    }
+
+    // --- SDL3 Constants (Bypassing jextract macros) ---
+    private static final int SDL_EVENT_TEXT_EDITING = 0x302;
+    private static final int SDL_EVENT_FINGER_DOWN   = 0x700;
+    private static final int SDL_EVENT_FINGER_UP     = 0x701;
+    private static final int SDL_EVENT_FINGER_MOTION = 0x702;
+    private static final int SDL_EVENT_USER          = 0x8000;
+
+    private static final int SDL_INIT_VIDEO = 0x00000020;
+
+    private static final String SDL_HINT_RENDER_VSYNC = "SDL_RENDER_VSYNC";
+    private static final String SDL_HINT_VIDEO_X11_NET_WM_PING = "SDL_VIDEO_X11_NET_WM_PING";
+    private static final String SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK = "SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK";
+    private static final String SDL_HINT_MAC_BACKGROUND_APP = "SDL_HINT_MAC_BACKGROUND_APP";
+
+    // SDL eventaction enums
+    private static final int SDL_ADDEVENT = 0;
+    private static final int SDL_PEEKEVENT = 1;
+    private static final int SDL_GETEVENT  = 2;
+
+    // SDL event range constants
+    private static final int SDL_EVENT_FIRST = 0x0;
+    private static final int SDL_EVENT_LAST  = 0xFFFF;
+
+    // --- Loop State ---
+    private static final int EVENT_FETCH_BATCH_SIZE = 32;
     private static final CountDownLatch startLatch = new CountDownLatch(1);
     private static volatile boolean isRunning = false;
 
-    public static volatile Consumer<SDL_Event> osEventHandler = null;
+    public static volatile Consumer<MemorySegment> osEventHandler = null;
     public static volatile Runnable renderFrameIfNeeded = null;
 
     public static void start() {
-        startLatch.countDown(); // Just unblock the main thread!
+        startLatch.countDown();
     }
 
-    // Break the main thread's wait from any background thread
     public static void wakeUp() {
         if (!isRunning) {
             return;
         }
-        try (MemoryStack stack = stackPush()) {
-            final SDL_Event wakeupEvent = SDL_Event.calloc(stack);
-            wakeupEvent.type(SDL_EVENT_USER);  // osEventHandler will ignore event
+        // Use a confined arena for a single-use stack-like allocation
+        try (Arena arena = Arena.ofConfined()) {
+            final MemorySegment wakeupEvent = SDL_Event.allocate(arena);
+            SDL_Event.type(wakeupEvent, SDL_EVENT_USER);
             SDL_PushEvent(wakeupEvent);
         }
     }
 
     public static void run() {
-        // Wait until start() is called.
         try {
             startLatch.await();
         } catch (InterruptedException e) {
@@ -69,66 +86,57 @@ public final class PlatformEventLoop {
             return;
         }
 
-        SDL_SetMemoryFunctions(
-                        MemoryUtil::nmemAllocChecked,
-                        MemoryUtil::nmemCallocChecked,
-                        MemoryUtil::nmemReallocChecked,
-                        MemoryUtil::nmemFree);
+        try (Arena arena = Arena.ofConfined()) {
+            // Setup App Metadata using older properties (compatible with LWJGL's SDL3 binary)
+            checkSdlError(SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING(), arena.allocateFrom("TruffleSqueak")));
+            checkSdlError(SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_VERSION_STRING(), arena.allocateFrom(SqueakLanguageConfig.VERSION)));
+            checkSdlError(SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_IDENTIFIER_STRING(), arena.allocateFrom("de.hpi.swa.trufflesqueak")));
 
-        checkSdlError(SDL_SetAppMetadata("TruffleSqueak", SqueakLanguageConfig.VERSION, "de.hpi.swa.trufflesqueak"));
-        checkSdlError(SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_URL_STRING, SqueakLanguageConfig.WEBSITE));
-        checkSdlError(SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_CREATOR_STRING, "TruffleSqueak"));
-        checkSdlError(SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_COPYRIGHT_STRING, "License terms: " + SqueakLanguageConfig.WEBSITE));
+            // Setup Hints
+            SDL_SetHint(arena.allocateFrom(SDL_HINT_RENDER_VSYNC), arena.allocateFrom("1"));
+            SDL_SetHint(arena.allocateFrom(SDL_HINT_VIDEO_X11_NET_WM_PING), arena.allocateFrom("0"));
+            SDL_SetHint(arena.allocateFrom(SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK), arena.allocateFrom("1"));
+            SDL_SetHint(arena.allocateFrom(SDL_HINT_MAC_BACKGROUND_APP), arena.allocateFrom("0"));
 
-        // Enable VSync to accumulate damage and prevent tearing.
-        checkSdlError(SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1"));
-        // Disable WM_PING, so the WM does not think it is hung.
-        checkSdlError(SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_PING, "0"));
-        // Ctrl-Click on macOS is right click.
-        checkSdlError(SDL_SetHint(SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK, "1"));
-        // Make sure that macOS does not think we're a background task.
-        checkSdlError(SDL_SetHint(SDL_HINT_MAC_BACKGROUND_APP, "0"));
+            // Initialize SDL
+            if (!SDL_Init(SDL_INIT_VIDEO)) {
+                throw new IllegalStateException("Unable to initialize SDL: " + SDL_GetError().getString(0));
+            }
 
-        // Initialize SDL.
-        if (!SDL_Init(SDL_INIT_VIDEO)) {
-            throw new IllegalStateException("Unable to initialize SDL: " + SDL_GetError());
-        }
+            // Disable unneeded events
+            SDL_SetEventEnabled(SDL_EVENT_TEXT_EDITING, false);
+            SDL_SetEventEnabled(SDL_EVENT_FINGER_DOWN, false);
+            SDL_SetEventEnabled(SDL_EVENT_FINGER_UP, false);
+            SDL_SetEventEnabled(SDL_EVENT_FINGER_MOTION, false);
 
-        // Disable unneeded events to avoid issues (e.g. double clicks).
-        SDL_SetEventEnabled(SDL_EVENT_TEXT_EDITING, false);
-        SDL_SetEventEnabled(SDL_EVENT_FINGER_DOWN, false);
-        SDL_SetEventEnabled(SDL_EVENT_FINGER_UP, false);
-        SDL_SetEventEnabled(SDL_EVENT_FINGER_MOTION, false);
-
-        // Fire an immediate wake-up ping just in case Squeak tried to render
-        // while we were booting up SDL, ensuring it doesn't get stuck waiting.
-        isRunning = true;
-        wakeUp();
-
-        try (MemoryStack stack = stackPush()) {
+            isRunning = true;
+            wakeUp();
 
             // Allocate a contiguous buffer for fetching multiple events
-            final SDL_Event.Buffer eventBuffer = SDL_Event.malloc(EVENT_FETCH_BATCH_SIZE, stack);
+            final long eventSize = SDL_Event.layout().byteSize();
+            final MemorySegment eventBuffer = SDL_Event.allocateArray(EVENT_FETCH_BATCH_SIZE, arena);
+            final MemorySegment firstEvent = eventBuffer.asSlice(0, eventSize);
 
-            // We use the first slot of the buffer for the blocking wait call
-            final SDL_Event firstEvent = eventBuffer.get(0);
-
-            // The main event loop evaluation order: callbacks, OS events, render
-            // Loop is triggered by an OS event or a wakeUp() ping (not by callbacks).
             while (isRunning) {
-                // Sleep until an event (or wakeUp() ping) arrives.
-                // All main thread callbacks are executed when the event or wake-up enqueues.
+                // Sleep until an event (or wakeUp() ping) arrives
                 if (SDL_WaitEvent(firstEvent)) {
                     int eventsRead;
-                    // Now, process the first and all other waiting OS events
-                    osEventHandler.accept(firstEvent);
-                    while ((eventsRead = SDL_PeepEvents(eventBuffer, SDL_GETEVENT, SDL_EVENT_FIRST, SDL_EVENT_LAST)) > 0) {
+
+                    if (osEventHandler != null) {
+                        osEventHandler.accept(firstEvent);
+                    }
+
+                    // Peep additional events from the queue into our buffer
+                    while ((eventsRead = SDL_PeepEvents(eventBuffer, EVENT_FETCH_BATCH_SIZE, SDL_GETEVENT, SDL_EVENT_FIRST, SDL_EVENT_LAST)) > 0) {
                         for (int i = 0; i < eventsRead; i++) {
-                            osEventHandler.accept(eventBuffer.get(i));
+                            if (osEventHandler != null) {
+                                // Slice the buffer to get a pointer to the i-th SDL_Event struct
+                                MemorySegment nextEvent = eventBuffer.asSlice(i * eventSize, eventSize);
+                                osEventHandler.accept(nextEvent);
+                            }
                         }
                     }
-                    // All OS events processed; now render to the screen, if needed.
-                    // If a render occurs, our thread will sleep until there is a vsync.
+                    // Process rendering if requested
                     if (renderFrameIfNeeded != null) {
                         renderFrameIfNeeded.run();
                     }
@@ -139,7 +147,7 @@ public final class PlatformEventLoop {
 
     private static void checkSdlError(final boolean success) {
         if (!success) {
-            throw new IllegalStateException("SDL error encountered: " + SDL_GetError());
+            throw new IllegalStateException("SDL error encountered: " + SDL_GetError().getString(0));
         }
     }
 }

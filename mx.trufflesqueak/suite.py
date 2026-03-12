@@ -131,73 +131,10 @@ suite = {
             },
             "useModulePath": True,
         },
-        "LWJGL": {
-            "moduleName": "org.lwjgl",
-            "digest": "sha512:54dc983a8020a4d662c51f72d68ea90e8e16951c156869195b49826a086dcd4e4cfa17052720198335226de706aaa3198ec29b7b6b6332b7eeab5230c7b7a3c6",
-            "maven": {
-                "groupId": "org.lwjgl",
-                "artifactId": "lwjgl",
-                "version": "3.4.1",
-            },
-            "useModulePath": True,
-        },
-        "LWJGL_PLATFORM": {
-            "os_arch": {
-                "linux": {
-                    "amd64": {
-                        "maven": {
-                            "groupId": "org.lwjgl",
-                            "artifactId": "lwjgl",
-                            "classifier": "natives-linux",
-                            "version": "3.4.1",
-                        },
-                        "digest": "sha256:5dfee41aba83762229b27f969e0b567d68bc9cedda1edcaf82b91dc99fe34677",
-                    },
-                    "aarch64": {
-                        "maven": {
-                            "groupId": "org.lwjgl",
-                            "artifactId": "lwjgl",
-                            "classifier": "natives-linux-arm64",
-                            "version": "3.4.1",
-                        },
-                        "digest": "sha256:8a1112ee7599aff95de4364ae7048329d92975380122c519feee31342bdb678b",
-                    },
-                },
-                "darwin": {
-                    "aarch64": {
-                        "maven": {
-                            "groupId": "org.lwjgl",
-                            "artifactId": "lwjgl",
-                            "classifier": "natives-macos-arm64",
-                            "version": "3.4.1",
-                        },
-                        "digest": "sha256:96cfb1ac127a684a2c7ce3f0a2f1da206c2190f6a2e962c377f1835e549a3dcb",
-                    },
-                },
-                "windows": {
-                    "amd64": {
-                        "maven": {
-                            "groupId": "org.lwjgl",
-                            "artifactId": "lwjgl",
-                            "classifier": "natives-windows",
-                            "version": "3.4.1",
-                        },
-                        "digest": "sha256:21872776b9be0a93c746d6f28797c12ac47a75e0f0188e5a4fad0c20c9a6a07e",
-                    },
-                },
-            },
-        },
-        "LWJGL_SDL": {
-            "moduleName": "org.lwjgl.sdl",
-            "digest": "sha512:3b66fceb301ba2a81b2044e31494dbb271dabe32aaa9d43e01f361e6805d6697e0f6b8c5ff4c1ab8c404443b42adc748e61299ac1be4cfd36b37d70a50574ce1",
-            "maven": {
-                "groupId": "org.lwjgl",
-                "artifactId": "lwjgl-sdl",
-                "version": "3.4.1",
-            },
-            "dependencies": ["LWJGL"],
-            "useModulePath": True,
-        },
+        # TODO: "VAMPIRE" METHOD ACTIVE
+        # We are currently stealing the pre-compiled native SDL3 binaries from LWJGL's Maven repository.
+        # In the future, we can replace this with our own custom-packaged SDL3 binaries
+        # (similar to OSVM_PLUGINS) if we want to fully break the LWJGL download dependency.
         "LWJGL_SDL_PLATFORM": {
             "os_arch": {
                 "linux": {
@@ -315,7 +252,6 @@ suite = {
             "sourceDirs": ["src"],
             "dependencies": [
                 "sdk:GRAAL_SDK",
-                "LWJGL_SDL",
             ],
             "checkstyle": "de.hpi.swa.trufflesqueak",
             "jacoco": "include",
@@ -362,12 +298,12 @@ suite = {
             "relative_extracted_lib_paths": {
                 "truffle.attach.library": "../jvmlibs/<lib:truffleattach>",
                 "truffle.nfi.library": "../jvmlibs/<lib:trufflenfi>",
-                "org.lwjgl.librarypath": "../lib",
             },
             "liblang_relpath": "../lib/<lib:smalltalkvm>",
             "default_vm_args": [
                 "--vm.-add-exports=java.base/jdk.internal.module=de.hpi.swa.trufflesqueak",
-                "--vm.-enable-native-access=org.lwjgl",
+                "--vm.-enable-native-access=de.hpi.swa.trufflesqueak.shared",
+                "--vm.Djava.library.path=<path:TRUFFLESQUEAK_HOME>/lib",
                 "--vm.XstartOnFirstThread",
             ],
         },
@@ -380,13 +316,9 @@ suite = {
                 "TRUFFLESQUEAK_STANDALONE_COMMON",
             ],
             "build_args": [
-                # "-Dpolyglot.image-build-time.PreinitializeContexts=smalltalk",
-                # Configure launcher
                 "-Dorg.graalvm.launcher.class=de.hpi.swa.trufflesqueak.launcher.TruffleSqueakLauncher",
                 "-H:+IncludeNodeSourcePositions",  # for improved stack traces on deopts
                 "-H:+DetectUserDirectoriesInImageHeap",
-                # Tell GraalVM to relax and automatically handle LWJGL's initialization
-                "-H:-AssertInitializationSpecifiedForAllClasses",
             ],
             "dynamicBuildArgs": "libsmalltalkvm_build_args",
         },
@@ -496,16 +428,10 @@ suite = {
             "dependencies": [
                 "de.hpi.swa.trufflesqueak.launcher",
             ],
-            "exclude": [
-                "LWJGL",
-                "LWJGL_SDL",
-            ],
             "distDependencies": [
                 "TRUFFLESQUEAK_SHARED",
                 "sdk:LAUNCHER_COMMON",
                 "sdk:MAVEN_DOWNLOADER",
-                "LWJGL",
-                "LWJGL_SDL",
             ],
             "maven": {
                 "groupId": "de.hpi.swa.trufflesqueak",
@@ -521,13 +447,10 @@ suite = {
                 "name": "de.hpi.swa.trufflesqueak.shared",
                 "exports": [
                     "de.hpi.swa.trufflesqueak.shared",
+                    "bindings.sdl",
                 ],
             },
             "useModulePath": True,
-            "exclude": [
-                "LWJGL",
-                "LWJGL_SDL",
-            ],
             "dependencies": [
                 "de.hpi.swa.trufflesqueak.shared",
             ],
@@ -599,7 +522,6 @@ suite = {
                                     "dependency": "OSVM_PLUGINS",
                                     "path": "*",
                                 },
-                                "extracted-dependency:LWJGL_PLATFORM/linux/x64/org/lwjgl/liblwjgl.so",
                                 "extracted-dependency:LWJGL_SDL_PLATFORM/linux/x64/org/lwjgl/sdl/libSDL3.so",
                             ],
                         },
@@ -613,7 +535,6 @@ suite = {
                                     "dependency": "OSVM_PLUGINS",
                                     "path": "*",
                                 },
-                                "extracted-dependency:LWJGL_PLATFORM/linux/arm64/org/lwjgl/liblwjgl.so",
                                 "extracted-dependency:LWJGL_SDL_PLATFORM/linux/arm64/org/lwjgl/sdl/libSDL3.so",
                             ],
                         },
@@ -629,7 +550,6 @@ suite = {
                                     "dependency": "OSVM_PLUGINS",
                                     "path": "*",
                                 },
-                                "extracted-dependency:LWJGL_PLATFORM/macos/arm64/org/lwjgl/liblwjgl.dylib",
                                 "extracted-dependency:LWJGL_SDL_PLATFORM/macos/arm64/org/lwjgl/sdl/libSDL3.dylib",
                             ],
                         },
@@ -645,7 +565,6 @@ suite = {
                                     "dependency": "OSVM_PLUGINS",
                                     "path": "*",
                                 },
-                                "extracted-dependency:LWJGL_PLATFORM/windows/x64/org/lwjgl/lwjgl.dll",
                                 "extracted-dependency:LWJGL_SDL_PLATFORM/windows/x64/org/lwjgl/sdl/SDL3.dll",
                             ],
                         },
@@ -674,8 +593,6 @@ suite = {
                 "trufflesqueak:TRUFFLESQUEAK_LAUNCHER",
                 "trufflesqueak:TRUFFLESQUEAK",
                 "sdk:TOOLS_FOR_STANDALONE",
-                "LWJGL",
-                "LWJGL_SDL",
             ],
             "dynamicDistDependencies": "trufflesqueak_standalone_deps",
             "maven": False,
@@ -718,7 +635,6 @@ suite = {
                         },
                     },
                 },
-                # AWT not supported on macOS yet, so no JDK libraries yet
                 "<others>": {"<others>": {"optional": True}},
             },
         },
