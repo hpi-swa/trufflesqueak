@@ -1303,7 +1303,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected final Object doForceUpdate(final Object receiver) {
             final SqueakImageContext image = getContext();
             if (image.hasDisplay()) {
-                image.getDisplay().render(true);
+                // image.getDisplay().render(true);
             }
             return receiver;
         }
