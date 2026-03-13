@@ -314,8 +314,7 @@ suite = {
             ],
             "default_vm_args": [
                 "--vm.-add-exports=java.base/jdk.internal.module=de.hpi.swa.trufflesqueak",
-                "--vm.-enable-native-access=de.hpi.swa.trufflesqueak.shared",
-                "--vm.XstartOnFirstThread",
+                "--vm.-enable-native-access=de.hpi.swa.trufflesqueak.shared,de.hpi.swa.trufflesqueak",
             ],
         },
         "libsmalltalkvm": {

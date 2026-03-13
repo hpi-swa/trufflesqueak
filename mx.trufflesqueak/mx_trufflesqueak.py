@@ -40,15 +40,6 @@ def libsmalltalkvm_build_args():
     is_oracle_graalvm = "-community" not in os.getenv("JAVA_HOME")
     if is_oracle_graalvm and mx.get_os() == "linux":
         build_args.append("--gc=G1")
-    # --- MACOS SPECIFIC: Inject the Apple UI metadata for the Menu Bar ---
-    if mx.get_os() == "darwin":
-        info_plist_path = mx.join(mx.primary_suite().dir, "Info.plist")
-        build_args.extend([
-            "-H:NativeLinkerOption=-sectcreate",
-            "-H:NativeLinkerOption=__TEXT",
-            "-H:NativeLinkerOption=__info_plist",
-            f"-H:NativeLinkerOption={info_plist_path}"
-        ])
     return build_args
 
 
