@@ -6,6 +6,10 @@
  */
 package de.hpi.swa.trufflesqueak.shared;
 
+import static de.hpi.swa.trufflesqueak.shared.sdl.SDLEvents.*;
+import static de.hpi.swa.trufflesqueak.shared.sdl.SDLHints.*;
+import static de.hpi.swa.trufflesqueak.shared.sdl.SDLInit.*;
+
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.util.concurrent.CountDownLatch;
@@ -31,30 +35,6 @@ public final class PlatformEventLoop {
         }
     }
 
-    // --- SDL3 Constants (Bypassing jextract macros) ---
-    private static final int SDL_EVENT_TEXT_EDITING = 0x302;
-    private static final int SDL_EVENT_FINGER_DOWN   = 0x700;
-    private static final int SDL_EVENT_FINGER_UP     = 0x701;
-    private static final int SDL_EVENT_FINGER_MOTION = 0x702;
-    private static final int SDL_EVENT_USER          = 0x8000;
-
-    private static final int SDL_INIT_VIDEO = 0x00000020;
-
-    private static final String SDL_HINT_RENDER_VSYNC = "SDL_RENDER_VSYNC";
-    private static final String SDL_HINT_VIDEO_X11_NET_WM_PING = "SDL_VIDEO_X11_NET_WM_PING";
-    private static final String SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK = "SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK";
-    private static final String SDL_HINT_MAC_BACKGROUND_APP = "SDL_HINT_MAC_BACKGROUND_APP";
-
-    // SDL eventaction enums
-    private static final int SDL_ADDEVENT = 0;
-    private static final int SDL_PEEKEVENT = 1;
-    private static final int SDL_GETEVENT  = 2;
-
-    // SDL event range constants
-    private static final int SDL_EVENT_FIRST = 0x0;
-    private static final int SDL_EVENT_LAST  = 0xFFFF;
-
-    // --- Loop State ---
     private static final int EVENT_FETCH_BATCH_SIZE = 32;
     private static final CountDownLatch startLatch = new CountDownLatch(1);
     private static volatile boolean isRunning = false;

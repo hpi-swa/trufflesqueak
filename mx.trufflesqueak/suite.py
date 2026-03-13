@@ -208,6 +208,10 @@ suite = {
             "requiresConcealed": {
                 "java.base": ["jdk.internal.module"],
             },
+            "javac.lint.overrides": "-restricted",
+            "javac_args": [
+                "--enable-native-access=de.hpi.swa.trufflesqueak",
+            ],
             "checkstyleVersion": "10.7.0",
             "jacoco": "include",
             "javaCompliance": "21+",
@@ -252,6 +256,10 @@ suite = {
             "sourceDirs": ["src"],
             "dependencies": [
                 "sdk:GRAAL_SDK",
+            ],
+            "javac.lint.overrides": "-restricted",
+            "javac_args": [
+                "--enable-native-access=de.hpi.swa.trufflesqueak.shared",
             ],
             "checkstyle": "de.hpi.swa.trufflesqueak",
             "jacoco": "include",
@@ -301,6 +309,9 @@ suite = {
                 "java.library.path": "../lib",
             },
             "liblang_relpath": "../lib/<lib:smalltalkvm>",
+            "javac_args": [
+                "--enable-native-access=de.hpi.swa.trufflesqueak.shared,de.hpi.swa.trufflesqueak",
+            ],
             "default_vm_args": [
                 "--vm.-add-exports=java.base/jdk.internal.module=de.hpi.swa.trufflesqueak",
                 "--vm.-enable-native-access=de.hpi.swa.trufflesqueak.shared",
@@ -319,6 +330,7 @@ suite = {
                 "-Dorg.graalvm.launcher.class=de.hpi.swa.trufflesqueak.launcher.TruffleSqueakLauncher",
                 "-H:+IncludeNodeSourcePositions",  # for improved stack traces on deopts
                 "-H:+DetectUserDirectoriesInImageHeap",
+                "--initialize-at-run-time=de.hpi.swa.trufflesqueak.shared.PlatformEventLoop,bindings.sdl",
             ],
             "dynamicBuildArgs": "libsmalltalkvm_build_args",
         },

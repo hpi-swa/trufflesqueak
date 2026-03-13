@@ -143,7 +143,12 @@
     "methods": [{ "name": "<init>", "parameterTypes": [ ] }]
   },
   {
-    "name": "org.lwjgl.sdl.SDL_MainThreadCallbackI",
+    "name": "bindings.sdl.SDL_MainThreadCallback$Function",
+    "allDeclaredMethods": true,
+    "allPublicMethods": true
+  },
+  {
+    "name": "bindings.sdl.SDL_EventFilter$Function",
     "allDeclaredMethods": true,
     "allPublicMethods": true
   }

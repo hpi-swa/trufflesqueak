@@ -6,6 +6,14 @@
  */
 package de.hpi.swa.trufflesqueak.io;
 
+import static de.hpi.swa.trufflesqueak.shared.sdl.SDLEvents.*;
+import static de.hpi.swa.trufflesqueak.shared.sdl.SDLKeycode.*;
+import static de.hpi.swa.trufflesqueak.shared.sdl.SDLMouse.*;
+import static de.hpi.swa.trufflesqueak.shared.sdl.SDLPixels.*;
+import static de.hpi.swa.trufflesqueak.shared.sdl.SDLRender.*;
+import static de.hpi.swa.trufflesqueak.shared.sdl.SDLSurface.*;
+import static de.hpi.swa.trufflesqueak.shared.sdl.SDLVideo.*;
+
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
@@ -16,12 +24,9 @@ import static bindings.sdl.SDL_h.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -45,93 +50,6 @@ import de.hpi.swa.trufflesqueak.util.LogUtils;
 
 public final class SqueakDisplay {
     public final SqueakImageContext image;
-
-    // --- SDL3 Macro & Enum Constants (Bypassing jextract) ---
-    private static final int SDL_PIXELFORMAT_ARGB8888 = 0x16362004;
-    private static final int SDL_TEXTUREACCESS_STREAMING = 1;
-    private static final int SDL_SCALEMODE_NEAREST = 0;
-    private static final long SDL_WINDOW_RESIZABLE = 32L;
-    private static final long SDL_WINDOW_HIGH_PIXEL_DENSITY = 8192L;
-
-    // SDL Events
-    private static final int SDL_EVENT_QUIT = 0x100;
-    private static final int SDL_EVENT_WINDOW_CLOSE_REQUESTED = 0x203;
-    private static final int SDL_EVENT_WINDOW_RESIZED = 0x205;
-    private static final int SDL_EVENT_WINDOW_MOUSE_LEAVE = 0x20C;
-    private static final int SDL_EVENT_WINDOW_DISPLAY_CHANGED = 0x212;
-    private static final int SDL_EVENT_KEY_DOWN = 0x300;
-    private static final int SDL_EVENT_KEY_UP = 0x301;
-    private static final int SDL_EVENT_TEXT_INPUT = 0x303;
-    private static final int SDL_EVENT_MOUSE_MOTION = 0x400;
-    private static final int SDL_EVENT_MOUSE_BUTTON_DOWN = 0x401;
-    private static final int SDL_EVENT_MOUSE_BUTTON_UP = 0x402;
-    private static final int SDL_EVENT_MOUSE_WHEEL = 0x403;
-    private static final int SDL_EVENT_DROP_BEGIN = 0x1000;
-    private static final int SDL_EVENT_DROP_FILE = 0x1001;
-    private static final int SDL_EVENT_DROP_COMPLETE = 0x1003;
-    private static final int SDL_EVENT_DROP_POSITION = 0x1004;
-    private static final int SDL_EVENT_RENDER_TARGETS_RESET = 0x2000;
-    private static final int SDL_EVENT_RENDER_DEVICE_RESET = 0x2001;
-
-    // SDL Mouse Buttons
-    private static final int SDL_BUTTON_LEFT = 1;
-    private static final int SDL_BUTTON_MIDDLE = 2;
-    private static final int SDL_BUTTON_RIGHT = 3;
-
-    // SDL Keyboard Modifiers
-    private static final int SDL_KMOD_LSHIFT = 0x0001;
-    private static final int SDL_KMOD_RSHIFT = 0x0002;
-    private static final int SDL_KMOD_LCTRL = 0x0040;
-    private static final int SDL_KMOD_RCTRL = 0x0080;
-    private static final int SDL_KMOD_LALT = 0x0100;
-    private static final int SDL_KMOD_RALT = 0x0200;
-    private static final int SDL_KMOD_LGUI = 0x0400;
-    private static final int SDL_KMOD_RGUI = 0x0800;
-
-    // SDL Keycodes (ASCII)
-    private static final int SDLK_RETURN = '\r';
-    private static final int SDLK_ESCAPE = '\u001B';
-    private static final int SDLK_BACKSPACE = '\b';
-    private static final int SDLK_TAB = '\t';
-    private static final int SDLK_SPACE = ' ';
-
-    // SDL Keycodes (Extended Scancodes with 0x40000000 mask)
-    private static final int SDLK_INSERT = 0x40000049;
-    private static final int SDLK_HOME = 0x4000004A;
-    private static final int SDLK_PAGEUP = 0x4000004B;
-    private static final int SDLK_DELETE = 0x4000004C;
-    private static final int SDLK_END = 0x4000004D;
-    private static final int SDLK_PAGEDOWN = 0x4000004E;
-    private static final int SDLK_RIGHT = 0x4000004F;
-    private static final int SDLK_LEFT = 0x40000050;
-    private static final int SDLK_DOWN = 0x40000051;
-    private static final int SDLK_UP = 0x40000052;
-
-    private static final int SDLK_KP_DIVIDE = 0x40000054;
-    private static final int SDLK_KP_MULTIPLY = 0x40000055;
-    private static final int SDLK_KP_MINUS = 0x40000056;
-    private static final int SDLK_KP_PLUS = 0x40000057;
-    private static final int SDLK_KP_ENTER = 0x40000058;
-    private static final int SDLK_KP_1 = 0x40000059;
-    private static final int SDLK_KP_2 = 0x4000005A;
-    private static final int SDLK_KP_3 = 0x4000005B;
-    private static final int SDLK_KP_4 = 0x4000005C;
-    private static final int SDLK_KP_5 = 0x4000005D;
-    private static final int SDLK_KP_6 = 0x4000005E;
-    private static final int SDLK_KP_7 = 0x4000005F;
-    private static final int SDLK_KP_8 = 0x40000060;
-    private static final int SDLK_KP_9 = 0x40000061;
-    private static final int SDLK_KP_0 = 0x40000062;
-    private static final int SDLK_KP_PERIOD = 0x40000063;
-
-    private static final int SDLK_LCTRL = 0x400000E0;
-    private static final int SDLK_LSHIFT = 0x400000E1;
-    private static final int SDLK_LALT = 0x400000E2;
-    private static final int SDLK_LGUI = 0x400000E3;
-    private static final int SDLK_RCTRL = 0x400000E4;
-    private static final int SDLK_RSHIFT = 0x400000E5;
-    private static final int SDLK_RALT = 0x400000E6;
-    private static final int SDLK_RGUI = 0x400000E7;
 
     private MemorySegment window = MemorySegment.NULL;
     private MemorySegment cursor = MemorySegment.NULL;
@@ -252,10 +170,8 @@ public final class SqueakDisplay {
     private void ensureStagingPixels(final int w, final int h) {
         final int requiredBytes = w * h * Integer.BYTES;
         if (stagingArena == null || stagingCapacity < requiredBytes) {
-            if (stagingArena != null) {
-                stagingArena.close(); // Instantly frees the old native memory
-            }
-            stagingArena = Arena.ofShared(); // Create a new native memory arena
+            // DO NOT close the old arena. The GC will clean it up automatically.
+            stagingArena = Arena.ofAuto();
             stagingBuffer = stagingArena.allocate(requiredBytes);
             stagingCapacity = requiredBytes;
         }
@@ -437,17 +353,21 @@ public final class SqueakDisplay {
     @TruffleBoundary
     public void close() {
         MemorySegment closeTask = SDL_MainThreadCallback.allocate((userdata) -> {
-            if (stagingArena != null) {
-                stagingArena.close();
-            }
+
+            // Just drop the reference so the GC can safely free the native memory
+            stagingArena = null;
+
             if (texture != MemorySegment.NULL) {
                 SDL_DestroyTexture(texture);
+                texture = MemorySegment.NULL;
             }
             if (renderer != MemorySegment.NULL) {
                 SDL_DestroyRenderer(renderer);
+                renderer = MemorySegment.NULL;
             }
             if (window != MemorySegment.NULL) {
                 SDL_DestroyWindow(window);
+                window = MemorySegment.NULL;
             }
             SDL_Quit();
             System.out.println("Quitting SqueakVM");
@@ -535,14 +455,12 @@ public final class SqueakDisplay {
     }
 
     private static void setWindowIcon(final MemorySegment window) {
-        try (InputStream is = SqueakDisplay.class.getResourceAsStream("/trufflesqueak-icon.zip");
-             ZipInputStream zis = new ZipInputStream(is)) {
-            final ZipEntry entry = zis.getNextEntry();
-            if (entry == null || !entry.getName().endsWith(".bmp")) {
-                System.out.println("The zip archive is empty or doesn't contain .bmp file.");
+        try (InputStream is = SqueakDisplay.class.getResourceAsStream("/trufflesqueak-icon.png")) {
+            if (is == null) {
+                System.out.println("The icon file /trufflesqueak-icon.png was not found.");
                 return;
             }
-            final byte[] imageBytes = zis.readAllBytes();
+            final byte[] imageBytes = is.readAllBytes();
 
             try (Arena arena = Arena.ofConfined()) {
                 final MemorySegment imageBuffer = arena.allocateFrom(ValueLayout.JAVA_BYTE, imageBytes);
@@ -552,7 +470,9 @@ public final class SqueakDisplay {
                     return;
                 }
 
-                final MemorySegment iconSurface = SDL_LoadBMP_IO(ioStream, true);
+                // Load the PNG directly from the IO stream
+                final MemorySegment iconSurface = SDL_LoadPNG_IO(ioStream, true);
+
                 if (iconSurface != MemorySegment.NULL) {
                     SDL_SetWindowIcon(window, iconSurface);
                     SDL_DestroySurface(iconSurface);
