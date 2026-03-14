@@ -214,7 +214,7 @@ suite = {
             ],
             "checkstyleVersion": "10.7.0",
             "jacoco": "include",
-            "javaCompliance": "21+",
+            "javaCompliance": "22+",
             "annotationProcessors": ["truffle:TRUFFLE_DSL_PROCESSOR"],
             "workingSets": "TruffleSqueak",
         },
@@ -231,7 +231,7 @@ suite = {
             ],
             "checkstyle": "de.hpi.swa.trufflesqueak",
             "jacoco": "include",
-            "javaCompliance": "21+",
+            "javaCompliance": "22+",
             "workingSets": "TruffleSqueak",
         },
         "de.hpi.swa.trufflesqueak.ffi.native": {
@@ -263,7 +263,7 @@ suite = {
             ],
             "checkstyle": "de.hpi.swa.trufflesqueak",
             "jacoco": "include",
-            "javaCompliance": "21+",
+            "javaCompliance": "22+",
             "workingSets": "TruffleSqueak",
         },
         "de.hpi.swa.trufflesqueak.tck": {
@@ -271,7 +271,7 @@ suite = {
             "sourceDirs": ["src"],
             "dependencies": ["TRUFFLESQUEAK_SHARED", "sdk:POLYGLOT_TCK", "mx:JUNIT"],
             "checkstyle": "de.hpi.swa.trufflesqueak",
-            "javaCompliance": "21+",
+            "javaCompliance": "22+",
             "workingSets": "TruffleSqueak",
             "testProject": True,
         },
@@ -287,7 +287,7 @@ suite = {
             ],
             "checkstyle": "de.hpi.swa.trufflesqueak",
             "jacoco": "include",
-            "javaCompliance": "21+",
+            "javaCompliance": "22+",
             "workingSets": "TruffleSqueak",
             "testProject": True,
         },
@@ -329,7 +329,7 @@ suite = {
                 "-Dorg.graalvm.launcher.class=de.hpi.swa.trufflesqueak.launcher.TruffleSqueakLauncher",
                 "-H:+IncludeNodeSourcePositions",  # for improved stack traces on deopts
                 "-H:+DetectUserDirectoriesInImageHeap",
-                "--initialize-at-run-time=de.hpi.swa.trufflesqueak.shared.PlatformEventLoop,bindings.sdl",
+                "--initialize-at-run-time=de.hpi.swa.trufflesqueak.shared.PlatformEventLoop,de.hpi.swa.trufflesqueak.shared.sdl.bindings",
             ],
             "dynamicBuildArgs": "libsmalltalkvm_build_args",
         },
@@ -458,7 +458,7 @@ suite = {
                 "name": "de.hpi.swa.trufflesqueak.shared",
                 "exports": [
                     "de.hpi.swa.trufflesqueak.shared",
-                    "bindings.sdl",
+                    "de.hpi.swa.trufflesqueak.shared.sdl.bindings",
                 ],
             },
             "useModulePath": True,
@@ -503,7 +503,7 @@ suite = {
                 ],
             },
             "useModulePath": True,
-            "javaCompliance": "21+",
+            "javaCompliance": "22+",
             "dependencies": [
                 "de.hpi.swa.trufflesqueak.test",
             ],
@@ -623,7 +623,7 @@ suite = {
                 "release": "dependency:sdk:STANDALONE_JAVA_HOME/release",
             },
         },
-        "TRUFFLSQUEAK_NATIVE_STANDALONE_JDK_LIBRARIES": {
+        "TRUFFLESQUEAK_NATIVE_STANDALONE_JDK_LIBRARIES": {
             "description": "JDK libraries for TruffleSqueak Native standalone.",
             "maven": False,
             "native": True,
@@ -657,7 +657,7 @@ suite = {
             "layout": {
                 "./": [
                     "dependency:TRUFFLESQUEAK_STANDALONE_COMMON/*",
-                    "dependency:TRUFFLSQUEAK_NATIVE_STANDALONE_JDK_LIBRARIES/*",
+                    "dependency:TRUFFLESQUEAK_NATIVE_STANDALONE_JDK_LIBRARIES/*",
                 ],
                 "lib/": "dependency:libsmalltalkvm",
             },

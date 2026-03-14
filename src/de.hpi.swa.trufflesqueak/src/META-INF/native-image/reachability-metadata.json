@@ -10,7 +10,7 @@
       ]
     },
     {
-      "type": "bindings.sdl.SDL_MainThreadCallback$Function",
+      "type": "de.hpi.swa.trufflesqueak.shared.sdl.bindings.SDL_MainThreadCallback$Function",
       "methods": [
         {
           "name": "apply",

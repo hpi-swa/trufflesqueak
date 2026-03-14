@@ -13,13 +13,13 @@ import static de.hpi.swa.trufflesqueak.shared.sdl.SDLPixels.*;
 import static de.hpi.swa.trufflesqueak.shared.sdl.SDLRender.*;
 import static de.hpi.swa.trufflesqueak.shared.sdl.SDLSurface.*;
 import static de.hpi.swa.trufflesqueak.shared.sdl.SDLVideo.*;
+import static de.hpi.swa.trufflesqueak.shared.sdl.bindings.SDL_h.*;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 
-import bindings.sdl.*;
-import static bindings.sdl.SDL_h.*;
+import de.hpi.swa.trufflesqueak.shared.sdl.bindings.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -100,13 +100,9 @@ public final class SqueakDisplay {
 
     private String title = "TruffleSqueak";
 
-    private final MemorySegment setFullscreenTask = SDL_MainThreadCallback.allocate((userdata) -> {
-        checkSdlError(SDL_SetWindowFullscreen(window, userdata.address() == 1L));
-    }, Arena.global());
+    private final MemorySegment setFullscreenTask = SDL_MainThreadCallback.allocate((userdata) -> checkSdlError(SDL_SetWindowFullscreen(window, userdata.address() == 1L)), Arena.global());
 
-    private final MemorySegment resizeTask = SDL_MainThreadCallback.allocate((userdata) -> {
-        checkSdlError(SDL_SetWindowSize(window, osWindowWidth, osWindowHeight));
-    }, Arena.global());
+    private final MemorySegment resizeTask = SDL_MainThreadCallback.allocate((userdata) -> checkSdlError(SDL_SetWindowSize(window, osWindowWidth, osWindowHeight)), Arena.global());
 
     private final MemorySegment updateTitleTask = SDL_MainThreadCallback.allocate((userdata) -> {
         try (Arena arena = Arena.ofConfined()) {
@@ -307,12 +303,12 @@ public final class SqueakDisplay {
 
                 // Fast Path: one single transfer if more than 75% screen width
                 if (rowInts >= (currentWidth * 3) / 4) {
-                    final long startOffsetBytes = (long) (safeTop * currentWidth) * Integer.BYTES;
-                    final long totalBytes = (long) ((safeBottom - safeTop) * currentWidth) * Integer.BYTES;
+                    final long startOffsetBytes = (long) safeTop * currentWidth * Integer.BYTES;
+                    final long totalBytes = (long) (safeBottom - safeTop) * currentWidth * Integer.BYTES;
                     MemorySegment.copy(srcSegment, startOffsetBytes, stagingBuffer, startOffsetBytes, totalBytes);
                 } else {
                     // Row-by-Row Path
-                    long srcOffsetBytes = (long) (safeTop * currentWidth + safeLeft) * Integer.BYTES;
+                    long srcOffsetBytes =((long) safeTop * currentWidth + safeLeft) * Integer.BYTES;
                     long dstOffsetBytes = ((long) safeTop * stagingPitchBytes) + ((long) safeLeft * Integer.BYTES);
                     final long rowBytes = (long) rowInts * Integer.BYTES;
 
@@ -789,9 +785,8 @@ public final class SqueakDisplay {
         if (eventType == EVENT_TYPE.MOUSE) {
             final long[] lastEvent = deferredEvents.pollLast();
             if (lastEvent != null) {
-                if (lastEvent[0] == EVENT_TYPE.MOUSE && lastEvent[4] == value5) {
-                    // Throw away event if it is a mouse event with same button state.
-                } else {
+                // Throw away event if it is a mouse event with same button state.
+                if (!(lastEvent[0] == EVENT_TYPE.MOUSE && lastEvent[4] == value5)) {
                     deferredEvents.addLast(lastEvent);
                 }
             }

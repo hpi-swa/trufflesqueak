@@ -9,21 +9,18 @@ package de.hpi.swa.trufflesqueak.shared;
 import static de.hpi.swa.trufflesqueak.shared.sdl.SDLEvents.*;
 import static de.hpi.swa.trufflesqueak.shared.sdl.SDLHints.*;
 import static de.hpi.swa.trufflesqueak.shared.sdl.SDLInit.*;
+import static de.hpi.swa.trufflesqueak.shared.sdl.bindings.SDL_h.*;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
 
-import bindings.sdl.*;
-import static bindings.sdl.SDL_h.*;
+import de.hpi.swa.trufflesqueak.shared.sdl.bindings.*;
 
 public final class PlatformEventLoop {
     static {
         try {
-            // This pulls the path we just set in suite.py
-            String libPath = System.getProperty("java.library.path");
-
             // Try to load by name (System will search java.library.path)
             System.loadLibrary("SDL3");
         } catch (UnsatisfiedLinkError e) {
