@@ -13577,7 +13577,7 @@ class SDL_h_4 extends SDL_h$shared {
     private static class sys_errlist$constants {
         public static final SequenceLayout LAYOUT = MemoryLayout.sequenceLayout(0, SDL_h.C_POINTER);
         public static final MemorySegment SEGMENT = SYMBOL_LOOKUP.findOrThrow("sys_errlist").reinterpret(LAYOUT.byteSize());
-        @SuppressWarnings("unused") public static final VarHandle HANDLE = LAYOUT.varHandle();
+    public static final VarHandle HANDLE = LAYOUT.varHandle();
 
         public static final long[] DIMS = {  };
     }
@@ -14479,7 +14479,7 @@ class SDL_h_4 extends SDL_h$shared {
     private static class tzname$constants {
         public static final SequenceLayout LAYOUT = MemoryLayout.sequenceLayout(0, SDL_h.C_POINTER);
         public static final MemorySegment SEGMENT = SYMBOL_LOOKUP.findOrThrow("tzname").reinterpret(LAYOUT.byteSize());
-        @SuppressWarnings("unused") public static final VarHandle HANDLE = LAYOUT.varHandle();
+    public static final VarHandle HANDLE = LAYOUT.varHandle();
 
         public static final long[] DIMS = {  };
     }

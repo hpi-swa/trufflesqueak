@@ -230,7 +230,8 @@ public final class MiscUtils {
 
     /* Wraps bitmap in a BufferedImage for efficient drawing. */
     @TruffleBoundary
-    public static /*BufferedImage*/ Object new32BitBufferedImage(final int[] words, final int width, final int height, final boolean withAlpha) {
+    @SuppressWarnings("unused")
+    public static /* BufferedImage */ Object new32BitBufferedImage(final int[] words, final int width, final int height, final boolean withAlpha) {
         /**
          * {@link ColorModel#getRGBdefault()} with alpha = 1.0. Transparency not needed at this
          * point. More importantly for the {@link JPEGReadWriter2Plugin}, {@link BufferedImage}s

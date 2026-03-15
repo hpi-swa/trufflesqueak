@@ -257,6 +257,10 @@ suite = {
             "dependencies": [
                 "sdk:GRAAL_SDK",
             ],
+            "checkstyle.exclude": [
+                "de.hpi.swa.trufflesqueak.shared.sdl",
+                "de.hpi.swa.trufflesqueak.shared.sdl.*",
+            ],
             "javac.lint.overrides": "-restricted",
             "javac_args": [
                 "--enable-native-access=de.hpi.swa.trufflesqueak.shared",

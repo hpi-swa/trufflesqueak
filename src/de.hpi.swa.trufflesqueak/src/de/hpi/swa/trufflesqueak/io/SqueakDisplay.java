@@ -102,15 +102,15 @@ public final class SqueakDisplay {
 
     private final MemorySegment setFullscreenTask = SDL_MainThreadCallback.allocate((userdata) -> checkSdlError(SDL_SetWindowFullscreen(window, userdata.address() == 1L)), Arena.global());
 
-    private final MemorySegment resizeTask = SDL_MainThreadCallback.allocate((userdata) -> checkSdlError(SDL_SetWindowSize(window, osWindowWidth, osWindowHeight)), Arena.global());
+    private final MemorySegment resizeTask = SDL_MainThreadCallback.allocate((_ /* userdata */) -> checkSdlError(SDL_SetWindowSize(window, osWindowWidth, osWindowHeight)), Arena.global());
 
-    private final MemorySegment updateTitleTask = SDL_MainThreadCallback.allocate((userdata) -> {
+    private final MemorySegment updateTitleTask = SDL_MainThreadCallback.allocate((_ /* userdata */) -> {
         try (Arena arena = Arena.ofConfined()) {
             checkSdlError(SDL_SetWindowTitle(window, arena.allocateFrom(title)));
         }
     }, Arena.global());
 
-    private final MemorySegment setCursorTask = SDL_MainThreadCallback.allocate((userdata) -> {
+    private final MemorySegment setCursorTask = SDL_MainThreadCallback.allocate((_ /* userdata */) -> {
         if (cursorData == null) {
             return;
         }
@@ -308,7 +308,7 @@ public final class SqueakDisplay {
                     MemorySegment.copy(srcSegment, startOffsetBytes, stagingBuffer, startOffsetBytes, totalBytes);
                 } else {
                     // Row-by-Row Path
-                    long srcOffsetBytes =((long) safeTop * currentWidth + safeLeft) * Integer.BYTES;
+                    long srcOffsetBytes = ((long) safeTop * currentWidth + safeLeft) * Integer.BYTES;
                     long dstOffsetBytes = ((long) safeTop * stagingPitchBytes) + ((long) safeLeft * Integer.BYTES);
                     final long rowBytes = (long) rowInts * Integer.BYTES;
 
@@ -348,7 +348,7 @@ public final class SqueakDisplay {
 
     @TruffleBoundary
     public void close() {
-        MemorySegment closeTask = SDL_MainThreadCallback.allocate((userdata) -> {
+        MemorySegment closeTask = SDL_MainThreadCallback.allocate((_ /* userdata */) -> {
 
             // Just drop the reference so the GC can safely free the native memory
             stagingArena = null;
@@ -410,7 +410,7 @@ public final class SqueakDisplay {
             osWindowWidth = (int) Math.ceil(width / getDisplayScale());
             osWindowHeight = (int) Math.ceil(height / getDisplayScale());
 
-            MemorySegment openTask = SDL_MainThreadCallback.allocate((userdata) -> {
+            MemorySegment openTask = SDL_MainThreadCallback.allocate((_ /* userdata */) -> {
                 long windowFlags = SDL_WINDOW_RESIZABLE;
                 if (image.flags.upscaleDisplayIfHighDPI()) {
                     windowFlags |= SDL_WINDOW_HIGH_PIXEL_DENSITY;
@@ -661,14 +661,14 @@ public final class SqueakDisplay {
         addEvent(EVENT_TYPE.KEYBOARD, keyCharOrCode, eventType, buttons >> 3, keyCharOrCode);
     }
 
-    private boolean isModifier(final int sdlKeySym) {
+    private static boolean isModifier(final int sdlKeySym) {
         return switch (sdlKeySym) {
             case SDLK_LSHIFT, SDLK_RSHIFT, SDLK_LCTRL, SDLK_RCTRL, SDLK_LALT, SDLK_RALT, SDLK_LGUI, SDLK_RGUI -> true;
             default -> false;
         };
     }
 
-    private boolean isControlKey(final int sdlKeySym) {
+    private static boolean isControlKey(final int sdlKeySym) {
         return switch (sdlKeySym) {
             case SDLK_BACKSPACE, SDLK_TAB, SDLK_RETURN, SDLK_KP_ENTER, SDLK_ESCAPE, SDLK_PAGEUP, SDLK_PAGEDOWN, SDLK_END, //
                 SDLK_HOME, SDLK_LEFT, SDLK_UP, SDLK_RIGHT, SDLK_DOWN, SDLK_INSERT, SDLK_DELETE -> true;
@@ -714,20 +714,20 @@ public final class SqueakDisplay {
 
 // --- Mouse processing methods ---
 
-    public void processMouseMotion(final MemorySegment event, final float scaleFactor) {
-        recordMouseEvent(MOUSE_EVENT.MOVE, SDL_MouseMotionEvent.x(event) * scaleFactor, SDL_MouseMotionEvent.y(event) * scaleFactor, 0);
+    public void processMouseMotion(final MemorySegment event, final float scale) {
+        recordMouseEvent(MOUSE_EVENT.MOVE, SDL_MouseMotionEvent.x(event) * scale, SDL_MouseMotionEvent.y(event) * scale, 0);
     }
 
-    public void processMouseButtonDown(final MemorySegment event, final float scaleFactor) {
-        recordMouseEvent(MOUSE_EVENT.DOWN, SDL_MouseButtonEvent.x(event) * scaleFactor, SDL_MouseButtonEvent.y(event) * scaleFactor, SDL_MouseButtonEvent.button(event));
+    public void processMouseButtonDown(final MemorySegment event, final float scale) {
+        recordMouseEvent(MOUSE_EVENT.DOWN, SDL_MouseButtonEvent.x(event) * scale, SDL_MouseButtonEvent.y(event) * scale, SDL_MouseButtonEvent.button(event));
     }
 
-    public void processMouseButtonUp(final MemorySegment event, final float scaleFactor) {
-        recordMouseEvent(MOUSE_EVENT.UP, SDL_MouseButtonEvent.x(event) * scaleFactor, SDL_MouseButtonEvent.y(event) * scaleFactor, SDL_MouseButtonEvent.button(event));
+    public void processMouseButtonUp(final MemorySegment event, final float scale) {
+        recordMouseEvent(MOUSE_EVENT.UP, SDL_MouseButtonEvent.x(event) * scale, SDL_MouseButtonEvent.y(event) * scale, SDL_MouseButtonEvent.button(event));
     }
 
-    public void processMouseWheel(final MemorySegment event, final float scaleFactor) {
-        addEvent(EVENT_TYPE.MOUSE_WHEEL, 0L, (long) (SDL_MouseWheelEvent.y(event) * scaleFactor * MOUSE.WHEEL_DELTA_FACTOR), buttons >> 3, 0L);
+    public void processMouseWheel(final MemorySegment event, final float scale) {
+        addEvent(EVENT_TYPE.MOUSE_WHEEL, 0L, (long) (SDL_MouseWheelEvent.y(event) * scale * MOUSE.WHEEL_DELTA_FACTOR), buttons >> 3, 0L);
     }
 
     private void recordMouseEvent(final MOUSE_EVENT type, final float x, final float y, final int sdlButton) {

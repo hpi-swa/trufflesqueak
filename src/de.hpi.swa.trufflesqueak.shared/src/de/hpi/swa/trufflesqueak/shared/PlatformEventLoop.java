@@ -27,8 +27,8 @@ public final class PlatformEventLoop {
             // Fallback: If it fails, let's try to find it manually to give a better error
             String libPath = System.getProperty("java.library.path");
             throw new RuntimeException("FFI Error: libSDL3.dylib not found. \n" +
-                    "Search Path: " + libPath + "\n" +
-                    "Verify that libSDL3.dylib is in that folder.", e);
+                            "Search Path: " + libPath + "\n" +
+                            "Verify that libSDL3.dylib is in that folder.", e);
         }
     }
 
