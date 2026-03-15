@@ -241,7 +241,7 @@ public class SDL_GamepadBinding {
              * int axis
              * }
              */
-            public static int axis(MemorySegment struct) {
+            public static int set_axis(MemorySegment struct) {
                 return struct.get(axis$LAYOUT, axis$OFFSET);
             }
 
@@ -251,7 +251,7 @@ public class SDL_GamepadBinding {
              * int axis
              * }
              */
-            public static void axis(MemorySegment struct, int fieldValue) {
+            public static void set_axis(MemorySegment struct, int fieldValue) {
                 struct.set(axis$LAYOUT, axis$OFFSET, fieldValue);
             }
 
@@ -504,7 +504,7 @@ public class SDL_GamepadBinding {
              * int hat
              * }
              */
-            public static int hat(MemorySegment struct) {
+            public static int set_hat(MemorySegment struct) {
                 return struct.get(hat$LAYOUT, hat$OFFSET);
             }
 
@@ -514,7 +514,7 @@ public class SDL_GamepadBinding {
              * int hat
              * }
              */
-            public static void hat(MemorySegment struct, int fieldValue) {
+            public static void set_hat(MemorySegment struct, int fieldValue) {
                 struct.set(hat$LAYOUT, hat$OFFSET, fieldValue);
             }
 
@@ -972,7 +972,7 @@ public class SDL_GamepadBinding {
              * SDL_GamepadAxis axis
              * }
              */
-            public static int axis(MemorySegment struct) {
+            public static int get_axis(MemorySegment struct) {
                 return struct.get(axis$LAYOUT, axis$OFFSET);
             }
 
@@ -982,7 +982,7 @@ public class SDL_GamepadBinding {
              * SDL_GamepadAxis axis
              * }
              */
-            public static void axis(MemorySegment struct, int fieldValue) {
+            public static void set_axis(MemorySegment struct, int fieldValue) {
                 struct.set(axis$LAYOUT, axis$OFFSET, fieldValue);
             }
 
