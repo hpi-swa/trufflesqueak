@@ -208,10 +208,6 @@ suite = {
             "requiresConcealed": {
                 "java.base": ["jdk.internal.module"],
             },
-            "javac.lint.overrides": "-restricted",
-            "javac_args": [
-                "--enable-native-access=de.hpi.swa.trufflesqueak",
-            ],
             "checkstyleVersion": "10.7.0",
             "jacoco": "include",
             "javaCompliance": "22+",
@@ -251,19 +247,22 @@ suite = {
                 },
             },
         },
+        "de.hpi.swa.trufflesqueak.sdl3": {
+            "subDir": "src",
+            "sourceDirs": ["src"],
+            "eclipseformat": False,
+            "forceJavac": True,
+            "javac.lint.overrides": "none",
+            "jacoco": "exclude",
+            "javaCompliance": "22+",
+            "workingSets": "TruffleSqueak",
+        },
         "de.hpi.swa.trufflesqueak.shared": {
             "subDir": "src",
             "sourceDirs": ["src"],
             "dependencies": [
+                "de.hpi.swa.trufflesqueak.sdl3",
                 "sdk:GRAAL_SDK",
-            ],
-            "checkstyle.exclude": [
-                "de.hpi.swa.trufflesqueak.shared.sdl",
-                "de.hpi.swa.trufflesqueak.shared.sdl.*",
-            ],
-            "javac.lint.overrides": "-restricted",
-            "javac_args": [
-                "--enable-native-access=de.hpi.swa.trufflesqueak.shared",
             ],
             "checkstyle": "de.hpi.swa.trufflesqueak",
             "jacoco": "include",
@@ -330,7 +329,7 @@ suite = {
                 "-Dorg.graalvm.launcher.class=de.hpi.swa.trufflesqueak.launcher.TruffleSqueakLauncher",
                 "-H:+IncludeNodeSourcePositions",  # for improved stack traces on deopts
                 "-H:+DetectUserDirectoriesInImageHeap",
-                "--initialize-at-run-time=de.hpi.swa.trufflesqueak.shared.PlatformEventLoop,de.hpi.swa.trufflesqueak.shared.sdl.bindings",
+                "--initialize-at-run-time=de.hpi.swa.trufflesqueak.shared.PlatformEventLoop,de.hpi.swa.trufflesqueak.sdl3.bindings",
             ],
             "dynamicBuildArgs": "libsmalltalkvm_build_args",
         },
@@ -453,13 +452,35 @@ suite = {
             "noMavenJavadoc": True,
             "license": ["MIT"],
         },
+        "TRUFFLESQUEAK_SDL3": {
+            "description": "TruffleSqueak SDL3 bindings distribution",
+            "moduleInfo": {
+                "name": "de.hpi.swa.trufflesqueak.sdl3",
+                "exports": [
+                    "de.hpi.swa.trufflesqueak.sdl3.bindings",
+                ],
+            },
+            "useModulePath": True,
+            "dependencies": [
+                "de.hpi.swa.trufflesqueak.sdl3",
+            ],
+            "distDependencies": [
+                "sdk:GRAAL_SDK",
+            ],
+            "maven": {
+                "groupId": "de.hpi.swa.trufflesqueak",
+                "artifactId": "trufflesqueak-shared",
+                "tag": ["default", "public"],
+            },
+            "noMavenJavadoc": True,
+            "license": ["MIT"],
+        },
         "TRUFFLESQUEAK_SHARED": {
             "description": "TruffleSqueak shared distribution",
             "moduleInfo": {
                 "name": "de.hpi.swa.trufflesqueak.shared",
                 "exports": [
                     "de.hpi.swa.trufflesqueak.shared",
-                    "de.hpi.swa.trufflesqueak.shared.sdl.bindings",
                 ],
             },
             "useModulePath": True,
@@ -467,6 +488,7 @@ suite = {
                 "de.hpi.swa.trufflesqueak.shared",
             ],
             "distDependencies": [
+                "TRUFFLESQUEAK_SDL3",
                 "sdk:GRAAL_SDK",
             ],
             "maven": {

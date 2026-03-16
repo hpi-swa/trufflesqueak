@@ -1,7 +1,7 @@
 {
   "reflection": [
     {
-      "type": "de.hpi.swa.trufflesqueak.shared.sdl.bindings.SDL_MainThreadCallback$Function",
+      "type": "de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_MainThreadCallback$Function",
       "methods": [
         {
           "name": "apply",

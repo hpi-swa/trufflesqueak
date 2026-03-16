@@ -6,20 +6,20 @@
  */
 package de.hpi.swa.trufflesqueak.io;
 
-import static de.hpi.swa.trufflesqueak.shared.sdl.SDLEvents.*;
-import static de.hpi.swa.trufflesqueak.shared.sdl.SDLKeycode.*;
-import static de.hpi.swa.trufflesqueak.shared.sdl.SDLMouse.*;
-import static de.hpi.swa.trufflesqueak.shared.sdl.SDLPixels.*;
-import static de.hpi.swa.trufflesqueak.shared.sdl.SDLRender.*;
-import static de.hpi.swa.trufflesqueak.shared.sdl.SDLSurface.*;
-import static de.hpi.swa.trufflesqueak.shared.sdl.SDLVideo.*;
-import static de.hpi.swa.trufflesqueak.shared.sdl.bindings.SDL_h.*;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.*;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.*;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLMouse.*;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLPixels.*;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLRender.*;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLSurface.*;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLVideo.*;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.*;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 
-import de.hpi.swa.trufflesqueak.shared.sdl.bindings.*;
+import de.hpi.swa.trufflesqueak.sdl3.bindings.*;
 
 import java.io.File;
 import java.io.IOException;

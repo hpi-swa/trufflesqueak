@@ -6,17 +6,17 @@
  */
 package de.hpi.swa.trufflesqueak.shared;
 
-import static de.hpi.swa.trufflesqueak.shared.sdl.SDLEvents.*;
-import static de.hpi.swa.trufflesqueak.shared.sdl.SDLHints.*;
-import static de.hpi.swa.trufflesqueak.shared.sdl.SDLInit.*;
-import static de.hpi.swa.trufflesqueak.shared.sdl.bindings.SDL_h.*;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.*;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLHints.*;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLInit.*;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.*;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
 
-import de.hpi.swa.trufflesqueak.shared.sdl.bindings.*;
+import de.hpi.swa.trufflesqueak.sdl3.bindings.*;
 
 public final class PlatformEventLoop {
     static {
