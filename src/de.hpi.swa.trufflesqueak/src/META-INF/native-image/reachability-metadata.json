@@ -10,6 +10,64 @@
           ]
         }
       ]
+    },
+    {
+      "type": "com.oracle.svm.enterprise.truffle.SubstrateEnterpriseOptimizedCallTarget",
+      "methods": [
+        { "name": "getCallCount", "parameterTypes": [ ] },
+        { "name": "getCallAndLoopCount", "parameterTypes": [ ] },
+        { "name": "getKnownCallSiteCount", "parameterTypes": [ ] },
+        { "name": "getNonTrivialNodeCount", "parameterTypes": [ ] },
+        { "name": "toString", "parameterTypes": [ ] }
+      ]
+    },
+    {
+      "type": "com.oracle.svm.truffle.api.SubstrateOptimizedCallTarget",
+      "allDeclaredFields": true,
+      "methods": [
+        { "name": "getCallCount", "parameterTypes": [ ] },
+        { "name": "getCallAndLoopCount", "parameterTypes": [ ] },
+        { "name": "getKnownCallSiteCount", "parameterTypes": [ ] },
+        { "name": "getNonTrivialNodeCount", "parameterTypes": [ ] },
+        { "name": "toString", "parameterTypes": [ ] }
+      ]
+    },
+    {
+      "type": "com.oracle.svm.truffle.api.SubstrateTruffleRuntime",
+      "methods": [
+        { "name": "getCompileQueue", "parameterTypes": [ ] },
+        { "name": "getCompilationQueueSize", "parameterTypes": [ ] },
+        { "name": "getName", "parameterTypes": [ ] },
+        { "name": "toString", "parameterTypes": [ ] }
+      ]
+    },
+    {
+      "type": "com.oracle.truffle.runtime.BackgroundCompileQueue",
+      "allDeclaredFields": true,
+      "methods": [
+        { "name": "getQueueSize", "parameterTypes": [ ] },
+        { "name": "toString", "parameterTypes": [ ] }
+      ]
+    },
+    {
+      "type": "com.oracle.truffle.runtime.OptimizedCallTarget",
+      "allDeclaredFields": true,
+      "methods": [
+        { "name": "getCallCount", "parameterTypes": [ ] },
+        { "name": "getCallAndLoopCount", "parameterTypes": [ ] },
+        { "name": "getKnownCallSiteCount", "parameterTypes": [ ] },
+        { "name": "getNonTrivialNodeCount", "parameterTypes": [ ] },
+        { "name": "toString", "parameterTypes": [ ] }
+      ]
+    },
+    {
+      "type": "com.oracle.truffle.runtime.OptimizedCallTarget$ArgumentsProfile"
+    },
+    {
+      "type": "com.oracle.truffle.runtime.OptimizedCallTarget$ReturnProfile"
+    },
+    {
+      "type": "com.oracle.truffle.runtime.OptimizedDirectCallNode"
     }
   ],
   "resources": [
