@@ -111,12 +111,9 @@ jobs:
     - name: Archive TruffleSqueak standalone
       shell: bash
       run: mx.trufflesqueak/utils.sh archive-standalone ${{ matrix.type }}
-      # GraalVM Native Image does not support AWT on macOS yet (https://github.com/oracle/graal/issues/4921)
-      if: ${{ matrix.type == 'jvm' || runner.os != 'macOS' }}
     - name: Deploy TruffleSqueak standalone
       shell: bash
       run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.STANDALONE_ARCHIVE }} ${{ secrets.GITHUB_TOKEN }}
-      if: ${{ matrix.type == 'jvm' || runner.os != 'macOS' }}
     - name: Upload TruffleSqueak standalone
       uses: actions/upload-artifact@v4
       with:
@@ -310,12 +307,9 @@ jobs:
     - name: Archive TruffleSqueak standalone
       shell: bash
       run: mx.trufflesqueak/utils.sh archive-standalone ${{ matrix.type }}
-      # GraalVM Native Image does not support AWT on macOS yet (https://github.com/oracle/graal/issues/4921)
-      if: ${{ matrix.type == 'jvm' || runner.os != 'macOS' }}
     - name: Deploy TruffleSqueak standalone
       shell: bash
       run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.STANDALONE_ARCHIVE }} ${{ secrets.GITHUB_TOKEN }}
-      if: ${{ matrix.type == 'jvm' || runner.os != 'macOS' }}
     - name: Upload TruffleSqueak standalone
       uses: actions/upload-artifact@v4
       with:
