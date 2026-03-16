@@ -48,7 +48,7 @@ def _patch_ThinLauncherProject():
 
     def new_init(self, suite, name, deps, workingSets, theLicense=None, **kw_args):
         if mx.is_darwin():
-            kw_args['default_vm_args'] += ['--vm.XstartOnFirstThread']
+            kw_args["default_vm_args"] += ["--vm.XstartOnFirstThread"]
         old_init(self, suite, name, deps, workingSets, theLicense, **kw_args)
 
     ThinLauncherProject.__init__ = new_init

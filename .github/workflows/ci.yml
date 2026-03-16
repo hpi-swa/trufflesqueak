@@ -19,7 +19,7 @@ on:
 
 env:
   # JVMCI_VERSION_CHECK: 'warn' # version of EA build does not always match
-  JAVA_VERSION: '25.0.1'
+  JAVA_VERSION: '25.0.2'
   NATIVE_IMAGE_OPTIONS: '-J-XX:MaxRAMPercentage=100'
   PGO_FILE_CUIS: '${{ github.workspace }}/trufflesqueak-cuis.iprof'
   PGO_FILE_SQUEAK: '${{ github.workspace }}/trufflesqueak-squeak.iprof'
