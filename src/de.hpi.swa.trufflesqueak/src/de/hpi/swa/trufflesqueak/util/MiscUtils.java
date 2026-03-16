@@ -228,32 +228,6 @@ public final class MiscUtils {
         return nanos / (1000d * 1000d * 1000d);
     }
 
-    /* Wraps bitmap in a BufferedImage for efficient drawing. */
-    @TruffleBoundary
-    @SuppressWarnings("unused")
-    public static /* BufferedImage */ Object new32BitBufferedImage(final int[] words, final int width, final int height, final boolean withAlpha) {
-        /**
-         * {@link ColorModel#getRGBdefault()} with alpha = 1.0. Transparency not needed at this
-         * point. More importantly for the {@link JPEGReadWriter2Plugin}, {@link BufferedImage}s
-         * without alpha channel can be exported as JPEG.
-         */
-        // ToDo: Disable for now while trying to fix the menu bar.
-        return null;
-        /*
-        final DirectColorModel cm = new DirectColorModel(
-                        32,
-                        0x00ff0000, // Red
-                        0x0000ff00, // Green
-                        0x000000ff, // Blue
-                        withAlpha ? 0xff000000 : 0 // Alpha
-        );
-        final SampleModel sm = cm.createCompatibleSampleModel(width, height);
-        final DataBufferInt db = new DataBufferInt(words, words.length);
-        final WritableRaster raster = Raster.createWritableRaster(sm, db, null);
-        return new BufferedImage(cm, raster, true, null);
-        */
-    }
-
     @TruffleBoundary
     public static void printResourceSummary() {
         final TruffleLogger log = LogUtils.MAIN;
