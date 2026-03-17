@@ -744,8 +744,8 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 x = image.getDisplay().getWindowWidth();
                 y = image.getDisplay().getWindowHeight();
             } else {
-                x = image.flags.getSnapshotScreenWidth();
-                y = image.flags.getSnapshotScreenHeight();
+                x = image.flags.getScreenWidth();
+                y = image.flags.getScreenHeight();
             }
             return image.asPoint(writeNode, x, y);
         }

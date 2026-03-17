@@ -238,7 +238,7 @@ public final class SqueakDisplay {
         EventQueue.invokeLater(() -> {
             frame.setTitle(title);
             if (!frame.isVisible()) {
-                canvas.setPreferredSize(new Dimension(image.flags.getSnapshotScreenWidth(), image.flags.getSnapshotScreenHeight()));
+                canvas.setPreferredSize(new Dimension(image.flags.getScreenWidth(), image.flags.getScreenHeight()));
                 frame.pack();
                 frame.setVisible(true);
                 frame.requestFocus();

@@ -88,11 +88,12 @@ public final class SqueakImageWriter {
     private void run(final ContextObject thisContext) throws IOException {
         final long start = MiscUtils.currentTimeMillis();
         /* Obtain and save the current window dimensions. */
+        // ToDo: Clean up: move the following into SqueakDisplay when AWT is gone
         if (image.getDisplay() instanceof final SqueakDisplay display) {
             final int width = display.getWindowWidth();
             final int height = display.getWindowHeight();
             if (width > 0 && height > 0) {
-                image.flags.setSnapshotScreenSize(width, height);
+                image.flags.setScreenSize(width, height);
             }
         }
         nextChunk = image.flags.getOldBaseAddress();
@@ -123,7 +124,7 @@ public final class SqueakImageWriter {
         writeLong(image.flags.getOldBaseAddress()); // oldBaseAddress
         writeLong(specialObjectOop);
         writeLong(0xffee); // last hash
-        writeLong(image.flags.getSnapshotScreenSize());
+        writeLong(image.flags.getScreenSize());
         writeLong(image.flags.getHeaderFlags());
         writeInt(0); // extra VM memory
         /* Continue with Spur header. */

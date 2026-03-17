@@ -6,8 +6,10 @@
  */
 package de.hpi.swa.trufflesqueak.image;
 
+import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Idempotent;
 
 public final class SqueakImageFlags {
@@ -15,19 +17,22 @@ public final class SqueakImageFlags {
     private static final int NUMERIC_PRIMS_MIX_COMPARISON = 0x800;
     private static final int PREEMPTION_DOES_NOT_YIELD = 0x010;
 
+    @CompilationFinal private Assumption headerFlagsAssumption = Truffle.getRuntime().createAssumption("constant headerFlags");
+
     @CompilationFinal private long oldBaseAddress = -1;
+    private long screenSize;
+
     @CompilationFinal private long headerFlags;
-    @CompilationFinal private long snapshotScreenSize;
     @CompilationFinal private int maxExternalSemaphoreTableSize;
     @CompilationFinal private boolean numericPrimsMixArithmetic;
     @CompilationFinal private boolean numericPrimsMixComparison;
     @CompilationFinal private boolean preemptionYields;
 
-    public void initialize(final long oldBaseAddressValue, final long flags, final long screenSize, final int lastMaxExternalSemaphoreTableSize) {
+    public void initialize(final long oldBaseAddressValue, final long flags, final long snapshotScreenSize, final int lastMaxExternalSemaphoreTableSize) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         oldBaseAddress = oldBaseAddressValue;
         setHeaderFlags(flags);
-        snapshotScreenSize = screenSize;
+        screenSize = snapshotScreenSize;
         maxExternalSemaphoreTableSize = lastMaxExternalSemaphoreTableSize;
     }
 
@@ -37,12 +42,22 @@ public final class SqueakImageFlags {
     }
 
     public long getHeaderFlags() {
+        if (!headerFlagsAssumption.isValid()) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+        }
         return headerFlags;
     }
 
     private void setHeaderFlags(final long headerFlags) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+
         final long oldHeaderFlags = this.headerFlags;
         this.headerFlags = headerFlags;
+
+        final Assumption oldAssumption = this.headerFlagsAssumption;
+        this.headerFlagsAssumption = Truffle.getRuntime().createAssumption("constant headerFlags");
+        oldAssumption.invalidate();
+
         if (oldHeaderFlags != headerFlags) {
             /*
              * This is a trick to work around an incompatible change in OSVM: Squeak does not update
@@ -61,29 +76,31 @@ public final class SqueakImageFlags {
 
     // For some reason, header flags appear to be shifted by 2 (see #getImageHeaderFlagsParameter).
     public long getHeaderFlagsDecoded() {
+        if (!headerFlagsAssumption.isValid()) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+        }
         return headerFlags >> 2;
     }
 
     public void setHeaderFlagsEncoded(final long headerFlags) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
         setHeaderFlags(headerFlags << 2);
     }
 
-    public long getSnapshotScreenSize() {
-        return snapshotScreenSize;
+    public long getScreenSize() {
+        return screenSize;
     }
 
-    public void setSnapshotScreenSize(final int width, final int height) {
+    public void setScreenSize(final int width, final int height) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        snapshotScreenSize = ((long) width << 16) | (height & 0xFFFFL);
+        screenSize = ((long) width << 16) | (height & 0xFFFFL);
     }
 
-    public int getSnapshotScreenWidth() {
-        return (int) snapshotScreenSize >> 16 & 0xffff;
+    public int getScreenWidth() {
+        return (int) screenSize >> 16 & 0xffff;
     }
 
-    public int getSnapshotScreenHeight() {
-        return (int) snapshotScreenSize & 0xffff;
+    public int getScreenHeight() {
+        return (int) screenSize & 0xffff;
     }
 
     public int getMaxExternalSemaphoreTableSize() {
@@ -102,16 +119,25 @@ public final class SqueakImageFlags {
 
     @Idempotent
     public boolean numericPrimsMixArithmetic() {
+        if (!headerFlagsAssumption.isValid()) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+        }
         return numericPrimsMixArithmetic;
     }
 
     @Idempotent
     public boolean numericPrimsMixComparison() {
+        if (!headerFlagsAssumption.isValid()) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+        }
         return numericPrimsMixComparison;
     }
 
     @Idempotent
     public boolean preemptionYields() {
+        if (!headerFlagsAssumption.isValid()) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+        }
         return preemptionYields;
     }
 }
