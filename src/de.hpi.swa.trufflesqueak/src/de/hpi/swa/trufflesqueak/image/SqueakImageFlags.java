@@ -7,9 +7,10 @@
 package de.hpi.swa.trufflesqueak.image;
 
 import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Idempotent;
 
 public final class SqueakImageFlags {
@@ -17,7 +18,7 @@ public final class SqueakImageFlags {
     private static final int NUMERIC_PRIMS_MIX_COMPARISON = 0x800;
     private static final int PREEMPTION_DOES_NOT_YIELD = 0x010;
 
-    @CompilationFinal private Assumption headerFlagsAssumption = Truffle.getRuntime().createAssumption("constant headerFlags");
+    @CompilationFinal private Assumption headerFlagsAssumption = Assumption.create("constant headerFlags");
 
     @CompilationFinal private long oldBaseAddress = -1;
     private long screenSize;
@@ -29,7 +30,7 @@ public final class SqueakImageFlags {
     @CompilationFinal private boolean preemptionYields;
 
     public void initialize(final long oldBaseAddressValue, final long flags, final long snapshotScreenSize, final int lastMaxExternalSemaphoreTableSize) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
+        CompilerAsserts.neverPartOfCompilation();
         oldBaseAddress = oldBaseAddressValue;
         setHeaderFlags(flags);
         screenSize = snapshotScreenSize;
@@ -48,14 +49,13 @@ public final class SqueakImageFlags {
         return headerFlags;
     }
 
+    @TruffleBoundary
     private void setHeaderFlags(final long headerFlags) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-
         final long oldHeaderFlags = this.headerFlags;
         this.headerFlags = headerFlags;
 
         final Assumption oldAssumption = this.headerFlagsAssumption;
-        this.headerFlagsAssumption = Truffle.getRuntime().createAssumption("constant headerFlags");
+        this.headerFlagsAssumption = Assumption.create("constant headerFlags");
         oldAssumption.invalidate();
 
         if (oldHeaderFlags != headerFlags) {
@@ -76,10 +76,7 @@ public final class SqueakImageFlags {
 
     // For some reason, header flags appear to be shifted by 2 (see #getImageHeaderFlagsParameter).
     public long getHeaderFlagsDecoded() {
-        if (!headerFlagsAssumption.isValid()) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-        }
-        return headerFlags >> 2;
+        return getHeaderFlags() >> 2;
     }
 
     public void setHeaderFlagsEncoded(final long headerFlags) {
