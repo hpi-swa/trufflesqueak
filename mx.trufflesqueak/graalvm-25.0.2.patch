@@ -1,5 +1,5 @@
 diff --git a/sdk/mx.sdk/suite.py b/sdk/mx.sdk/suite.py
-index 79c97354020..9518d41f5db 100644
+index 8344cd4f0c8..89a41ceeee0 100644
 --- a/sdk/mx.sdk/suite.py
 +++ b/sdk/mx.sdk/suite.py
 @@ -520,6 +520,8 @@ suite = {

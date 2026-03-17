@@ -49,7 +49,7 @@ suite = {
             {
                 "name": "truffle",
                 "subdir": True,
-                "version": "graal-25.0.1",
+                "version": "graal-25.0.2",
                 "urls": [{"url": "https://github.com/oracle/graal", "kind": "git"}],
             }
         ],
@@ -91,43 +91,43 @@ suite = {
             },
         },
         "GRAALJS_LANGUAGE": {
-            "digest": "sha512:dbd9395b23a08718ec1273aa4f50a8d6e432a2aa79e6839d0fd13c9e16084fbaef3e3f0984a1c6d5a9ffecb595519c742250694c90bceb81e1eb55bc30af745e",
+            "digest": "sha512:1fee71037fbb47631bcf00934b82841aeb93255613a963569f9b925bb5b9752ffc715b5445ea8cf06577fce189d1ac4e765036c345249d0da5ccb3d8a7df4910",
             "maven": {
                 "groupId": "org.graalvm.js",
                 "artifactId": "js-language",
-                "version": "25.0.1",
+                "version": "25.0.2",
             },
             "dependencies": ["REGEX_LANGUAGE", "SHADOWED_ICU4J"],
             "useModulePath": True,
             "licence": "UPL",
         },
         "REGEX_LANGUAGE": {
-            "digest": "sha512:a215b10c4fd73eff7522a78ab830134ad23176ec0d36a2e620bb2ff9a417994eed5c227c0bc12e22890904ba958b4da44f92f4f78e922fbcd2857abdc168f869",
+            "digest": "sha512:069d631f8d6b5ee3f61f948fd07dd7175ba9a9f55e59e84fc9f85bda0d4562c141fdd9fde7321ebf9e4e589da3050ed1e8a10f89e787f6047975e2d8127176a9",
             "maven": {
                 "groupId": "org.graalvm.regex",
                 "artifactId": "regex",
-                "version": "25.0.1",
+                "version": "25.0.2",
             },
             "dependencies": ["SHADOWED_ICU4J"],
             "useModulePath": True,
             "licence": "UPL",
         },
         "SHADOWED_ICU4J": {
-            "digest": "sha512:e122e16fe4fc8fa65714fe526f4eb625605a375a11e00edb6bd39352afeeb690c749c92f427135c1f01dc552b9659a28fda7730f01e0306234d8439facc7215a",
+            "digest": "sha512:a76340d7f4c11ff3d43f727b4d760e89fd0e42a3058c2cc8db174b99ac3102b8d7e370edd35d45a874d42142d5a00829a1d5de5aec7ef492ff19cd064a69768d",
             "maven": {
                 "groupId": "org.graalvm.shadowed",
                 "artifactId": "icu4j",
-                "version": "25.0.1",
+                "version": "25.0.2",
             },
             "dependencies": ["SHADOWED_XZ"],
             "useModulePath": True,
         },
         "SHADOWED_XZ": {
-            "digest": "sha512:b12f38e92164e15afe257b1907ac113f6fd39e2413f208030eb376fb74e9dea5e083cabe2b5f3c3fbf4caeb63889b2b869160228d1a6c0def7f070fb60e5b2c3",
+            "digest": "sha512:60bceb75ca5a6ade1726610e4282de66ab8fc3933c8aeb048bfe7b5c171ae98f0b1beb6d14b4d7ef5da2ee0b606a10b736801d65976d440df33071810cf482ab",
             "maven": {
                 "groupId": "org.graalvm.shadowed",
                 "artifactId": "xz",
-                "version": "25.0.1",
+                "version": "25.0.2",
             },
             "useModulePath": True,
         },
