@@ -36,9 +36,9 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: Clone TruffleSqueak repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
       with:
         python-version: '${{ env.PYTHON_VERSION }}'
     - name: Set up dependencies
@@ -69,11 +69,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - name: Clone TruffleSqueak repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
       with:
         submodules: true
     - name: Set up Oracle GraalVM
-      uses: graalvm/setup-graalvm@v1
+      uses: graalvm/setup-graalvm@f744c72a42b1995d7b0cbc314bde4bace7ac1fe1  # v1.5.0
       with:
         java-version: '${{ env.JAVA_VERSION }}'
         distribution: 'graalvm'
@@ -82,7 +82,7 @@ jobs:
       shell: bash
       run: echo "BOOTSTRAP_GRAALVM=$JAVA_HOME" >> $GITHUB_ENV
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
       with:
         python-version: '${{ env.PYTHON_VERSION }}'
     - name: Set up dependencies
@@ -118,7 +118,7 @@ jobs:
       run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.STANDALONE_ARCHIVE }} ${{ secrets.GITHUB_TOKEN }}
       if: ${{ matrix.type == 'jvm' || runner.os != 'macOS' }}
     - name: Upload TruffleSqueak standalone
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
       with:
         name: trufflesqueak-${{ matrix.type }}-${{ matrix.os }}
         path: ${{ env.STANDALONE_ARCHIVE }}
@@ -153,14 +153,14 @@ jobs:
       timeout-minutes: 30
       if: ${{ matrix.os != 'windows-2022' }}
     - name: Upload test image on failure
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
       with:
         name: test-image-${{ matrix.type }}-${{ matrix.os }}
         path: images/test-64bit.*
         retention-days: 5
       if: failure()
     - name: Upload Graal compiler dumps
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
       with:
         name: graal_dumps-${{ matrix.type }}-${{ matrix.os }}
         path: graal_dumps/
@@ -179,11 +179,11 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: Clone TruffleSqueak repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
       with:
         submodules: true
     - name: Set up Oracle GraalVM
-      uses: graalvm/setup-graalvm@v1
+      uses: graalvm/setup-graalvm@f744c72a42b1995d7b0cbc314bde4bace7ac1fe1  # v1.5.0
       with:
         java-version: '${{ env.JAVA_VERSION }}'
         distribution: 'graalvm'
@@ -192,7 +192,7 @@ jobs:
       shell: bash
       run: echo "BOOTSTRAP_GRAALVM=$JAVA_HOME" >> $GITHUB_ENV
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
       with:
         python-version: '${{ env.PYTHON_VERSION }}'
     - name: Set up dependencies
@@ -223,7 +223,7 @@ jobs:
       run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r ${{ env.PGO_LCOV_FILE_CUIS }} -r ${{ env.PGO_LCOV_FILE_SQUEAK }}
       if: ${{ env.CODACY_PROJECT_TOKEN != '' }}
     - name: Upload PGO profiles
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
       with:
         name: trufflesqueak-profiles
         path: trufflesqueak-*.iprof
@@ -242,11 +242,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - name: Clone TruffleSqueak repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
       with:
         submodules: true
     - name: Set up Oracle GraalVM
-      uses: graalvm/setup-graalvm@v1
+      uses: graalvm/setup-graalvm@f744c72a42b1995d7b0cbc314bde4bace7ac1fe1  # v1.5.0
       with:
         java-version: '${{ env.JAVA_VERSION }}'
         distribution: 'graalvm'
@@ -255,14 +255,14 @@ jobs:
       shell: bash
       run: echo "BOOTSTRAP_GRAALVM=$JAVA_HOME" >> $GITHUB_ENV
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
       with:
         python-version: '${{ env.PYTHON_VERSION }}'
     - name: Set up dependencies
       shell: bash
       run: mx.trufflesqueak/utils.sh set-up-dependencies ${{ matrix.type }}
     - name: Download PGO profiles
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
       with:
         name: trufflesqueak-profiles
       if: ${{ matrix.type == 'native' }}
@@ -317,7 +317,7 @@ jobs:
       run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.STANDALONE_ARCHIVE }} ${{ secrets.GITHUB_TOKEN }}
       if: ${{ matrix.type == 'jvm' || runner.os != 'macOS' }}
     - name: Upload TruffleSqueak standalone
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
       with:
         name: trufflesqueak-${{ matrix.type }}-${{ matrix.os }}
         path: ${{ env.STANDALONE_ARCHIVE }}
@@ -352,14 +352,14 @@ jobs:
       timeout-minutes: 30
       if: ${{ matrix.os != 'windows-2022' }}
     - name: Upload test image on failure
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
       with:
         name: test-image-${{ matrix.type }}-${{ matrix.os }}
         path: images/test-64bit.*
         retention-days: 5
       if: failure()
     - name: Upload Graal compiler dumps
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
       with:
         name: graal_dumps-${{ matrix.type }}-${{ matrix.os }}
         path: graal_dumps/
@@ -391,9 +391,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - name: Clone TruffleSqueak repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
     - name: Download TruffleSqueak (${{ matrix.type }}-${{ matrix.os }})
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
       with:
         name: trufflesqueak-${{ matrix.type }}-${{ matrix.os }}
     - name: Unpack TruffleSqueak standalone
@@ -454,7 +454,7 @@ jobs:
           -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
           "https://api.github.com/repos/${{ github.repository }}/commits/${{ github.sha }}/comments"
     - name: Upload Graal compiler dumps
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
       with:
         name: graal_dumps-benchmarks-${{ matrix.os }}
         path: graal_dumps/
