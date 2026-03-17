@@ -6,20 +6,9 @@
  */
 package de.hpi.swa.trufflesqueak.io;
 
-import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.*;
-import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.*;
-import static de.hpi.swa.trufflesqueak.sdl3.SDLMouse.*;
-import static de.hpi.swa.trufflesqueak.sdl3.SDLPixels.*;
-import static de.hpi.swa.trufflesqueak.sdl3.SDLRender.*;
-import static de.hpi.swa.trufflesqueak.sdl3.SDLSurface.*;
-import static de.hpi.swa.trufflesqueak.sdl3.SDLVideo.*;
-import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.*;
-
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
-
-import de.hpi.swa.trufflesqueak.sdl3.bindings.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,9 +33,126 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.FORM;
 import de.hpi.swa.trufflesqueak.nodes.plugins.HostWindowPlugin;
+import de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_DisplayMode;
+import de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_DropEvent;
+import de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_Event;
+import de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_KeyboardEvent;
+import de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_MainThreadCallback;
+import de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_MouseButtonEvent;
+import de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_MouseMotionEvent;
+import de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_MouseWheelEvent;
+import de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_Rect;
+import de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_TextInputEvent;
+import de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_WindowEvent;
 import de.hpi.swa.trufflesqueak.shared.PlatformEventLoop;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
+
+import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_DROP_BEGIN;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_DROP_COMPLETE;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_DROP_FILE;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_DROP_POSITION;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_KEY_DOWN;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_KEY_UP;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_MOUSE_BUTTON_DOWN;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_MOUSE_BUTTON_UP;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_MOUSE_MOTION;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_MOUSE_WHEEL;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_QUIT;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_RENDER_DEVICE_RESET;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_RENDER_TARGETS_RESET;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_TEXT_INPUT;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_WINDOW_CLOSE_REQUESTED;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_WINDOW_DISPLAY_CHANGED;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_WINDOW_MOUSE_LEAVE;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_WINDOW_RESIZED;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_BACKSPACE;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_DELETE;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_DOWN;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_END;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_ESCAPE;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_HOME;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_INSERT;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_KP_0;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_KP_1;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_KP_2;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_KP_3;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_KP_4;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_KP_5;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_KP_6;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_KP_7;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_KP_8;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_KP_9;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_KP_DIVIDE;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_KP_ENTER;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_KP_MINUS;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_KP_MULTIPLY;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_KP_PERIOD;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_KP_PLUS;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_LALT;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_LCTRL;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_LEFT;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_LGUI;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_LSHIFT;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_PAGEDOWN;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_PAGEUP;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_RALT;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_RCTRL;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_RETURN;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_RGUI;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_RIGHT;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_RSHIFT;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_SPACE;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_TAB;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_UP;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDL_KMOD_LALT;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDL_KMOD_LCTRL;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDL_KMOD_LGUI;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDL_KMOD_LSHIFT;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDL_KMOD_RALT;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDL_KMOD_RCTRL;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDL_KMOD_RGUI;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDL_KMOD_RSHIFT;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLMouse.SDL_BUTTON_LEFT;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLMouse.SDL_BUTTON_MIDDLE;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLMouse.SDL_BUTTON_RIGHT;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLPixels.SDL_PIXELFORMAT_ARGB8888;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLRender.SDL_TEXTUREACCESS_STREAMING;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLSurface.SDL_SCALEMODE_NEAREST;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLVideo.SDL_WINDOW_HIGH_PIXEL_DENSITY;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLVideo.SDL_WINDOW_RESIZABLE;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_CreateTexture;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_DestroyTexture;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_SetTextureScaleMode;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_CreateCursor;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_DestroyCursor;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_SetCursor;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_GetError;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_SetWindowFullscreen;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_SetWindowSize;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_SetWindowTitle;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_RunOnMainThread;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_GetClipboardText;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_GetDesktopDisplayMode;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_GetPrimaryDisplay;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_GetWindowDisplayScale;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_HasClipboardText;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_SetClipboardText;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_CreateRenderer;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_DestroyRenderer;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_Quit;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_RenderClear;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_RenderPresent;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_RenderTexture;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_UpdateTexture;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_StartTextInput;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_CreateWindow;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_DestroySurface;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_DestroyWindow;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_IOFromMem;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_LoadPNG_IO;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_RaiseWindow;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_SetWindowIcon;
 
 public final class SqueakDisplay {
     public final SqueakImageContext image;
@@ -299,7 +405,7 @@ public final class SqueakDisplay {
                 final int rowInts = safeRight - safeLeft;
 
                 // Wrap the Squeak pixel array into a Panama segment
-                MemorySegment srcSegment = MemorySegment.ofArray(sqPixels);
+                final MemorySegment srcSegment = MemorySegment.ofArray(sqPixels);
 
                 // Fast Path: one single transfer if more than 75% screen width
                 if (rowInts >= (currentWidth * 3) / 4) {
@@ -348,7 +454,7 @@ public final class SqueakDisplay {
 
     @TruffleBoundary
     public void close() {
-        MemorySegment closeTask = SDL_MainThreadCallback.allocate((_ /* userdata */) -> {
+        final MemorySegment closeTask = SDL_MainThreadCallback.allocate((_ /* userdata */) -> {
 
             // Just drop the reference so the GC can safely free the native memory
             stagingArena = null;
@@ -366,7 +472,6 @@ public final class SqueakDisplay {
                 window = MemorySegment.NULL;
             }
             SDL_Quit();
-            System.out.println("Quitting SqueakVM");
         }, Arena.global());
 
         SDL_RunOnMainThread(closeTask, MemorySegment.NULL, true);
@@ -410,7 +515,7 @@ public final class SqueakDisplay {
             osWindowWidth = (int) Math.ceil(width / getDisplayScale());
             osWindowHeight = (int) Math.ceil(height / getDisplayScale());
 
-            MemorySegment openTask = SDL_MainThreadCallback.allocate((_ /* userdata */) -> {
+            final MemorySegment openTask = SDL_MainThreadCallback.allocate((_ /* userdata */) -> {
                 long windowFlags = SDL_WINDOW_RESIZABLE;
                 if (image.flags.upscaleDisplayIfHighDPI()) {
                     windowFlags |= SDL_WINDOW_HIGH_PIXEL_DENSITY;
@@ -453,7 +558,7 @@ public final class SqueakDisplay {
     private static void setWindowIcon(final MemorySegment window) {
         try (InputStream is = SqueakDisplay.class.getResourceAsStream("/trufflesqueak-icon.png")) {
             if (is == null) {
-                System.out.println("The icon file /trufflesqueak-icon.png was not found.");
+                LogUtils.IO.warning("The icon file /trufflesqueak-icon.png was not found.");
                 return;
             }
             final byte[] imageBytes = is.readAllBytes();
@@ -462,7 +567,7 @@ public final class SqueakDisplay {
                 final MemorySegment imageBuffer = arena.allocateFrom(ValueLayout.JAVA_BYTE, imageBytes);
                 final MemorySegment ioStream = SDL_IOFromMem(imageBuffer, imageBytes.length);
                 if (ioStream == MemorySegment.NULL) {
-                    System.out.println("Failed to create SDL ioStream: " + SDL_GetError().getString(0));
+                    LogUtils.IO.warning("Failed to create SDL ioStream: " + SDL_GetError().getString(0));
                     return;
                 }
 
@@ -473,11 +578,11 @@ public final class SqueakDisplay {
                     SDL_SetWindowIcon(window, iconSurface);
                     SDL_DestroySurface(iconSurface);
                 } else {
-                    System.out.println("Failed to create SDL icon surface: " + SDL_GetError().getString(0));
+                    LogUtils.IO.warning("Failed to create SDL icon surface: " + SDL_GetError().getString(0));
                 }
             }
         } catch (final IOException e) {
-            System.out.println("Failed to load and set icon: " + e);
+            LogUtils.IO.warning("Failed to load and set icon: " + e);
         }
     }
 
@@ -523,7 +628,7 @@ public final class SqueakDisplay {
     }
 
     public void processEvent(final MemorySegment event) {
-        int type = SDL_Event.type(event);
+        final int type = SDL_Event.type(event);
 
         switch (type) {
             case SDL_EVENT_KEY_DOWN:
@@ -533,7 +638,7 @@ public final class SqueakDisplay {
                 processKeyUp(SDL_KeyboardEvent.key(event), SDL_KeyboardEvent.mod(event));
                 break;
             case SDL_EVENT_TEXT_INPUT:
-                MemorySegment textPtr = SDL_TextInputEvent.text(event);
+                final MemorySegment textPtr = SDL_TextInputEvent.text(event);
                 if (textPtr != MemorySegment.NULL) {
                     processTextInput(textPtr.getString(0));
                 }
@@ -563,7 +668,7 @@ public final class SqueakDisplay {
             }
             case SDL_EVENT_DROP_FILE: {
                 // Read the C-string directly from the memory pointer
-                MemorySegment dataPtr = SDL_DropEvent.data(event);
+                final MemorySegment dataPtr = SDL_DropEvent.data(event);
                 if (dataPtr != MemorySegment.NULL) {
                     dropFilesAccumulator.add(dataPtr.getString(0));
                 }
