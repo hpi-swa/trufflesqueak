@@ -10,7 +10,7 @@ suite = {
     #  METADATA
     # ==========================================================================
     "name": "trufflesqueak",
-    "mxversion": "7.54.7",
+    "mxversion": "7.68.1",
     "versionConflictResolution": "latest",
     "version": "25.0.2",
     "trufflesqueak:dependencyMap": {
