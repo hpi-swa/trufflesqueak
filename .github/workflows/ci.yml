@@ -18,7 +18,7 @@ on:
   workflow_dispatch:
 
 env:
-  GRAALVM_VERSION: '25.0.2-ea.15'
+  GRAALVM_VERSION: '25.0.2-ea.17'
   JVMCI_VERSION_CHECK: 'warn' # version of EA build does not always match
   JAVA_VERSION: '25.0.2'
   NATIVE_IMAGE_OPTIONS: '-J-XX:MaxRAMPercentage=100'
