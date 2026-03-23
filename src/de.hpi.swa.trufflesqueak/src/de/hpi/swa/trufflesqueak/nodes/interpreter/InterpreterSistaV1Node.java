@@ -714,7 +714,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                                 }
                             }
                             if (data[currentPC] instanceof final CheckForInterruptsInLoopNode checkForInterruptsNode) {
-                                checkForInterruptsNode.execute(frame, pc);
+                                checkForInterruptsNode.execute(frame, pc, sp);
                             }
                         }
                         break;
@@ -873,7 +873,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                                 }
                             }
                             if (data[currentPC] instanceof final CheckForInterruptsInLoopNode checkForInterruptsNode) {
-                                checkForInterruptsNode.execute(frame, pc);
+                                checkForInterruptsNode.execute(frame, pc, sp);
                             }
                         }
                         extA = extB = 0;

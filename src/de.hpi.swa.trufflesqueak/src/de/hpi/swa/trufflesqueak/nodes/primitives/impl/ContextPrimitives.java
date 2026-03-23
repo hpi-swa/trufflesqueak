@@ -35,13 +35,20 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 76)
     protected abstract static class PrimStoreStackPointerNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = {"0 <= newStackPointer", "newStackPointer <= receiver.size()"})
-        protected static final ContextObject store(final ContextObject receiver, final long newStackPointer) {
-            /*
-             * Not need to "nil any newly accessible cells" as cells are always nil-initialized and
-             * their values are cleared (overwritten with nil) on stack pop.
-             */
-            receiver.setStackPointer((int) newStackPointer);
+        @Specialization(guards = {"0 <= newStackPointerLong", "newStackPointerLong <= receiver.size()"})
+        protected static final ContextObject store(final ContextObject receiver, final long newStackPointerLong) {
+            final int oldStackPointer = receiver.getStackPointer();
+            final int newStackPointer = (int) newStackPointerLong;
+
+            /* Nil any newly accessible or newly hidden stack slots */
+            final int start = Math.min(oldStackPointer, newStackPointer);
+            final int end = Math.max(oldStackPointer, newStackPointer);
+
+            for (int i = start; i < end; i++) {
+                receiver.atTempPut(i, NilObject.SINGLETON);
+            }
+
+            receiver.setStackPointer(newStackPointer);
             return receiver;
         }
     }
@@ -149,7 +156,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 210)
     protected abstract static class PrimContextAtNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = {"index <= receiver.size()"})
+        @Specialization(guards = {"1 <= index", "index <= receiver.getStackPointer()"})
         protected static final Object doContextObject(final ContextObject receiver, final long index,
                         @Bind final Node node,
                         @Cached final ContextObjectReadNode readNode) {
@@ -160,7 +167,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 211)
     protected abstract static class PrimContextAtPutNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
-        @Specialization(guards = "index <= receiver.size()")
+        @Specialization(guards = {"1 <= index", "index <= receiver.getStackPointer()"})
         protected static final Object doContextObject(final ContextObject receiver, final long index, final Object value,
                         @Bind final Node node,
                         @Cached final ContextObjectWriteNode writeNode) {
@@ -172,6 +179,12 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 212)
     protected abstract static class PrimContextSizeNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
+        /*
+         * "Note that it is impossible to determine the real object size of a Context except by
+         * asking for the frameSize of its method. Any fields above the stack pointer (stackp) are
+         * truly invisible even (and especially!) to the garbage collector. Any store into stackp
+         * other than by the primitive method stackp: is potentially fatal."
+         */
         @Specialization(guards = "receiver.hasTruffleFrame()")
         protected static final long doSize(final ContextObject receiver) {
             return receiver.getStackPointer();
@@ -179,6 +192,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "!receiver.hasTruffleFrame()")
         protected static final long doSizeWithoutFrame(final ContextObject receiver) {
+            // ToDo: Is this correct? From the definition above, it should be zero...
             return receiver.size() - receiver.instsize();
         }
     }

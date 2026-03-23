@@ -305,9 +305,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "isSemaphore(receiver)")
         protected static final Object doSignal(final VirtualFrame frame, final PointersObject receiver,
                         @Cached final SignalSemaphoreNode signalSemaphoreNode,
-                        @Cached("getIncrementedStackPointer(frame)") final int stackPointer) {
+                        @Cached final PushToStackNode pushNode) {
             if (signalSemaphoreNode.executeSignal(frame, receiver)) {
-                FrameAccess.setStackPointer(frame, stackPointer);
+                pushNode.execute(frame, receiver);
                 throw ProcessSwitch.SINGLETON;
             } else {
                 return receiver;
@@ -327,7 +327,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final AddLastLinkToListNode addLastLinkToListNode,
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
                         @Cached final GetActiveProcessNode getActiveProcessNode,
-                        @Cached("getIncrementedStackPointer(frame)") final int stackPointer) {
+                        @Cached final PushToStackNode pushNode) {
             assert isSemaphore(receiver);
             final long excessSignals = pointersReadNode.executeLong(receiver, SEMAPHORE.EXCESS_SIGNALS);
             if (excessSignals > 0) {
@@ -336,7 +336,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             } else {
                 addLastLinkToListNode.execute(getActiveProcessNode.execute(node), receiver);
                 wakeHighestPriorityNode.executeWake(frame);
-                FrameAccess.setStackPointer(frame, stackPointer);
+                pushNode.execute(frame, receiver);
                 throw ProcessSwitch.SINGLETON;
             }
         }
@@ -349,13 +349,13 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final Object doResume(final VirtualFrame frame, final PointersObject receiver,
                         @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final ResumeProcessNode resumeProcessNode,
-                        @Cached("getIncrementedStackPointer(frame)") final int stackPointer) {
+                        @Cached final PushToStackNode pushNode) {
             if (!(readNode.execute(receiver, PROCESS.SUSPENDED_CONTEXT) instanceof ContextObject)) {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
             if (resumeProcessNode.executeResume(frame, receiver)) {
-                FrameAccess.setStackPointer(frame, stackPointer);
+                pushNode.execute(frame, receiver);
                 throw ProcessSwitch.SINGLETON;
             } else {
                 return receiver;
@@ -781,9 +781,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @DenyReplace
-    @SqueakPrimitive(indices = 130)
-    public static final class PrimFullGCNode extends AbstractSingletonPrimitiveNode implements Primitive0 {
+    private static final class GCHelper {
         private static final MBeanServer SERVER = TruffleOptions.AOT ? null : ManagementFactory.getPlatformMBeanServer();
         private static final String OPERATION_NAME = "gcRun";
         private static final Object[] PARAMS = {null};
@@ -802,31 +800,18 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        @Override
-        public Object execute(final VirtualFrame frame, final Object receiver) {
-            final SqueakImageContext image = getContext();
-            return doGC(image);
-        }
-
         @TruffleBoundary
-        private static Object doGC(final SqueakImageContext image) {
-            /*
-             * We need to do two things: remove forwarding pointers, and remove spurious references
-             * from the stacks of dead frames. Any tracing of the object graph will remove the
-             * spurious references, so if an unfollow is needed to remove the forwarding pointers,
-             * we're done. Otherwise, we ask for all instances of an unknown class.
-             */
-            if (image.objectGraphUtils.isUnfollowNeeded()) {
-                image.objectGraphUtils.unfollow();
-            } else {
-                image.objectGraphUtils.allInstancesOf(null);
-            }
-            if (TruffleOptions.AOT) {
+        static Object doGC(final SqueakImageContext image, final boolean isFull) {
+            // Eliminate forwarding pointers and dead objects in stack frames.
+            image.objectGraphUtils.flushDeadReferences();
+
+            if (TruffleOptions.AOT || !isFull) {
                 /* System.gc() triggers full GC by default in SVM (see https://git.io/JvY7g). */
                 MiscUtils.systemGC();
             } else {
                 forceFullGC();
             }
+
             final boolean hasPendingFinalizations = LogUtils.GC_IS_LOGGABLE_FINE ? hasPendingFinalizationsWithLogging(image) : hasPendingFinalizations(image);
             final boolean hasPendingEphemerons = image.containsEphemerons && image.objectGraphUtils.checkEphemerons();
             if (hasPendingFinalizations || hasPendingEphemerons) {
@@ -866,14 +851,43 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @DenyReplace
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 130)
+    protected abstract static class PrimFullGCNode extends AbstractPrimitiveWithFrameNode implements Primitive0 {
+        @Specialization
+        protected final Object doGC(final VirtualFrame frame, @SuppressWarnings("unused") final Object receiver,
+                        @Cached final CheckForInterruptsFullNode interruptNode,
+                        @Cached final PushToStackNode pushNode) {
+
+            final Object result = GCHelper.doGC(getContext(), true);
+
+            try {
+                interruptNode.execute(frame);
+            } catch (final ProcessSwitch ps) {
+                pushNode.execute(frame, result);
+                throw ps;
+            }
+            return result;
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(indices = 131)
-    public static final class PrimIncrementalGCNode extends AbstractSingletonPrimitiveNode implements Primitive0 {
-        @Override
-        public Object execute(final VirtualFrame frame, final Object receiver) {
-            /* Cannot force incremental GC in Java, suggesting a normal GC instead. */
-            MiscUtils.systemGC();
-            return MiscUtils.runtimeFreeMemory();
+    protected abstract static class PrimIncrementalGCNode extends AbstractPrimitiveWithFrameNode implements Primitive0 {
+        @Specialization
+        protected final Object doGC(final VirtualFrame frame, @SuppressWarnings("unused") final Object receiver,
+                        @Cached final CheckForInterruptsFullNode interruptNode,
+                        @Cached final PushToStackNode pushNode) {
+
+            final Object result = GCHelper.doGC(getContext(), false);
+
+            try {
+                interruptNode.execute(frame);
+            } catch (final ProcessSwitch ps) {
+                pushNode.execute(frame, result);
+                throw ps;
+            }
+            return result;
         }
     }
 
@@ -901,7 +915,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final AbstractPointersObjectReadNode pointersReadNode,
                         @Cached final AddLastLinkToListNode addLastLinkToListNode,
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
-                        @Cached("getIncrementedStackPointer(frame)") final int stackPointer) {
+                        @Cached final PushToStackNode pushNode) {
             final PointersObject activeProcess = getActiveProcessNode.execute(node);
             final long priority = pointersReadNode.executeLong(activeProcess, PROCESS.PRIORITY);
             final ArrayObject processLists = pointersReadNode.executeArray(scheduler, PROCESS_SCHEDULER.PROCESS_LISTS);
@@ -911,7 +925,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             }
             addLastLinkToListNode.execute(activeProcess, processList);
             wakeHighestPriorityNode.executeWake(frame);
-            FrameAccess.setStackPointer(frame, stackPointer);
+            pushNode.execute(frame, NilObject.SINGLETON);
             throw ProcessSwitch.SINGLETON;
         }
     }
@@ -955,11 +969,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                             @Cached final AbstractPointersObjectReadNode readNode,
                             @Exclusive @Cached final AbstractPointersObjectWriteNode writeNode,
                             @Cached final ResumeProcessNode resumeProcessNode,
-                            @Cached("getIncrementedStackPointer(frame)") final int stackPointer) {
+                            @Cached final PushToStackNode pushNode) {
                 final PointersObject owningProcess = mutex.removeFirstLinkOfList(readNode, writeNode);
                 writeNode.execute(mutex, MUTEX.OWNER, owningProcess);
                 if (resumeProcessNode.executeResume(frame, owningProcess)) {
-                    FrameAccess.setStackPointer(frame, stackPointer);
+                    pushNode.execute(frame, mutex);
                     throw ProcessSwitch.SINGLETON;
                 } else {
                     return mutex;
@@ -1281,7 +1295,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final Object doRelinquish(final VirtualFrame frame, final Object receiver, final long timeMicroseconds,
                         @Cached final CheckForInterruptsFullNode interruptNode,
-                        @Cached("getIncrementedStackPointer(frame)") final int stackPointer) {
+                        @Cached final PushToStackNode pushNode) {
             MiscUtils.park(timeMicroseconds * 1000);
             /*
              * Perform interrupt check (even if interrupt handler is not active), otherwise
@@ -1290,7 +1304,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             try {
                 interruptNode.execute(frame);
             } catch (final ProcessSwitch ps) {
-                FrameAccess.setStackPointer(frame, stackPointer);
+                pushNode.execute(frame, receiver);
                 throw ps;
             }
             return receiver;
@@ -1426,8 +1440,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         new PrimQuickReturnZeroNode(),
                         new PrimQuickReturnOneNode(),
                         new PrimQuickReturnTwoNode(),
-                        new PrimBytesLeftNode(),
-                        new PrimFullGCNode(),
-                        new PrimIncrementalGCNode());
+                        new PrimBytesLeftNode());
     }
 }
