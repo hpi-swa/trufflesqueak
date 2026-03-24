@@ -551,6 +551,9 @@ public final class SqueakDisplay {
             }
         }
 
+        // Save current window size in flags for later writing to disk image
+        image.flags.setScreenSize(getWindowWidth(), getWindowHeight());
+
         final String imageFileName = new File(image.getImagePath()).getName();
         setWindowTitle(imageFileName.contains(SqueakLanguageConfig.IMPLEMENTATION_NAME) ? imageFileName : imageFileName + " running on " + SqueakLanguageConfig.IMPLEMENTATION_NAME);
     }
@@ -598,6 +601,9 @@ public final class SqueakDisplay {
 
         osWindowWidth = targetLogicalWidth;
         osWindowHeight = targetLogicalHeight;
+
+        // Save current window size in flags for later writing to disk image
+        image.flags.setScreenSize(getWindowWidth(), getWindowHeight());
 
         if (window != MemorySegment.NULL) {
             SDL_RunOnMainThread(resizeTask, MemorySegment.NULL, true);
