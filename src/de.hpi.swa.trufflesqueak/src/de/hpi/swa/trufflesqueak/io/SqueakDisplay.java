@@ -114,6 +114,7 @@ import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDL_KMOD_LALT;
 import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDL_KMOD_LCTRL;
 import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDL_KMOD_LGUI;
 import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDL_KMOD_LSHIFT;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDL_KMOD_MODE;
 import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDL_KMOD_RALT;
 import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDL_KMOD_RCTRL;
 import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDL_KMOD_RGUI;
@@ -138,6 +139,7 @@ import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_SetWindowTitle;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_RunOnMainThread;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_GetClipboardText;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_GetDesktopDisplayMode;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_GetModState;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_GetPrimaryDisplay;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_GetWindowDisplayScale;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_HasClipboardText;
@@ -800,7 +802,7 @@ public final class SqueakDisplay {
         addKeyboardEvent(KEYBOARD_EVENT.DOWN, keyChar);
 
         final boolean isCommandOrCtrl = (sdlModifiers & (SDL_KMOD_LCTRL | SDL_KMOD_RCTRL |
-                        SDL_KMOD_LGUI | SDL_KMOD_RGUI)) != 0;
+                        SDL_KMOD_LALT | SDL_KMOD_RALT | SDL_KMOD_LGUI | SDL_KMOD_RGUI)) != 0;
 
         if (isControlKey(sdlKeySym) || isCommandOrCtrl) {
             if (keyChar <= 65535) {
@@ -926,8 +928,9 @@ public final class SqueakDisplay {
     }
 
     private static int mapButton(final int sdlButton) {
+        final int sdlModifiers = SDL_GetModState();
         return switch (sdlButton) {
-            case SDL_BUTTON_LEFT -> MOUSE.RED;
+            case SDL_BUTTON_LEFT -> (sdlModifiers & (SDL_KMOD_LALT | SDL_KMOD_RALT)) != 0 ? MOUSE.YELLOW : MOUSE.RED;
             case SDL_BUTTON_MIDDLE -> MOUSE.YELLOW;
             case SDL_BUTTON_RIGHT -> MOUSE.BLUE;
             default -> 0;
@@ -939,8 +942,8 @@ public final class SqueakDisplay {
     public void recordModifiers(final int sdlModifiers) {
         final int shiftValue = (sdlModifiers & (SDL_KMOD_LSHIFT | SDL_KMOD_RSHIFT)) != 0 ? KEYBOARD.SHIFT : 0;
         final int ctrlValue = (sdlModifiers & (SDL_KMOD_LCTRL | SDL_KMOD_RCTRL)) != 0 ? KEYBOARD.CTRL : 0;
-        final int optValue = (sdlModifiers & (SDL_KMOD_LALT | SDL_KMOD_RALT)) != 0 ? KEYBOARD.ALT : 0;
-        final int cmdValue = (sdlModifiers & (SDL_KMOD_LGUI | SDL_KMOD_RGUI)) != 0 ? KEYBOARD.CMD : 0;
+        final int optValue = (sdlModifiers & SDL_KMOD_MODE) != 0 ? KEYBOARD.ALT : 0;
+        final int cmdValue = (sdlModifiers & (SDL_KMOD_LALT | SDL_KMOD_RALT | SDL_KMOD_LGUI | SDL_KMOD_RGUI)) != 0 ? KEYBOARD.CMD : 0;
 
         final int modifiers = shiftValue + ctrlValue + optValue + cmdValue;
         buttons = buttons & ~KEYBOARD.ALL | modifiers;
