@@ -193,7 +193,8 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 final PointersObject offset = receiver.getFormOffset(cursorReadNode);
                 final int offsetX = Math.abs(offsetReadNode.executeInt(offset, POINT.X));
                 final int offsetY = Math.abs(offsetReadNode.executeInt(offset, POINT.Y));
-                image.getDisplay().setCursor(receiver.getFormBits(cursorReadNode), null, receiver.getFormWidth(cursorReadNode), receiver.getFormHeight(cursorReadNode), offsetX, offsetY);
+                image.getDisplay().setCursor(receiver.getFormBits(cursorReadNode), null, receiver.getFormWidth(cursorReadNode), receiver.getFormHeight(cursorReadNode),
+                                receiver.getFormDepth(cursorReadNode), offsetX, offsetY);
             }
             return receiver;
         }
@@ -223,7 +224,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 } else {
                     mask = null;
                 }
-                image.getDisplay().setCursor(words, mask, width, height, offsetX, offsetY);
+                image.getDisplay().setCursor(words, mask, width, height, depth, offsetX, offsetY);
             }
             return receiver;
         }

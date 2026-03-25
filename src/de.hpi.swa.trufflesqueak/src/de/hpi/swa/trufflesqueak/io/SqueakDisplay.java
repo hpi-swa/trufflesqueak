@@ -42,6 +42,7 @@ import de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_MouseButtonEvent;
 import de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_MouseMotionEvent;
 import de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_MouseWheelEvent;
 import de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_Rect;
+import de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_Surface;
 import de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_TextInputEvent;
 import de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_WindowEvent;
 import de.hpi.swa.trufflesqueak.shared.PlatformEventLoop;
@@ -124,7 +125,6 @@ import static de.hpi.swa.trufflesqueak.sdl3.SDLVideo.SDL_WINDOW_RESIZABLE;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_CreateTexture;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_DestroyTexture;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_SetTextureScaleMode;
-import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_CreateCursor;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_DestroyCursor;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_SetCursor;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_GetError;
@@ -153,6 +153,10 @@ import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_IOFromMem;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_LoadPNG_IO;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_RaiseWindow;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_SetWindowIcon;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_CreateColorCursor;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_CreateSurface;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_LockSurface;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_UnlockSurface;
 
 public final class SqueakDisplay {
     public final SqueakImageContext image;
@@ -201,7 +205,7 @@ public final class SqueakDisplay {
 
     private final List<String> dropFilesAccumulator = new ArrayList<>();
 
-    record CursorData(int[] cursorWords, int[] maskWords, int width, int height, int offsetX, int offsetY) {
+    record CursorData(int[] cursorWords, int[] maskWords, int width, int height, int depth, int offsetX, int offsetY) {
     }
 
     private String title = "TruffleSqueak";
@@ -222,23 +226,78 @@ public final class SqueakDisplay {
         }
         if (cursor != MemorySegment.NULL) {
             SDL_DestroyCursor(cursor);
+            cursor = MemorySegment.NULL;
         }
+
         try (Arena arena = Arena.ofConfined()) {
-            final int numBytes = cursorData.cursorWords.length * Short.BYTES;
-            final MemorySegment data = arena.allocate(numBytes);
-            final MemorySegment mask = arena.allocate(numBytes);
+            final int w = cursorData.width;
+            final int h = cursorData.height;
 
-            copyIntoSegment(cursorData.cursorWords, data);
-            if (cursorData.maskWords != null) {
-                copyIntoSegment(cursorData.maskWords, mask);
+            final MemorySegment surface = SDL_CreateSurface(w, h, SDL_PIXELFORMAT_ARGB8888);
+            if (surface == MemorySegment.NULL) return;
+
+            // Use SDL_LockSurface to ensure we have CPU access to the pixel buffer
+            if (SDL_LockSurface(surface)) {
+                try {
+                    final MemorySegment pixels = SDL_Surface.pixels(surface);
+                    final int pitch = SDL_Surface.pitch(surface);
+                    final int[] sqPixels = cursorData.cursorWords;
+                    final int[] sqMask = cursorData.maskWords;
+
+                    if (cursorData.depth == 32) {
+                        /* Case 1: 32-bit ARGB (Direct Copy) */
+                        for (int y = 0; y < h; y++) {
+                            long srcOffset = (long) y * w * Integer.BYTES;
+                            long dstOffset = (long) y * pitch;
+                            MemorySegment.copy(MemorySegment.ofArray(sqPixels), srcOffset, pixels, dstOffset, (long) w * Integer.BYTES);
+                        }
+                    }
+                    else if (sqMask != null && w == SqueakIOConstants.CURSOR_WIDTH && h == SqueakIOConstants.CURSOR_HEIGHT) {
+                        /* Case 2: Legacy 16x16 Masked Cursor */
+                        for (int y = 0; y < h; y++) {
+                            final int cWord = sqPixels[y];
+                            final int mWord = sqMask[y];
+                            for (int x = 0; x < w; x++) {
+                                final int bit = 0x80000000 >>> x;
+                                final boolean c = (cWord & bit) != 0;
+                                final boolean m = (mWord & bit) != 0;
+
+                                int argb = 0; // Transparent (0,0)
+                                if (m && c) argb = 0xFF000000;      // Black (1,1)
+                                else if (m) argb = 0xFFFFFFFF;      // White (1,0)
+                                else if (c) argb = 0x00FFFFFF;      // Invert (0,1)
+
+                                pixels.set(ValueLayout.JAVA_INT, (long) y * pitch + (long) x * 4, argb);
+                            }
+                        }
+                    }
+                    else {
+                        /* Case 3: Arbitrary Sized Monochrome (1-bit) */
+                        // Squeak bit-padding: rows are padded to 32-bit boundaries
+                        final int wordsPerRow = (w + 31) / 32;
+                        for (int y = 0; y < h; y++) {
+                            for (int x = 0; x < w; x++) {
+                                final int wordIdx = y * wordsPerRow + (x / 32);
+                                final int bitIdx = x % 32;
+                                final boolean isSet = (sqPixels[wordIdx] & (0x80000000 >>> bitIdx)) != 0;
+
+                                // Map 1 to Black, 0 to Transparent
+                                pixels.set(ValueLayout.JAVA_INT, (long) y * pitch + (long) x * 4, isSet ? 0xFF000000 : 0x00000000);
+                            }
+                        }
+                    }
+                } finally {
+                    SDL_UnlockSurface(surface);
+                }
             }
 
-            cursor = SDL_CreateCursor(data, mask, cursorData.width, cursorData.height, cursorData.offsetX, cursorData.offsetY);
-            if (cursor == MemorySegment.NULL) {
-                throw SqueakException.create("Failed to create SDL cursor: " + SDL_GetError().getString(0));
-            }
+            cursor = SDL_CreateColorCursor(surface, cursorData.offsetX, cursorData.offsetY);
+            SDL_DestroySurface(surface);
         }
-        checkSdlError(SDL_SetCursor(cursor));
+
+        if (cursor != MemorySegment.NULL) {
+            checkSdlError(SDL_SetCursor(cursor));
+        }
         cursorData = null;
     }, Arena.global());
 
@@ -618,8 +677,9 @@ public final class SqueakDisplay {
     }
 
     @TruffleBoundary
-    public void setCursor(final int[] cursorWords, final int[] maskWords, final int width, final int height, final int offsetX, final int offsetY) {
-        cursorData = new CursorData(cursorWords, maskWords, width, height, offsetX, offsetY);
+    public void setCursor(final int[] cursorWords, final int[] maskWords, final int width, final int height, final int depth, final int offsetX, final int offsetY) {
+        assert depth == 1 || depth == 32 : "Bad cursor depth: " + depth;
+        cursorData = new CursorData(cursorWords, maskWords, width, height, depth, offsetX, offsetY);
         if (window == MemorySegment.NULL) {
             return;
         }
