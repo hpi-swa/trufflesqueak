@@ -114,13 +114,9 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
                 // Log the fatal crash through the GraalVM launcher framework
                 throw abort(t);
             } finally {
-                // GUARANTEED TO RUN: When Squeak exits or crashes, tell the JWM window to
-                // close
-// App.runOnUIThread(App::terminate);
+                PlatformEventLoop.stop();
+                System.exit(exitCode);
             }
-
-            // Shut down the JVM completely (only reached if no exception was thrown)
-            System.exit(exitCode);
 
         }, "SqueakVM-Thread");
 

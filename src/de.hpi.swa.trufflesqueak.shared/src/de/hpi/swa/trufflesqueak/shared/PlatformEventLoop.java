@@ -67,6 +67,18 @@ public final class PlatformEventLoop {
         if (!isRunning) {
             return;
         }
+        pushWakeUpEvent();
+    }
+
+    public static void stop() {
+        if (!isRunning) {
+            return;
+        }
+        isRunning = false;
+        pushWakeUpEvent();
+    }
+
+    private static void pushWakeUpEvent() {
         // Use a confined arena for a single-use stack-like allocation
         try (Arena arena = Arena.ofConfined()) {
             final MemorySegment wakeupEvent = SDL_Event.allocate(arena);

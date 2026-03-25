@@ -528,6 +528,7 @@ public final class SqueakDisplay {
                 SDL_DestroyWindow(window);
                 window = MemorySegment.NULL;
             }
+            PlatformEventLoop.stop();
             SDL_Quit();
         }, Arena.global());
 
