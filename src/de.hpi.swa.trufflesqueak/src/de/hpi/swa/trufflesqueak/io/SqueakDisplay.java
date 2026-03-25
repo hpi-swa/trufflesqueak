@@ -910,7 +910,7 @@ public final class SqueakDisplay {
     }
 
     public void processMouseWheel(final MemorySegment event, final float scale) {
-        addEvent(EVENT_TYPE.MOUSE_WHEEL, 0L, (long) (SDL_MouseWheelEvent.y(event) * scale * MOUSE.WHEEL_DELTA_FACTOR), buttons >> 3, 0L);
+        addEvent(EVENT_TYPE.MOUSE_WHEEL, 0L, (long) (SDL_MouseWheelEvent.y(event) * MOUSE.WHEEL_DELTA_FACTOR), buttons >> 3, 0L);
     }
 
     private void recordMouseEvent(final MOUSE_EVENT type, final float x, final float y, final int sdlButton) {
