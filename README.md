@@ -71,19 +71,13 @@ free to open an [issue][ts_issues] or join the `#trufflesqueak` channel on the
 [GraalVM Slack][graalvm_slack].
 
 
-## Documentation
-
-Documentation is available in [`docs/`][ts_docs].
-
-
 ## Development
 
 Active development is done in the [`main` branch][ts_main].
 Please feel free to open a [pull request][pull_request] if you'd like to
 contribute a bug-fix, documentation, or a new feature.
-For more information, for example on how to build TruffleSqueak from source or
-set up a development environment, please refer to the
-[development.md][ts_dev_docs].
+For more information, for example on how to build TruffleSqueak from source,
+please refer to the [AGENTS.md](AGENTS.md).
 
 
 ## Contributing
@@ -238,8 +232,6 @@ TruffleSqueak is released under the [MIT license][ts_license].
 [sdr19_pdf]: https://www.hpi.uni-potsdam.de/hirschfeld/publications/media/PapeFelgentreffNiephausHirschfeld_2019_LetThemFailTowardsVmBuiltInBehaviorThatFallsBackToTheProgram_AcmDL.pdf
 [squeak]: https://squeak.org
 [squeak_downloads]: https://squeak.org/downloads/
-[ts_docs]: https://github.com/hpi-swa/trufflesqueak/tree/main/docs
-[ts_dev_docs]: https://github.com/hpi-swa/trufflesqueak/blob/main/docs/development.md
 [ts_gh_action]: https://github.com/hpi-swa/trufflesqueak/actions
 [ts_gh_action_badge]: https://img.shields.io/github/actions/workflow/status/hpi-swa/trufflesqueak/ci.yml?branch=main
 [ts_issues]: https://github.com/hpi-swa/trufflesqueak/issues/new
