@@ -319,14 +319,14 @@ public final class SqueakDisplay {
             }
 
             // Prepare SDL Texture
-            if (textureWidth != width || textureHeight != height || texture == null) {
-                if (texture != null) {
+            if (textureWidth != width || textureHeight != height || texture == MemorySegment.NULL) {
+                if (texture != MemorySegment.NULL) {
                     SDL_DestroyTexture(texture);
                 }
                 textureWidth = width;
                 textureHeight = height;
                 texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, textureWidth, textureHeight);
-                if (texture == null) {
+                if (texture == null || texture == MemorySegment.NULL) {
                     throw SqueakException.create("Failed to create texture");
                 }
                 checkSdlError(SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST));
