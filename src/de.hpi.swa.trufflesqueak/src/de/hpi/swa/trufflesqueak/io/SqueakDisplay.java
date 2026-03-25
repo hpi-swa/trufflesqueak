@@ -65,6 +65,10 @@ import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_RENDER_TARGETS_R
 import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_TEXT_INPUT;
 import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_WINDOW_CLOSE_REQUESTED;
 import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_WINDOW_DISPLAY_CHANGED;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_WINDOW_EXPOSED;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_WINDOW_FOCUS_GAINED;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_WINDOW_FOCUS_LOST;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_WINDOW_MINIMIZED;
 import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_WINDOW_MOUSE_LEAVE;
 import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_WINDOW_RESIZED;
 import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_BACKSPACE;
@@ -750,9 +754,23 @@ public final class SqueakDisplay {
             case SDL_EVENT_QUIT, SDL_EVENT_WINDOW_CLOSE_REQUESTED:
                 addWindowEvent(SqueakIOConstants.WINDOW.CLOSE);
                 break;
+            case SDL_EVENT_WINDOW_EXPOSED:
+                addWindowEvent(SqueakIOConstants.WINDOW.PAINT);
+                fullDamage();
+                render(true);
+                break;
             case SDL_EVENT_WINDOW_DISPLAY_CHANGED:
                 scaleFactor = checkSdlError(SDL_GetWindowDisplayScale(window));
                 addWindowEvent(SqueakIOConstants.WINDOW.CHANGED_SCREEN);
+                break;
+            case SDL_EVENT_WINDOW_MINIMIZED:
+                addWindowEvent(SqueakIOConstants.WINDOW.ICONISE);
+                break;
+            case SDL_EVENT_WINDOW_FOCUS_GAINED:
+                addWindowEvent(SqueakIOConstants.WINDOW.ACTIVATED);
+                break;
+            case SDL_EVENT_WINDOW_FOCUS_LOST:
+                addWindowEvent(SqueakIOConstants.WINDOW.DEACTIVATED);
                 break;
             case SDL_EVENT_WINDOW_RESIZED:
                 osWindowWidth = SDL_WindowEvent.data1(event);
