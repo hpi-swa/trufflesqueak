@@ -530,6 +530,10 @@ public final class SqueakDisplay {
                 SDL_DestroyRenderer(renderer);
                 renderer = MemorySegment.NULL;
             }
+            if (cursor != MemorySegment.NULL) {
+                SDL_DestroyCursor(cursor);
+                cursor = MemorySegment.NULL;
+            }
             if (window != MemorySegment.NULL) {
                 SDL_DestroyWindow(window);
                 window = MemorySegment.NULL;
