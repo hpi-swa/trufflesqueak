@@ -605,6 +605,9 @@ public final class SqueakDisplay {
             }, Arena.global());
 
             SDL_RunOnMainThread(openTask, MemorySegment.NULL, true);
+            if (cursorData != null) {
+                SDL_RunOnMainThread(setCursorTask, MemorySegment.NULL, false);
+            }
         } else {
             final int targetLogicalWidth = (int) Math.ceil(width / getDisplayScale());
             final int targetLogicalHeight = (int) Math.ceil(height / getDisplayScale());
