@@ -469,7 +469,7 @@ suite = {
             ],
             "maven": {
                 "groupId": "de.hpi.swa.trufflesqueak",
-                "artifactId": "trufflesqueak-shared",
+                "artifactId": "trufflesqueak-sdl3",
                 "tag": ["default", "public"],
             },
             "noMavenJavadoc": True,
