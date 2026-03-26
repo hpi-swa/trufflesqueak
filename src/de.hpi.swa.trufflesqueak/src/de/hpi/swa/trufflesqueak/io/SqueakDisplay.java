@@ -24,11 +24,13 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.DRAG;
 import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.EVENT_TYPE;
 import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.KEYBOARD;
 import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.KEYBOARD_EVENT;
 import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.MOUSE;
 import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.MOUSE_EVENT;
+import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.WINDOW;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.FORM;
@@ -65,6 +67,10 @@ import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_RENDER_TARGETS_R
 import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_TEXT_INPUT;
 import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_WINDOW_CLOSE_REQUESTED;
 import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_WINDOW_DISPLAY_CHANGED;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_WINDOW_EXPOSED;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_WINDOW_FOCUS_GAINED;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_WINDOW_FOCUS_LOST;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_WINDOW_MINIMIZED;
 import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_WINDOW_MOUSE_LEAVE;
 import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_WINDOW_RESIZED;
 import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDLK_BACKSPACE;
@@ -686,13 +692,6 @@ public final class SqueakDisplay {
         SDL_RunOnMainThread(setCursorTask, MemorySegment.NULL, false);
     }
 
-    private static void copyIntoSegment(final int[] words, final MemorySegment segment) {
-        for (int i = 0; i < words.length; i++) {
-            segment.set(ValueLayout.JAVA_BYTE, i * 2L, (byte) (words[i] >> 24));
-            segment.set(ValueLayout.JAVA_BYTE, i * 2L + 1, (byte) (words[i] >> 16));
-        }
-    }
-
     public void processEvent(final MemorySegment event) {
         final int type = SDL_Event.type(event);
 
@@ -724,12 +723,12 @@ public final class SqueakDisplay {
             case SDL_EVENT_DROP_BEGIN:
                 isDragActive = true;
                 dropFilesAccumulator.clear();
-                addDragEvent(SqueakIOConstants.DRAG.ENTER, 0, 0);
+                addDragEvent(DRAG.ENTER, 0, 0);
                 break;
             case SDL_EVENT_DROP_POSITION: {
                 final int x = (int) (SDL_DropEvent.x(event) * scaleFactor);
                 final int y = (int) (SDL_DropEvent.y(event) * scaleFactor);
-                addDragEvent(SqueakIOConstants.DRAG.MOVE, x, y);
+                addDragEvent(DRAG.MOVE, x, y);
                 break;
             }
             case SDL_EVENT_DROP_FILE: {
@@ -745,27 +744,41 @@ public final class SqueakDisplay {
                 image.dropPluginFileList = dropFilesAccumulator.toArray(new String[0]);
                 final int x = (int) (SDL_DropEvent.x(event) * scaleFactor);
                 final int y = (int) (SDL_DropEvent.y(event) * scaleFactor);
-                addDragEvent(SqueakIOConstants.DRAG.DROP, x, y);
+                addDragEvent(DRAG.DROP, x, y);
                 dropFilesAccumulator.clear();
                 break;
             }
             case SDL_EVENT_WINDOW_MOUSE_LEAVE:
                 if (isDragActive) {
-                    addDragEvent(SqueakIOConstants.DRAG.LEAVE, 0, 0);
+                    addDragEvent(DRAG.LEAVE, 0, 0);
                     isDragActive = false;
                 }
                 break;
             case SDL_EVENT_QUIT, SDL_EVENT_WINDOW_CLOSE_REQUESTED:
-                addWindowEvent(SqueakIOConstants.WINDOW.CLOSE);
+                addWindowEvent(WINDOW.CLOSE);
                 break;
             case SDL_EVENT_WINDOW_DISPLAY_CHANGED:
                 scaleFactor = checkSdlError(SDL_GetWindowDisplayScale(window));
-                addWindowEvent(SqueakIOConstants.WINDOW.CHANGED_SCREEN);
+                addWindowEvent(WINDOW.CHANGED_SCREEN);
+                break;
+            case SDL_EVENT_WINDOW_EXPOSED:
+                addWindowEvent(WINDOW.PAINT);
+                fullDamage();
+                render(true);
+                break;
+            case SDL_EVENT_WINDOW_MINIMIZED:
+                addWindowEvent(WINDOW.ICONISE);
+                break;
+            case SDL_EVENT_WINDOW_FOCUS_GAINED:
+                addWindowEvent(WINDOW.ACTIVATED);
+                break;
+            case SDL_EVENT_WINDOW_FOCUS_LOST:
+                addWindowEvent(WINDOW.DEACTIVATED);
                 break;
             case SDL_EVENT_WINDOW_RESIZED:
                 osWindowWidth = SDL_WindowEvent.data1(event);
                 osWindowHeight = SDL_WindowEvent.data2(event);
-                addWindowEvent(SqueakIOConstants.WINDOW.METRIC_CHANGE);
+                addWindowEvent(WINDOW.METRIC_CHANGE);
                 fullDamage();
                 render(true);
                 break;
