@@ -850,9 +850,9 @@ public final class SqueakDisplay {
             return;
         }
 
-        for (int i = 0; i < text.length(); i++) {
-            addKeyboardEvent(KEYBOARD_EVENT.CHAR, text.charAt(i));
-        }
+        text.codePoints().forEach(codePoint -> {
+            addKeyboardEvent(KEYBOARD_EVENT.CHAR, codePoint);
+        });
     }
 
     private void addKeyboardEvent(final long eventType, final int keyCharOrCode) {
