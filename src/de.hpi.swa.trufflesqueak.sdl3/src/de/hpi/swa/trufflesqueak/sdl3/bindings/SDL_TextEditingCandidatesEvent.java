@@ -2,14 +2,18 @@
 
 package de.hpi.swa.trufflesqueak.sdl3.bindings;
 
+import java.lang.invoke.*;
 import java.lang.foreign.*;
+import java.nio.ByteOrder;
+import java.util.*;
 import java.util.function.*;
+import java.util.stream.*;
 
 import static java.lang.foreign.ValueLayout.*;
 import static java.lang.foreign.MemoryLayout.PathElement.*;
 
 /**
- * {@snippet lang = c :
+ * {@snippet lang=c :
  * struct SDL_TextEditingCandidatesEvent {
  *     SDL_EventType type;
  *     Uint32 reserved;
@@ -32,19 +36,20 @@ public class SDL_TextEditingCandidatesEvent {
     }
 
     private static final GroupLayout $LAYOUT = MemoryLayout.structLayout(
-                    SDL_h.C_INT.withName("type"),
-                    SDL_h.C_INT.withName("reserved"),
-                    SDL_h.C_LONG_LONG.withName("timestamp"),
-                    SDL_h.C_INT.withName("windowID"),
-                    MemoryLayout.paddingLayout(4),
-                    SDL_h.C_POINTER.withName("candidates"),
-                    SDL_h.C_INT.withName("num_candidates"),
-                    SDL_h.C_INT.withName("selected_candidate"),
-                    SDL_h.C_BOOL.withName("horizontal"),
-                    SDL_h.C_CHAR.withName("padding1"),
-                    SDL_h.C_CHAR.withName("padding2"),
-                    SDL_h.C_CHAR.withName("padding3"),
-                    MemoryLayout.paddingLayout(4)).withName("SDL_TextEditingCandidatesEvent");
+        SDL_h.C_INT.withName("type"),
+        SDL_h.C_INT.withName("reserved"),
+        SDL_h.C_LONG_LONG.withName("timestamp"),
+        SDL_h.C_INT.withName("windowID"),
+        MemoryLayout.paddingLayout(4),
+        SDL_h.C_POINTER.withName("candidates"),
+        SDL_h.C_INT.withName("num_candidates"),
+        SDL_h.C_INT.withName("selected_candidate"),
+        SDL_h.C_BOOL.withName("horizontal"),
+        SDL_h.C_CHAR.withName("padding1"),
+        SDL_h.C_CHAR.withName("padding2"),
+        SDL_h.C_CHAR.withName("padding3"),
+        MemoryLayout.paddingLayout(4)
+    ).withName("SDL_TextEditingCandidatesEvent");
 
     /**
      * The layout of this struct
@@ -53,11 +58,12 @@ public class SDL_TextEditingCandidatesEvent {
         return $LAYOUT;
     }
 
-    private static final OfInt type$LAYOUT = (OfInt) $LAYOUT.select(groupElement("type"));
+    private static final OfInt type$LAYOUT = (OfInt)$LAYOUT.select(groupElement("type"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * SDL_EventType type
+     * {@snippet lang=c :
+     * SDL_EventType type
      * }
      */
     public static final OfInt type$layout() {
@@ -68,7 +74,8 @@ public class SDL_TextEditingCandidatesEvent {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * SDL_EventType type
+     * {@snippet lang=c :
+     * SDL_EventType type
      * }
      */
     public static final long type$offset() {
@@ -77,7 +84,8 @@ public class SDL_TextEditingCandidatesEvent {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * SDL_EventType type
+     * {@snippet lang=c :
+     * SDL_EventType type
      * }
      */
     public static int type(MemorySegment struct) {
@@ -86,18 +94,20 @@ public class SDL_TextEditingCandidatesEvent {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * SDL_EventType type
+     * {@snippet lang=c :
+     * SDL_EventType type
      * }
      */
     public static void type(MemorySegment struct, int fieldValue) {
         struct.set(type$LAYOUT, type$OFFSET, fieldValue);
     }
 
-    private static final OfInt reserved$LAYOUT = (OfInt) $LAYOUT.select(groupElement("reserved"));
+    private static final OfInt reserved$LAYOUT = (OfInt)$LAYOUT.select(groupElement("reserved"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * Uint32 reserved
+     * {@snippet lang=c :
+     * Uint32 reserved
      * }
      */
     public static final OfInt reserved$layout() {
@@ -108,7 +118,8 @@ public class SDL_TextEditingCandidatesEvent {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * Uint32 reserved
+     * {@snippet lang=c :
+     * Uint32 reserved
      * }
      */
     public static final long reserved$offset() {
@@ -117,7 +128,8 @@ public class SDL_TextEditingCandidatesEvent {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * Uint32 reserved
+     * {@snippet lang=c :
+     * Uint32 reserved
      * }
      */
     public static int reserved(MemorySegment struct) {
@@ -126,18 +138,20 @@ public class SDL_TextEditingCandidatesEvent {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * Uint32 reserved
+     * {@snippet lang=c :
+     * Uint32 reserved
      * }
      */
     public static void reserved(MemorySegment struct, int fieldValue) {
         struct.set(reserved$LAYOUT, reserved$OFFSET, fieldValue);
     }
 
-    private static final OfLong timestamp$LAYOUT = (OfLong) $LAYOUT.select(groupElement("timestamp"));
+    private static final OfLong timestamp$LAYOUT = (OfLong)$LAYOUT.select(groupElement("timestamp"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * Uint64 timestamp
+     * {@snippet lang=c :
+     * Uint64 timestamp
      * }
      */
     public static final OfLong timestamp$layout() {
@@ -148,7 +162,8 @@ public class SDL_TextEditingCandidatesEvent {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * Uint64 timestamp
+     * {@snippet lang=c :
+     * Uint64 timestamp
      * }
      */
     public static final long timestamp$offset() {
@@ -157,7 +172,8 @@ public class SDL_TextEditingCandidatesEvent {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * Uint64 timestamp
+     * {@snippet lang=c :
+     * Uint64 timestamp
      * }
      */
     public static long timestamp(MemorySegment struct) {
@@ -166,18 +182,20 @@ public class SDL_TextEditingCandidatesEvent {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * Uint64 timestamp
+     * {@snippet lang=c :
+     * Uint64 timestamp
      * }
      */
     public static void timestamp(MemorySegment struct, long fieldValue) {
         struct.set(timestamp$LAYOUT, timestamp$OFFSET, fieldValue);
     }
 
-    private static final OfInt windowID$LAYOUT = (OfInt) $LAYOUT.select(groupElement("windowID"));
+    private static final OfInt windowID$LAYOUT = (OfInt)$LAYOUT.select(groupElement("windowID"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * SDL_WindowID windowID
+     * {@snippet lang=c :
+     * SDL_WindowID windowID
      * }
      */
     public static final OfInt windowID$layout() {
@@ -188,7 +206,8 @@ public class SDL_TextEditingCandidatesEvent {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * SDL_WindowID windowID
+     * {@snippet lang=c :
+     * SDL_WindowID windowID
      * }
      */
     public static final long windowID$offset() {
@@ -197,7 +216,8 @@ public class SDL_TextEditingCandidatesEvent {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * SDL_WindowID windowID
+     * {@snippet lang=c :
+     * SDL_WindowID windowID
      * }
      */
     public static int windowID(MemorySegment struct) {
@@ -206,18 +226,20 @@ public class SDL_TextEditingCandidatesEvent {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * SDL_WindowID windowID
+     * {@snippet lang=c :
+     * SDL_WindowID windowID
      * }
      */
     public static void windowID(MemorySegment struct, int fieldValue) {
         struct.set(windowID$LAYOUT, windowID$OFFSET, fieldValue);
     }
 
-    private static final AddressLayout candidates$LAYOUT = (AddressLayout) $LAYOUT.select(groupElement("candidates"));
+    private static final AddressLayout candidates$LAYOUT = (AddressLayout)$LAYOUT.select(groupElement("candidates"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * const char *const *candidates
+     * {@snippet lang=c :
+     * const char *const *candidates
      * }
      */
     public static final AddressLayout candidates$layout() {
@@ -228,7 +250,8 @@ public class SDL_TextEditingCandidatesEvent {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * const char *const *candidates
+     * {@snippet lang=c :
+     * const char *const *candidates
      * }
      */
     public static final long candidates$offset() {
@@ -237,7 +260,8 @@ public class SDL_TextEditingCandidatesEvent {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * const char *const *candidates
+     * {@snippet lang=c :
+     * const char *const *candidates
      * }
      */
     public static MemorySegment candidates(MemorySegment struct) {
@@ -246,18 +270,20 @@ public class SDL_TextEditingCandidatesEvent {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * const char *const *candidates
+     * {@snippet lang=c :
+     * const char *const *candidates
      * }
      */
     public static void candidates(MemorySegment struct, MemorySegment fieldValue) {
         struct.set(candidates$LAYOUT, candidates$OFFSET, fieldValue);
     }
 
-    private static final OfInt num_candidates$LAYOUT = (OfInt) $LAYOUT.select(groupElement("num_candidates"));
+    private static final OfInt num_candidates$LAYOUT = (OfInt)$LAYOUT.select(groupElement("num_candidates"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * Sint32 num_candidates
+     * {@snippet lang=c :
+     * Sint32 num_candidates
      * }
      */
     public static final OfInt num_candidates$layout() {
@@ -268,7 +294,8 @@ public class SDL_TextEditingCandidatesEvent {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * Sint32 num_candidates
+     * {@snippet lang=c :
+     * Sint32 num_candidates
      * }
      */
     public static final long num_candidates$offset() {
@@ -277,7 +304,8 @@ public class SDL_TextEditingCandidatesEvent {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * Sint32 num_candidates
+     * {@snippet lang=c :
+     * Sint32 num_candidates
      * }
      */
     public static int num_candidates(MemorySegment struct) {
@@ -286,18 +314,20 @@ public class SDL_TextEditingCandidatesEvent {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * Sint32 num_candidates
+     * {@snippet lang=c :
+     * Sint32 num_candidates
      * }
      */
     public static void num_candidates(MemorySegment struct, int fieldValue) {
         struct.set(num_candidates$LAYOUT, num_candidates$OFFSET, fieldValue);
     }
 
-    private static final OfInt selected_candidate$LAYOUT = (OfInt) $LAYOUT.select(groupElement("selected_candidate"));
+    private static final OfInt selected_candidate$LAYOUT = (OfInt)$LAYOUT.select(groupElement("selected_candidate"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * Sint32 selected_candidate
+     * {@snippet lang=c :
+     * Sint32 selected_candidate
      * }
      */
     public static final OfInt selected_candidate$layout() {
@@ -308,7 +338,8 @@ public class SDL_TextEditingCandidatesEvent {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * Sint32 selected_candidate
+     * {@snippet lang=c :
+     * Sint32 selected_candidate
      * }
      */
     public static final long selected_candidate$offset() {
@@ -317,7 +348,8 @@ public class SDL_TextEditingCandidatesEvent {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * Sint32 selected_candidate
+     * {@snippet lang=c :
+     * Sint32 selected_candidate
      * }
      */
     public static int selected_candidate(MemorySegment struct) {
@@ -326,18 +358,20 @@ public class SDL_TextEditingCandidatesEvent {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * Sint32 selected_candidate
+     * {@snippet lang=c :
+     * Sint32 selected_candidate
      * }
      */
     public static void selected_candidate(MemorySegment struct, int fieldValue) {
         struct.set(selected_candidate$LAYOUT, selected_candidate$OFFSET, fieldValue);
     }
 
-    private static final OfBoolean horizontal$LAYOUT = (OfBoolean) $LAYOUT.select(groupElement("horizontal"));
+    private static final OfBoolean horizontal$LAYOUT = (OfBoolean)$LAYOUT.select(groupElement("horizontal"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * bool horizontal
+     * {@snippet lang=c :
+     * bool horizontal
      * }
      */
     public static final OfBoolean horizontal$layout() {
@@ -348,7 +382,8 @@ public class SDL_TextEditingCandidatesEvent {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * bool horizontal
+     * {@snippet lang=c :
+     * bool horizontal
      * }
      */
     public static final long horizontal$offset() {
@@ -357,7 +392,8 @@ public class SDL_TextEditingCandidatesEvent {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * bool horizontal
+     * {@snippet lang=c :
+     * bool horizontal
      * }
      */
     public static boolean horizontal(MemorySegment struct) {
@@ -366,18 +402,20 @@ public class SDL_TextEditingCandidatesEvent {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * bool horizontal
+     * {@snippet lang=c :
+     * bool horizontal
      * }
      */
     public static void horizontal(MemorySegment struct, boolean fieldValue) {
         struct.set(horizontal$LAYOUT, horizontal$OFFSET, fieldValue);
     }
 
-    private static final OfByte padding1$LAYOUT = (OfByte) $LAYOUT.select(groupElement("padding1"));
+    private static final OfByte padding1$LAYOUT = (OfByte)$LAYOUT.select(groupElement("padding1"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * Uint8 padding1
+     * {@snippet lang=c :
+     * Uint8 padding1
      * }
      */
     public static final OfByte padding1$layout() {
@@ -388,7 +426,8 @@ public class SDL_TextEditingCandidatesEvent {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * Uint8 padding1
+     * {@snippet lang=c :
+     * Uint8 padding1
      * }
      */
     public static final long padding1$offset() {
@@ -397,7 +436,8 @@ public class SDL_TextEditingCandidatesEvent {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * Uint8 padding1
+     * {@snippet lang=c :
+     * Uint8 padding1
      * }
      */
     public static byte padding1(MemorySegment struct) {
@@ -406,18 +446,20 @@ public class SDL_TextEditingCandidatesEvent {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * Uint8 padding1
+     * {@snippet lang=c :
+     * Uint8 padding1
      * }
      */
     public static void padding1(MemorySegment struct, byte fieldValue) {
         struct.set(padding1$LAYOUT, padding1$OFFSET, fieldValue);
     }
 
-    private static final OfByte padding2$LAYOUT = (OfByte) $LAYOUT.select(groupElement("padding2"));
+    private static final OfByte padding2$LAYOUT = (OfByte)$LAYOUT.select(groupElement("padding2"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * Uint8 padding2
+     * {@snippet lang=c :
+     * Uint8 padding2
      * }
      */
     public static final OfByte padding2$layout() {
@@ -428,7 +470,8 @@ public class SDL_TextEditingCandidatesEvent {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * Uint8 padding2
+     * {@snippet lang=c :
+     * Uint8 padding2
      * }
      */
     public static final long padding2$offset() {
@@ -437,7 +480,8 @@ public class SDL_TextEditingCandidatesEvent {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * Uint8 padding2
+     * {@snippet lang=c :
+     * Uint8 padding2
      * }
      */
     public static byte padding2(MemorySegment struct) {
@@ -446,18 +490,20 @@ public class SDL_TextEditingCandidatesEvent {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * Uint8 padding2
+     * {@snippet lang=c :
+     * Uint8 padding2
      * }
      */
     public static void padding2(MemorySegment struct, byte fieldValue) {
         struct.set(padding2$LAYOUT, padding2$OFFSET, fieldValue);
     }
 
-    private static final OfByte padding3$LAYOUT = (OfByte) $LAYOUT.select(groupElement("padding3"));
+    private static final OfByte padding3$LAYOUT = (OfByte)$LAYOUT.select(groupElement("padding3"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * Uint8 padding3
+     * {@snippet lang=c :
+     * Uint8 padding3
      * }
      */
     public static final OfByte padding3$layout() {
@@ -468,7 +514,8 @@ public class SDL_TextEditingCandidatesEvent {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * Uint8 padding3
+     * {@snippet lang=c :
+     * Uint8 padding3
      * }
      */
     public static final long padding3$offset() {
@@ -477,7 +524,8 @@ public class SDL_TextEditingCandidatesEvent {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * Uint8 padding3
+     * {@snippet lang=c :
+     * Uint8 padding3
      * }
      */
     public static byte padding3(MemorySegment struct) {
@@ -486,7 +534,8 @@ public class SDL_TextEditingCandidatesEvent {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * Uint8 padding3
+     * {@snippet lang=c :
+     * Uint8 padding3
      * }
      */
     public static void padding3(MemorySegment struct, byte fieldValue) {
@@ -494,8 +543,8 @@ public class SDL_TextEditingCandidatesEvent {
     }
 
     /**
-     * Obtains a slice of {@code arrayParam} which selects the array element at {@code index}. The
-     * returned segment has address {@code arrayParam.address() + index * layout().byteSize()}
+     * Obtains a slice of {@code arrayParam} which selects the array element at {@code index}.
+     * The returned segment has address {@code arrayParam.address() + index * layout().byteSize()}
      */
     public static MemorySegment asSlice(MemorySegment array, long index) {
         return array.asSlice(layout().byteSize() * index);
@@ -504,9 +553,7 @@ public class SDL_TextEditingCandidatesEvent {
     /**
      * The size (in bytes) of this struct
      */
-    public static long sizeof() {
-        return layout().byteSize();
-    }
+    public static long sizeof() { return layout().byteSize(); }
 
     /**
      * Allocate a segment of size {@code layout().byteSize()} using {@code allocator}
@@ -516,26 +563,27 @@ public class SDL_TextEditingCandidatesEvent {
     }
 
     /**
-     * Allocate an array of size {@code elementCount} using {@code allocator}. The returned segment
-     * has size {@code elementCount * layout().byteSize()}.
+     * Allocate an array of size {@code elementCount} using {@code allocator}.
+     * The returned segment has size {@code elementCount * layout().byteSize()}.
      */
     public static MemorySegment allocateArray(long elementCount, SegmentAllocator allocator) {
         return allocator.allocate(MemoryLayout.sequenceLayout(elementCount, layout()));
     }
 
     /**
-     * Reinterprets {@code addr} using target {@code arena} and {@code cleanupAction} (if any). The
-     * returned segment has size {@code layout().byteSize()}
+     * Reinterprets {@code addr} using target {@code arena} and {@code cleanupAction} (if any).
+     * The returned segment has size {@code layout().byteSize()}
      */
     public static MemorySegment reinterpret(MemorySegment addr, Arena arena, Consumer<MemorySegment> cleanup) {
         return reinterpret(addr, 1, arena, cleanup);
     }
 
     /**
-     * Reinterprets {@code addr} using target {@code arena} and {@code cleanupAction} (if any). The
-     * returned segment has size {@code elementCount * layout().byteSize()}
+     * Reinterprets {@code addr} using target {@code arena} and {@code cleanupAction} (if any).
+     * The returned segment has size {@code elementCount * layout().byteSize()}
      */
     public static MemorySegment reinterpret(MemorySegment addr, long elementCount, Arena arena, Consumer<MemorySegment> cleanup) {
         return addr.reinterpret(layout().byteSize() * elementCount, arena, cleanup);
     }
 }
+
