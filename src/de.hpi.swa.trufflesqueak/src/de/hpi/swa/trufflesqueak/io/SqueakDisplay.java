@@ -532,6 +532,10 @@ public final class SqueakDisplay {
                 SDL_DestroyRenderer(renderer);
                 renderer = MemorySegment.NULL;
             }
+            if (cursor != MemorySegment.NULL) {
+                SDL_DestroyCursor(cursor);
+                cursor = MemorySegment.NULL;
+            }
             if (window != MemorySegment.NULL) {
                 SDL_DestroyWindow(window);
                 window = MemorySegment.NULL;
@@ -603,6 +607,9 @@ public final class SqueakDisplay {
                 scaleFactor = checkSdlError(SDL_GetWindowDisplayScale(window));
                 checkSdlError(SDL_StartTextInput(window));
                 fullDamage();
+                if (cursorData != null) {
+                    SDL_RunOnMainThread(setCursorTask, MemorySegment.NULL, false);
+                }
             }, Arena.global());
 
             SDL_RunOnMainThread(openTask, MemorySegment.NULL, true);
