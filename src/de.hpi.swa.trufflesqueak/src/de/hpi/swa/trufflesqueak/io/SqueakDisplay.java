@@ -239,7 +239,9 @@ public final class SqueakDisplay {
         final int h = cursorData.height;
 
         final MemorySegment surface = SDL_CreateSurface(w, h, SDL_PIXELFORMAT_ARGB8888);
-        if (surface == MemorySegment.NULL) return;
+        if (surface == MemorySegment.NULL) {
+            return;
+        }
 
         // Use SDL_LockSurface to ensure we have CPU access to the pixel buffer
         if (SDL_LockSurface(surface)) {
@@ -252,12 +254,11 @@ public final class SqueakDisplay {
                 if (cursorData.depth == 32) {
                     /* Case 1: 32-bit ARGB (Direct Copy) */
                     for (int y = 0; y < h; y++) {
-                        long srcOffset = (long) y * w * Integer.BYTES;
-                        long dstOffset = (long) y * pitch;
+                        final long srcOffset = (long) y * w * Integer.BYTES;
+                        final long dstOffset = (long) y * pitch;
                         MemorySegment.copy(MemorySegment.ofArray(sqPixels), srcOffset, pixels, dstOffset, (long) w * Integer.BYTES);
                     }
-                }
-                else if (sqMask != null && w == SqueakIOConstants.CURSOR_WIDTH && h == SqueakIOConstants.CURSOR_HEIGHT) {
+                } else if (sqMask != null && w == SqueakIOConstants.CURSOR_WIDTH && h == SqueakIOConstants.CURSOR_HEIGHT) {
                     /* Case 2: Legacy 16x16 Masked Cursor */
                     for (int y = 0; y < h; y++) {
                         final int cWord = sqPixels[y];
@@ -268,15 +269,20 @@ public final class SqueakDisplay {
                             final boolean m = (mWord & bit) != 0;
 
                             int argb = 0; // Transparent (0,0)
-                            if (m && c) argb = 0xFF000000;      // Black (1,1)
-                            else if (m) argb = 0xFFFFFFFF;      // White (1,0)
-                            else if (c) argb = 0x00FFFFFF;      // Invert (0,1)
+                            if (m && c) {
+                                argb = 0xFF000000;      // Black (1,1)
+                            }
+                            else if (m) {
+                                argb = 0xFFFFFFFF;      // White (1,0)
+                            }
+                            else if (c) {
+                                argb = 0x00FFFFFF;      // Invert (0,1)
+                            }
 
                             pixels.set(ValueLayout.JAVA_INT, (long) y * pitch + (long) x * 4, argb);
                         }
                     }
-                }
-                else {
+                } else {
                     /* Case 3: Arbitrary Sized Monochrome (1-bit) */
                     // Squeak bit-padding: rows are padded to 32-bit boundaries
                     final int wordsPerRow = (w + 31) / 32;
