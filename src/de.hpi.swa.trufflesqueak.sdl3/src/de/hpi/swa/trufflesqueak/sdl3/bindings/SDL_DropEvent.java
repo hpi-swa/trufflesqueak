@@ -2,14 +2,18 @@
 
 package de.hpi.swa.trufflesqueak.sdl3.bindings;
 
+import java.lang.invoke.*;
 import java.lang.foreign.*;
+import java.nio.ByteOrder;
+import java.util.*;
 import java.util.function.*;
+import java.util.stream.*;
 
 import static java.lang.foreign.ValueLayout.*;
 import static java.lang.foreign.MemoryLayout.PathElement.*;
 
 /**
- * {@snippet lang = c :
+ * {@snippet lang=c :
  * struct SDL_DropEvent {
  *     SDL_EventType type;
  *     Uint32 reserved;
@@ -29,15 +33,16 @@ public class SDL_DropEvent {
     }
 
     private static final GroupLayout $LAYOUT = MemoryLayout.structLayout(
-                    SDL_h.C_INT.withName("type"),
-                    SDL_h.C_INT.withName("reserved"),
-                    SDL_h.C_LONG_LONG.withName("timestamp"),
-                    SDL_h.C_INT.withName("windowID"),
-                    SDL_h.C_FLOAT.withName("x"),
-                    SDL_h.C_FLOAT.withName("y"),
-                    MemoryLayout.paddingLayout(4),
-                    SDL_h.C_POINTER.withName("source"),
-                    SDL_h.C_POINTER.withName("data")).withName("SDL_DropEvent");
+        SDL_h.C_INT.withName("type"),
+        SDL_h.C_INT.withName("reserved"),
+        SDL_h.C_LONG_LONG.withName("timestamp"),
+        SDL_h.C_INT.withName("windowID"),
+        SDL_h.C_FLOAT.withName("x"),
+        SDL_h.C_FLOAT.withName("y"),
+        MemoryLayout.paddingLayout(4),
+        SDL_h.C_POINTER.withName("source"),
+        SDL_h.C_POINTER.withName("data")
+    ).withName("SDL_DropEvent");
 
     /**
      * The layout of this struct
@@ -46,11 +51,12 @@ public class SDL_DropEvent {
         return $LAYOUT;
     }
 
-    private static final OfInt type$LAYOUT = (OfInt) $LAYOUT.select(groupElement("type"));
+    private static final OfInt type$LAYOUT = (OfInt)$LAYOUT.select(groupElement("type"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * SDL_EventType type
+     * {@snippet lang=c :
+     * SDL_EventType type
      * }
      */
     public static final OfInt type$layout() {
@@ -61,7 +67,8 @@ public class SDL_DropEvent {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * SDL_EventType type
+     * {@snippet lang=c :
+     * SDL_EventType type
      * }
      */
     public static final long type$offset() {
@@ -70,7 +77,8 @@ public class SDL_DropEvent {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * SDL_EventType type
+     * {@snippet lang=c :
+     * SDL_EventType type
      * }
      */
     public static int type(MemorySegment struct) {
@@ -79,18 +87,20 @@ public class SDL_DropEvent {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * SDL_EventType type
+     * {@snippet lang=c :
+     * SDL_EventType type
      * }
      */
     public static void type(MemorySegment struct, int fieldValue) {
         struct.set(type$LAYOUT, type$OFFSET, fieldValue);
     }
 
-    private static final OfInt reserved$LAYOUT = (OfInt) $LAYOUT.select(groupElement("reserved"));
+    private static final OfInt reserved$LAYOUT = (OfInt)$LAYOUT.select(groupElement("reserved"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * Uint32 reserved
+     * {@snippet lang=c :
+     * Uint32 reserved
      * }
      */
     public static final OfInt reserved$layout() {
@@ -101,7 +111,8 @@ public class SDL_DropEvent {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * Uint32 reserved
+     * {@snippet lang=c :
+     * Uint32 reserved
      * }
      */
     public static final long reserved$offset() {
@@ -110,7 +121,8 @@ public class SDL_DropEvent {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * Uint32 reserved
+     * {@snippet lang=c :
+     * Uint32 reserved
      * }
      */
     public static int reserved(MemorySegment struct) {
@@ -119,18 +131,20 @@ public class SDL_DropEvent {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * Uint32 reserved
+     * {@snippet lang=c :
+     * Uint32 reserved
      * }
      */
     public static void reserved(MemorySegment struct, int fieldValue) {
         struct.set(reserved$LAYOUT, reserved$OFFSET, fieldValue);
     }
 
-    private static final OfLong timestamp$LAYOUT = (OfLong) $LAYOUT.select(groupElement("timestamp"));
+    private static final OfLong timestamp$LAYOUT = (OfLong)$LAYOUT.select(groupElement("timestamp"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * Uint64 timestamp
+     * {@snippet lang=c :
+     * Uint64 timestamp
      * }
      */
     public static final OfLong timestamp$layout() {
@@ -141,7 +155,8 @@ public class SDL_DropEvent {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * Uint64 timestamp
+     * {@snippet lang=c :
+     * Uint64 timestamp
      * }
      */
     public static final long timestamp$offset() {
@@ -150,7 +165,8 @@ public class SDL_DropEvent {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * Uint64 timestamp
+     * {@snippet lang=c :
+     * Uint64 timestamp
      * }
      */
     public static long timestamp(MemorySegment struct) {
@@ -159,18 +175,20 @@ public class SDL_DropEvent {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * Uint64 timestamp
+     * {@snippet lang=c :
+     * Uint64 timestamp
      * }
      */
     public static void timestamp(MemorySegment struct, long fieldValue) {
         struct.set(timestamp$LAYOUT, timestamp$OFFSET, fieldValue);
     }
 
-    private static final OfInt windowID$LAYOUT = (OfInt) $LAYOUT.select(groupElement("windowID"));
+    private static final OfInt windowID$LAYOUT = (OfInt)$LAYOUT.select(groupElement("windowID"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * SDL_WindowID windowID
+     * {@snippet lang=c :
+     * SDL_WindowID windowID
      * }
      */
     public static final OfInt windowID$layout() {
@@ -181,7 +199,8 @@ public class SDL_DropEvent {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * SDL_WindowID windowID
+     * {@snippet lang=c :
+     * SDL_WindowID windowID
      * }
      */
     public static final long windowID$offset() {
@@ -190,7 +209,8 @@ public class SDL_DropEvent {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * SDL_WindowID windowID
+     * {@snippet lang=c :
+     * SDL_WindowID windowID
      * }
      */
     public static int windowID(MemorySegment struct) {
@@ -199,18 +219,20 @@ public class SDL_DropEvent {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * SDL_WindowID windowID
+     * {@snippet lang=c :
+     * SDL_WindowID windowID
      * }
      */
     public static void windowID(MemorySegment struct, int fieldValue) {
         struct.set(windowID$LAYOUT, windowID$OFFSET, fieldValue);
     }
 
-    private static final OfFloat x$LAYOUT = (OfFloat) $LAYOUT.select(groupElement("x"));
+    private static final OfFloat x$LAYOUT = (OfFloat)$LAYOUT.select(groupElement("x"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * float x
+     * {@snippet lang=c :
+     * float x
      * }
      */
     public static final OfFloat x$layout() {
@@ -221,7 +243,8 @@ public class SDL_DropEvent {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * float x
+     * {@snippet lang=c :
+     * float x
      * }
      */
     public static final long x$offset() {
@@ -230,7 +253,8 @@ public class SDL_DropEvent {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * float x
+     * {@snippet lang=c :
+     * float x
      * }
      */
     public static float x(MemorySegment struct) {
@@ -239,18 +263,20 @@ public class SDL_DropEvent {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * float x
+     * {@snippet lang=c :
+     * float x
      * }
      */
     public static void x(MemorySegment struct, float fieldValue) {
         struct.set(x$LAYOUT, x$OFFSET, fieldValue);
     }
 
-    private static final OfFloat y$LAYOUT = (OfFloat) $LAYOUT.select(groupElement("y"));
+    private static final OfFloat y$LAYOUT = (OfFloat)$LAYOUT.select(groupElement("y"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * float y
+     * {@snippet lang=c :
+     * float y
      * }
      */
     public static final OfFloat y$layout() {
@@ -261,7 +287,8 @@ public class SDL_DropEvent {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * float y
+     * {@snippet lang=c :
+     * float y
      * }
      */
     public static final long y$offset() {
@@ -270,7 +297,8 @@ public class SDL_DropEvent {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * float y
+     * {@snippet lang=c :
+     * float y
      * }
      */
     public static float y(MemorySegment struct) {
@@ -279,18 +307,20 @@ public class SDL_DropEvent {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * float y
+     * {@snippet lang=c :
+     * float y
      * }
      */
     public static void y(MemorySegment struct, float fieldValue) {
         struct.set(y$LAYOUT, y$OFFSET, fieldValue);
     }
 
-    private static final AddressLayout source$LAYOUT = (AddressLayout) $LAYOUT.select(groupElement("source"));
+    private static final AddressLayout source$LAYOUT = (AddressLayout)$LAYOUT.select(groupElement("source"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * const char *source
+     * {@snippet lang=c :
+     * const char *source
      * }
      */
     public static final AddressLayout source$layout() {
@@ -301,7 +331,8 @@ public class SDL_DropEvent {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * const char *source
+     * {@snippet lang=c :
+     * const char *source
      * }
      */
     public static final long source$offset() {
@@ -310,7 +341,8 @@ public class SDL_DropEvent {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * const char *source
+     * {@snippet lang=c :
+     * const char *source
      * }
      */
     public static MemorySegment source(MemorySegment struct) {
@@ -319,18 +351,20 @@ public class SDL_DropEvent {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * const char *source
+     * {@snippet lang=c :
+     * const char *source
      * }
      */
     public static void source(MemorySegment struct, MemorySegment fieldValue) {
         struct.set(source$LAYOUT, source$OFFSET, fieldValue);
     }
 
-    private static final AddressLayout data$LAYOUT = (AddressLayout) $LAYOUT.select(groupElement("data"));
+    private static final AddressLayout data$LAYOUT = (AddressLayout)$LAYOUT.select(groupElement("data"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * const char *data
+     * {@snippet lang=c :
+     * const char *data
      * }
      */
     public static final AddressLayout data$layout() {
@@ -341,7 +375,8 @@ public class SDL_DropEvent {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * const char *data
+     * {@snippet lang=c :
+     * const char *data
      * }
      */
     public static final long data$offset() {
@@ -350,7 +385,8 @@ public class SDL_DropEvent {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * const char *data
+     * {@snippet lang=c :
+     * const char *data
      * }
      */
     public static MemorySegment data(MemorySegment struct) {
@@ -359,7 +395,8 @@ public class SDL_DropEvent {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * const char *data
+     * {@snippet lang=c :
+     * const char *data
      * }
      */
     public static void data(MemorySegment struct, MemorySegment fieldValue) {
@@ -367,8 +404,8 @@ public class SDL_DropEvent {
     }
 
     /**
-     * Obtains a slice of {@code arrayParam} which selects the array element at {@code index}. The
-     * returned segment has address {@code arrayParam.address() + index * layout().byteSize()}
+     * Obtains a slice of {@code arrayParam} which selects the array element at {@code index}.
+     * The returned segment has address {@code arrayParam.address() + index * layout().byteSize()}
      */
     public static MemorySegment asSlice(MemorySegment array, long index) {
         return array.asSlice(layout().byteSize() * index);
@@ -377,9 +414,7 @@ public class SDL_DropEvent {
     /**
      * The size (in bytes) of this struct
      */
-    public static long sizeof() {
-        return layout().byteSize();
-    }
+    public static long sizeof() { return layout().byteSize(); }
 
     /**
      * Allocate a segment of size {@code layout().byteSize()} using {@code allocator}
@@ -389,26 +424,27 @@ public class SDL_DropEvent {
     }
 
     /**
-     * Allocate an array of size {@code elementCount} using {@code allocator}. The returned segment
-     * has size {@code elementCount * layout().byteSize()}.
+     * Allocate an array of size {@code elementCount} using {@code allocator}.
+     * The returned segment has size {@code elementCount * layout().byteSize()}.
      */
     public static MemorySegment allocateArray(long elementCount, SegmentAllocator allocator) {
         return allocator.allocate(MemoryLayout.sequenceLayout(elementCount, layout()));
     }
 
     /**
-     * Reinterprets {@code addr} using target {@code arena} and {@code cleanupAction} (if any). The
-     * returned segment has size {@code layout().byteSize()}
+     * Reinterprets {@code addr} using target {@code arena} and {@code cleanupAction} (if any).
+     * The returned segment has size {@code layout().byteSize()}
      */
     public static MemorySegment reinterpret(MemorySegment addr, Arena arena, Consumer<MemorySegment> cleanup) {
         return reinterpret(addr, 1, arena, cleanup);
     }
 
     /**
-     * Reinterprets {@code addr} using target {@code arena} and {@code cleanupAction} (if any). The
-     * returned segment has size {@code elementCount * layout().byteSize()}
+     * Reinterprets {@code addr} using target {@code arena} and {@code cleanupAction} (if any).
+     * The returned segment has size {@code elementCount * layout().byteSize()}
      */
     public static MemorySegment reinterpret(MemorySegment addr, long elementCount, Arena arena, Consumer<MemorySegment> cleanup) {
         return addr.reinterpret(layout().byteSize() * elementCount, arena, cleanup);
     }
 }
+

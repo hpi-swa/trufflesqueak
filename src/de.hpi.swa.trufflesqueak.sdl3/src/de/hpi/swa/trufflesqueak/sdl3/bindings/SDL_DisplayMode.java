@@ -2,14 +2,18 @@
 
 package de.hpi.swa.trufflesqueak.sdl3.bindings;
 
+import java.lang.invoke.*;
 import java.lang.foreign.*;
+import java.nio.ByteOrder;
+import java.util.*;
 import java.util.function.*;
+import java.util.stream.*;
 
 import static java.lang.foreign.ValueLayout.*;
 import static java.lang.foreign.MemoryLayout.PathElement.*;
 
 /**
- * {@snippet lang = c :
+ * {@snippet lang=c :
  * struct SDL_DisplayMode {
  *     SDL_DisplayID displayID;
  *     SDL_PixelFormat format;
@@ -30,15 +34,16 @@ public class SDL_DisplayMode {
     }
 
     private static final GroupLayout $LAYOUT = MemoryLayout.structLayout(
-                    SDL_h.C_INT.withName("displayID"),
-                    SDL_h.C_INT.withName("format"),
-                    SDL_h.C_INT.withName("w"),
-                    SDL_h.C_INT.withName("h"),
-                    SDL_h.C_FLOAT.withName("pixel_density"),
-                    SDL_h.C_FLOAT.withName("refresh_rate"),
-                    SDL_h.C_INT.withName("refresh_rate_numerator"),
-                    SDL_h.C_INT.withName("refresh_rate_denominator"),
-                    SDL_h.C_POINTER.withName("internal")).withName("SDL_DisplayMode");
+        SDL_h.C_INT.withName("displayID"),
+        SDL_h.C_INT.withName("format"),
+        SDL_h.C_INT.withName("w"),
+        SDL_h.C_INT.withName("h"),
+        SDL_h.C_FLOAT.withName("pixel_density"),
+        SDL_h.C_FLOAT.withName("refresh_rate"),
+        SDL_h.C_INT.withName("refresh_rate_numerator"),
+        SDL_h.C_INT.withName("refresh_rate_denominator"),
+        SDL_h.C_POINTER.withName("internal")
+    ).withName("SDL_DisplayMode");
 
     /**
      * The layout of this struct
@@ -47,11 +52,12 @@ public class SDL_DisplayMode {
         return $LAYOUT;
     }
 
-    private static final OfInt displayID$LAYOUT = (OfInt) $LAYOUT.select(groupElement("displayID"));
+    private static final OfInt displayID$LAYOUT = (OfInt)$LAYOUT.select(groupElement("displayID"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * SDL_DisplayID displayID
+     * {@snippet lang=c :
+     * SDL_DisplayID displayID
      * }
      */
     public static final OfInt displayID$layout() {
@@ -62,7 +68,8 @@ public class SDL_DisplayMode {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * SDL_DisplayID displayID
+     * {@snippet lang=c :
+     * SDL_DisplayID displayID
      * }
      */
     public static final long displayID$offset() {
@@ -71,7 +78,8 @@ public class SDL_DisplayMode {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * SDL_DisplayID displayID
+     * {@snippet lang=c :
+     * SDL_DisplayID displayID
      * }
      */
     public static int displayID(MemorySegment struct) {
@@ -80,18 +88,20 @@ public class SDL_DisplayMode {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * SDL_DisplayID displayID
+     * {@snippet lang=c :
+     * SDL_DisplayID displayID
      * }
      */
     public static void displayID(MemorySegment struct, int fieldValue) {
         struct.set(displayID$LAYOUT, displayID$OFFSET, fieldValue);
     }
 
-    private static final OfInt format$LAYOUT = (OfInt) $LAYOUT.select(groupElement("format"));
+    private static final OfInt format$LAYOUT = (OfInt)$LAYOUT.select(groupElement("format"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * SDL_PixelFormat format
+     * {@snippet lang=c :
+     * SDL_PixelFormat format
      * }
      */
     public static final OfInt format$layout() {
@@ -102,7 +112,8 @@ public class SDL_DisplayMode {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * SDL_PixelFormat format
+     * {@snippet lang=c :
+     * SDL_PixelFormat format
      * }
      */
     public static final long format$offset() {
@@ -111,7 +122,8 @@ public class SDL_DisplayMode {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * SDL_PixelFormat format
+     * {@snippet lang=c :
+     * SDL_PixelFormat format
      * }
      */
     public static int format(MemorySegment struct) {
@@ -120,18 +132,20 @@ public class SDL_DisplayMode {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * SDL_PixelFormat format
+     * {@snippet lang=c :
+     * SDL_PixelFormat format
      * }
      */
     public static void format(MemorySegment struct, int fieldValue) {
         struct.set(format$LAYOUT, format$OFFSET, fieldValue);
     }
 
-    private static final OfInt w$LAYOUT = (OfInt) $LAYOUT.select(groupElement("w"));
+    private static final OfInt w$LAYOUT = (OfInt)$LAYOUT.select(groupElement("w"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * int w
+     * {@snippet lang=c :
+     * int w
      * }
      */
     public static final OfInt w$layout() {
@@ -142,7 +156,8 @@ public class SDL_DisplayMode {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * int w
+     * {@snippet lang=c :
+     * int w
      * }
      */
     public static final long w$offset() {
@@ -151,7 +166,8 @@ public class SDL_DisplayMode {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * int w
+     * {@snippet lang=c :
+     * int w
      * }
      */
     public static int w(MemorySegment struct) {
@@ -160,18 +176,20 @@ public class SDL_DisplayMode {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * int w
+     * {@snippet lang=c :
+     * int w
      * }
      */
     public static void w(MemorySegment struct, int fieldValue) {
         struct.set(w$LAYOUT, w$OFFSET, fieldValue);
     }
 
-    private static final OfInt h$LAYOUT = (OfInt) $LAYOUT.select(groupElement("h"));
+    private static final OfInt h$LAYOUT = (OfInt)$LAYOUT.select(groupElement("h"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * int h
+     * {@snippet lang=c :
+     * int h
      * }
      */
     public static final OfInt h$layout() {
@@ -182,7 +200,8 @@ public class SDL_DisplayMode {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * int h
+     * {@snippet lang=c :
+     * int h
      * }
      */
     public static final long h$offset() {
@@ -191,7 +210,8 @@ public class SDL_DisplayMode {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * int h
+     * {@snippet lang=c :
+     * int h
      * }
      */
     public static int h(MemorySegment struct) {
@@ -200,18 +220,20 @@ public class SDL_DisplayMode {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * int h
+     * {@snippet lang=c :
+     * int h
      * }
      */
     public static void h(MemorySegment struct, int fieldValue) {
         struct.set(h$LAYOUT, h$OFFSET, fieldValue);
     }
 
-    private static final OfFloat pixel_density$LAYOUT = (OfFloat) $LAYOUT.select(groupElement("pixel_density"));
+    private static final OfFloat pixel_density$LAYOUT = (OfFloat)$LAYOUT.select(groupElement("pixel_density"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * float pixel_density
+     * {@snippet lang=c :
+     * float pixel_density
      * }
      */
     public static final OfFloat pixel_density$layout() {
@@ -222,7 +244,8 @@ public class SDL_DisplayMode {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * float pixel_density
+     * {@snippet lang=c :
+     * float pixel_density
      * }
      */
     public static final long pixel_density$offset() {
@@ -231,7 +254,8 @@ public class SDL_DisplayMode {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * float pixel_density
+     * {@snippet lang=c :
+     * float pixel_density
      * }
      */
     public static float pixel_density(MemorySegment struct) {
@@ -240,18 +264,20 @@ public class SDL_DisplayMode {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * float pixel_density
+     * {@snippet lang=c :
+     * float pixel_density
      * }
      */
     public static void pixel_density(MemorySegment struct, float fieldValue) {
         struct.set(pixel_density$LAYOUT, pixel_density$OFFSET, fieldValue);
     }
 
-    private static final OfFloat refresh_rate$LAYOUT = (OfFloat) $LAYOUT.select(groupElement("refresh_rate"));
+    private static final OfFloat refresh_rate$LAYOUT = (OfFloat)$LAYOUT.select(groupElement("refresh_rate"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * float refresh_rate
+     * {@snippet lang=c :
+     * float refresh_rate
      * }
      */
     public static final OfFloat refresh_rate$layout() {
@@ -262,7 +288,8 @@ public class SDL_DisplayMode {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * float refresh_rate
+     * {@snippet lang=c :
+     * float refresh_rate
      * }
      */
     public static final long refresh_rate$offset() {
@@ -271,7 +298,8 @@ public class SDL_DisplayMode {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * float refresh_rate
+     * {@snippet lang=c :
+     * float refresh_rate
      * }
      */
     public static float refresh_rate(MemorySegment struct) {
@@ -280,18 +308,20 @@ public class SDL_DisplayMode {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * float refresh_rate
+     * {@snippet lang=c :
+     * float refresh_rate
      * }
      */
     public static void refresh_rate(MemorySegment struct, float fieldValue) {
         struct.set(refresh_rate$LAYOUT, refresh_rate$OFFSET, fieldValue);
     }
 
-    private static final OfInt refresh_rate_numerator$LAYOUT = (OfInt) $LAYOUT.select(groupElement("refresh_rate_numerator"));
+    private static final OfInt refresh_rate_numerator$LAYOUT = (OfInt)$LAYOUT.select(groupElement("refresh_rate_numerator"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * int refresh_rate_numerator
+     * {@snippet lang=c :
+     * int refresh_rate_numerator
      * }
      */
     public static final OfInt refresh_rate_numerator$layout() {
@@ -302,7 +332,8 @@ public class SDL_DisplayMode {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * int refresh_rate_numerator
+     * {@snippet lang=c :
+     * int refresh_rate_numerator
      * }
      */
     public static final long refresh_rate_numerator$offset() {
@@ -311,7 +342,8 @@ public class SDL_DisplayMode {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * int refresh_rate_numerator
+     * {@snippet lang=c :
+     * int refresh_rate_numerator
      * }
      */
     public static int refresh_rate_numerator(MemorySegment struct) {
@@ -320,18 +352,20 @@ public class SDL_DisplayMode {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * int refresh_rate_numerator
+     * {@snippet lang=c :
+     * int refresh_rate_numerator
      * }
      */
     public static void refresh_rate_numerator(MemorySegment struct, int fieldValue) {
         struct.set(refresh_rate_numerator$LAYOUT, refresh_rate_numerator$OFFSET, fieldValue);
     }
 
-    private static final OfInt refresh_rate_denominator$LAYOUT = (OfInt) $LAYOUT.select(groupElement("refresh_rate_denominator"));
+    private static final OfInt refresh_rate_denominator$LAYOUT = (OfInt)$LAYOUT.select(groupElement("refresh_rate_denominator"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * int refresh_rate_denominator
+     * {@snippet lang=c :
+     * int refresh_rate_denominator
      * }
      */
     public static final OfInt refresh_rate_denominator$layout() {
@@ -342,7 +376,8 @@ public class SDL_DisplayMode {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * int refresh_rate_denominator
+     * {@snippet lang=c :
+     * int refresh_rate_denominator
      * }
      */
     public static final long refresh_rate_denominator$offset() {
@@ -351,7 +386,8 @@ public class SDL_DisplayMode {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * int refresh_rate_denominator
+     * {@snippet lang=c :
+     * int refresh_rate_denominator
      * }
      */
     public static int refresh_rate_denominator(MemorySegment struct) {
@@ -360,18 +396,20 @@ public class SDL_DisplayMode {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * int refresh_rate_denominator
+     * {@snippet lang=c :
+     * int refresh_rate_denominator
      * }
      */
     public static void refresh_rate_denominator(MemorySegment struct, int fieldValue) {
         struct.set(refresh_rate_denominator$LAYOUT, refresh_rate_denominator$OFFSET, fieldValue);
     }
 
-    private static final AddressLayout internal$LAYOUT = (AddressLayout) $LAYOUT.select(groupElement("internal"));
+    private static final AddressLayout internal$LAYOUT = (AddressLayout)$LAYOUT.select(groupElement("internal"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * SDL_DisplayModeData *internal
+     * {@snippet lang=c :
+     * SDL_DisplayModeData *internal
      * }
      */
     public static final AddressLayout internal$layout() {
@@ -382,7 +420,8 @@ public class SDL_DisplayMode {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * SDL_DisplayModeData *internal
+     * {@snippet lang=c :
+     * SDL_DisplayModeData *internal
      * }
      */
     public static final long internal$offset() {
@@ -391,7 +430,8 @@ public class SDL_DisplayMode {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * SDL_DisplayModeData *internal
+     * {@snippet lang=c :
+     * SDL_DisplayModeData *internal
      * }
      */
     public static MemorySegment internal(MemorySegment struct) {
@@ -400,7 +440,8 @@ public class SDL_DisplayMode {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * SDL_DisplayModeData *internal
+     * {@snippet lang=c :
+     * SDL_DisplayModeData *internal
      * }
      */
     public static void internal(MemorySegment struct, MemorySegment fieldValue) {
@@ -408,8 +449,8 @@ public class SDL_DisplayMode {
     }
 
     /**
-     * Obtains a slice of {@code arrayParam} which selects the array element at {@code index}. The
-     * returned segment has address {@code arrayParam.address() + index * layout().byteSize()}
+     * Obtains a slice of {@code arrayParam} which selects the array element at {@code index}.
+     * The returned segment has address {@code arrayParam.address() + index * layout().byteSize()}
      */
     public static MemorySegment asSlice(MemorySegment array, long index) {
         return array.asSlice(layout().byteSize() * index);
@@ -418,9 +459,7 @@ public class SDL_DisplayMode {
     /**
      * The size (in bytes) of this struct
      */
-    public static long sizeof() {
-        return layout().byteSize();
-    }
+    public static long sizeof() { return layout().byteSize(); }
 
     /**
      * Allocate a segment of size {@code layout().byteSize()} using {@code allocator}
@@ -430,26 +469,27 @@ public class SDL_DisplayMode {
     }
 
     /**
-     * Allocate an array of size {@code elementCount} using {@code allocator}. The returned segment
-     * has size {@code elementCount * layout().byteSize()}.
+     * Allocate an array of size {@code elementCount} using {@code allocator}.
+     * The returned segment has size {@code elementCount * layout().byteSize()}.
      */
     public static MemorySegment allocateArray(long elementCount, SegmentAllocator allocator) {
         return allocator.allocate(MemoryLayout.sequenceLayout(elementCount, layout()));
     }
 
     /**
-     * Reinterprets {@code addr} using target {@code arena} and {@code cleanupAction} (if any). The
-     * returned segment has size {@code layout().byteSize()}
+     * Reinterprets {@code addr} using target {@code arena} and {@code cleanupAction} (if any).
+     * The returned segment has size {@code layout().byteSize()}
      */
     public static MemorySegment reinterpret(MemorySegment addr, Arena arena, Consumer<MemorySegment> cleanup) {
         return reinterpret(addr, 1, arena, cleanup);
     }
 
     /**
-     * Reinterprets {@code addr} using target {@code arena} and {@code cleanupAction} (if any). The
-     * returned segment has size {@code elementCount * layout().byteSize()}
+     * Reinterprets {@code addr} using target {@code arena} and {@code cleanupAction} (if any).
+     * The returned segment has size {@code elementCount * layout().byteSize()}
      */
     public static MemorySegment reinterpret(MemorySegment addr, long elementCount, Arena arena, Consumer<MemorySegment> cleanup) {
         return addr.reinterpret(layout().byteSize() * elementCount, arena, cleanup);
     }
 }
+

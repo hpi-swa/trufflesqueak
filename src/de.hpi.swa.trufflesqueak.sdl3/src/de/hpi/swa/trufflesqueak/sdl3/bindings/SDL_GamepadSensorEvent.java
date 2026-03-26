@@ -4,13 +4,16 @@ package de.hpi.swa.trufflesqueak.sdl3.bindings;
 
 import java.lang.invoke.*;
 import java.lang.foreign.*;
+import java.nio.ByteOrder;
+import java.util.*;
 import java.util.function.*;
+import java.util.stream.*;
 
 import static java.lang.foreign.ValueLayout.*;
 import static java.lang.foreign.MemoryLayout.PathElement.*;
 
 /**
- * {@snippet lang = c :
+ * {@snippet lang=c :
  * struct SDL_GamepadSensorEvent {
  *     SDL_EventType type;
  *     Uint32 reserved;
@@ -29,14 +32,15 @@ public class SDL_GamepadSensorEvent {
     }
 
     private static final GroupLayout $LAYOUT = MemoryLayout.structLayout(
-                    SDL_h.C_INT.withName("type"),
-                    SDL_h.C_INT.withName("reserved"),
-                    SDL_h.C_LONG_LONG.withName("timestamp"),
-                    SDL_h.C_INT.withName("which"),
-                    SDL_h.C_INT.withName("sensor"),
-                    MemoryLayout.sequenceLayout(3, SDL_h.C_FLOAT).withName("data"),
-                    MemoryLayout.paddingLayout(4),
-                    SDL_h.C_LONG_LONG.withName("sensor_timestamp")).withName("SDL_GamepadSensorEvent");
+        SDL_h.C_INT.withName("type"),
+        SDL_h.C_INT.withName("reserved"),
+        SDL_h.C_LONG_LONG.withName("timestamp"),
+        SDL_h.C_INT.withName("which"),
+        SDL_h.C_INT.withName("sensor"),
+        MemoryLayout.sequenceLayout(3, SDL_h.C_FLOAT).withName("data"),
+        MemoryLayout.paddingLayout(4),
+        SDL_h.C_LONG_LONG.withName("sensor_timestamp")
+    ).withName("SDL_GamepadSensorEvent");
 
     /**
      * The layout of this struct
@@ -45,11 +49,12 @@ public class SDL_GamepadSensorEvent {
         return $LAYOUT;
     }
 
-    private static final OfInt type$LAYOUT = (OfInt) $LAYOUT.select(groupElement("type"));
+    private static final OfInt type$LAYOUT = (OfInt)$LAYOUT.select(groupElement("type"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * SDL_EventType type
+     * {@snippet lang=c :
+     * SDL_EventType type
      * }
      */
     public static final OfInt type$layout() {
@@ -60,7 +65,8 @@ public class SDL_GamepadSensorEvent {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * SDL_EventType type
+     * {@snippet lang=c :
+     * SDL_EventType type
      * }
      */
     public static final long type$offset() {
@@ -69,7 +75,8 @@ public class SDL_GamepadSensorEvent {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * SDL_EventType type
+     * {@snippet lang=c :
+     * SDL_EventType type
      * }
      */
     public static int type(MemorySegment struct) {
@@ -78,18 +85,20 @@ public class SDL_GamepadSensorEvent {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * SDL_EventType type
+     * {@snippet lang=c :
+     * SDL_EventType type
      * }
      */
     public static void type(MemorySegment struct, int fieldValue) {
         struct.set(type$LAYOUT, type$OFFSET, fieldValue);
     }
 
-    private static final OfInt reserved$LAYOUT = (OfInt) $LAYOUT.select(groupElement("reserved"));
+    private static final OfInt reserved$LAYOUT = (OfInt)$LAYOUT.select(groupElement("reserved"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * Uint32 reserved
+     * {@snippet lang=c :
+     * Uint32 reserved
      * }
      */
     public static final OfInt reserved$layout() {
@@ -100,7 +109,8 @@ public class SDL_GamepadSensorEvent {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * Uint32 reserved
+     * {@snippet lang=c :
+     * Uint32 reserved
      * }
      */
     public static final long reserved$offset() {
@@ -109,7 +119,8 @@ public class SDL_GamepadSensorEvent {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * Uint32 reserved
+     * {@snippet lang=c :
+     * Uint32 reserved
      * }
      */
     public static int reserved(MemorySegment struct) {
@@ -118,18 +129,20 @@ public class SDL_GamepadSensorEvent {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * Uint32 reserved
+     * {@snippet lang=c :
+     * Uint32 reserved
      * }
      */
     public static void reserved(MemorySegment struct, int fieldValue) {
         struct.set(reserved$LAYOUT, reserved$OFFSET, fieldValue);
     }
 
-    private static final OfLong timestamp$LAYOUT = (OfLong) $LAYOUT.select(groupElement("timestamp"));
+    private static final OfLong timestamp$LAYOUT = (OfLong)$LAYOUT.select(groupElement("timestamp"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * Uint64 timestamp
+     * {@snippet lang=c :
+     * Uint64 timestamp
      * }
      */
     public static final OfLong timestamp$layout() {
@@ -140,7 +153,8 @@ public class SDL_GamepadSensorEvent {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * Uint64 timestamp
+     * {@snippet lang=c :
+     * Uint64 timestamp
      * }
      */
     public static final long timestamp$offset() {
@@ -149,7 +163,8 @@ public class SDL_GamepadSensorEvent {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * Uint64 timestamp
+     * {@snippet lang=c :
+     * Uint64 timestamp
      * }
      */
     public static long timestamp(MemorySegment struct) {
@@ -158,18 +173,20 @@ public class SDL_GamepadSensorEvent {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * Uint64 timestamp
+     * {@snippet lang=c :
+     * Uint64 timestamp
      * }
      */
     public static void timestamp(MemorySegment struct, long fieldValue) {
         struct.set(timestamp$LAYOUT, timestamp$OFFSET, fieldValue);
     }
 
-    private static final OfInt which$LAYOUT = (OfInt) $LAYOUT.select(groupElement("which"));
+    private static final OfInt which$LAYOUT = (OfInt)$LAYOUT.select(groupElement("which"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * SDL_JoystickID which
+     * {@snippet lang=c :
+     * SDL_JoystickID which
      * }
      */
     public static final OfInt which$layout() {
@@ -180,7 +197,8 @@ public class SDL_GamepadSensorEvent {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * SDL_JoystickID which
+     * {@snippet lang=c :
+     * SDL_JoystickID which
      * }
      */
     public static final long which$offset() {
@@ -189,7 +207,8 @@ public class SDL_GamepadSensorEvent {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * SDL_JoystickID which
+     * {@snippet lang=c :
+     * SDL_JoystickID which
      * }
      */
     public static int which(MemorySegment struct) {
@@ -198,18 +217,20 @@ public class SDL_GamepadSensorEvent {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * SDL_JoystickID which
+     * {@snippet lang=c :
+     * SDL_JoystickID which
      * }
      */
     public static void which(MemorySegment struct, int fieldValue) {
         struct.set(which$LAYOUT, which$OFFSET, fieldValue);
     }
 
-    private static final OfInt sensor$LAYOUT = (OfInt) $LAYOUT.select(groupElement("sensor"));
+    private static final OfInt sensor$LAYOUT = (OfInt)$LAYOUT.select(groupElement("sensor"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * Sint32 sensor
+     * {@snippet lang=c :
+     * Sint32 sensor
      * }
      */
     public static final OfInt sensor$layout() {
@@ -220,7 +241,8 @@ public class SDL_GamepadSensorEvent {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * Sint32 sensor
+     * {@snippet lang=c :
+     * Sint32 sensor
      * }
      */
     public static final long sensor$offset() {
@@ -229,7 +251,8 @@ public class SDL_GamepadSensorEvent {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * Sint32 sensor
+     * {@snippet lang=c :
+     * Sint32 sensor
      * }
      */
     public static int sensor(MemorySegment struct) {
@@ -238,18 +261,20 @@ public class SDL_GamepadSensorEvent {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * Sint32 sensor
+     * {@snippet lang=c :
+     * Sint32 sensor
      * }
      */
     public static void sensor(MemorySegment struct, int fieldValue) {
         struct.set(sensor$LAYOUT, sensor$OFFSET, fieldValue);
     }
 
-    private static final SequenceLayout data$LAYOUT = (SequenceLayout) $LAYOUT.select(groupElement("data"));
+    private static final SequenceLayout data$LAYOUT = (SequenceLayout)$LAYOUT.select(groupElement("data"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * float data[3]
+     * {@snippet lang=c :
+     * float data[3]
      * }
      */
     public static final SequenceLayout data$layout() {
@@ -260,7 +285,8 @@ public class SDL_GamepadSensorEvent {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * float data[3]
+     * {@snippet lang=c :
+     * float data[3]
      * }
      */
     public static final long data$offset() {
@@ -269,7 +295,8 @@ public class SDL_GamepadSensorEvent {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * float data[3]
+     * {@snippet lang=c :
+     * float data[3]
      * }
      */
     public static MemorySegment data(MemorySegment struct) {
@@ -278,49 +305,53 @@ public class SDL_GamepadSensorEvent {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * float data[3]
+     * {@snippet lang=c :
+     * float data[3]
      * }
      */
     public static void data(MemorySegment struct, MemorySegment fieldValue) {
         MemorySegment.copy(fieldValue, 0L, struct, data$OFFSET, data$LAYOUT.byteSize());
     }
 
-    private static long[] data$DIMS = {3};
+    private static long[] data$DIMS = { 3 };
 
     /**
      * Dimensions for array field:
-     * {@snippet lang = c : * float data[3]
+     * {@snippet lang=c :
+     * float data[3]
      * }
      */
     public static long[] data$dimensions() {
         return data$DIMS;
     }
-
     private static final VarHandle data$ELEM_HANDLE = data$LAYOUT.varHandle(sequenceElement());
 
     /**
      * Indexed getter for field:
-     * {@snippet lang = c : * float data[3]
+     * {@snippet lang=c :
+     * float data[3]
      * }
      */
     public static float data(MemorySegment struct, long index0) {
-        return (float) data$ELEM_HANDLE.get(struct, data$OFFSET, index0);
+        return (float)data$ELEM_HANDLE.get(struct, data$OFFSET, index0);
     }
 
     /**
      * Indexed setter for field:
-     * {@snippet lang = c : * float data[3]
+     * {@snippet lang=c :
+     * float data[3]
      * }
      */
     public static void data(MemorySegment struct, long index0, float fieldValue) {
         data$ELEM_HANDLE.set(struct, data$OFFSET, index0, fieldValue);
     }
 
-    private static final OfLong sensor_timestamp$LAYOUT = (OfLong) $LAYOUT.select(groupElement("sensor_timestamp"));
+    private static final OfLong sensor_timestamp$LAYOUT = (OfLong)$LAYOUT.select(groupElement("sensor_timestamp"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * Uint64 sensor_timestamp
+     * {@snippet lang=c :
+     * Uint64 sensor_timestamp
      * }
      */
     public static final OfLong sensor_timestamp$layout() {
@@ -331,7 +362,8 @@ public class SDL_GamepadSensorEvent {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * Uint64 sensor_timestamp
+     * {@snippet lang=c :
+     * Uint64 sensor_timestamp
      * }
      */
     public static final long sensor_timestamp$offset() {
@@ -340,7 +372,8 @@ public class SDL_GamepadSensorEvent {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * Uint64 sensor_timestamp
+     * {@snippet lang=c :
+     * Uint64 sensor_timestamp
      * }
      */
     public static long sensor_timestamp(MemorySegment struct) {
@@ -349,7 +382,8 @@ public class SDL_GamepadSensorEvent {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * Uint64 sensor_timestamp
+     * {@snippet lang=c :
+     * Uint64 sensor_timestamp
      * }
      */
     public static void sensor_timestamp(MemorySegment struct, long fieldValue) {
@@ -357,8 +391,8 @@ public class SDL_GamepadSensorEvent {
     }
 
     /**
-     * Obtains a slice of {@code arrayParam} which selects the array element at {@code index}. The
-     * returned segment has address {@code arrayParam.address() + index * layout().byteSize()}
+     * Obtains a slice of {@code arrayParam} which selects the array element at {@code index}.
+     * The returned segment has address {@code arrayParam.address() + index * layout().byteSize()}
      */
     public static MemorySegment asSlice(MemorySegment array, long index) {
         return array.asSlice(layout().byteSize() * index);
@@ -367,9 +401,7 @@ public class SDL_GamepadSensorEvent {
     /**
      * The size (in bytes) of this struct
      */
-    public static long sizeof() {
-        return layout().byteSize();
-    }
+    public static long sizeof() { return layout().byteSize(); }
 
     /**
      * Allocate a segment of size {@code layout().byteSize()} using {@code allocator}
@@ -379,26 +411,27 @@ public class SDL_GamepadSensorEvent {
     }
 
     /**
-     * Allocate an array of size {@code elementCount} using {@code allocator}. The returned segment
-     * has size {@code elementCount * layout().byteSize()}.
+     * Allocate an array of size {@code elementCount} using {@code allocator}.
+     * The returned segment has size {@code elementCount * layout().byteSize()}.
      */
     public static MemorySegment allocateArray(long elementCount, SegmentAllocator allocator) {
         return allocator.allocate(MemoryLayout.sequenceLayout(elementCount, layout()));
     }
 
     /**
-     * Reinterprets {@code addr} using target {@code arena} and {@code cleanupAction} (if any). The
-     * returned segment has size {@code layout().byteSize()}
+     * Reinterprets {@code addr} using target {@code arena} and {@code cleanupAction} (if any).
+     * The returned segment has size {@code layout().byteSize()}
      */
     public static MemorySegment reinterpret(MemorySegment addr, Arena arena, Consumer<MemorySegment> cleanup) {
         return reinterpret(addr, 1, arena, cleanup);
     }
 
     /**
-     * Reinterprets {@code addr} using target {@code arena} and {@code cleanupAction} (if any). The
-     * returned segment has size {@code elementCount * layout().byteSize()}
+     * Reinterprets {@code addr} using target {@code arena} and {@code cleanupAction} (if any).
+     * The returned segment has size {@code elementCount * layout().byteSize()}
      */
     public static MemorySegment reinterpret(MemorySegment addr, long elementCount, Arena arena, Consumer<MemorySegment> cleanup) {
         return addr.reinterpret(layout().byteSize() * elementCount, arena, cleanup);
     }
 }
+

@@ -2,14 +2,18 @@
 
 package de.hpi.swa.trufflesqueak.sdl3.bindings;
 
+import java.lang.invoke.*;
 import java.lang.foreign.*;
+import java.nio.ByteOrder;
+import java.util.*;
 import java.util.function.*;
+import java.util.stream.*;
 
 import static java.lang.foreign.ValueLayout.*;
 import static java.lang.foreign.MemoryLayout.PathElement.*;
 
 /**
- * {@snippet lang = c :
+ * {@snippet lang=c :
  * struct SDL_PenProximityEvent {
  *     SDL_EventType type;
  *     Uint32 reserved;
@@ -26,11 +30,12 @@ public class SDL_PenProximityEvent {
     }
 
     private static final GroupLayout $LAYOUT = MemoryLayout.structLayout(
-                    SDL_h.C_INT.withName("type"),
-                    SDL_h.C_INT.withName("reserved"),
-                    SDL_h.C_LONG_LONG.withName("timestamp"),
-                    SDL_h.C_INT.withName("windowID"),
-                    SDL_h.C_INT.withName("which")).withName("SDL_PenProximityEvent");
+        SDL_h.C_INT.withName("type"),
+        SDL_h.C_INT.withName("reserved"),
+        SDL_h.C_LONG_LONG.withName("timestamp"),
+        SDL_h.C_INT.withName("windowID"),
+        SDL_h.C_INT.withName("which")
+    ).withName("SDL_PenProximityEvent");
 
     /**
      * The layout of this struct
@@ -39,11 +44,12 @@ public class SDL_PenProximityEvent {
         return $LAYOUT;
     }
 
-    private static final OfInt type$LAYOUT = (OfInt) $LAYOUT.select(groupElement("type"));
+    private static final OfInt type$LAYOUT = (OfInt)$LAYOUT.select(groupElement("type"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * SDL_EventType type
+     * {@snippet lang=c :
+     * SDL_EventType type
      * }
      */
     public static final OfInt type$layout() {
@@ -54,7 +60,8 @@ public class SDL_PenProximityEvent {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * SDL_EventType type
+     * {@snippet lang=c :
+     * SDL_EventType type
      * }
      */
     public static final long type$offset() {
@@ -63,7 +70,8 @@ public class SDL_PenProximityEvent {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * SDL_EventType type
+     * {@snippet lang=c :
+     * SDL_EventType type
      * }
      */
     public static int type(MemorySegment struct) {
@@ -72,18 +80,20 @@ public class SDL_PenProximityEvent {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * SDL_EventType type
+     * {@snippet lang=c :
+     * SDL_EventType type
      * }
      */
     public static void type(MemorySegment struct, int fieldValue) {
         struct.set(type$LAYOUT, type$OFFSET, fieldValue);
     }
 
-    private static final OfInt reserved$LAYOUT = (OfInt) $LAYOUT.select(groupElement("reserved"));
+    private static final OfInt reserved$LAYOUT = (OfInt)$LAYOUT.select(groupElement("reserved"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * Uint32 reserved
+     * {@snippet lang=c :
+     * Uint32 reserved
      * }
      */
     public static final OfInt reserved$layout() {
@@ -94,7 +104,8 @@ public class SDL_PenProximityEvent {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * Uint32 reserved
+     * {@snippet lang=c :
+     * Uint32 reserved
      * }
      */
     public static final long reserved$offset() {
@@ -103,7 +114,8 @@ public class SDL_PenProximityEvent {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * Uint32 reserved
+     * {@snippet lang=c :
+     * Uint32 reserved
      * }
      */
     public static int reserved(MemorySegment struct) {
@@ -112,18 +124,20 @@ public class SDL_PenProximityEvent {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * Uint32 reserved
+     * {@snippet lang=c :
+     * Uint32 reserved
      * }
      */
     public static void reserved(MemorySegment struct, int fieldValue) {
         struct.set(reserved$LAYOUT, reserved$OFFSET, fieldValue);
     }
 
-    private static final OfLong timestamp$LAYOUT = (OfLong) $LAYOUT.select(groupElement("timestamp"));
+    private static final OfLong timestamp$LAYOUT = (OfLong)$LAYOUT.select(groupElement("timestamp"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * Uint64 timestamp
+     * {@snippet lang=c :
+     * Uint64 timestamp
      * }
      */
     public static final OfLong timestamp$layout() {
@@ -134,7 +148,8 @@ public class SDL_PenProximityEvent {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * Uint64 timestamp
+     * {@snippet lang=c :
+     * Uint64 timestamp
      * }
      */
     public static final long timestamp$offset() {
@@ -143,7 +158,8 @@ public class SDL_PenProximityEvent {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * Uint64 timestamp
+     * {@snippet lang=c :
+     * Uint64 timestamp
      * }
      */
     public static long timestamp(MemorySegment struct) {
@@ -152,18 +168,20 @@ public class SDL_PenProximityEvent {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * Uint64 timestamp
+     * {@snippet lang=c :
+     * Uint64 timestamp
      * }
      */
     public static void timestamp(MemorySegment struct, long fieldValue) {
         struct.set(timestamp$LAYOUT, timestamp$OFFSET, fieldValue);
     }
 
-    private static final OfInt windowID$LAYOUT = (OfInt) $LAYOUT.select(groupElement("windowID"));
+    private static final OfInt windowID$LAYOUT = (OfInt)$LAYOUT.select(groupElement("windowID"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * SDL_WindowID windowID
+     * {@snippet lang=c :
+     * SDL_WindowID windowID
      * }
      */
     public static final OfInt windowID$layout() {
@@ -174,7 +192,8 @@ public class SDL_PenProximityEvent {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * SDL_WindowID windowID
+     * {@snippet lang=c :
+     * SDL_WindowID windowID
      * }
      */
     public static final long windowID$offset() {
@@ -183,7 +202,8 @@ public class SDL_PenProximityEvent {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * SDL_WindowID windowID
+     * {@snippet lang=c :
+     * SDL_WindowID windowID
      * }
      */
     public static int windowID(MemorySegment struct) {
@@ -192,18 +212,20 @@ public class SDL_PenProximityEvent {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * SDL_WindowID windowID
+     * {@snippet lang=c :
+     * SDL_WindowID windowID
      * }
      */
     public static void windowID(MemorySegment struct, int fieldValue) {
         struct.set(windowID$LAYOUT, windowID$OFFSET, fieldValue);
     }
 
-    private static final OfInt which$LAYOUT = (OfInt) $LAYOUT.select(groupElement("which"));
+    private static final OfInt which$LAYOUT = (OfInt)$LAYOUT.select(groupElement("which"));
 
     /**
      * Layout for field:
-     * {@snippet lang = c : * SDL_PenID which
+     * {@snippet lang=c :
+     * SDL_PenID which
      * }
      */
     public static final OfInt which$layout() {
@@ -214,7 +236,8 @@ public class SDL_PenProximityEvent {
 
     /**
      * Offset for field:
-     * {@snippet lang = c : * SDL_PenID which
+     * {@snippet lang=c :
+     * SDL_PenID which
      * }
      */
     public static final long which$offset() {
@@ -223,7 +246,8 @@ public class SDL_PenProximityEvent {
 
     /**
      * Getter for field:
-     * {@snippet lang = c : * SDL_PenID which
+     * {@snippet lang=c :
+     * SDL_PenID which
      * }
      */
     public static int which(MemorySegment struct) {
@@ -232,7 +256,8 @@ public class SDL_PenProximityEvent {
 
     /**
      * Setter for field:
-     * {@snippet lang = c : * SDL_PenID which
+     * {@snippet lang=c :
+     * SDL_PenID which
      * }
      */
     public static void which(MemorySegment struct, int fieldValue) {
@@ -240,8 +265,8 @@ public class SDL_PenProximityEvent {
     }
 
     /**
-     * Obtains a slice of {@code arrayParam} which selects the array element at {@code index}. The
-     * returned segment has address {@code arrayParam.address() + index * layout().byteSize()}
+     * Obtains a slice of {@code arrayParam} which selects the array element at {@code index}.
+     * The returned segment has address {@code arrayParam.address() + index * layout().byteSize()}
      */
     public static MemorySegment asSlice(MemorySegment array, long index) {
         return array.asSlice(layout().byteSize() * index);
@@ -250,9 +275,7 @@ public class SDL_PenProximityEvent {
     /**
      * The size (in bytes) of this struct
      */
-    public static long sizeof() {
-        return layout().byteSize();
-    }
+    public static long sizeof() { return layout().byteSize(); }
 
     /**
      * Allocate a segment of size {@code layout().byteSize()} using {@code allocator}
@@ -262,26 +285,27 @@ public class SDL_PenProximityEvent {
     }
 
     /**
-     * Allocate an array of size {@code elementCount} using {@code allocator}. The returned segment
-     * has size {@code elementCount * layout().byteSize()}.
+     * Allocate an array of size {@code elementCount} using {@code allocator}.
+     * The returned segment has size {@code elementCount * layout().byteSize()}.
      */
     public static MemorySegment allocateArray(long elementCount, SegmentAllocator allocator) {
         return allocator.allocate(MemoryLayout.sequenceLayout(elementCount, layout()));
     }
 
     /**
-     * Reinterprets {@code addr} using target {@code arena} and {@code cleanupAction} (if any). The
-     * returned segment has size {@code layout().byteSize()}
+     * Reinterprets {@code addr} using target {@code arena} and {@code cleanupAction} (if any).
+     * The returned segment has size {@code layout().byteSize()}
      */
     public static MemorySegment reinterpret(MemorySegment addr, Arena arena, Consumer<MemorySegment> cleanup) {
         return reinterpret(addr, 1, arena, cleanup);
     }
 
     /**
-     * Reinterprets {@code addr} using target {@code arena} and {@code cleanupAction} (if any). The
-     * returned segment has size {@code elementCount * layout().byteSize()}
+     * Reinterprets {@code addr} using target {@code arena} and {@code cleanupAction} (if any).
+     * The returned segment has size {@code elementCount * layout().byteSize()}
      */
     public static MemorySegment reinterpret(MemorySegment addr, long elementCount, Arena arena, Consumer<MemorySegment> cleanup) {
         return addr.reinterpret(layout().byteSize() * elementCount, arena, cleanup);
     }
 }
+
