@@ -209,6 +209,9 @@ public final class SqueakDisplay {
     public int buttons;
     private boolean isDragActive = false;
 
+    private double pendingScrollX = 0.0;
+    private double pendingScrollY = 0.0;
+
     private final List<String> dropFilesAccumulator = new ArrayList<>();
 
     record CursorData(int[] cursorWords, int[] maskWords, int width, int height, int depth, int offsetX, int offsetY) {
@@ -729,7 +732,7 @@ public final class SqueakDisplay {
                 processMouseButtonUp(event, scaleFactor);
                 break;
             case SDL_EVENT_MOUSE_WHEEL:
-                processMouseWheel(event, scaleFactor);
+                processMouseWheel(event);
                 break;
             case SDL_EVENT_DROP_BEGIN:
                 isDragActive = true;
@@ -921,8 +924,25 @@ public final class SqueakDisplay {
         recordMouseEvent(MOUSE_EVENT.UP, SDL_MouseButtonEvent.x(event) * scale, SDL_MouseButtonEvent.y(event) * scale, SDL_MouseButtonEvent.button(event));
     }
 
-    public void processMouseWheel(final MemorySegment event, final float scale) {
-        addEvent(EVENT_TYPE.MOUSE_WHEEL, 0L, (long) (SDL_MouseWheelEvent.y(event) * scale * MOUSE.WHEEL_DELTA_FACTOR), buttons >> 3, 0L);
+    public void processMouseWheel(final MemorySegment event) {
+        // --- Accumulate raw fractional deltas ---
+        final double currentDeltaX = SDL_MouseWheelEvent.x(event) * MOUSE.WHEEL_DELTA_FACTOR;
+        final double currentDeltaY = SDL_MouseWheelEvent.y(event) * MOUSE.WHEEL_DELTA_FACTOR;
+
+        pendingScrollX += currentDeltaX;
+        pendingScrollY += currentDeltaY;
+
+        // --- Extract integer portions ---
+        final long finalScrollX = (long) pendingScrollX;
+        final long finalScrollY = (long) pendingScrollY;
+
+        if (finalScrollX != 0L || finalScrollY != 0L) {
+            // Keep the fractional remainders
+            pendingScrollX -= finalScrollX;
+            pendingScrollY -= finalScrollY;
+
+            addEvent(EVENT_TYPE.MOUSE_WHEEL, finalScrollX, finalScrollY, buttons & MOUSE.ALL, buttons >> 3);
+        }
     }
 
     private void recordMouseEvent(final MOUSE_EVENT type, final float x, final float y, final int sdlButton) {
