@@ -37,6 +37,7 @@ import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_PushEvent;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_SetEventEnabled;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_WaitEvent;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_GetError;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_Quit;
 
 public final class PlatformEventLoop {
     static {
@@ -63,15 +64,25 @@ public final class PlatformEventLoop {
         startLatch.countDown();
     }
 
-    public static void wakeUp() {
-        if (!isRunning) {
-            return;
+    public static void stop() {
+        if (isRunning) {
+            isRunning = false;
+            pushWakeUpEvent();
         }
+    }
+
+    private static void pushWakeUpEvent() {
         // Use a confined arena for a single-use stack-like allocation
         try (Arena arena = Arena.ofConfined()) {
             final MemorySegment wakeupEvent = SDL_Event.allocate(arena);
             SDL_Event.type(wakeupEvent, SDL_EVENT_USER);
             SDL_PushEvent(wakeupEvent);
+        }
+    }
+
+    public static void wakeUp() {
+        if (isRunning) {
+            pushWakeUpEvent();
         }
     }
 
@@ -139,6 +150,9 @@ public final class PlatformEventLoop {
                     }
                 }
             }
+
+            // Event loop has been stopped -- tear down SDL.
+            SDL_Quit();
         }
     }
 

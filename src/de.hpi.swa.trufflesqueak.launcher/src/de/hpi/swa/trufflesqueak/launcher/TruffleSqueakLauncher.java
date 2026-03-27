@@ -46,6 +46,8 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
     private boolean enableTranscriptForwarding;
     private boolean useEngineModeLatency = true;
 
+    private volatile int vmExitCode = -1;
+
     public static void main(final String[] arguments) throws RuntimeException {
         new TruffleSqueakLauncher().launch(arguments);
     }
@@ -105,28 +107,25 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
 
         // Run the Squeak VM in a background thread
         final Thread squeakVMThread = new Thread(() -> {
-            int exitCode = -1; // Assume crash by default
-
             try {
                 // Execute the Squeak image
-                exitCode = execute(contextBuilder);
+                vmExitCode = execute(contextBuilder);
             } catch (Throwable t) {
                 // Log the fatal crash through the GraalVM launcher framework
                 throw abort(t);
             } finally {
-                // GUARANTEED TO RUN: When Squeak exits or crashes, tell the JWM window to
-                // close
-// App.runOnUIThread(App::terminate);
+                // Signal the main thread's event loop to wake up and exit
+                PlatformEventLoop.stop();
             }
-
-            // Shut down the JVM completely (only reached if no exception was thrown)
-            System.exit(exitCode);
-
         }, "SqueakVM-Thread");
 
         squeakVMThread.start();
 
+        // The main thread blocks here until PlatformEventLoop.stop() is called
         PlatformEventLoop.run();
+
+        // After the event loop has finished and cleaned up SDL, we can exit
+        System.exit(vmExitCode);
     }
 
     private int execute(final Context.Builder contextBuilder) {

@@ -549,7 +549,9 @@ public final class SqueakDisplay {
                 SDL_DestroyWindow(window);
                 window = MemorySegment.NULL;
             }
-            SDL_Quit();
+
+            // Terminate the event loop.
+            PlatformEventLoop.stop();
         }, Arena.global());
 
         SDL_RunOnMainThread(closeTask, MemorySegment.NULL, true);
