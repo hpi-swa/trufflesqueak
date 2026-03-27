@@ -219,15 +219,12 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 final int offsetX = Math.abs(offsetReadNode.executeInt(offset, POINT.X));
                 final int offsetY = Math.abs(offsetReadNode.executeInt(offset, POINT.Y));
                 final int[] mask;
-                final int realDepth;
                 if (depthProfile.profile(node, depth == 1)) {
                     mask = cursorReadNode.executeNative(maskObject, FORM.BITS).getIntStorage();
-                    realDepth = 2;
                 } else {
                     mask = null;
-                    realDepth = depth;
                 }
-                image.getDisplay().setCursor(words, mask, width, height, realDepth, offsetX, offsetY);
+                image.getDisplay().setCursor(words, mask, width, height, depth, offsetX, offsetY);
             }
             return receiver;
         }
