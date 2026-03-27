@@ -6,13 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.shared;
 
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemorySegment;
-import java.util.concurrent.CountDownLatch;
-import java.util.function.Consumer;
-
-import de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_Event;
-
 import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_FINGER_DOWN;
 import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_FINGER_MOTION;
 import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_FINGER_UP;
@@ -26,33 +19,27 @@ import static de.hpi.swa.trufflesqueak.sdl3.SDLHints.SDL_HINT_MAC_CTRL_CLICK_EMU
 import static de.hpi.swa.trufflesqueak.sdl3.SDLHints.SDL_HINT_RENDER_VSYNC;
 import static de.hpi.swa.trufflesqueak.sdl3.SDLHints.SDL_HINT_VIDEO_X11_NET_WM_PING;
 import static de.hpi.swa.trufflesqueak.sdl3.SDLInit.SDL_INIT_VIDEO;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_GetError;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_Init;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_PROP_APP_METADATA_IDENTIFIER_STRING;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_PROP_APP_METADATA_NAME_STRING;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_PROP_APP_METADATA_VERSION_STRING;
-import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_Init;
-import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_SetAppMetadataProperty;
-import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_SetHint;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_PeepEvents;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_PushEvent;
-import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_SetEventEnabled;
-import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_WaitEvent;
-import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_GetError;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_Quit;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_SetAppMetadataProperty;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_SetEventEnabled;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_SetHint;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_WaitEvent;
+
+import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySegment;
+import java.util.concurrent.CountDownLatch;
+import java.util.function.Consumer;
+
+import de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_Event;
 
 public final class PlatformEventLoop {
-    static {
-        try {
-            // Try to load by name (System will search java.library.path)
-            System.loadLibrary("SDL3");
-        } catch (UnsatisfiedLinkError e) {
-            // Fallback: If it fails, let's try to find it manually to give a better error
-            final String libPath = System.getProperty("java.library.path");
-            throw new RuntimeException("FFI Error: libSDL3.dylib not found. \n" +
-                            "Search Path: " + libPath + "\n" +
-                            "Verify that libSDL3.dylib is in that folder.", e);
-        }
-    }
-
     private static final int EVENT_FETCH_BATCH_SIZE = 32;
     private static final CountDownLatch startLatch = new CountDownLatch(1);
     private static volatile boolean isRunning = false;

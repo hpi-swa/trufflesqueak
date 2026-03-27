@@ -20,6 +20,11 @@ public class SDL_h extends SDL_h$shared {
 
     static final Arena LIBRARY_ARENA = Arena.ofAuto();
 
+
+    static {
+        System.loadLibrary("SDL3");
+    }
+
     static final SymbolLookup SYMBOL_LOOKUP = SymbolLookup.loaderLookup()
             .or(Linker.nativeLinker().defaultLookup());
 

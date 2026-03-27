@@ -2,7 +2,8 @@
 src/de.hpi.swa.trufflesqueak.sdl3/src
 --target-package
 de.hpi.swa.trufflesqueak.sdl3.bindings
---header-class-name SDL_h
+--library SDL3
+--use-system-load-library
 -I
 SDL-release-3.4.2/include
 SDL-release-3.4.2/include/SDL3/SDL.h
