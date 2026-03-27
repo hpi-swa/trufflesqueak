@@ -50,6 +50,7 @@ import de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_WindowEvent;
 import de.hpi.swa.trufflesqueak.shared.PlatformEventLoop;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
+import de.hpi.swa.trufflesqueak.util.OS;
 
 import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_DROP_BEGIN;
 import static de.hpi.swa.trufflesqueak.sdl3.SDLEvents.SDL_EVENT_DROP_COMPLETE;
@@ -116,6 +117,7 @@ import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDL_KMOD_LALT;
 import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDL_KMOD_LCTRL;
 import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDL_KMOD_LGUI;
 import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDL_KMOD_LSHIFT;
+import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDL_KMOD_MODE;
 import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDL_KMOD_RALT;
 import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDL_KMOD_RCTRL;
 import static de.hpi.swa.trufflesqueak.sdl3.SDLKeycode.SDL_KMOD_RGUI;
@@ -209,6 +211,8 @@ public final class SqueakDisplay {
     public int buttons;
     private boolean isDragActive = false;
 
+    private int currentEmulatedButton = 0;
+
     private double pendingScrollX = 0.0;
     private double pendingScrollY = 0.0;
 
@@ -274,11 +278,9 @@ public final class SqueakDisplay {
                             int argb = 0; // Transparent (0,0)
                             if (m && c) {
                                 argb = 0xFF000000;      // Black (1,1)
-                            }
-                            else if (m) {
+                            } else if (m) {
                                 argb = 0xFFFFFFFF;      // White (1,0)
-                            }
-                            else if (c) {
+                            } else if (c) {
                                 argb = 0x00FFFFFF;      // Invert (0,1)
                             }
 
@@ -948,24 +950,45 @@ public final class SqueakDisplay {
     private void recordMouseEvent(final MOUSE_EVENT type, final float x, final float y, final int sdlButton) {
         final int currentButtons = buttons & MOUSE.ALL;
 
-        final int newButtonState = switch (type) {
-            case DOWN -> currentButtons | mapButton(sdlButton);
-            case MOVE -> currentButtons;
-            case UP -> currentButtons & ~mapButton(sdlButton);
-        };
+        // Resolve Emulated Button on DOWN
+        if (type == MOUSE_EVENT.DOWN && sdlButton == SDL_BUTTON_LEFT) {
+            if ((buttons & KEYBOARD.CMD) != 0) {
+                currentEmulatedButton = MOUSE.BLUE;   // Cmd + Click = Right
+            } else if ((buttons & KEYBOARD.ALT) != 0) {
+                currentEmulatedButton = MOUSE.YELLOW; // Option/Alt + Click = Middle
+            } else {
+                currentEmulatedButton = MOUSE.RED;    // Normal Left Click
+            }
+        }
 
-        buttons = newButtonState | (buttons & ~MOUSE.ALL);
-
-        addEvent(EVENT_TYPE.MOUSE, (int) x, (int) y, buttons & MOUSE.ALL, buttons >> 3);
-    }
-
-    private static int mapButton(final int sdlButton) {
-        return switch (sdlButton) {
-            case SDL_BUTTON_LEFT -> MOUSE.RED;
+        final int eventButton = switch (sdlButton) {
+            case SDL_BUTTON_LEFT -> currentEmulatedButton;
             case SDL_BUTTON_MIDDLE -> MOUSE.YELLOW;
             case SDL_BUTTON_RIGHT -> MOUSE.BLUE;
             default -> 0;
         };
+
+        // Strip the emulated button trigger modifier
+        final int modifiersForEvent = switch (currentEmulatedButton) {
+            case MOUSE.BLUE -> (buttons & ~KEYBOARD.CMD) >> 3;
+            case MOUSE.YELLOW -> (buttons & ~KEYBOARD.ALT) >> 3;
+            default -> buttons >> 3;
+        };
+
+        final int newButtonState = switch (type) {
+            case DOWN -> currentButtons | eventButton;
+            case MOVE -> currentButtons;
+            case UP -> currentButtons & ~eventButton;
+        };
+
+        // Clean up emulation state on UP
+        if (type == MOUSE_EVENT.UP && sdlButton == SDL_BUTTON_LEFT) {
+            currentEmulatedButton = 0;
+        }
+
+        buttons = newButtonState | (buttons & ~MOUSE.ALL);
+
+        addEvent(EVENT_TYPE.MOUSE, (int) x, (int) y, buttons & MOUSE.ALL, modifiersForEvent);
     }
 
     // --- Event queue methods ---
@@ -973,8 +996,19 @@ public final class SqueakDisplay {
     public void recordModifiers(final int sdlModifiers) {
         final int shiftValue = (sdlModifiers & (SDL_KMOD_LSHIFT | SDL_KMOD_RSHIFT)) != 0 ? KEYBOARD.SHIFT : 0;
         final int ctrlValue = (sdlModifiers & (SDL_KMOD_LCTRL | SDL_KMOD_RCTRL)) != 0 ? KEYBOARD.CTRL : 0;
-        final int optValue = (sdlModifiers & (SDL_KMOD_LALT | SDL_KMOD_RALT)) != 0 ? KEYBOARD.ALT : 0;
-        final int cmdValue = (sdlModifiers & (SDL_KMOD_LGUI | SDL_KMOD_RGUI)) != 0 ? KEYBOARD.CMD : 0;
+
+        final int optValue;
+        final int cmdValue;
+
+        if (OS.isMacOS()) {
+            // macOS: Pure 1:1 physical key mapping
+            optValue = (sdlModifiers & (SDL_KMOD_LALT | SDL_KMOD_RALT)) != 0 ? KEYBOARD.ALT : 0;
+            cmdValue = (sdlModifiers & (SDL_KMOD_LGUI | SDL_KMOD_RGUI)) != 0 ? KEYBOARD.CMD : 0;
+        } else {
+            // Windows/Linux: Alt hijacked for Cmd, AltGr (MODE) isolated for Opt
+            optValue = (sdlModifiers & SDL_KMOD_MODE) != 0 ? KEYBOARD.ALT : 0;
+            cmdValue = (sdlModifiers & (SDL_KMOD_LALT | SDL_KMOD_RALT | SDL_KMOD_LGUI | SDL_KMOD_RGUI)) != 0 ? KEYBOARD.CMD : 0;
+        }
 
         final int modifiers = shiftValue + ctrlValue + optValue + cmdValue;
         buttons = buttons & ~KEYBOARD.ALL | modifiers;
