@@ -1532,38 +1532,12 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     /* Meta-data APIs */
 
     @GenerateNodeFactory
-    @SuppressWarnings("deprecation")
-    @SqueakPrimitive(names = "primitiveHasLanguage")
-    protected abstract static class PrimHasLanguageNode extends AbstractPrimitiveNode implements Primitive1 {
-        @Specialization(limit = "3")
-        protected static final boolean hasLanguage(@SuppressWarnings("unused") final Object receiver, final Object object,
-                        @CachedLibrary("object") final InteropLibrary lib) {
-            return lib.hasLanguage(object);
-        }
-    }
-
-    @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveHasLanguageId")
     protected abstract static class PrimHasLanguageIdNode extends AbstractPrimitiveNode implements Primitive1 {
         @Specialization(limit = "3")
         protected static final boolean hasLanguageId(@SuppressWarnings("unused") final Object receiver, final Object object,
                         @CachedLibrary("object") final InteropLibrary lib) {
             return BooleanObject.wrap(lib.hasLanguageId(object));
-        }
-    }
-
-    @GenerateNodeFactory
-    @SuppressWarnings("deprecation")
-    @SqueakPrimitive(names = "primitiveGetLanguage")
-    protected abstract static class PrimGetLanguageNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = "lib.hasLanguage(object)", limit = "3")
-        protected static final Class<? extends TruffleLanguage<?>> getLanguage(@SuppressWarnings("unused") final Object receiver, final Object object,
-                        @CachedLibrary("object") final InteropLibrary lib) {
-            try {
-                return lib.getLanguage(object);
-            } catch (final UnsupportedMessageException e) {
-                throw primitiveFailedInInterpreterCapturing(e);
-            }
         }
     }
 
@@ -1592,6 +1566,16 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             } catch (final UnsupportedMessageException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
             }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsInternal")
+    protected abstract static class PrimIsInternalNode extends AbstractPrimitiveNode implements Primitive1 {
+        @Specialization(limit = "3")
+        protected static final Object isInternal(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary("object") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.isInternal(object));
         }
     }
 
