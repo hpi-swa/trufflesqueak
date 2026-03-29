@@ -8,7 +8,6 @@ package de.hpi.swa.trufflesqueak.exceptions;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.exception.AbstractTruffleException;
 import com.oracle.truffle.api.interop.ExceptionType;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -18,7 +17,6 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.EXCEPTION;
@@ -55,13 +53,13 @@ public final class SqueakExceptions {
         }
 
         @ExportMessage
-        protected final boolean hasLanguage() {
+        protected final boolean hasLanguageId() {
             return true;
         }
 
         @ExportMessage
-        protected final Class<? extends TruffleLanguage<?>> getLanguage() {
-            return SqueakLanguage.class;
+        protected final String getLanguageId() {
+            return SqueakLanguageConfig.ID;
         }
     }
 
