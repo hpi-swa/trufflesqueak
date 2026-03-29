@@ -22,7 +22,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.TruffleOptions;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
@@ -216,7 +215,7 @@ public final class JavaObjectWrapper implements TruffleObject {
         }
     }
 
-    @CompilationFinal private static Class<? extends TruffleLanguage<?>> hostLanguage;
+    @CompilationFinal private static String hostLanguageId;
     private final Object wrappedObject;
 
     private JavaObjectWrapper(final Object object) {
@@ -881,22 +880,22 @@ public final class JavaObjectWrapper implements TruffleObject {
     }
 
     @ExportMessage
-    boolean hasLanguage() {
+    boolean hasLanguageId() {
         return true;
     }
 
     @ExportMessage
-    Class<? extends TruffleLanguage<?>> getLanguage() {
-        if (hostLanguage == null) {
+    String getLanguageId() {
+        if (hostLanguageId == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             try {
                 final Object hostObject = SqueakImageContext.getSlow().env.asGuestValue(Truffle.getRuntime());
-                hostLanguage = InteropLibrary.getUncached().getLanguage(hostObject);
+                hostLanguageId = InteropLibrary.getUncached().getLanguageId(hostObject);
             } catch (final UnsupportedMessageException e) {
                 LogUtils.INTEROP.warning(e.toString());
             }
         }
-        return hostLanguage;
+        return hostLanguageId;
     }
 
     // Helpers

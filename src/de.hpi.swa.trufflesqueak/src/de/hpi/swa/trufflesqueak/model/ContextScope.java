@@ -9,7 +9,6 @@ package de.hpi.swa.trufflesqueak.model;
 import java.util.logging.Level;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -19,10 +18,10 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.interop.InteropArray;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
+import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 
@@ -44,13 +43,13 @@ public final class ContextScope implements TruffleObject {
     }
 
     @ExportMessage
-    protected boolean hasLanguage() {
+    protected boolean hasLanguageId() {
         return true;
     }
 
     @ExportMessage
-    protected Class<? extends TruffleLanguage<?>> getLanguage() {
-        return SqueakLanguage.class;
+    protected String getLanguageId() {
+        return SqueakLanguageConfig.ID;
     }
 
     @ExportMessage

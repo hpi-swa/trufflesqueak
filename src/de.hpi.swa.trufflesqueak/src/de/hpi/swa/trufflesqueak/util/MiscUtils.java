@@ -26,6 +26,7 @@ import java.security.SecureRandom;
 import java.security.Security;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.locks.LockSupport;
 
@@ -68,6 +69,11 @@ public final class MiscUtils {
     @TruffleBoundary
     public static String format(final String format, final Object... args) {
         return String.format(format, args);
+    }
+
+    @TruffleBoundary
+    public static <K, V> V get(final Map<K, V> map, final K key) {
+        return map.get(key);
     }
 
     @TruffleBoundary
