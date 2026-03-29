@@ -29,8 +29,8 @@ $(cd "${SCRIPT_DIRECTORY}" && python3 -c "${py_export}")
 ([[ -z "${TRUFFLE_VERSION}" ]] || [[ -z "${GITHUB_SLUG}" ]]) && \
   echo "Failed to load values from dependencyMap and GitHub slug." 1>&2 && exit 1
 
-if [[ -z "${BOOTSTRAP_GRAALVM}" && -f "$BOOTSTRAP_GRAALVM/release" ]]; then
-  readonly GRAALVM_TRUFFLE_VERSION=$(sed -n 's/^COMMIT_INFO=//p' "$BOOTSTRAP_GRAALVM/release" | jq -r '.truffle["commit.rev"]')
+if [[ -n "${BOOTSTRAP_GRAALVM:-}" && -f "${BOOTSTRAP_GRAALVM}/release" ]]; then
+  readonly GRAALVM_TRUFFLE_VERSION=$(sed -n 's/^COMMIT_INFO=//p' "${BOOTSTRAP_GRAALVM}/release" | jq -r '.truffle["commit.rev"]')
 fi
 
 OS_NAME=$(uname -s | tr '[:upper:]' '[:lower:]')
