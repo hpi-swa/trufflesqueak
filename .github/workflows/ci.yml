@@ -19,6 +19,7 @@ on:
 
 env:
   # JVMCI_VERSION_CHECK: 'warn' # version of EA build does not always match
+  GRAALVM_VERSION: '25e1-ea'
   JAVA_VERSION: '25.0.2'
   NATIVE_IMAGE_OPTIONS: '-J-XX:MaxRAMPercentage=100'
   PGO_FILE_CUIS: '${{ github.workspace }}/trufflesqueak-cuis.iprof'
@@ -75,7 +76,7 @@ jobs:
     - name: Set up Oracle GraalVM
       uses: graalvm/setup-graalvm@f744c72a42b1995d7b0cbc314bde4bace7ac1fe1  # v1.5.0
       with:
-        java-version: '${{ env.JAVA_VERSION }}'
+        java-version: '${{ env.GRAALVM_VERSION }}'
         distribution: 'graalvm'
         github-token: ${{ secrets.GITHUB_TOKEN }}
     - name: Enable Oracle GraalVM
@@ -126,9 +127,9 @@ jobs:
       if: ${{ matrix.os == 'ubuntu-22.04-arm' && matrix.type == 'native' }} # for run-benchmarks
     - name: Run trufflesqueak-polyglot-get on TruffleSqueak JVM standalone
       run: |
-        trufflesqueak-polyglot-get -v ${{ env.JAVA_VERSION }} -a js
+        trufflesqueak-polyglot-get -v ${{ env.GRAALVM_VERSION }} -a js
         trufflesqueak --code "Polyglot eval: 'js' string: 'new Object({hello_world: 42})'" images/test-64bit.image
-      if: ${{ matrix.type == 'jvm' }}
+      if: ${{ matrix.type == 'jvm' && ! endsWith(env.GRAALVM_VERSION, '-ea') }}
     - name: Run Cuis 7.3 tests on TruffleSqueak standalone
       run: |
         mx.trufflesqueak/utils.sh download-cuis-7-3-test-image
@@ -185,7 +186,7 @@ jobs:
     - name: Set up Oracle GraalVM
       uses: graalvm/setup-graalvm@f744c72a42b1995d7b0cbc314bde4bace7ac1fe1  # v1.5.0
       with:
-        java-version: '${{ env.JAVA_VERSION }}'
+        java-version: '${{ env.GRAALVM_VERSION }}'
         distribution: 'graalvm'
         github-token: ${{ secrets.GITHUB_TOKEN }}
     - name: Enable Oracle GraalVM
@@ -248,7 +249,7 @@ jobs:
     - name: Set up Oracle GraalVM
       uses: graalvm/setup-graalvm@f744c72a42b1995d7b0cbc314bde4bace7ac1fe1  # v1.5.0
       with:
-        java-version: '${{ env.JAVA_VERSION }}'
+        java-version: '${{ env.GRAALVM_VERSION }}'
         distribution: 'graalvm'
         github-token: ${{ secrets.GITHUB_TOKEN }}
     - name: Enable Oracle GraalVM
@@ -325,9 +326,9 @@ jobs:
       if: ${{ matrix.os == 'ubuntu-22.04-arm' && matrix.type == 'native' }} # for run-benchmarks
     - name: Run trufflesqueak-polyglot-get on TruffleSqueak JVM standalone
       run: |
-        trufflesqueak-polyglot-get -v ${{ env.JAVA_VERSION }} -a js
+        trufflesqueak-polyglot-get -v ${{ env.GRAALVM_VERSION }} -a js
         trufflesqueak --code "Polyglot eval: 'js' string: 'new Object({hello_world: 42})'" images/test-64bit.image
-      if: ${{ matrix.type == 'jvm' }}
+      if: ${{ matrix.type == 'jvm' && ! endsWith(env.GRAALVM_VERSION, '-ea') }}
     - name: Run Cuis 7.3 tests on TruffleSqueak standalone
       run: |
         mx.trufflesqueak/utils.sh download-cuis-7-3-test-image

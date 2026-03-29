@@ -19,15 +19,19 @@ readonly py_export=$(cat <<-END
 from suite import suite;
 vars= ' '.join(['DEP_%s=%s' % (k.upper(), v)
   for k, v in suite['trufflesqueak:dependencyMap'].items()]);
-graal_version = next(x['version'] for x in suite['imports']['suites'] if x['name'] == 'truffle')
+truffle_version = next(x['version'] for x in suite['imports']['suites'] if x['name'] == 'truffle')
 slug = '/'.join(suite['url'].split('/')[-2:]);
 mxversion = suite['mxversion']
-print('export %s GRAAL_VERSION=%s GITHUB_SLUG=%s MX_VERSION=%s' % (vars, graal_version, slug, mxversion))
+print('export %s TRUFFLE_VERSION=%s GITHUB_SLUG=%s MX_VERSION=%s' % (vars, truffle_version, slug, mxversion))
 END
 )
 $(cd "${SCRIPT_DIRECTORY}" && python3 -c "${py_export}")
-([[ -z "${GRAAL_VERSION}" ]] || [[ -z "${GITHUB_SLUG}" ]]) && \
+([[ -z "${TRUFFLE_VERSION}" ]] || [[ -z "${GITHUB_SLUG}" ]]) && \
   echo "Failed to load values from dependencyMap and GitHub slug." 1>&2 && exit 1
+
+if [[ -n "${BOOTSTRAP_GRAALVM:-}" && -f "${BOOTSTRAP_GRAALVM}/release" ]]; then
+  readonly GRAALVM_TRUFFLE_VERSION=$(sed -n 's/^COMMIT_INFO=//p' "${BOOTSTRAP_GRAALVM}/release" | jq -r '.truffle["commit.rev"]')
+fi
 
 OS_NAME=$(uname -s | tr '[:upper:]' '[:lower:]')
 [[ "${OS_NAME}" == msys* || "${OS_NAME}" == cygwin* || "${OS_NAME}" == mingw* ]] && OS_NAME="windows"
@@ -332,10 +336,15 @@ shallow-clone-graalvm-project() {
 }
 
 shallow-clone-graal() {
-  shallow-clone-graalvm-project https://github.com/oracle/graal.git "${GRAAL_VERSION}"
-  echo "[graal repo (${GRAAL_VERSION}) cloned successfully]"
-  $(cd ${BASE_DIRECTORY}/../graal && git apply "${SCRIPT_DIRECTORY}/graalvm-25.0.2.patch")
-  echo "[graal repo patched successfully]"
+  if [[ -n "${GRAALVM_TRUFFLE_VERSION:-}" && "${GRAALVM_TRUFFLE_VERSION}" != "${TRUFFLE_VERSION}" ]]; then
+    echo "Truffle version does not match (TruffleSqueak: ${TRUFFLE_VERSION}, GraalVM distro: ${GRAALVM_TRUFFLE_VERSION})."
+  fi
+
+  target_version="${GRAALVM_TRUFFLE_VERSION:-${TRUFFLE_VERSION}}"
+  shallow-clone-graalvm-project https://github.com/oracle/graal.git "${target_version}"
+  echo "[graal repo (${target_version}) cloned successfully]"
+  # $(cd ${BASE_DIRECTORY}/../graal && git apply "${SCRIPT_DIRECTORY}/graalvm-25.0.2.patch")
+  # echo "[graal repo patched successfully]"
 }
 
 eval "$@"
