@@ -1,3 +1,3 @@
 *TruffleSqueak-Core-language
-interopHasLanguage
-	^ true
+interopIsInternal
+	^ false

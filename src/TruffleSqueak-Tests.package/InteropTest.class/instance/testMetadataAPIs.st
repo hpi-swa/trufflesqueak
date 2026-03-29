@@ -3,11 +3,12 @@ testMetadataAPIs
 	Java primitiveIsHostLookupAllowed ifFalse: [ ^self ].
 
 	"All boxed objects have a language"
-	self assert: (Interop hasLanguage: Smalltalk).
-	self assert: (Interop getLanguage: Smalltalk) equals: (Interop getLanguage: Smalltalk)
+	self assert: (Interop hasLanguageId: Smalltalk).
+	self assert: (Interop getLanguageId: Smalltalk) equals: (Interop getLanguageId: Smalltalk)
 		 description: 'Languages not equal'.
+	self deny: (Interop isInternal: Smalltalk).
 	"Immediate values have no language"
-	self deny: (Interop hasLanguage: 42).
+	self deny: (Interop hasLanguageId: 42).
 
 	"All boxed objects provide their class as meta object"
 	self assert: (Interop hasMetaObject: Smalltalk).

@@ -5,7 +5,7 @@ defaultLabelForPolyglotTools
 			(Interop hasMetaObject: self)
 				ifTrue: [ (Interop getMetaQualifiedName: (Interop getMetaObject: self)) asString ]
 				ifFalse: [ self class name ]).
-		(Interop hasLanguage: self)
+		(Interop hasLanguageId: self)
 			ifTrue: [ aStream
 				nextPutAll: ' (';
 				nextPutAll: (Interop getLanguageInfo: self) getName asString;

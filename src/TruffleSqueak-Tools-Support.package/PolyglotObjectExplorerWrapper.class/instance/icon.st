@@ -1,5 +1,5 @@
 accessing
 icon
-	^ (Interop hasLanguage: self object)
-		ifTrue: [ Polyglot iconFor: (Interop getLanguageInfo: self object) getId asString ]
+	^ (Interop hasLanguageId: self object)
+		ifTrue: [ Polyglot iconFor: (Interop getLanguageId: self object) ]
 		ifFalse: [ ToolIcons iconNamed: #blank ]

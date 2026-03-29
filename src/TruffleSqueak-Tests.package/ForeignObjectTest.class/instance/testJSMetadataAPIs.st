@@ -6,9 +6,10 @@ testJSMetadataAPIs
 	jsCode := '{a: "Foo"}'.
 	jsObject := (self jsEval: 'new Object(', jsCode, ')').
 
-	self assert: (Interop hasLanguage: jsObject).
-	self assert: (Interop getLanguage: jsObject) equals: (Interop getLanguage: jsObject)
+	self assert: (Interop hasLanguageId: jsObject).
+	self assert: (Interop getLanguageId: jsObject) equals: (Interop getLanguageId: jsObject)
 		description: 'Languages not equal'.
+	self deny: (Interop isInternal: jsObject).
 
 	"All boxed objects provide their class as meta object"
 	self assert: (Interop hasMetaObject: jsObject).
