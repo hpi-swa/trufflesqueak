@@ -1,3 +1,3 @@
 *TruffleSqueak-Core-language
 interopGetLanguageId
-	^ Polyglot languageIdSmalltalk
+	^ Java asString: Polyglot languageIdSmalltalk
