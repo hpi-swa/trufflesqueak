@@ -121,7 +121,6 @@ jobs:
         name: trufflesqueak-${{ matrix.type }}-${{ matrix.os }}
         path: ${{ env.STANDALONE_ARCHIVE }}
         retention-days: 7
-      if: ${{ matrix.os == 'ubuntu-22.04-arm' && matrix.type == 'native' }} # for run-benchmarks
     - name: Run trufflesqueak-polyglot-get on TruffleSqueak JVM standalone
       run: |
         trufflesqueak-polyglot-get -v ${{ env.GRAALVM_VERSION }} -a js
@@ -317,7 +316,6 @@ jobs:
         name: trufflesqueak-${{ matrix.type }}-${{ matrix.os }}
         path: ${{ env.STANDALONE_ARCHIVE }}
         retention-days: 7
-      if: ${{ matrix.os == 'ubuntu-22.04-arm' && matrix.type == 'native' }} # for run-benchmarks
     - name: Run trufflesqueak-polyglot-get on TruffleSqueak JVM standalone
       run: |
         trufflesqueak-polyglot-get -v ${{ env.GRAALVM_VERSION }} -a js
