@@ -6,6 +6,7 @@
  */
 package de.hpi.swa.trufflesqueak.util;
 
+import java.io.PrintStream;
 import java.lang.management.LockInfo;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MonitorInfo;
@@ -14,7 +15,6 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 
@@ -152,8 +152,8 @@ public final class DebugUtils {
         final boolean isCIBuild = System.getenv().containsKey("GITHUB_ACTIONS");
         final int[] depth = new int[1];
         final Object[] lastSender = {null};
-        final TruffleLogger log = LogUtils.DEBUG;
-        log.info("== Truffle stack trace ===========================================================");
+        final PrintStream err = System.err;
+        err.println("== Truffle stack trace ===========================================================");
         Truffle.getRuntime().iterateFrames(frameInstance -> {
             if (depth[0]++ > 50 && isCIBuild) {
                 return null;
@@ -163,21 +163,22 @@ public final class DebugUtils {
                 return null;
             }
             final CompiledCodeObject code = FrameAccess.getCodeObject(current);
-            lastSender[0] = FrameAccess.getSender(current);
-            final Object context = FrameAccess.getContext(current);
-            final String prefix = FrameAccess.hasClosure(current) ? "[] in " : "";
-            final String argumentsString = ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(current));
-            log.info(MiscUtils.format("%s%s #(%s) [context: %s, sender: %s]", prefix, code, argumentsString, context, lastSender[0]));
+            final boolean hasReceiver = current.getArguments().length >= FrameAccess.getReceiverStartIndex();
+            if (hasReceiver) {
+                lastSender[0] = FrameAccess.getSender(current);
+                final Object context = FrameAccess.getContext(current);
+                final String prefix = FrameAccess.hasClosure(current) ? "[] in " : "";
+                final String argumentsString = ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(current));
+                err.printf("%s%s #(%s) [context: %s, sender: %s]%n", prefix, code, argumentsString, context, lastSender[0]);
+            } else {
+                err.printf("%s <unknown>%n", code);
+            }
             return null;
         });
         if (lastSender[0] instanceof final ContextObject c) {
-            log.info("== Squeak frames ================================================================");
-            printSqStackTrace(c);
+            err.println("== Squeak frames ================================================================");
+            err.println(getSqStackTrace(c));
         }
-    }
-
-    public static void printSqStackTrace(final ContextObject context) {
-        LogUtils.DEBUG.info(() -> getSqStackTrace(context));
     }
 
     public static String getSqStackTrace(final ContextObject context) {
