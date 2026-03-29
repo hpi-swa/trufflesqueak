@@ -163,11 +163,16 @@ public final class DebugUtils {
                 return null;
             }
             final CompiledCodeObject code = FrameAccess.getCodeObject(current);
-            lastSender[0] = FrameAccess.getSender(current);
-            final Object context = FrameAccess.getContext(current);
-            final String prefix = FrameAccess.hasClosure(current) ? "[] in " : "";
-            final String argumentsString = ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(current));
-            log.info(MiscUtils.format("%s%s #(%s) [context: %s, sender: %s]", prefix, code, argumentsString, context, lastSender[0]));
+            final boolean hasReceiver = current.getArguments().length >= FrameAccess.getReceiverStartIndex();
+            if (hasReceiver) {
+                lastSender[0] = FrameAccess.getSender(current);
+                final Object context = FrameAccess.getContext(current);
+                final String prefix = FrameAccess.hasClosure(current) ? "[] in " : "";
+                final String argumentsString = ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(current));
+                log.info(MiscUtils.format("%s%s #(%s) [context: %s, sender: %s]", prefix, code, argumentsString, context, lastSender[0]));
+            } else {
+                log.info(MiscUtils.format("%s <unknown>", code));
+            }
             return null;
         });
         if (lastSender[0] instanceof final ContextObject c) {
