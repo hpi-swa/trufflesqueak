@@ -51,12 +51,12 @@ Read `mx.trufflesqueak/suite.py` first. It is the quickest way to understand pro
 
 ```bash
 # Build JVM standalone (faster to build) and find the target build directory
-mx --env trufflesqueak-jvm build
-mx --env trufflesqueak-jvm paths --output "TRUFFLESQUEAK_JVM_STANDALONE"
+mx --env jvm build
+mx --env jvm paths --output "TRUFFLESQUEAK_JVM_STANDALONE"
 
 # Build native standalone (slower to build) and find the target build directory
-mx --env trufflesqueak-native build --build-log important
-mx --env trufflesqueak-native paths --output "TRUFFLESQUEAK_NATIVE_STANDALONE"
+mx --env native build --build-log important
+mx --env native paths --output "TRUFFLESQUEAK_NATIVE_STANDALONE"
 
 # Launch TruffleSqueak from the standalone's bin/ directory
 trufflesqueak --headless --quiet -- --evaluate "<smalltalk code>"
@@ -80,8 +80,8 @@ trufflesqueak --vm.ea images/Cuis7.5-7708.image -s src/image-tests/runCuisTests.
 ## Codebase Map
 
 - `mx.trufflesqueak/suite.py`: suite metadata, external dependencies, project list, and distributions.
-- `mx.trufflesqueak/trufflesqueak-jvm`: mx environment for the JVM standalone.
-- `mx.trufflesqueak/trufflesqueak-native`: mx environment for the native standalone.
+- `mx.trufflesqueak/jvm`: mx environment for the JVM standalone.
+- `mx.trufflesqueak/native`: mx environment for the native standalone.
 - `src/de.hpi.swa.trufflesqueak.launcher/src/de/hpi/swa/trufflesqueak/launcher/TruffleSqueakLauncher.java`: launcher entry point and CLI behavior.
 - `src/de.hpi.swa.trufflesqueak/src/de/hpi/swa/trufflesqueak/image`: image loading, writing, and runtime context.
 - `src/de.hpi.swa.trufflesqueak/src/de/hpi/swa/trufflesqueak/model`: object model for Squeak objects.

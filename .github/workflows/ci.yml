@@ -97,9 +97,9 @@ jobs:
       shell: cmd
       run: |
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
-        call mx --env trufflesqueak-${{ matrix.type }} --no-download-progress build
+        call mx --env ${{ matrix.type }} --no-download-progress build
         if ${{ matrix.type }}==native (set "STANDALONE_NAME=TRUFFLESQUEAK_NATIVE_STANDALONE") else (set "STANDALONE_NAME=TRUFFLESQUEAK_JVM_STANDALONE") 
-        call mx --env trufflesqueak-${{ matrix.type }} paths --output %STANDALONE_NAME% > standalone-home-with-forward-slashes.txt
+        call mx --env ${{ matrix.type }} paths --output %STANDALONE_NAME% > standalone-home-with-forward-slashes.txt
         set /p STANDALONE_HOME=<standalone-home-with-forward-slashes.txt
         echo STANDALONE_HOME=%STANDALONE_HOME%>>%GITHUB_ENV%
         echo %STANDALONE_HOME%/bin>>%GITHUB_PATH%
@@ -293,9 +293,9 @@ jobs:
       run: |
         set NATIVE_IMAGE_OPTIONS=%NATIVE_IMAGE_OPTIONS% --pgo=${{ env.PGO_FILE_CUIS }},${{ env.PGO_FILE_SQUEAK }}
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
-        call mx --env trufflesqueak-${{ matrix.type }} --no-download-progress build
+        call mx --env ${{ matrix.type }} --no-download-progress build
         if ${{ matrix.type }}==native (set "STANDALONE_NAME=TRUFFLESQUEAK_NATIVE_STANDALONE") else (set "STANDALONE_NAME=TRUFFLESQUEAK_JVM_STANDALONE") 
-        call mx --env trufflesqueak-${{ matrix.type }} paths --output %STANDALONE_NAME% > standalone-home-with-forward-slashes.txt
+        call mx --env ${{ matrix.type }} paths --output %STANDALONE_NAME% > standalone-home-with-forward-slashes.txt
         set /p STANDALONE_HOME=<standalone-home-with-forward-slashes.txt
         echo STANDALONE_HOME=%STANDALONE_HOME%>>%GITHUB_ENV%
         echo %STANDALONE_HOME%/bin>>%GITHUB_PATH%
