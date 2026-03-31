@@ -775,7 +775,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final PointersObject doShow(final PointersObject receiver, final long left, final long right, final long top, final long bottom) {
             final SqueakImageContext image = getContext();
-            if (image.hasDisplay() && left < right && top < bottom) {
+            if (image.hasDisplay() && image.getDisplay().getDeferUpdates() && left < right && top < bottom) {
                 image.getDisplay().showDisplayRect((int) left, (int) top, (int) right, (int) bottom);
             }
             return receiver;
