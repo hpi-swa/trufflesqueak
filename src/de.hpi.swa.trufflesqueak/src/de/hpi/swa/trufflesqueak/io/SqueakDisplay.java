@@ -479,10 +479,20 @@ public final class SqueakDisplay {
         PlatformEventLoop.wakeUp();
     }
 
-    @TruffleBoundary
-    public void showDisplayRect(final int left, final int top, final int right, final int bottom) {
-        assert left <= right && top <= bottom;
+    public void showDisplayBits(final PointersObject aForm, final int left, final int top, final int right, final int bottom) {
+        if (!deferUpdates && aForm.isDisplay(image)) {
+            updateDisplay(left, top, right, bottom);
+        }
+    }
 
+    public void updateDisplay(final int left, final int top, final int right, final int bottom) {
+        if (left <= right && top <= bottom) {
+            ioShowDisplay(left, top, right, bottom);
+        }
+    }
+
+    @TruffleBoundary
+    private void ioShowDisplay(final int left, final int top, final int right, final int bottom) {
         synchronized (this) {
             final int currentWidth = width;
             final int currentHeight = height;
@@ -1099,10 +1109,6 @@ public final class SqueakDisplay {
             fullDamage();
             requestRender();
         }
-    }
-
-    public boolean getDeferUpdates() {
-        return deferUpdates;
     }
 
     @TruffleBoundary

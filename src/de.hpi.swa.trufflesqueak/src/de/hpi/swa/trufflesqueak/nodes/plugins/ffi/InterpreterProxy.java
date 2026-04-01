@@ -689,8 +689,8 @@ public final class InterpreterProxy {
         final Object aFormObject = objectRegistryGet(aFormOop);
         if (aFormObject instanceof final PointersObject aForm) {
             final SqueakDisplay display = context.getDisplay();
-            if (aForm.isDisplay(context) && !display.getDeferUpdates()) {
-                display.showDisplayRect((int) l, (int) t, (int) r, (int) b);
+            if (display != null) {
+                display.showDisplayBits(aForm, (int) l, (int) t, (int) r, (int) b);
             }
         }
         return returnVoid();

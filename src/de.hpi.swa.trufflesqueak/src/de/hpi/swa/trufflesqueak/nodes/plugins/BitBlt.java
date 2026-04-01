@@ -3186,8 +3186,8 @@ public final class BitBlt {
     /* BitBltSimulation>>#showDisplayBits */
     private void showDisplayBits() {
         final SqueakDisplay display = image.getDisplay();
-        if (display != null && affectedL < affectedR && affectedT < affectedB && !display.getDeferUpdates() && destForm.isDisplay(image)) {
-            display.showDisplayRect(affectedL, affectedT, affectedR, affectedB);
+        if (display != null) {
+            display.showDisplayBits(destForm, affectedL, affectedT, affectedR, affectedB);
         }
     }
 
