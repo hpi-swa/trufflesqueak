@@ -29,6 +29,7 @@ import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.io.SqueakDisplay;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
@@ -491,8 +492,9 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         @Specialization
         protected final NativeObject getClipboardText(@SuppressWarnings("unused") final Object receiver) {
             final SqueakImageContext image = getContext();
-            if (image.hasDisplay()) {
-                return image.asByteString(image.getDisplay().getClipboardData());
+            final SqueakDisplay display = getContext().getDisplay();
+            if (display != null) {
+                return image.asByteString(display.getClipboardData());
             } else {
                 return image.clipboardTextHeadless;
             }
@@ -505,8 +507,9 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         @Specialization(guards = "value.isByteType()")
         protected final NativeObject setClipboardText(@SuppressWarnings("unused") final Object receiver, final NativeObject value) {
             final SqueakImageContext image = getContext();
-            if (image.hasDisplay()) {
-                image.getDisplay().setClipboardData(value.asStringUnsafe());
+            final SqueakDisplay display = image.getDisplay();
+            if (display != null) {
+                display.setClipboardData(value.asStringUnsafe());
             } else {
                 image.clipboardTextHeadless = value;
             }

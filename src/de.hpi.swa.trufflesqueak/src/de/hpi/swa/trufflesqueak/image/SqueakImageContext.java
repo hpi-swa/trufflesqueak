@@ -918,10 +918,6 @@ public final class SqueakImageContext {
         }
     }
 
-    public boolean hasDisplay() {
-        return display != null;
-    }
-
     public SqueakDisplay getDisplay() {
         return display;
     }

@@ -25,6 +25,7 @@ import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.TopLevelReturn;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.io.SqueakDisplay;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
@@ -71,8 +72,9 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         } finally {
             if (isImageResuming) {
                 image.interrupt.shutdown();
-                if (image.hasDisplay()) {
-                    image.getDisplay().close();
+                final SqueakDisplay display = image.getDisplay();
+                if (display != null) {
+                    display.close();
                 }
             }
         }

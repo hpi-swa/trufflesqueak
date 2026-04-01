@@ -14,6 +14,7 @@ import java.util.Locale;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
+import de.hpi.swa.trufflesqueak.io.SqueakDisplay;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
@@ -207,8 +208,9 @@ public final class SqueakSystemAttributes {
     private NativeObject getGraphicsHardwareDetails() {
         int width = 0;
         int height = 0;
-        if (image.hasDisplay()) {
-            final int[] dimensions = image.getDisplay().getPrimaryDisplayDimensions();
+        final SqueakDisplay display = image.getDisplay();
+        if (display != null) {
+            final int[] dimensions = display.getPrimaryDisplayDimensions();
             width = dimensions[0];
             height = dimensions[1];
         }

@@ -45,6 +45,7 @@ import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakQuit;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.io.SqueakDisplay;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -1310,9 +1311,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimSetFullScreenNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization
         protected final Object doFullScreen(final Object receiver, final boolean enable) {
-            final SqueakImageContext image = getContext();
-            if (image.hasDisplay()) {
-                image.getDisplay().setFullscreen(enable);
+            final SqueakDisplay display = getContext().getDisplay();
+            if (display != null) {
+                display.setFullscreen(enable);
             }
             return receiver;
         }
