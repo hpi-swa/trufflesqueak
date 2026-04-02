@@ -150,7 +150,7 @@ public class SDL_h extends SDL_h$shared {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_POINTER,
             SDL_h.C_POINTER,
-            SDL_h.C_LONG
+            SDL_h.C_SIZE_T
         );
 
         public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_IOFromMem");
