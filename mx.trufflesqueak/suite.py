@@ -219,6 +219,9 @@ suite = {
                 "de.hpi.swa.trufflesqueak.sdl3",
                 "sdk:GRAAL_SDK",
             ],
+            "requires": [
+                "java.net.http",
+            ],
             "checkstyle": "de.hpi.swa.trufflesqueak",
             "jacoco": "include",
             "javaCompliance": "24+",

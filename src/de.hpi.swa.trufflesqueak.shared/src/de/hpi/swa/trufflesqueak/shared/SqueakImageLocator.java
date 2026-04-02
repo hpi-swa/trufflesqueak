@@ -99,8 +99,7 @@ public final class SqueakImageLocator {
     }
 
     private static void downloadAndUnzip(final String url, final File destDirectory) {
-        try {
-            final BufferedInputStream bis = new BufferedInputStream(URI.create(url).toURL().openStream());
+        try (BufferedInputStream bis = ImageDownloadSupport.openStream(URI.create(url))) {
             unzip(bis, destDirectory);
         } catch (final IOException e) {
             throw new RuntimeException(e);
