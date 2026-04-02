@@ -102,6 +102,7 @@ import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_GetDesktopDisplay
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_GetPrimaryDisplay;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_GetWindowDisplayScale;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_HasClipboardText;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_HideCursor;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_IOFromMem;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_LoadPNG_IO;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_LockSurface;
@@ -117,6 +118,7 @@ import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_SetWindowFullscre
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_SetWindowIcon;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_SetWindowSize;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_SetWindowTitle;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_ShowCursor;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_StartTextInput;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_UnlockSurface;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_UpdateTexture;
@@ -281,6 +283,11 @@ public final class SqueakDisplay {
             cursor = MemorySegment.NULL;
         }
 
+        if (isBlankMaskedCursor(data)) {
+            checkSdlError(SDL_HideCursor());
+            return;
+        }
+
         final int w = data.width;
         final int h = data.height;
 
@@ -351,6 +358,7 @@ public final class SqueakDisplay {
             cursor = checkSdlError(SDL_CreateColorCursor(surface, data.offsetX, data.offsetY));
             if (cursor != MemorySegment.NULL) {
                 checkSdlError(SDL_SetCursor(cursor));
+                checkSdlError(SDL_ShowCursor());
             }
         } finally {
             SDL_DestroySurface(surface);
@@ -376,6 +384,27 @@ public final class SqueakDisplay {
     public static SqueakDisplay create(final SqueakImageContext image) {
         CompilerAsserts.neverPartOfCompilation();
         return new SqueakDisplay(image);
+    }
+
+    private static boolean isBlankMaskedCursor(final CursorData data) {
+        return data.depth == 1 &&
+                        data.maskWords != null &&
+                        data.width == SqueakIOConstants.CURSOR_WIDTH &&
+                        data.height == SqueakIOConstants.CURSOR_HEIGHT &&
+                        areAllWordsZero(data.cursorWords, data.height) &&
+                        areAllWordsZero(data.maskWords, data.height);
+    }
+
+    private static boolean areAllWordsZero(final int[] words, final int expectedLength) {
+        if (words == null || words.length < expectedLength) {
+            return false;
+        }
+        for (int i = 0; i < expectedLength; i++) {
+            if (words[i] != 0) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private void ensureStagingPixels(final int w, final int h) {

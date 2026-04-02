@@ -1467,6 +1467,124 @@ public class SDL_h extends SDL_h$shared {
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+
+    private static class SDL_ShowCursor {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            SDL_h.C_BOOL
+        );
+
+        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ShowCursor");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+    }
+
+    /**
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * extern bool SDL_ShowCursor()
+     * }
+     */
+    public static FunctionDescriptor SDL_ShowCursor$descriptor() {
+        return SDL_ShowCursor.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * extern bool SDL_ShowCursor()
+     * }
+     */
+    public static MethodHandle SDL_ShowCursor$handle() {
+        return SDL_ShowCursor.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * extern bool SDL_ShowCursor()
+     * }
+     */
+    public static MemorySegment SDL_ShowCursor$address() {
+        return SDL_ShowCursor.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * extern bool SDL_ShowCursor()
+     * }
+     */
+    public static boolean SDL_ShowCursor() {
+        var mh$ = SDL_ShowCursor.HANDLE;
+        try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("SDL_ShowCursor");
+            }
+            return (boolean)mh$.invokeExact();
+        } catch (Error | RuntimeException ex) {
+           throw ex;
+        } catch (Throwable ex$) {
+           throw new AssertionError("should not reach here", ex$);
+        }
+    }
+
+    private static class SDL_HideCursor {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            SDL_h.C_BOOL
+        );
+
+        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_HideCursor");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+    }
+
+    /**
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * extern bool SDL_HideCursor()
+     * }
+     */
+    public static FunctionDescriptor SDL_HideCursor$descriptor() {
+        return SDL_HideCursor.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * extern bool SDL_HideCursor()
+     * }
+     */
+    public static MethodHandle SDL_HideCursor$handle() {
+        return SDL_HideCursor.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * extern bool SDL_HideCursor()
+     * }
+     */
+    public static MemorySegment SDL_HideCursor$address() {
+        return SDL_HideCursor.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * extern bool SDL_HideCursor()
+     * }
+     */
+    public static boolean SDL_HideCursor() {
+        var mh$ = SDL_HideCursor.HANDLE;
+        try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("SDL_HideCursor");
+            }
+            return (boolean)mh$.invokeExact();
+        } catch (Error | RuntimeException ex) {
+           throw ex;
+        } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
     }
@@ -2661,4 +2779,3 @@ public class SDL_h extends SDL_h$shared {
         return Holder.SDL_PROP_APP_METADATA_IDENTIFIER_STRING;
     }
 }
-

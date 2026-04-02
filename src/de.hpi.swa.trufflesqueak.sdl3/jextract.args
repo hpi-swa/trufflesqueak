@@ -67,7 +67,9 @@ src/SDL-release-3.4.2/include/SDL3/SDL.h
 --include-function SDL_StartTextInput
 --include-function SDL_CreateColorCursor
 --include-function SDL_DestroyCursor
+--include-function SDL_HideCursor
 --include-function SDL_SetCursor
+--include-function SDL_ShowCursor
 --include-struct SDL_Rect
 --include-function SDL_CreateRenderer
 --include-function SDL_CreateTexture
