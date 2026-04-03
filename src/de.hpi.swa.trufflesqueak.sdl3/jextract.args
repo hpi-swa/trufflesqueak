@@ -12,7 +12,6 @@ src/SDL-release-3.4.2/include/SDL3/SDL.h
 --include-function SDL_SetClipboardText
 --include-function SDL_GetError
 --include-struct SDL_DropEvent
---include-union SDL_Event
 --include-struct SDL_KeyboardEvent
 --include-struct SDL_MouseButtonEvent
 --include-struct SDL_MouseMotionEvent
@@ -26,6 +25,7 @@ src/SDL-release-3.4.2/include/SDL3/SDL.h
 --include-struct SDL_AudioDeviceEvent
 --include-struct SDL_CameraDeviceEvent
 --include-struct SDL_ClipboardEvent
+--include-union SDL_Event
 --include-struct SDL_CommonEvent
 --include-struct SDL_DisplayEvent
 --include-struct SDL_GamepadAxisEvent
