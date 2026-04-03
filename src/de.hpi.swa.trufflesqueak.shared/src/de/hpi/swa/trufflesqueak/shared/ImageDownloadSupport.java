@@ -33,6 +33,7 @@ public final class ImageDownloadSupport {
 
         @Override
         public void connectFailed(final URI uri, final java.net.SocketAddress sa, final IOException ioe) {
+            // Intentionally ignored because this selector always forces direct connections.
         }
     };
 
@@ -75,6 +76,7 @@ public final class ImageDownloadSupport {
             }
             case DEFAULT -> {
             }
+            default -> throw new IllegalStateException("Unhandled proxy mode: " + proxyConfiguration.mode());
         }
         final HttpRequest request = HttpRequest.newBuilder(uri).GET().build();
         try {
