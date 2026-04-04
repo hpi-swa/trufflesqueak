@@ -149,7 +149,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 210)
     protected abstract static class PrimContextAtNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = {"index <= receiver.size()"})
+        @Specialization(guards = {"index <= receiver.getStackPointer()"})
         protected static final Object doContextObject(final ContextObject receiver, final long index,
                         @Bind final Node node,
                         @Cached final ContextObjectReadNode readNode) {
@@ -160,7 +160,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 211)
     protected abstract static class PrimContextAtPutNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
-        @Specialization(guards = "index <= receiver.size()")
+        @Specialization(guards = "index <= receiver.getStackPointer()")
         protected static final Object doContextObject(final ContextObject receiver, final long index, final Object value,
                         @Bind final Node node,
                         @Cached final ContextObjectWriteNode writeNode) {
@@ -172,6 +172,12 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 212)
     protected abstract static class PrimContextSizeNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
+        /*
+         * "Note that it is impossible to determine the real object size of a Context except by
+         * asking for the frameSize of its method. Any fields above the stack pointer (stackp) are
+         * truly invisible even (and especially!) to the garbage collector. Any store into stackp
+         * other than by the primitive method stackp: is potentially fatal."
+         */
         @Specialization(guards = "receiver.hasTruffleFrame()")
         protected static final long doSize(final ContextObject receiver) {
             return receiver.getStackPointer();
@@ -179,6 +185,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "!receiver.hasTruffleFrame()")
         protected static final long doSizeWithoutFrame(final ContextObject receiver) {
+            // ToDo: Is this correct? From the definition above, it should be zero...
             return receiver.size() - receiver.instsize();
         }
     }
