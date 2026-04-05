@@ -64,7 +64,7 @@ jobs:
         os: [ubuntu-22.04, ubuntu-22.04-arm, windows-2022, macos-14]
         type: [jvm]
     env:
-      VM_ARGS: "--vm.ea --vm.Xmx6G --headless --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --compiler.DeoptCycleDetectionThreshold=-1 --engine.CompilationFailureAction=Diagnose --engine.CompilationStatistics"
+      VM_ARGS: "--vm.ea --vm.Xmx6G --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --compiler.DeoptCycleDetectionThreshold=-1 --engine.CompilationFailureAction=Diagnose --engine.CompilationStatistics"
     name: build ${{ matrix.type }} ${{ matrix.os }}
     timeout-minutes: 45
     runs-on: ${{ matrix.os }}
@@ -127,6 +127,11 @@ jobs:
         trufflesqueak-polyglot-get -v ${{ env.GRAALVM_VERSION }} -a js
         trufflesqueak --code "Polyglot eval: 'js' string: 'new Object({hello_world: 42})'" images/test-64bit.image
       if: ${{ matrix.type == 'jvm' && ! endsWith(env.GRAALVM_VERSION, '-ea') }}
+    - name: Start Xvfb in background
+      run: |
+        Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+        echo "DISPLAY=:99" >> $GITHUB_ENV
+      if: ${{ runner.os == 'Linux' }}
     - name: Run Cuis 7.3 tests on TruffleSqueak standalone
       run: |
         mx.trufflesqueak/utils.sh download-cuis-7-3-test-image
@@ -204,16 +209,21 @@ jobs:
       shell: bash
       run: |
         trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image
+    - name: Start Xvfb in background
+      run: |
+        Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+        echo "DISPLAY=:99" >> $GITHUB_ENV
+      if: ${{ runner.os == 'Linux' }}
     - name: Run Cuis 7.3 tests on instrumented TruffleSqueak standalone
       run: |
         mx.trufflesqueak/utils.sh download-cuis-7-3-test-image
-        trufflesqueak --headless --engine.Mode=default --vm.XX:ProfilesDumpFile=${{ env.PGO_FILE_CUIS }} --vm.XX:ProfilesLCOVFile=${{ env.PGO_LCOV_FILE_CUIS }} images/Cuis?.?-????.image -s src/image-tests/runCuisTests.st
+        trufflesqueak --engine.Mode=default --vm.XX:ProfilesDumpFile=${{ env.PGO_FILE_CUIS }} --vm.XX:ProfilesLCOVFile=${{ env.PGO_LCOV_FILE_CUIS }} images/Cuis?.?-????.image -s src/image-tests/runCuisTests.st
       timeout-minutes: 10
       if: ${{ matrix.os == 'ubuntu-22.04' }}
     - name: Run Squeak/Smalltalk tests on instrumented TruffleSqueak standalone
       shell: bash
       run: |
-        trufflesqueak --headless --engine.Mode=default --vm.XX:ProfilesDumpFile=${{ env.PGO_FILE_SQUEAK }} --vm.XX:ProfilesLCOVFile=${{ env.PGO_LCOV_FILE_SQUEAK }} images/test-64bit.image $(pwd)/src/image-tests/runSqueakTests.st
+        trufflesqueak --engine.Mode=default --vm.XX:ProfilesDumpFile=${{ env.PGO_FILE_SQUEAK }} --vm.XX:ProfilesLCOVFile=${{ env.PGO_LCOV_FILE_SQUEAK }} images/test-64bit.image $(pwd)/src/image-tests/runSqueakTests.st
       timeout-minutes: 30
     - name: Report code coverage
       env:
