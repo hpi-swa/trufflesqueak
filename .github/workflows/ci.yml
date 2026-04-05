@@ -28,7 +28,6 @@ env:
   PGO_LCOV_FILE_SQUEAK: '${{ github.workspace }}/lcov-squeak.info'
   PYTHONIOENCODING: 'utf-8'
   PYTHON_VERSION: '3.12'
-  SDL_VIDEO_DRIVER: 'offscreen'
   VERBOSE_GRAALVM_LAUNCHERS: true
 
 jobs:
@@ -128,6 +127,11 @@ jobs:
         trufflesqueak-polyglot-get -v ${{ env.GRAALVM_VERSION }} -a js
         trufflesqueak --code "Polyglot eval: 'js' string: 'new Object({hello_world: 42})'" images/test-64bit.image
       if: ${{ matrix.type == 'jvm' && ! endsWith(env.GRAALVM_VERSION, '-ea') }}
+    - name: Start Xvfb in background
+      run: |
+        Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+        echo "DISPLAY=:99" >> $GITHUB_ENV
+      if: ${{ runner.os == 'Linux' }}
     - name: Run Cuis 7.3 tests on TruffleSqueak standalone
       run: |
         mx.trufflesqueak/utils.sh download-cuis-7-3-test-image
@@ -205,6 +209,11 @@ jobs:
       shell: bash
       run: |
         trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image
+    - name: Start Xvfb in background
+      run: |
+        Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+        echo "DISPLAY=:99" >> $GITHUB_ENV
+      if: ${{ runner.os == 'Linux' }}
     - name: Run Cuis 7.3 tests on instrumented TruffleSqueak standalone
       run: |
         mx.trufflesqueak/utils.sh download-cuis-7-3-test-image
@@ -214,7 +223,7 @@ jobs:
     - name: Run Squeak/Smalltalk tests on instrumented TruffleSqueak standalone
       shell: bash
       run: |
-        trufflesqueak --headless --engine.Mode=default --vm.XX:ProfilesDumpFile=${{ env.PGO_FILE_SQUEAK }} --vm.XX:ProfilesLCOVFile=${{ env.PGO_LCOV_FILE_SQUEAK }} images/test-64bit.image $(pwd)/src/image-tests/runSqueakTests.st
+        trufflesqueak --engine.Mode=default --vm.XX:ProfilesDumpFile=${{ env.PGO_FILE_SQUEAK }} --vm.XX:ProfilesLCOVFile=${{ env.PGO_LCOV_FILE_SQUEAK }} images/test-64bit.image $(pwd)/src/image-tests/runSqueakTests.st
       timeout-minutes: 30
     - name: Report code coverage
       env:
