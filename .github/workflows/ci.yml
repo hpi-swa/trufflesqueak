@@ -191,6 +191,7 @@ jobs:
         java-version: '${{ env.GRAALVM_VERSION }}'
         distribution: 'graalvm'
         github-token: ${{ secrets.GITHUB_TOKEN }}
+        native-image-job-reports: true
     - name: Enable Oracle GraalVM
       shell: bash
       run: echo "BOOTSTRAP_GRAALVM=$JAVA_HOME" >> $GITHUB_ENV
@@ -259,6 +260,7 @@ jobs:
         java-version: '${{ env.GRAALVM_VERSION }}'
         distribution: 'graalvm'
         github-token: ${{ secrets.GITHUB_TOKEN }}
+        native-image-job-reports: true
     - name: Enable Oracle GraalVM
       shell: bash
       run: echo "BOOTSTRAP_GRAALVM=$JAVA_HOME" >> $GITHUB_ENV
