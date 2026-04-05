@@ -28,7 +28,7 @@ env:
   PGO_LCOV_FILE_SQUEAK: '${{ github.workspace }}/lcov-squeak.info'
   PYTHONIOENCODING: 'utf-8'
   PYTHON_VERSION: '3.12'
-  SDL_VIDEO_DRIVER: 'dummy'
+  SDL_VIDEO_DRIVER: 'offscreen'
   VERBOSE_GRAALVM_LAUNCHERS: true
 
 jobs:
