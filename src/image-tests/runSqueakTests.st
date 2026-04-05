@@ -179,7 +179,6 @@
         BitBltSimulationTest -> #(#testRgbMulDepth16 #testRgbMulDepth1to8).
         CompilerExceptionsTest -> #(#testUnknownSelector).
         HelpBrowserTest -> #(#testRegistration).
-        MorphicToolBuilderTests -> #(#testGetButtonColor).
         ObjectTest -> #(#testEvaluateWheneverChangeIn #testEvaluateWheneverChangeInTransparent "become EmptyObject->PointersObject not yet supported" #testPinning "not yet supported").
         PackageDependencyTest -> #(#testBalloon #testPreferenceBrowser #testSUnit).
         SequenceableCollectionTest -> #(#testDoWithIndexDeprecation).
@@ -208,6 +207,7 @@
         MCDictionaryRepositoryTest -> #(#testIncludesName #testStoreAndLoad).
         MCSnapshotTest -> #(#testInstanceReuse).
         MethodHighlightingTests -> #(#testMethodHighlighting).
+        MorphicToolBuilderTests -> #(#testGetButtonColor).
         PCCByCompilationTest -> #(#testSwitchPrimCallOffOn).
         PCCByLiteralsTest -> #(#testSwitchPrimCallOffOn).
         SequenceableCollectionTest -> #(#testCollectWithIndexDeprecation).
