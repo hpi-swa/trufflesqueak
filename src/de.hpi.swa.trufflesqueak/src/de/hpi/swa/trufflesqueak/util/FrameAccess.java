@@ -248,10 +248,6 @@ public final class FrameAccess {
             for (int slotIndex = SlotIndices.STACK_START; slotIndex < frameDescriptor.getNumberOfSlots(); slotIndex++) {
                 frame.setObjectStatic(slotIndex, null);
             }
-            // ToDo: determine if auxSlots are actually used and remove the following if not.
-            for (int auxSlotIndex = 0; auxSlotIndex < frameDescriptor.getNumberOfAuxiliarySlots(); auxSlotIndex++) {
-                frame.setAuxiliarySlot(auxSlotIndex, null);
-            }
         }
     }
 
@@ -287,8 +283,8 @@ public final class FrameAccess {
      * Iterates over the live stack objects of a given frame, passing them to the provided action.
      * <p>
      * <strong>Important boundary:</strong> The {@code action} is strictly applied to objects from
-     * the stack start up to the current stack pointer (exclusive), plus any auxiliary slots. It
-     * <em>does not</em> pass objects located at or beyond the stack pointer to the action.
+     * the stack start up to the current stack pointer (exclusive). It <em>does not</em> pass
+     * objects located at or beyond the stack pointer to the action.
      * <p>
      * <strong>Write Access Required:</strong> If {@code frameHandling} is set to
      * {@link FrameHandling#SCRUB}, this method will modify the frame by nilling out unreachable
@@ -319,10 +315,6 @@ public final class FrameAccess {
                     frame.setObjectStatic(slotIndex, null);
                 }
             }
-            // ToDo: determine if auxSlots are actually used and remove the following if not.
-            for (int auxSlotIndex = 0; auxSlotIndex < frameDescriptor.getNumberOfAuxiliarySlots(); auxSlotIndex++) {
-                action.accept(frame.getAuxiliarySlot(auxSlotIndex));
-            }
         }
     }
 
@@ -331,8 +323,8 @@ public final class FrameAccess {
      * optionally replace their values.
      * <p>
      * <strong>Important boundary:</strong> This method strictly iterates from the stack start up to
-     * the current stack pointer (exclusive), along with auxiliary slots. It <em>does not</em>
-     * evaluate or replace objects located at or beyond the stack pointer.
+     * the current stack pointer (exclusive). It <em>does not</em> evaluate or replace objects
+     * located at or beyond the stack pointer.
      * <p>
      * <strong>Write Access Required:</strong> Because this method explicitly modifies frame slots
      * (either by applying a replacement, or by clearing slots when {@code clearStackSlots} is
@@ -358,13 +350,6 @@ public final class FrameAccess {
                 final Object replacement = action.apply(frame.getObjectStatic(slotIndex));
                 if (replacement != null) {
                     frame.setObjectStatic(slotIndex, replacement);
-                }
-            }
-            // ToDo: determine if auxSlots are actually used and remove the following if not.
-            for (int auxSlotIndex = 0; auxSlotIndex < frameDescriptor.getNumberOfAuxiliarySlots(); auxSlotIndex++) {
-                final Object replacement = action.apply(frame.getAuxiliarySlot(auxSlotIndex));
-                if (replacement != null) {
-                    frame.setAuxiliarySlot(auxSlotIndex, replacement);
                 }
             }
         }

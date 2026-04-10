@@ -309,6 +309,10 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         FrameAccess.setInstructionPointer(getTruffleFrame(), NIL_PC_STACK_NOT_NIL_VALUE);
     }
 
+    public int getStackPointerOrZero() {
+        return hasTruffleFrame() ? FrameAccess.getStackPointer(getTruffleFrame()) : 0;
+    }
+
     public int getStackPointer() {
         return FrameAccess.getStackPointer(getTruffleFrame());
     }

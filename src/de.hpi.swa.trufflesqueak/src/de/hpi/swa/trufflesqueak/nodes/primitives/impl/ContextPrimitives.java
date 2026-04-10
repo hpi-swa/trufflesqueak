@@ -37,7 +37,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimStoreStackPointerNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = {"0 <= newStackPointerLong", "newStackPointerLong <= receiver.size()"})
         protected static final ContextObject store(final ContextObject receiver, final long newStackPointerLong) {
-            final int oldStackPointer = receiver.getStackPointer();
+            final int oldStackPointer = receiver.getStackPointerOrZero();
             final int newStackPointer = (int) newStackPointerLong;
 
             /* Nil any newly accessible or newly hidden stack slots */
@@ -191,9 +191,8 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "!receiver.hasTruffleFrame()")
-        protected static final long doSizeWithoutFrame(final ContextObject receiver) {
-            // ToDo: Is this correct? From the definition above, it should be zero...
-            return receiver.size() - receiver.instsize();
+        protected static final long doSizeWithoutFrame(@SuppressWarnings("unused") final ContextObject receiver) {
+            return 0;
         }
     }
 
