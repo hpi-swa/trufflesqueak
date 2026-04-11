@@ -686,7 +686,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 pc += calculateShortOffset(b);
                             }
                         } else {
-                            sendMustBeBooleanInInterpreter(frame, pc, stackValue);
+                            sendMustBeBooleanInInterpreter(frame, pc, sp, stackValue);
                         }
                         break;
                     }
@@ -734,7 +734,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 pc += offset;
                             }
                         } else {
-                            sendMustBeBooleanInInterpreter(frame, pc, stackValue);
+                            sendMustBeBooleanInInterpreter(frame, pc, sp, stackValue);
                         }
                         break;
                     }
@@ -746,7 +746,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 pc += offset;
                             }
                         } else {
-                            sendMustBeBooleanInInterpreter(frame, pc, stackValue);
+                            sendMustBeBooleanInInterpreter(frame, pc, sp, stackValue);
                         }
                         break;
                     }

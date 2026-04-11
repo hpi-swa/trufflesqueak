@@ -726,7 +726,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                                 pc += calculateShortOffset(b);
                             }
                         } else {
-                            sendMustBeBooleanInInterpreter(frame, pc, stackValue);
+                            sendMustBeBooleanInInterpreter(frame, pc, sp, stackValue);
                         }
                         break;
                     }
@@ -737,7 +737,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                                 pc += calculateShortOffset(b);
                             }
                         } else {
-                            sendMustBeBooleanInInterpreter(frame, pc, stackValue);
+                            sendMustBeBooleanInInterpreter(frame, pc, sp, stackValue);
                         }
                         break;
                     }
@@ -887,7 +887,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                                 pc += offset;
                             }
                         } else {
-                            sendMustBeBooleanInInterpreter(frame, pc, stackValue);
+                            sendMustBeBooleanInInterpreter(frame, pc, sp, stackValue);
                         }
                         extA = extB = 0;
                         break;
@@ -900,7 +900,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                                 pc += offset;
                             }
                         } else {
-                            sendMustBeBooleanInInterpreter(frame, pc, stackValue);
+                            sendMustBeBooleanInInterpreter(frame, pc, sp, stackValue);
                         }
                         extA = extB = 0;
                         break;

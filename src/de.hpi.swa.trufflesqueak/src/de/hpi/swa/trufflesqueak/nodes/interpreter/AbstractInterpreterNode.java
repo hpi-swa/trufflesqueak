@@ -37,7 +37,6 @@ import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
-import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0NodeGen;
@@ -424,9 +423,9 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         }
     }
 
-    protected final void sendMustBeBooleanInInterpreter(final VirtualFrame frame, final int pc, final Object stackValue) {
+    protected final void sendMustBeBooleanInInterpreter(final VirtualFrame frame, final int pc, final int sp, final Object stackValue) {
         CompilerDirectives.transferToInterpreter();
-        FrameAccess.setInstructionPointer(frame, pc);
+        externalizePCAndSP(frame, pc, sp);
         final SqueakImageContext image = getContext();
         image.mustBeBooleanSelector.executeAsSymbolSlow(image, frame, stackValue);
         throw SqueakException.create("Should not be reached");
