@@ -847,12 +847,12 @@ public final class SqueakImageContext {
         return env.getInternalLanguages().containsKey("nfi");
     }
 
-    public InterpreterProxy getInterpreterProxy(final MaterializedFrame frame, final int numReceiverAndArguments) {
+    public InterpreterProxy getInterpreterProxy(final int numReceiverAndArguments, final Object[] receiverAndArguments) {
         if (interpreterProxy == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             interpreterProxy = new InterpreterProxy(this);
         }
-        return interpreterProxy.instanceFor(frame, numReceiverAndArguments);
+        return interpreterProxy.instanceFor(numReceiverAndArguments, receiverAndArguments);
     }
 
     public PointersObject getScheduler() {

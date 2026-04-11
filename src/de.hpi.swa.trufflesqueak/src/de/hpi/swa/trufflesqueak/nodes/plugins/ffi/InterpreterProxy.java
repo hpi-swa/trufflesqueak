@@ -50,8 +50,9 @@ public final class InterpreterProxy {
     private static final int BaseHeaderSize = 8;
 
     private final SqueakImageContext context;
-    private MaterializedFrame frame;
     private int numReceiverAndArguments;
+    private Object[] receiverAndArguments;
+    private int sp;
     private final ArrayList<NativeObjectStorage> postPrimitiveCleanups = new ArrayList<>();
     /*
      * should not be local, as the references are needed to keep the native closures alive since
@@ -176,10 +177,15 @@ public final class InterpreterProxy {
         };
     }
 
-    public InterpreterProxy instanceFor(final MaterializedFrame currentFrame, final int currentNumReceiverAndArguments) {
-        this.frame = currentFrame;
+    public InterpreterProxy instanceFor(final int currentNumReceiverAndArguments, final Object[] currentReceiverAndArguments) {
         this.numReceiverAndArguments = currentNumReceiverAndArguments;
+        this.receiverAndArguments = currentReceiverAndArguments == null ? null : currentReceiverAndArguments.clone();
+        this.sp = currentNumReceiverAndArguments;
         return this;
+    }
+
+    public Object getReturnValue() {
+        return receiverAndArguments[0];
     }
 
     /* MISCELLANEOUS */
@@ -220,20 +226,10 @@ public final class InterpreterProxy {
 
     /* STACK HELPERS */
 
-    private int getStackPointer() {
-        return FrameAccess.getStackPointer(frame);
-    }
-
-    private void setStackPointer(final int stackPointer) {
-        FrameAccess.setStackPointer(frame, stackPointer);
-    }
-
     private void pushObject(final Object object) {
-        final int stackPointer = getStackPointer();
-        setStackPointer(stackPointer + 1);
         // push to the original stack pointer, as it always points to the slot where the next object
         // is pushed
-        FrameAccess.setStackValue(frame, stackPointer, object);
+        receiverAndArguments[sp++] = object;
     }
 
     private Object getObjectOnStack(final long reverseStackIndex) {
@@ -243,21 +239,20 @@ public final class InterpreterProxy {
         }
         // the stack pointer is the index of the object that is pushed onto the stack next,
         // so we subtract 1 to get the index of the object that was last pushed onto the stack
-        final int stackIndex = getStackPointer() - 1 - (int) reverseStackIndex;
+        final int stackIndex = sp - 1 - (int) reverseStackIndex;
         if (stackIndex < 0) {
             primitiveFail();
             return null;
         }
-        final Object value = FrameAccess.getStackValue(frame, stackIndex);
+        final Object value = receiverAndArguments[stackIndex];
         assert value != null;
         return value;
     }
 
     private long methodReturnObject(final Object object) {
         assert hasSucceeded();
-        final int stackPointer = getStackPointer() - numReceiverAndArguments;
-        setStackPointer(stackPointer + 1);
-        FrameAccess.setStackValue(frame, stackPointer, object);
+        sp = 0;
+        receiverAndArguments[0] = object;
         return returnVoid();
     }
 
@@ -637,7 +632,10 @@ public final class InterpreterProxy {
     }
 
     private long pop(final long nItems) {
-        setStackPointer(getStackPointer() - (int) nItems);
+        if (sp < (int) nItems) {
+            return primitiveFail();
+        }
+        sp -= (int) nItems;
         return returnVoid();
     }
 

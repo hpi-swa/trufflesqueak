@@ -9,7 +9,6 @@ package de.hpi.swa.trufflesqueak.nodes.plugins.ffi;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.exception.AbstractTruffleException;
-import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -32,7 +31,6 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive6;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive7;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive8;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive9;
-import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.NFIUtils;
 
 public final class PrimExternalCallNode extends AbstractPrimitiveNode
@@ -49,7 +47,7 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode
 
     @Override
     public boolean needsFrame() {
-        return true;
+        return false;
     }
 
     public static PrimExternalCallNode load(final String moduleName, final String functionName, final int numReceiverAndArguments) {
@@ -98,7 +96,7 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode
             }
             try {
                 final InteropLibrary moduleInteropLibrary = NFIUtils.getInteropLibrary(library);
-                moduleInteropLibrary.invokeMember(library, "setInterpreter", context.getInterpreterProxy(null, 0).getPointer());
+                moduleInteropLibrary.invokeMember(library, "setInterpreter", context.getInterpreterProxy(0, null).getPointer());
             } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException | UnknownIdentifierException e) {
                 throw CompilerDirectives.shouldNotReachHere(e);
             }
@@ -111,77 +109,77 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode
 
     @Override
     public Object execute(final VirtualFrame frame, final Object receiver) {
-        return call(frame, receiver);
+        return call(receiver);
     }
 
     @Override
     public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1) {
-        return call(frame, receiver, arg1);
+        return call(receiver, arg1);
     }
 
     @Override
     public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2) {
-        return call(frame, receiver, arg1, arg2);
+        return call(receiver, arg1, arg2);
     }
 
     @Override
     public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3) {
-        return call(frame, receiver, arg1, arg2, arg3);
+        return call(receiver, arg1, arg2, arg3);
     }
 
     @Override
     public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4) {
-        return call(frame, receiver, arg1, arg2, arg3, arg4);
+        return call(receiver, arg1, arg2, arg3, arg4);
     }
 
     @Override
     public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5) {
-        return call(frame, receiver, arg1, arg2, arg3, arg4, arg5);
+        return call(receiver, arg1, arg2, arg3, arg4, arg5);
     }
 
     @Override
     public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6) {
-        return call(frame, receiver, arg1, arg2, arg3, arg4, arg5, arg6);
+        return call(receiver, arg1, arg2, arg3, arg4, arg5, arg6);
     }
 
     @Override
     public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
                     final Object arg7) {
-        return call(frame, receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+        return call(receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
     }
 
     @Override
     public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
                     final Object arg7, final Object arg8) {
-        return call(frame, receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+        return call(receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
     }
 
     @Override
     public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
                     final Object arg7, final Object arg8, final Object arg9) {
-        return call(frame, receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
+        return call(receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
     }
 
     @Override
     public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
                     final Object arg7, final Object arg8, final Object arg9, final Object arg10) {
-        return call(frame, receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
+        return call(receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
     }
 
     @Override
     public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
                     final Object arg7, final Object arg8, final Object arg9, final Object arg10, final Object arg11) {
-        return call(frame, receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
+        return call(receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
     }
 
-    private Object call(final VirtualFrame frame, final Object... receiverAndArguments) {
-        return doExternalCall(frame.materialize(), receiverAndArguments);
+    private Object call(final Object... receiverAndArguments) {
+        return doExternalCall(receiverAndArguments);
     }
 
     @TruffleBoundary
-    private Object doExternalCall(final MaterializedFrame frame, final Object[] receiverAndArguments) {
-        restoreStackValues(frame, receiverAndArguments);
-        final InterpreterProxy interpreterProxy = getContext().getInterpreterProxy(frame, numReceiverAndArguments);
+    private Object doExternalCall(final Object[] receiverAndArguments) {
+        /* InterpreterProxy uses receiverAndArguments as the stack. */
+        final InterpreterProxy interpreterProxy = getContext().getInterpreterProxy(numReceiverAndArguments, receiverAndArguments);
         try {
             /*
              * return value is unused, the actual return value is pushed onto the stack (see below)
@@ -190,11 +188,9 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode
             /*
              * The return value is pushed onto the stack by the plugin via the InterpreterProxy, but
              * TruffleSqueak expects the return value to be returned by this function
-             * (AbstractSendNode.executeVoid). Pop the return value and return it.
+             * (AbstractSendNode.executeVoid). Fetch the return value and return it.
              */
-            final int stackPointer = FrameAccess.getStackPointer(frame) - 1;
-            final Object returnValue = FrameAccess.getStackValue(frame, stackPointer);
-            FrameAccess.setStackPointer(frame, stackPointer);
+            final Object returnValue = interpreterProxy.getReturnValue();
             final long failReason = interpreterProxy.failed();
             if (failReason == 0) {
                 return returnValue;
@@ -206,31 +202,5 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode
         } finally {
             interpreterProxy.postPrimitiveCleanups();
         }
-    }
-
-    private void restoreStackValues(final MaterializedFrame frame, final Object[] receiverAndArguments) {
-        /*
-         * A message send (AbstractSendNode.executeVoid) will pop and potentially clear stack
-         * values, and decrement the stack pointer by numReceiverAndArguments before transferring
-         * control. We need the values back on the stack and the stack pointer to point at the last
-         * argument, since the C code expects that. Therefore, we restore the stack values and
-         * pointer here.
-         */
-        assert numReceiverAndArguments == receiverAndArguments.length;
-        final int initialSP;
-        if (!FrameAccess.hasClosure(frame)) {
-            initialSP = FrameAccess.getCodeObject(frame).getNumTemps();
-        } else {
-            initialSP = FrameAccess.getClosure(frame).getInitialSP();
-        }
-        final int stackPointer = FrameAccess.getStackPointer(frame);
-        for (int i = 0; i < numReceiverAndArguments; i++) {
-            final int stackIndex = stackPointer + i;
-            /* Only values stored above initialSP are cleared */
-            if (stackIndex >= initialSP) {
-                FrameAccess.setStackValue(frame, stackIndex, receiverAndArguments[i]);
-            }
-        }
-        FrameAccess.setStackPointer(frame, stackPointer + numReceiverAndArguments);
     }
 }
