@@ -175,6 +175,7 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode
 
     @TruffleBoundary
     private Object doExternalCall(final Object[] receiverAndArguments) {
+        assert receiverAndArguments.length == numReceiverAndArguments;
         /* InterpreterProxy uses receiverAndArguments as the stack. */
         final InterpreterProxy interpreterProxy = getContext().getInterpreterProxy(receiverAndArguments);
         try {
