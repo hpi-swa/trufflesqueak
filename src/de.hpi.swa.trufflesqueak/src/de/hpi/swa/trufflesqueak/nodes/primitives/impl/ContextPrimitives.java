@@ -40,11 +40,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
             final int oldStackPointer = receiver.getStackPointerOrZero();
             final int newStackPointer = (int) newStackPointerLong;
 
-            /* Nil any newly accessible or newly hidden stack slots */
-            final int start = Math.min(oldStackPointer, newStackPointer);
-            final int end = Math.max(oldStackPointer, newStackPointer);
-
-            for (int i = start; i < end; i++) {
+            for (int i = oldStackPointer; i < newStackPointer; i++) {
                 receiver.atTempPut(i, NilObject.SINGLETON);
             }
 

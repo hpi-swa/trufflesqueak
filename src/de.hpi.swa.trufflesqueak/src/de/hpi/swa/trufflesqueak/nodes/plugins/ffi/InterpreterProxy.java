@@ -12,7 +12,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
@@ -38,7 +37,6 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectNewNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
 import de.hpi.swa.trufflesqueak.nodes.plugins.ffi.wrappers.NativeObjectStorage;
-import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.NFIUtils;
@@ -177,10 +175,10 @@ public final class InterpreterProxy {
         };
     }
 
-    public InterpreterProxy instanceFor(final int currentNumReceiverAndArguments, final Object[] currentReceiverAndArguments) {
-        this.numReceiverAndArguments = currentNumReceiverAndArguments;
-        this.receiverAndArguments = currentReceiverAndArguments == null ? null : currentReceiverAndArguments.clone();
-        this.sp = currentNumReceiverAndArguments;
+    public InterpreterProxy instanceFor(final Object[] currentReceiverAndArguments) {
+        this.numReceiverAndArguments = currentReceiverAndArguments.length;
+        this.receiverAndArguments = currentReceiverAndArguments.clone();
+        this.sp = this.numReceiverAndArguments;
         return this;
     }
 

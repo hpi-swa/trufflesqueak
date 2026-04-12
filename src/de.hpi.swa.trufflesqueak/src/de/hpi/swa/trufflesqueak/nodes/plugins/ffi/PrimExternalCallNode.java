@@ -33,6 +33,8 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive8;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive9;
 import de.hpi.swa.trufflesqueak.util.NFIUtils;
 
+import static de.hpi.swa.trufflesqueak.util.ArrayUtils.EMPTY_ARRAY;
+
 public final class PrimExternalCallNode extends AbstractPrimitiveNode
                 implements Primitive0, Primitive1, Primitive2, Primitive3, Primitive4, Primitive5, Primitive6, Primitive7, Primitive8, Primitive9, Primitive10, Primitive11 {
     private final Object functionSymbol;
@@ -43,11 +45,6 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode
         this.functionSymbol = functionSymbol;
         this.functionInteropLibrary = functionInteropLibrary;
         this.numReceiverAndArguments = numReceiverAndArguments;
-    }
-
-    @Override
-    public boolean needsFrame() {
-        return false;
     }
 
     public static PrimExternalCallNode load(final String moduleName, final String functionName, final int numReceiverAndArguments) {
@@ -96,7 +93,7 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode
             }
             try {
                 final InteropLibrary moduleInteropLibrary = NFIUtils.getInteropLibrary(library);
-                moduleInteropLibrary.invokeMember(library, "setInterpreter", context.getInterpreterProxy(0, null).getPointer());
+                moduleInteropLibrary.invokeMember(library, "setInterpreter", context.getInterpreterProxy(EMPTY_ARRAY).getPointer());
             } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException | UnknownIdentifierException e) {
                 throw CompilerDirectives.shouldNotReachHere(e);
             }
@@ -179,7 +176,7 @@ public final class PrimExternalCallNode extends AbstractPrimitiveNode
     @TruffleBoundary
     private Object doExternalCall(final Object[] receiverAndArguments) {
         /* InterpreterProxy uses receiverAndArguments as the stack. */
-        final InterpreterProxy interpreterProxy = getContext().getInterpreterProxy(numReceiverAndArguments, receiverAndArguments);
+        final InterpreterProxy interpreterProxy = getContext().getInterpreterProxy(receiverAndArguments);
         try {
             /*
              * return value is unused, the actual return value is pushed onto the stack (see below)
