@@ -424,7 +424,8 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         CompilerAsserts.partialEvaluationConstant(variableType);
                         switch (variableType) {
                             case 0: {
-                                FrameAccess.externalizePCAndSP(frame, pc, sp); // for ContextObject access
+                                FrameAccess.externalizePCAndSP(frame, pc, sp); // for ContextObject
+                                                                               // access
                                 pushFollowed(frame, currentPC, sp++, uncheckedCast(data[currentPC], SqueakObjectAt0NodeGen.class).execute(this, FrameAccess.getReceiver(frame), variableIndex));
                                 break;
                             }
@@ -530,7 +531,8 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 break;
                             }
                             case 2: {
-                                FrameAccess.externalizePCAndSP(frame, pc, sp); // for ContextObject access
+                                FrameAccess.externalizePCAndSP(frame, pc, sp); // for ContextObject
+                                                                               // access
                                 pushFollowed(frame, currentPC, sp++, uncheckedCast(data[currentPC], SqueakObjectAt0NodeGen.class).execute(this, FrameAccess.getReceiver(frame), byte3));
                                 break;
                             }

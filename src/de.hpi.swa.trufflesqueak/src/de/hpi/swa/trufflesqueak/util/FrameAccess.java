@@ -209,7 +209,7 @@ public final class FrameAccess {
         frame.setIntStatic(SlotIndices.STACK_POINTER, value);
     }
 
-    public static  void externalizePCAndSP(final VirtualFrame frame, final int pc, final int sp) {
+    public static void externalizePCAndSP(final VirtualFrame frame, final int pc, final int sp) {
         setInstructionPointer(frame, pc);
         setStackPointer(frame, sp);
     }
