@@ -503,7 +503,7 @@ public final class FrameAccess {
         return frameArguments;
     }
 
-    public static Object[] newDNUWith(final AbstractSqueakObject sender, final Object receiver, final PointersObject message) {
+    public static Object[] newMessageFallbackWith(final AbstractSqueakObject sender, final Object receiver, final PointersObject message) {
         return newWith(sender, null, receiver, message);
     }
 

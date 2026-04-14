@@ -33,8 +33,8 @@ public final class ClassObjectNodes {
         }
 
         @Specialization(guards = {"isMethodDictIndex(index)"})
-        protected static final VariablePointersObject doClassMethodDict(final ClassObject obj, @SuppressWarnings("unused") final long index) {
-            return obj.getMethodDict();
+        protected static final AbstractSqueakObject doClassMethodDict(final ClassObject obj, @SuppressWarnings("unused") final long index) {
+            return obj.getMethodDictOrNil();
         }
 
         @Specialization(guards = {"isFormatIndex(index)"})
@@ -69,6 +69,11 @@ public final class ClassObjectNodes {
         @Specialization(guards = "isMethodDictIndex(index)")
         protected static final void doClassMethodDict(final ClassObject obj, @SuppressWarnings("unused") final long index, final VariablePointersObject value) {
             obj.setMethodDict(value);
+        }
+
+        @Specialization(guards = "isMethodDictIndex(index)")
+        protected static final void doClassMethodDict(final ClassObject obj, @SuppressWarnings("unused") final long index, @SuppressWarnings("unused") final NilObject value) {
+            obj.setMethodDict(null);
         }
 
         @Specialization(guards = "isFormatIndex(index)")

@@ -483,7 +483,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         final GetOrCreateContextWithoutFrameNode senderNode, final CreateFrameArgumentsForIndirectCallNaryNode argumentsNode, final IndirectCallNode callNode, final Node node) {
             if (inheritsFromNode.execute(node, receiver, lookupClass)) {
                 final Object lookupResult = getContext(node).lookup(lookupClass, selector);
-                final CompiledCodeObject method = methodNode.execute(node, getContext(node), sizeNode.execute(node, arguments), true, lookupClass, lookupResult);
+                final CompiledCodeObject method = methodNode.execute(node, getContext(node), sizeNode.execute(node, arguments), true, selector, lookupClass, lookupResult);
                 final Object callArguments = argumentsNode.execute(node, senderNode.execute(frame, node), receiver, getObjectArrayNode.execute(node, arguments), lookupClass, lookupResult, selector);
                 return callNode.call(method.getCallTarget(), callArguments);
             } else {

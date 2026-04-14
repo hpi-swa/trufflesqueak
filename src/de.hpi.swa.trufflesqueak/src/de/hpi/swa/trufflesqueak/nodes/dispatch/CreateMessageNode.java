@@ -20,7 +20,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Abst
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 
 @GenerateInline(false)
-abstract class CreateDoesNotUnderstandMessageNode extends AbstractNode {
+abstract class CreateMessageNode extends AbstractNode {
     public abstract PointersObject execute(NativeObject selector, Object receiver, Object[] arguments);
 
     @Specialization

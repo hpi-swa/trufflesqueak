@@ -29,7 +29,6 @@ import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
-import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
@@ -101,9 +100,7 @@ public final class DispatchSelector2Node extends DispatchSelectorNode {
         public static final DispatchDirect2Node create(final NativeObject selector, final ClassObject lookupClass, final boolean canPrimFail) {
             final Object lookupResult = lookupClass.lookupInMethodDictSlow(selector);
             final Assumption[] assumptions = DispatchUtils.createAssumptions(lookupClass, lookupResult);
-            if (lookupResult == null) {
-                return createDNUNode(selector, assumptions, lookupClass);
-            } else if (lookupResult instanceof final CompiledCodeObject lookupMethod) {
+            if (lookupResult instanceof final CompiledCodeObject lookupMethod) {
                 if (lookupMethod.getNumArgs() == 2) {
                     return create(assumptions, lookupMethod);
                 } else {
@@ -114,6 +111,8 @@ public final class DispatchSelector2Node extends DispatchSelectorNode {
                         return create(assumptions, lookupMethod);
                     }
                 }
+            } else if (lookupResult == null) {
+                return createMessageFallbackNode(selector, assumptions, lookupClass);
             } else {
                 final ClassObject lookupResultClass = SqueakObjectClassNode.executeUncached(lookupResult);
                 final Object runWithInLookupResult = LookupMethodNode.executeUncached(lookupResultClass, SqueakImageContext.getSlow().runWithInSelector);
@@ -121,7 +120,7 @@ public final class DispatchSelector2Node extends DispatchSelectorNode {
                     return new DispatchDirectObjectAsMethod2Node(assumptions, selector, runWithInMethod, lookupResult);
                 } else {
                     assert runWithInLookupResult == null : "runWithInLookupResult should not be another Object";
-                    return createDNUNode(selector, assumptions, lookupResultClass);
+                    return createMessageFallbackNode(selector, assumptions, lookupResultClass);
                 }
             }
         }
@@ -138,13 +137,9 @@ public final class DispatchSelector2Node extends DispatchSelectorNode {
             return new DispatchDirectMethod2Node(assumptions, method);
         }
 
-        private static DispatchDirectDoesNotUnderstand2Node createDNUNode(final NativeObject selector, final Assumption[] assumptions, final ClassObject receiverClass) {
-            final Object dnuLookupResult = receiverClass.lookupInMethodDictSlow(SqueakImageContext.getSlow().doesNotUnderstand);
-            if (dnuLookupResult instanceof final CompiledCodeObject dnuMethod) {
-                return new DispatchDirectDoesNotUnderstand2Node(assumptions, selector, dnuMethod);
-            } else {
-                throw SqueakException.create("Unable to find DNU method in", receiverClass);
-            }
+        private static DispatchDirectMessageFallback2Node createMessageFallbackNode(final NativeObject selector, final Assumption[] assumptions, final ClassObject receiverClass) {
+            final CompiledCodeObject fallbackMethod = receiverClass.resolveDispatchFailure(selector);
+            return new DispatchDirectMessageFallback2Node(assumptions, selector, fallbackMethod);
         }
     }
 
@@ -223,12 +218,12 @@ public final class DispatchSelector2Node extends DispatchSelectorNode {
         }
     }
 
-    static final class DispatchDirectDoesNotUnderstand2Node extends DispatchDirectWithSender2Node {
+    static final class DispatchDirectMessageFallback2Node extends DispatchDirectWithSender2Node {
         private final NativeObject selector;
         @Child private DirectCallNode callNode;
-        @Child private CreateDoesNotUnderstandMessageNode createDNUMessageNode = CreateDoesNotUnderstandMessageNodeGen.create();
+        @Child private CreateMessageNode createMessageNode = CreateMessageNodeGen.create();
 
-        DispatchDirectDoesNotUnderstand2Node(final Assumption[] assumptions, final NativeObject selector, final CompiledCodeObject dnuMethod) {
+        DispatchDirectMessageFallback2Node(final Assumption[] assumptions, final NativeObject selector, final CompiledCodeObject dnuMethod) {
             super(assumptions);
             this.selector = selector;
             callNode = DirectCallNode.create(dnuMethod.getCallTarget());
@@ -236,7 +231,8 @@ public final class DispatchSelector2Node extends DispatchSelectorNode {
 
         @Override
         public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2) {
-            return callNode.call(FrameAccess.newDNUWith(senderNode.execute(frame), receiver, createDNUMessageNode.execute(selector, receiver, new Object[]{arg1, arg2})));
+            final PointersObject message = createMessageNode.execute(selector, receiver, new Object[]{arg1, arg2});
+            return callNode.call(FrameAccess.newMessageFallbackWith(senderNode.execute(frame), receiver, message));
         }
     }
 
@@ -274,7 +270,7 @@ public final class DispatchSelector2Node extends DispatchSelectorNode {
             CompilerAsserts.partialEvaluationConstant(canPrimFail);
             final ClassObject receiverClass = classNode.executeLookup(node, receiver);
             final Object lookupResult = getContext(node).lookup(receiverClass, selector);
-            final CompiledCodeObject method = methodNode.execute(node, getContext(node), 2, canPrimFail, receiverClass, lookupResult);
+            final CompiledCodeObject method = methodNode.execute(node, getContext(node), 2, canPrimFail, selector, receiverClass, lookupResult);
             final Object result = tryPrimitiveNode.execute(frame, method, receiver, arg1, arg2);
             if (result != null) {
                 return result;
@@ -347,13 +343,13 @@ public final class DispatchSelector2Node extends DispatchSelectorNode {
             }
 
             @Specialization(guards = "lookupResult == null")
-            protected static final Object[] doDoesNotUnderstand(final Node node, final AbstractSqueakObject sender, final Object receiver, final Object arg1, final Object arg2,
+            protected static final Object[] doMessageFallback(final Node node, final AbstractSqueakObject sender, final Object receiver, final Object arg1, final Object arg2,
                             final ClassObject receiverClass,
                             @SuppressWarnings("unused") final Object lookupResult, final NativeObject selector,
                             @Cached(inline = false) final AbstractPointersObjectWriteNode writeNode) {
                 final Object[] arguments = new Object[]{arg1, arg2};
                 final PointersObject message = getContext(node).newMessage(writeNode, selector, receiverClass, arguments);
-                return FrameAccess.newDNUWith(sender, receiver, message);
+                return FrameAccess.newMessageFallbackWith(sender, receiver, message);
             }
 
             @Specialization(guards = {"targetObject != null", "!isCompiledCodeObject(targetObject)"})
