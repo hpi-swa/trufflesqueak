@@ -240,6 +240,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         this.internalHeader = internalHeader;
         this.literals = literals;
         this.bytes = bytes;
+        this.primitiveNodeOrNull = UNINITIALIZED_PRIMITIVE_NODE;
         invalidateCallTargetStable("new literals and bytes");
     }
 
@@ -468,7 +469,13 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         if (index < offset) {
             throw PrimitiveFailed.BAD_INDEX;
         } else {
-            bytes[(int) index - offset] = (byte) value;
+            final int byteIndex = (int) index - offset;
+            final boolean canHavePrimitive = hasPrimitive() && bytes.length >= 3;
+            final int oldPrimitiveIndex = canHavePrimitive ? primitiveIndex() : -1;
+            bytes[byteIndex] = (byte) value;
+            if (canHavePrimitive && oldPrimitiveIndex != primitiveIndex()) {
+                primitiveNodeOrNull = UNINITIALIZED_PRIMITIVE_NODE;
+            }
             invalidateCallTarget();
         }
     }
@@ -727,8 +734,12 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     public void setHeader(final long value) {
         final int oldNumLiterals = getNumLiterals();
+        final boolean oldHasPrimitive = hasPrimitive();
         internalHeader = CompiledCodeHeaderUtils.fromSmallIntegerValue(value);
         assert getNumLiterals() == oldNumLiterals;
+        if (oldHasPrimitive && !hasPrimitive()) {
+            primitiveNodeOrNull = UNINITIALIZED_PRIMITIVE_NODE;
+        }
         invalidateCallTarget();
     }
 

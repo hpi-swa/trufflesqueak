@@ -1042,6 +1042,10 @@ public final class SqueakImageContext {
 
     /* Clear cache entries for selector (prim 119). */
     private void flushMethodCacheForSelector(final NativeObject selector) {
+        if (selector == doesNotUnderstand || selector == cannotInterpretSelector) {
+            flushMethodCache();
+            return;
+        }
         for (int i = 0; i < METHOD_CACHE_SIZE; i++) {
             if (methodCache[i].getSelector() == selector) {
                 methodCache[i].freeAndRelease();

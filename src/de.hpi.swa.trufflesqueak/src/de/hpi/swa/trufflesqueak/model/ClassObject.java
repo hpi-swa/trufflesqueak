@@ -368,12 +368,20 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         assert superclass == null || superclass.assertNotForwarded();
         invalidateClassHierarchyAndMethodDictStableAssumption("new superclass");
         this.superclass = superclass;
+        // ToDo: Instead of a full global flush, this should be refined to only flush
+        // entries in image.methodCache where the entry's class is `this` class or a
+        // subclass of `this` class.
+        image.flushMethodCache();
     }
 
     public void setMethodDict(final VariablePointersObject methodDict) {
         assert methodDict == null || methodDict.assertNotForwarded();
         invalidateClassHierarchyAndMethodDictStableAssumption("new method dict");
         this.methodDict = methodDict;
+        // ToDo: Instead of a full global flush, this should be refined to only flush
+        // entries in image.methodCache where the entry's class is `this` class or a
+        // subclass of `this` class.
+        image.flushMethodCache();
     }
 
     /**
