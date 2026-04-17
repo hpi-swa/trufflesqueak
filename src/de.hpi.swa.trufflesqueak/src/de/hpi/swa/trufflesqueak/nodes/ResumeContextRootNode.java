@@ -15,6 +15,7 @@ import com.oracle.truffle.api.profiles.IntValueProfile;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class ResumeContextRootNode extends AbstractRootNode {
     private ContextObject activeContext;
@@ -36,6 +37,11 @@ public final class ResumeContextRootNode extends AbstractRootNode {
     @Override
     public Object execute(final VirtualFrame frame) {
         assert !activeContext.isDead() : "Terminated contexts cannot be resumed";
+        /*
+         * Make it so ObjectGraphUtils can find the active context when executing strictly within
+         * the active context.
+         */
+        FrameAccess.setContext(frame, activeContext);
         activeContext.clearModifiedSender();
         final int pc = instructionPointerProfile.profile(activeContext.getInstructionPointerForBytecodeLoop());
         final int sp = stackPointerProfile.profile(activeContext.getStackPointer());

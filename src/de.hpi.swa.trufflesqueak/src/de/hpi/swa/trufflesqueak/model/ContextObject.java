@@ -37,6 +37,13 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
 
     private static final Class<?> CONCRETE_MATERIALIZED_FRAME_CLASS = Truffle.getRuntime().createMaterializedFrame(new Object[0]).getClass();
 
+    public enum FrameHandling {
+        /** Enumerate live objects in Truffle frames (Read-Only). */
+        SCAN,
+        /** Enumerate live objects and nil dead objects in Truffle frames (Read-Write). */
+        SCRUB
+    }
+
     private Object senderOrFrameOrSize;
 
     public ContextObject(final SqueakImageChunk chunk) {
@@ -302,6 +309,10 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         FrameAccess.setInstructionPointer(getTruffleFrame(), NIL_PC_STACK_NOT_NIL_VALUE);
     }
 
+    public int getStackPointerOrZero() {
+        return hasTruffleFrame() ? FrameAccess.getStackPointer(getTruffleFrame()) : 0;
+    }
+
     public int getStackPointer() {
         return FrameAccess.getStackPointer(getTruffleFrame());
     }
@@ -399,7 +410,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         FrameAccess.setClosure(frame, value);
         // Cannot use copyTo here as frame descriptors may be different
         // ToDo: This does not handle any stack slots held in auxiliarySlots.
-        FrameAccess.iterateStackSlots(oldFrame, slotIndex -> {
+        FrameAccess.iterateStackSlots(oldFrame, sp, slotIndex -> {
             final Object stackValue = oldFrame.getObjectStatic(slotIndex);
             if (stackValue != null) {
                 frame.setObjectStatic(slotIndex, stackValue);
@@ -415,6 +426,15 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         FrameAccess.setReceiver(getOrCreateTruffleFrame(), value);
     }
 
+    /**
+     * Accesses a temporary variable or stack value at the given 0-based index.
+     * <p>
+     * If the index falls within the range of the initial arguments/copied values, it is retrieved
+     * from the frame arguments. Otherwise, it is fetched from the actual stack slots.
+     *
+     * @param index the 0-based index of the temporary variable to retrieve.
+     * @return the object at the specified index, or {@link NilObject#SINGLETON} if null.
+     */
     @TruffleBoundary
     public Object atTemp(final int index) {
         final MaterializedFrame frame = getTruffleFrame();
@@ -426,6 +446,16 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         }
     }
 
+    /**
+     * Sets a temporary variable or stack value at the given 0-based index.
+     * <p>
+     * This method performs a dual-write if the index falls within the range of initial arguments or
+     * copied values. It updates the value in the {@code frame.getArguments()} array and
+     * consistently updates the corresponding indexed stack slot in the Truffle frame.
+     *
+     * @param index the 0-based index of the temporary variable or stack slot to update.
+     * @param value the object to store at the specified index.
+     */
     @TruffleBoundary
     public void atTempPut(final int index, final Object value) {
         final MaterializedFrame frame = getOrCreateTruffleFrame();
@@ -614,7 +644,9 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
             final MaterializedFrame frame = getTruffleFrame();
             tracer.addIfUnmarked(FrameAccess.getCodeObject(frame));
             tracer.addAllIfUnmarked(frame.getArguments());
-            FrameAccess.iterateStackObjects(frame, true, tracer::addIfUnmarked);
+            FrameAccess.iterateStackObjects(frame, tracer.frameHandling, tracer::addIfUnmarked);
+        } else {
+            tracer.addIfUnmarked(senderOrFrameOrSize);
         }
     }
 
@@ -626,7 +658,9 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
             getSender(); /* May materialize sender. */
             writer.traceIfNecessary(FrameAccess.getCodeObject(frame));
             writer.traceAllIfNecessary(frame.getArguments());
-            FrameAccess.iterateStackObjects(frame, true, writer::traceIfNecessary);
+            FrameAccess.iterateStackObjects(frame, FrameHandling.SCRUB, writer::traceIfNecessary);
+        } else if (senderOrFrameOrSize instanceof AbstractSqueakObject o) {
+            writer.traceIfNecessary(o);
         }
     }
 

@@ -14,7 +14,6 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameDescriptor.Builder;
@@ -29,6 +28,7 @@ import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject.FrameHandling;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -185,7 +185,7 @@ public final class FrameAccess {
     }
 
     public static void setContext(final Frame frame, final ContextObject context) {
-        assert getContext(frame) == null : "ContextObject already allocated";
+        assert getContext(frame) == null || getContext(frame) == context : "ContextObject already allocated";
         frame.setObjectStatic(SlotIndices.THIS_CONTEXT, context);
     }
 
@@ -205,13 +205,23 @@ public final class FrameAccess {
         return frame.getIntStatic(SlotIndices.STACK_POINTER);
     }
 
-    @NeverDefault
-    public static int getIncrementedStackPointer(final VirtualFrame frame) {
-        return getStackPointer(frame) + 1;
-    }
-
     public static void setStackPointer(final Frame frame, final int value) {
         frame.setIntStatic(SlotIndices.STACK_POINTER, value);
+    }
+
+    public static void externalizePCAndSP(final VirtualFrame frame, final int pc, final int sp) {
+        setInstructionPointer(frame, pc);
+        setStackPointer(frame, sp);
+    }
+
+    public static int internalizePC(final VirtualFrame frame, final int pc) {
+        final int framePC = getInstructionPointer(frame);
+        if (pc != framePC) {
+            CompilerDirectives.transferToInterpreter();
+            return framePC;
+        } else {
+            return pc;
+        }
     }
 
     public static int getStackStart() {
@@ -253,43 +263,92 @@ public final class FrameAccess {
             for (int slotIndex = SlotIndices.STACK_START; slotIndex < frameDescriptor.getNumberOfSlots(); slotIndex++) {
                 frame.setObjectStatic(slotIndex, null);
             }
-            for (int auxSlotIndex = 0; auxSlotIndex < frameDescriptor.getNumberOfAuxiliarySlots(); auxSlotIndex++) {
-                frame.setAuxiliarySlot(auxSlotIndex, null);
-            }
         }
     }
 
-    /* Iterates used stack slots (may not be ordered). The stack of a dead frame is unreachable. */
-    public static void iterateStackSlots(final Frame frame, final Consumer<Integer> action) {
+    /**
+     * Iterates over the active stack slot indices of a given frame.
+     * <p>
+     * <strong>Important boundary:</strong> This method strictly iterates from the stack start up to
+     * the current stack pointer (exclusive). It <em>does not</em> yield indices at or beyond the
+     * active stack pointer.
+     * <p>
+     * <strong>Write Access Required:</strong> If the frame is dead (terminated), this method will
+     * modify the frame by explicitly clearing the remaining slots. Therefore, the {@code frame}
+     * must not be read-only in this state (e.g., it requires {@code READ_WRITE} access if obtained
+     * via a Truffle {@code FrameInstance}).
+     *
+     * @param frame the frame to inspect (must be writable if the frame is dead)
+     * @param sp the current stack pointer defining the upper boundary
+     * @param action the action to perform on each valid slot index
+     */
+    public static void iterateStackSlots(final Frame frame, final int sp, final Consumer<Integer> action) {
         if (isDead(frame)) {
             clearStackSlots(frame);
         } else {
-            for (int slotIndex = SlotIndices.STACK_START; slotIndex < frame.getFrameDescriptor().getNumberOfSlots(); slotIndex++) {
+            /* Iterate defined stack slots only. */
+            final int slotLimit = Integer.min(SlotIndices.STACK_START + sp, frame.getFrameDescriptor().getNumberOfSlots());
+            for (int slotIndex = SlotIndices.STACK_START; slotIndex < slotLimit; slotIndex++) {
                 action.accept(slotIndex);
             }
         }
     }
 
-    /* Iterate stack objects (may not be ordered). The stack of a dead frame is unreachable. */
-    public static void iterateStackObjects(final Frame frame, final boolean clearStackSlots, final Consumer<Object> action) {
+    /**
+     * Iterates over the live stack objects of a given frame, passing them to the provided action.
+     * <p>
+     * <strong>Important boundary:</strong> The {@code action} is strictly applied to objects from
+     * the stack start up to the current stack pointer (exclusive). It <em>does not</em> pass
+     * objects located at or beyond the stack pointer to the action.
+     * <p>
+     * <strong>Write Access Required:</strong> If {@code frameHandling} is set to
+     * {@link FrameHandling#SCRUB}, this method will modify the frame by nilling out unreachable
+     * stack entries (or the entire stack if dead). The {@code frame} must not be read-only when
+     * scrubbing is enabled (e.g., it requires {@code READ_WRITE} access).
+     *
+     * @param frame the frame to inspect (must be writable if scrubbing)
+     * @param frameHandling the handling policy (e.g., SCAN or SCRUB)
+     * @param action the action to perform on each live stack object
+     */
+    public static void iterateStackObjects(final Frame frame, final FrameHandling frameHandling, final Consumer<Object> action) {
         if (isDead(frame)) {
-            if (clearStackSlots) {
+            if (frameHandling == FrameHandling.SCRUB) {
                 clearStackSlots(frame);
             }
         } else {
+            /* Iterate defined stack slots only. */
+            final int sp = getStackPointer(frame);
             final FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-            for (int slotIndex = SlotIndices.STACK_START; slotIndex < frameDescriptor.getNumberOfSlots(); slotIndex++) {
+            final int slotCount = frameDescriptor.getNumberOfSlots();
+            final int slotLimit = Integer.min(SlotIndices.STACK_START + sp, slotCount);
+            for (int slotIndex = SlotIndices.STACK_START; slotIndex < slotLimit; slotIndex++) {
                 action.accept(frame.getObjectStatic(slotIndex));
             }
-            for (int auxSlotIndex = 0; auxSlotIndex < frameDescriptor.getNumberOfAuxiliarySlots(); auxSlotIndex++) {
-                action.accept(frame.getAuxiliarySlot(auxSlotIndex));
+            /* Nil unreachable stack entries. */
+            if (frameHandling == FrameHandling.SCRUB) {
+                for (int slotIndex = slotLimit; slotIndex < slotCount; slotIndex++) {
+                    frame.setObjectStatic(slotIndex, null);
+                }
             }
         }
     }
 
-    /*
-     * Iterate stack objects (may not be ordered) with optional replacement. The stack of a dead
-     * frame is unreachable.
+    /**
+     * Iterates over the live stack objects of a given frame, allowing the provided function to
+     * optionally replace their values.
+     * <p>
+     * <strong>Important boundary:</strong> This method strictly iterates from the stack start up to
+     * the current stack pointer (exclusive). It <em>does not</em> evaluate or replace objects
+     * located at or beyond the stack pointer.
+     * <p>
+     * <strong>Write Access Required:</strong> Because this method explicitly modifies frame slots
+     * (either by applying a replacement, or by clearing slots when {@code clearStackSlots} is
+     * {@code true} on a dead frame), the {@code frame} must not be a read-only instance under any
+     * circumstances (e.g., it requires {@code READ_WRITE} access).
+     *
+     * @param frame the frame to inspect (must be writable)
+     * @param clearStackSlots whether to nil out the stack if the frame is dead
+     * @param action a function that returns the replacement object, or null to keep the original
      */
     public static void iterateStackObjectsWithReplacement(final Frame frame, final boolean clearStackSlots, final Function<Object, Object> action) {
         if (isDead(frame)) {
@@ -297,17 +356,15 @@ public final class FrameAccess {
                 clearStackSlots(frame);
             }
         } else {
+            /* Iterate defined stack slots only. */
+            final int sp = getStackPointer(frame);
             final FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-            for (int slotIndex = SlotIndices.STACK_START; slotIndex < frameDescriptor.getNumberOfSlots(); slotIndex++) {
+            final int slotCount = frameDescriptor.getNumberOfSlots();
+            final int slotLimit = Integer.min(SlotIndices.STACK_START + sp, slotCount);
+            for (int slotIndex = SlotIndices.STACK_START; slotIndex < slotLimit; slotIndex++) {
                 final Object replacement = action.apply(frame.getObjectStatic(slotIndex));
                 if (replacement != null) {
                     frame.setObjectStatic(slotIndex, replacement);
-                }
-            }
-            for (int auxSlotIndex = 0; auxSlotIndex < frameDescriptor.getNumberOfAuxiliarySlots(); auxSlotIndex++) {
-                final Object replacement = action.apply(frame.getAuxiliarySlot(auxSlotIndex));
-                if (replacement != null) {
-                    frame.setAuxiliarySlot(auxSlotIndex, replacement);
                 }
             }
         }

@@ -47,7 +47,7 @@ public final class CheckForInterruptsInLoopNode extends AbstractNode {
         return SINGLETON;
     }
 
-    public void execute(final VirtualFrame frame, final int pc) {
+    public void execute(final VirtualFrame frame, final int pc, final int sp) {
         final SqueakImageContext image = getContext();
         final CheckForInterruptsState istate = image.interrupt;
         if (istate.shouldSkip()) {
@@ -55,7 +55,7 @@ public final class CheckForInterruptsInLoopNode extends AbstractNode {
         }
         /* Exclude interrupts case from compilation. */
         CompilerDirectives.transferToInterpreter();
-        FrameAccess.setInstructionPointer(frame, pc);
+        FrameAccess.externalizePCAndSP(frame, pc, sp);
         final Object[] specialObjects = image.specialObjectsArray.getObjectStorage();
         boolean switchToNewProcess = false;
         if (istate.tryInterruptPending()) {

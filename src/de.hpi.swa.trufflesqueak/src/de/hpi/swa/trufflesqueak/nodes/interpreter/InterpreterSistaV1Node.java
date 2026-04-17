@@ -446,9 +446,9 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                             result = PrimSmallFloatAddNode.doDouble(lhs, rhs);
                         } else {
                             enter(currentPC, state, BRANCH1);
-                            externalizePCAndSP(frame, pc, sp);
+                            FrameAccess.externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
-                            pc = internalizePC(frame, pc);
+                            pc = FrameAccess.internalizePC(frame, pc);
                         }
                         push(frame, sp++, result);
                         break;
@@ -474,9 +474,9 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                             result = PrimSmallFloatSubtractNode.doDouble(lhs, rhs);
                         } else {
                             enter(currentPC, state, BRANCH1);
-                            externalizePCAndSP(frame, pc, sp);
+                            FrameAccess.externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
-                            pc = internalizePC(frame, pc);
+                            pc = FrameAccess.internalizePC(frame, pc);
                         }
                         push(frame, sp++, result);
                         break;
@@ -494,9 +494,9 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                             result = PrimSmallFloatLessThanNode.doDouble(lhs, rhs);
                         } else {
                             enter(currentPC, state, BRANCH1);
-                            externalizePCAndSP(frame, pc, sp);
+                            FrameAccess.externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
-                            pc = internalizePC(frame, pc);
+                            pc = FrameAccess.internalizePC(frame, pc);
                         }
                         push(frame, sp++, result);
                         break;
@@ -514,9 +514,9 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                             result = PrimSmallFloatGreaterThanNode.doDouble(lhs, rhs);
                         } else {
                             enter(currentPC, state, BRANCH1);
-                            externalizePCAndSP(frame, pc, sp);
+                            FrameAccess.externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
-                            pc = internalizePC(frame, pc);
+                            pc = FrameAccess.internalizePC(frame, pc);
                         }
                         push(frame, sp++, result);
                         break;
@@ -534,9 +534,9 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                             result = PrimSmallFloatLessOrEqualNode.doDouble(lhs, rhs);
                         } else {
                             enter(currentPC, state, BRANCH1);
-                            externalizePCAndSP(frame, pc, sp);
+                            FrameAccess.externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
-                            pc = internalizePC(frame, pc);
+                            pc = FrameAccess.internalizePC(frame, pc);
                         }
                         push(frame, sp++, result);
                         break;
@@ -554,9 +554,9 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                             result = PrimSmallFloatGreaterOrEqualNode.doDouble(lhs, rhs);
                         } else {
                             enter(currentPC, state, BRANCH1);
-                            externalizePCAndSP(frame, pc, sp);
+                            FrameAccess.externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
-                            pc = internalizePC(frame, pc);
+                            pc = FrameAccess.internalizePC(frame, pc);
                         }
                         push(frame, sp++, result);
                         break;
@@ -574,9 +574,9 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                             result = PrimSmallFloatEqualNode.doDouble(lhs, rhs);
                         } else {
                             enter(currentPC, state, BRANCH1);
-                            externalizePCAndSP(frame, pc, sp);
+                            FrameAccess.externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
-                            pc = internalizePC(frame, pc);
+                            pc = FrameAccess.internalizePC(frame, pc);
                         }
                         push(frame, sp++, result);
                         break;
@@ -594,9 +594,9 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                             result = PrimSmallFloatNotEqualNode.doDouble(lhs, rhs);
                         } else {
                             enter(currentPC, state, BRANCH1);
-                            externalizePCAndSP(frame, pc, sp);
+                            FrameAccess.externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
-                            pc = internalizePC(frame, pc);
+                            pc = FrameAccess.internalizePC(frame, pc);
                         }
                         push(frame, sp++, result);
                         break;
@@ -611,9 +611,9 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                             result = PrimBitAndNode.doLong(lhs, rhs);
                         } else {
                             enter(currentPC, state, BRANCH1);
-                            externalizePCAndSP(frame, pc, sp);
+                            FrameAccess.externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
-                            pc = internalizePC(frame, pc);
+                            pc = FrameAccess.internalizePC(frame, pc);
                         }
                         push(frame, sp++, result);
                         break;
@@ -628,9 +628,9 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                             result = PrimBitOrNode.doLong(lhs, rhs);
                         } else {
                             enter(currentPC, state, BRANCH1);
-                            externalizePCAndSP(frame, pc, sp);
+                            FrameAccess.externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
-                            pc = internalizePC(frame, pc);
+                            pc = FrameAccess.internalizePC(frame, pc);
                         }
                         push(frame, sp++, result);
                         break;
@@ -656,9 +656,9 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         BC.SEND_LIT_SEL0_0, BC.SEND_LIT_SEL0_1, BC.SEND_LIT_SEL0_2, BC.SEND_LIT_SEL0_3, BC.SEND_LIT_SEL0_4, BC.SEND_LIT_SEL0_5, BC.SEND_LIT_SEL0_6, BC.SEND_LIT_SEL0_7, //
                         BC.SEND_LIT_SEL0_8, BC.SEND_LIT_SEL0_9, BC.SEND_LIT_SEL0_A, BC.SEND_LIT_SEL0_B, BC.SEND_LIT_SEL0_C, BC.SEND_LIT_SEL0_D, BC.SEND_LIT_SEL0_E, BC.SEND_LIT_SEL0_F: {
                         final Object receiver = popReceiver(frame, --sp);
-                        externalizePCAndSP(frame, pc, sp);
+                        FrameAccess.externalizePCAndSP(frame, pc, sp);
                         push(frame, sp++, send(frame, currentPC, receiver));
-                        pc = internalizePC(frame, pc);
+                        pc = FrameAccess.internalizePC(frame, pc);
                         break;
                     }
                     case BC.BYTECODE_PRIM_MULTIPLY, BC.BYTECODE_PRIM_DIVIDE, BC.BYTECODE_PRIM_MOD, BC.BYTECODE_PRIM_MAKE_POINT, BC.BYTECODE_PRIM_BIT_SHIFT, //
@@ -667,9 +667,9 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         BC.SEND_LIT_SEL1_8, BC.SEND_LIT_SEL1_9, BC.SEND_LIT_SEL1_A, BC.SEND_LIT_SEL1_B, BC.SEND_LIT_SEL1_C, BC.SEND_LIT_SEL1_D, BC.SEND_LIT_SEL1_E, BC.SEND_LIT_SEL1_F: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        externalizePCAndSP(frame, pc, sp);
+                        FrameAccess.externalizePCAndSP(frame, pc, sp);
                         push(frame, sp++, send(frame, currentPC, receiver, arg));
-                        pc = internalizePC(frame, pc);
+                        pc = FrameAccess.internalizePC(frame, pc);
                         break;
                     }
                     case BC.BYTECODE_PRIM_AT_PUT, //
@@ -678,9 +678,9 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         final Object arg2 = pop(frame, --sp);
                         final Object arg1 = pop(frame, --sp);
                         final Object receiver = popReceiver(frame, --sp);
-                        externalizePCAndSP(frame, pc, sp);
+                        FrameAccess.externalizePCAndSP(frame, pc, sp);
                         push(frame, sp++, send(frame, currentPC, receiver, arg1, arg2));
-                        pc = internalizePC(frame, pc);
+                        pc = FrameAccess.internalizePC(frame, pc);
                         break;
                     }
                     case BC.SHORT_UJUMP_0, BC.SHORT_UJUMP_1, BC.SHORT_UJUMP_2, BC.SHORT_UJUMP_3, BC.SHORT_UJUMP_4, BC.SHORT_UJUMP_5, BC.SHORT_UJUMP_6, BC.SHORT_UJUMP_7: {
@@ -714,7 +714,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                                 }
                             }
                             if (data[currentPC] instanceof final CheckForInterruptsInLoopNode checkForInterruptsNode) {
-                                checkForInterruptsNode.execute(frame, pc);
+                                checkForInterruptsNode.execute(frame, pc, sp);
                             }
                         }
                         break;
@@ -726,7 +726,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                                 pc += calculateShortOffset(b);
                             }
                         } else {
-                            sendMustBeBooleanInInterpreter(frame, pc, stackValue);
+                            sendMustBeBooleanInInterpreter(frame, pc, sp, stackValue);
                         }
                         break;
                     }
@@ -737,7 +737,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                                 pc += calculateShortOffset(b);
                             }
                         } else {
-                            sendMustBeBooleanInInterpreter(frame, pc, stackValue);
+                            sendMustBeBooleanInInterpreter(frame, pc, sp, stackValue);
                         }
                         break;
                     }
@@ -813,9 +813,9 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         final Object[] arguments = popN(frame, sp, numArgs);
                         sp -= numArgs;
                         final Object receiver = popReceiver(frame, --sp);
-                        externalizePCAndSP(frame, pc, sp);
+                        FrameAccess.externalizePCAndSP(frame, pc, sp);
                         push(frame, sp++, sendNary(frame, currentPC, receiver, arguments));
-                        pc = internalizePC(frame, pc);
+                        pc = FrameAccess.internalizePC(frame, pc);
                         extA = extB = 0;
                         break;
                     }
@@ -835,10 +835,10 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         final Object[] arguments = popN(frame, sp, numArgs);
                         sp -= numArgs;
                         final Object receiver = popReceiver(frame, --sp);
-                        externalizePCAndSP(frame, pc, sp);
+                        FrameAccess.externalizePCAndSP(frame, pc, sp);
                         CompilerAsserts.partialEvaluationConstant(isDirected);
                         pushFollowed(frame, currentPC, sp++, sendSuper(frame, isDirected, currentPC, lookupClass, receiver, arguments));
-                        pc = internalizePC(frame, pc);
+                        pc = FrameAccess.internalizePC(frame, pc);
                         extA = extB = 0;
                         break;
                     }
@@ -873,7 +873,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                                 }
                             }
                             if (data[currentPC] instanceof final CheckForInterruptsInLoopNode checkForInterruptsNode) {
-                                checkForInterruptsNode.execute(frame, pc);
+                                checkForInterruptsNode.execute(frame, pc, sp);
                             }
                         }
                         extA = extB = 0;
@@ -887,7 +887,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                                 pc += offset;
                             }
                         } else {
-                            sendMustBeBooleanInInterpreter(frame, pc, stackValue);
+                            sendMustBeBooleanInInterpreter(frame, pc, sp, stackValue);
                         }
                         extA = extB = 0;
                         break;
@@ -900,7 +900,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                                 pc += offset;
                             }
                         } else {
-                            sendMustBeBooleanInInterpreter(frame, pc, stackValue);
+                            sendMustBeBooleanInInterpreter(frame, pc, sp, stackValue);
                         }
                         extA = extB = 0;
                         break;
