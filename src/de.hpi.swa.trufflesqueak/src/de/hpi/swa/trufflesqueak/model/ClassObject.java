@@ -65,7 +65,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         instancesAreClasses = original.instancesAreClasses;
         superclass = original.superclass;
         assert superclass == null || superclass.assertNotForwarded();
-        methodDict = original.methodDict == null ? null : new VariablePointersObject(original.methodDict);
+        methodDict = original.methodDict != null ? new VariablePointersObject(original.methodDict) : null;
         format = original.format;
         // FIXME: should clone the pointers themselves, too
         pointers = original.pointers.clone();
@@ -368,9 +368,10 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         assert superclass == null || superclass.assertNotForwarded();
         invalidateClassHierarchyAndMethodDictStableAssumption("new superclass");
         this.superclass = superclass;
-        // ToDo: Instead of a full global flush, this should be refined to only flush
-        // entries in image.methodCache where the entry's class is `this` class or a
-        // subclass of `this` class.
+        /*
+         * TODO: Instead of a full global flush, this should be refined to only flush entries in
+         * image.methodCache where the entry's class is `this` class or a subclass of `this` class.
+         */
         image.flushMethodCache();
     }
 
@@ -378,9 +379,10 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         assert methodDict == null || methodDict.assertNotForwarded();
         invalidateClassHierarchyAndMethodDictStableAssumption("new method dict");
         this.methodDict = methodDict;
-        // ToDo: Instead of a full global flush, this should be refined to only flush
-        // entries in image.methodCache where the entry's class is `this` class or a
-        // subclass of `this` class.
+        /*
+         * TODO: Instead of a full global flush, this should be refined to only flush entries in
+         * image.methodCache where the entry's class is `this` class or a subclass of `this` class.
+         */
         image.flushMethodCache();
     }
 
@@ -465,7 +467,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
      */
     @TruffleBoundary
     public CompiledCodeObject resolveDispatchFailure(final NativeObject originalSelector) {
-
+        CompilerAsserts.neverPartOfCompilation();
         // Walk superclass chain to determine if #cannotInterpret:.
         ClassObject current = this;
         while (current != null) {

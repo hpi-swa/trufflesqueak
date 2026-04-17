@@ -51,10 +51,8 @@ public abstract class ResolveMethodNode extends AbstractNode {
     protected static final CompiledCodeObject doDispatchFailure(final SqueakImageContext image, final int expectedNumArgs, final boolean canPrimFail, final NativeObject selector,
                     final ClassObject receiverClass,
                     final Object lookupResult) {
-
         final MethodCacheEntry cacheEntry = image.findMethodCacheEntry(receiverClass, selector);
         final CompiledCodeObject fallbackMethod = cacheEntry.getOrCreateFallbackMethod();
-
         assert fallbackMethod.getNumArgs() == 1 : "Fallback method with unexpected number of arguments, got " + fallbackMethod.getNumArgs();
         return fallbackMethod;
     }
@@ -76,9 +74,10 @@ public abstract class ResolveMethodNode extends AbstractNode {
             assert runWithInMethod.getNumArgs() == 3 : "#run:with:in: with unexpected number of arguments, got " + runWithInMethod.getNumArgs();
             return runWithInMethod;
         } else {
-            // Target object doesn't understand run:with:in: (or it resolved to another non-method
-            // object),
-            // so we fall back to unified DNU.
+            /*
+             * Target object doesn't understand run:with:in: (or it resolved to another non-method
+             * object), so we fall back to unified DNU.
+             */
             return doDispatchFailure(image, 3, false, image.runWithInSelector, targetObjectClass, null);
         }
     }

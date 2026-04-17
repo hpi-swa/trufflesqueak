@@ -33,10 +33,14 @@ public final class MethodCacheEntry {
 
     public CompiledCodeObject getOrCreateFallbackMethod() {
         if (fallbackMethod == null) {
-            CompilerDirectives.transferToInterpreter();
-            fallbackMethod = classObject.resolveDispatchFailure(selector);
+            fallbackMethod = createFallbackMethod();
         }
         return fallbackMethod;
+    }
+
+    @CompilerDirectives.TruffleBoundary
+    private CompiledCodeObject createFallbackMethod() {
+        return classObject.resolveDispatchFailure(selector);
     }
 
     public void setResult(final Object object) {
