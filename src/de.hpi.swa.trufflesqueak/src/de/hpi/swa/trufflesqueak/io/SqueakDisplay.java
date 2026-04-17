@@ -504,7 +504,11 @@ public final class SqueakDisplay {
             frameRequested = true;
         }
 
-        // Wake the event loop to render the frame
+        wakeUpEventLoopToRenderFrame();
+    }
+
+    @TruffleBoundary
+    private static void wakeUpEventLoopToRenderFrame() {
         PlatformEventLoop.wakeUp();
     }
 

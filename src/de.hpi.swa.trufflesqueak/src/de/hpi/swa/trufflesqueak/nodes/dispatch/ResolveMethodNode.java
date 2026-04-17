@@ -15,7 +15,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
-import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -28,11 +27,12 @@ import de.hpi.swa.trufflesqueak.util.MethodCacheEntry;
 @GenerateCached(false)
 public abstract class ResolveMethodNode extends AbstractNode {
 
-    public abstract CompiledCodeObject execute(Node node, SqueakImageContext image, int expectedNumArgs, boolean canPrimFail, ClassObject receiverClass, Object lookupResult);
+    public abstract CompiledCodeObject execute(Node node, SqueakImageContext image, int expectedNumArgs, boolean canPrimFail, NativeObject selector, ClassObject receiverClass, Object lookupResult);
 
     @Specialization
     @SuppressWarnings("unused")
-    protected static final CompiledCodeObject doMethod(final SqueakImageContext image, final int expectedNumArgs, final boolean canPrimFail, final ClassObject receiverClass,
+    protected static final CompiledCodeObject doMethod(final SqueakImageContext image, final int expectedNumArgs, final boolean canPrimFail, final NativeObject selector,
+                    final ClassObject receiverClass,
                     final CompiledCodeObject method) {
         CompilerAsserts.partialEvaluationConstant(canPrimFail);
         if (method.getNumArgs() != expectedNumArgs) {
@@ -48,38 +48,37 @@ public abstract class ResolveMethodNode extends AbstractNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "lookupResult == null")
-    protected static final CompiledCodeObject doDoesNotUnderstand(final SqueakImageContext image, final int expectedNumArgs, final boolean canPrimFail, final ClassObject receiverClass,
+    protected static final CompiledCodeObject doDispatchFailure(final SqueakImageContext image, final int expectedNumArgs, final boolean canPrimFail, final NativeObject selector,
+                    final ClassObject receiverClass,
                     final Object lookupResult) {
-        final Object dnuMethod = lookupMethod(image, receiverClass, image.doesNotUnderstand);
-        if (dnuMethod instanceof final CompiledCodeObject method) {
-            assert method.getNumArgs() == 1 : "#doesNotUnderstand: with unexpected number of arguments, got " + method.getNumArgs();
-            return method;
-        } else {
-            throw SqueakException.create("Unable to find #doesNotUnderstand: in", receiverClass);
-        }
+        final MethodCacheEntry cacheEntry = image.findMethodCacheEntry(receiverClass, selector);
+        final CompiledCodeObject fallbackMethod = cacheEntry.getOrCreateFallbackMethod();
+        assert fallbackMethod.getNumArgs() == 1 : "Fallback method with unexpected number of arguments, got " + fallbackMethod.getNumArgs();
+        return fallbackMethod;
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"targetObject != null", "!isCompiledCodeObject(targetObject)"})
-    protected static final CompiledCodeObject doObjectAsMethod(final Node node, final SqueakImageContext image, final int expectedNumArgs, final boolean canPrimFail, final ClassObject receiverClass,
+    protected static final CompiledCodeObject doObjectAsMethod(final Node node, final SqueakImageContext image, final int expectedNumArgs, final boolean canPrimFail, final NativeObject selector,
+                    final ClassObject receiverClass,
                     final Object targetObject,
                     @Cached final SqueakObjectClassNode classNode) {
         final ClassObject targetObjectClass = classNode.executeLookup(node, targetObject);
-        final Object runWithInMethod = lookupMethod(image, targetObjectClass, image.runWithInSelector);
-        if (runWithInMethod instanceof final CompiledCodeObject method) {
-            assert method.getNumArgs() == 3 : "#run:with:in: with unexpected number of arguments, got " + method.getNumArgs();
-            return method;
-        } else {
-            assert runWithInMethod == null : "#run:with:in: should not be another Object";
-            return doDoesNotUnderstand(image, 2, false, targetObjectClass, null);
-        }
-    }
 
-    private static Object lookupMethod(final SqueakImageContext image, final ClassObject classObject, final NativeObject selector) {
-        final MethodCacheEntry cachedEntry = image.findMethodCacheEntry(classObject, selector);
-        if (cachedEntry.getResult() == null) {
-            cachedEntry.setResult(classObject.lookupInMethodDictSlow(selector));
+        final MethodCacheEntry oamCacheEntry = image.findMethodCacheEntry(targetObjectClass, image.runWithInSelector);
+        if (oamCacheEntry.getResult() == null) {
+            oamCacheEntry.setResult(targetObjectClass.lookupMethodInMethodDictSlow(image.runWithInSelector));
         }
-        return cachedEntry.getResult(); /* `null` return signals a doesNotUnderstand. */
+
+        if (oamCacheEntry.getResult() instanceof final CompiledCodeObject runWithInMethod) {
+            assert runWithInMethod.getNumArgs() == 3 : "#run:with:in: with unexpected number of arguments, got " + runWithInMethod.getNumArgs();
+            return runWithInMethod;
+        } else {
+            /*
+             * Target object doesn't understand run:with:in: (or it resolved to another non-method
+             * object), so we fall back to unified DNU.
+             */
+            return doDispatchFailure(image, 3, false, image.runWithInSelector, targetObjectClass, null);
+        }
     }
 }

@@ -8,13 +8,16 @@ package de.hpi.swa.trufflesqueak.util;
 
 import com.oracle.truffle.api.CompilerAsserts;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 
 public final class MethodCacheEntry {
     private ClassObject classObject;
     private NativeObject selector;
     private Object result;
+    private CompiledCodeObject fallbackMethod;
 
     public ClassObject getClassObject() {
         return classObject;
@@ -28,19 +31,34 @@ public final class MethodCacheEntry {
         return result;
     }
 
+    public CompiledCodeObject getOrCreateFallbackMethod() {
+        if (fallbackMethod == null) {
+            fallbackMethod = createFallbackMethod();
+        }
+        return fallbackMethod;
+    }
+
+    @CompilerDirectives.TruffleBoundary
+    private CompiledCodeObject createFallbackMethod() {
+        return classObject.resolveDispatchFailure(selector);
+    }
+
     public void setResult(final Object object) {
         result = object;
+        fallbackMethod = null;
     }
 
     public void freeAndRelease() {
         selector = null; /* Mark it free. */
         result = null; /* Release the method. */
+        fallbackMethod = null;
     }
 
     public MethodCacheEntry reuseFor(final ClassObject lookupClass, final NativeObject lookupSelector) {
         classObject = lookupClass;
         selector = lookupSelector;
         result = null;
+        fallbackMethod = null;
         return this;
     }
 

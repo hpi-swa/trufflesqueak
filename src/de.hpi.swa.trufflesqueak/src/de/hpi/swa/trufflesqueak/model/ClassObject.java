@@ -65,7 +65,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         instancesAreClasses = original.instancesAreClasses;
         superclass = original.superclass;
         assert superclass == null || superclass.assertNotForwarded();
-        methodDict = new VariablePointersObject(original.methodDict);
+        methodDict = original.methodDict != null ? new VariablePointersObject(original.methodDict) : null;
         format = original.format;
         // FIXME: should clone the pointers themselves, too
         pointers = original.pointers.clone();
@@ -247,7 +247,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
                 setSqueakHash(chunk.getHash());
             }
             superclass = (ClassObject) NilObject.nilToNull(chunk.getPointer(CLASS_DESCRIPTION.SUPERCLASS));
-            methodDict = (VariablePointersObject) chunk.getPointer(CLASS_DESCRIPTION.METHOD_DICT);
+            methodDict = (VariablePointersObject) NilObject.nilToNull(chunk.getPointer(CLASS_DESCRIPTION.METHOD_DICT));
             format = (long) chunk.getPointer(CLASS_DESCRIPTION.FORMAT);
             pointers = chunk.getPointers(CLASS_DESCRIPTION.INLINE_POINTERS);
             initializeLayout();
@@ -322,6 +322,11 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return getSuperclassOrNull();
     }
 
+    public AbstractSqueakObject getMethodDictOrNil() {
+        assert assertNotForwarded();
+        return NilObject.nullToNil(methodDict);
+    }
+
     public VariablePointersObject getMethodDict() {
         assert assertNotForwarded() && (methodDict == null || methodDict.assertNotForwarded());
         return methodDict;
@@ -329,6 +334,9 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     private VariablePointersObject getResolvedMethodDict() {
         assert assertNotForwarded();
+        if (methodDict == null) {
+            return methodDict;
+        }
         if (!methodDict.isNotForwarded()) {
             CompilerDirectives.transferToInterpreter();
             setMethodDict((VariablePointersObject) methodDict.getForwardingPointer());
@@ -360,15 +368,42 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         assert superclass == null || superclass.assertNotForwarded();
         invalidateClassHierarchyAndMethodDictStableAssumption("new superclass");
         this.superclass = superclass;
+        /*
+         * TODO: Instead of a full global flush, this should be refined to only flush entries in
+         * image.methodCache where the entry's class is `this` class or a subclass of `this` class.
+         */
+        image.flushMethodCache();
     }
 
     public void setMethodDict(final VariablePointersObject methodDict) {
         assert methodDict == null || methodDict.assertNotForwarded();
         invalidateClassHierarchyAndMethodDictStableAssumption("new method dict");
         this.methodDict = methodDict;
+        /*
+         * TODO: Instead of a full global flush, this should be refined to only flush entries in
+         * image.methodCache where the entry's class is `this` class or a subclass of `this` class.
+         */
+        image.flushMethodCache();
     }
 
-    /** See Interpreter#lookupMethodInClass:. */
+    /**
+     * Performs a full method lookup up the class hierarchy. See Interpreter#lookupMethodInClass:.
+     * <p>
+     * This method handles the core Smalltalk lookup semantics. It can return:
+     * <ul>
+     * <li>A {@link CompiledCodeObject} for a standard method.</li>
+     * <li>An arbitrary {@link Object} for Object-As-Method (run:with:in:) semantics.</li>
+     * <li>{@code null} if a structural dispatch failure occurs (either the selector is not found,
+     * or a nil method dictionary is encountered).</li>
+     * </ul>
+     * <p>
+     * Callers encountering a {@code null} result should use {@link #resolveDispatchFailure} to
+     * determine the appropriate fallback method (e.g., #doesNotUnderstand: or #cannotInterpret:).
+     *
+     * @param selector The message selector to look up.
+     * @return The result of the lookup (method or object), or {@code null} if dispatch fails.
+     */
+
     @TruffleBoundary
     public Object lookupInMethodDictSlow(final NativeObject selector) {
         final int selectorHash = selector.getSqueakHashInt();
@@ -380,7 +415,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
                  * "MethodDict pointer is nil (hopefully due a swapped out stub) -- raise exception
                  * #cannotInterpret:."
                  */
-                return getSuperclassOrNull().lookupInMethodDictSlow(image.cannotReturn);
+                return null;
             }
             final Object result = lookupMethodInDictionary(lookupClass.getResolvedMethodDict(), selector, selectorHash);
             if (result != null) {
@@ -423,8 +458,70 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return null;
     }
 
+    /**
+     * Resolves the fallback method for a failed dispatch (either DNU or CI).
+     *
+     * @param originalSelector The selector that failed (used for assertions and error context).
+     * @return The CompiledCodeObject for the fallback method.
+     * @throws SqueakException if the fallback method cannot be found (fatal VM error).
+     */
+    @TruffleBoundary
+    public CompiledCodeObject resolveDispatchFailure(final NativeObject originalSelector) {
+        CompilerAsserts.neverPartOfCompilation();
+        // Walk superclass chain to determine if #cannotInterpret:.
+        ClassObject current = this;
+        while (current != null) {
+            assert current.assertNotForwarded();
+            if (current.methodDict == null) {
+                break;
+            }
+            current = current.getSuperclassOrNull();
+        }
+
+        // If the walk terminates with null, we have a DNU.
+        if (current == null) {
+            assert originalSelector != image.doesNotUnderstand : "Fatal dispatch error: Recursive doesNotUnderstand:";
+
+            final CompiledCodeObject dnuMethod = lookupMethodInMethodDictSlow(image.doesNotUnderstand);
+            if (dnuMethod != null) {
+                return dnuMethod;
+            } else {
+                throw SqueakException.create("Fatal dispatch error: #doesNotUnderstand: not found in", this);
+            }
+        } else {
+            // Search for #cannotInterpret: starting in the superclass of the missing method
+            // dictionary class.
+            final ClassObject startingClass = current.getSuperclassOrNull();
+            if (startingClass == null) {
+                throw SqueakException.create("Fatal dispatch error: hit nil method dictionary in class with no superclass while sending", originalSelector);
+            }
+
+            final CompiledCodeObject ciMethod = startingClass.lookupMethodInMethodDictSlow(image.cannotInterpretSelector);
+            if (ciMethod != null) {
+                return ciMethod;
+            } else {
+                throw SqueakException.create("Fatal dispatch error: #cannotInterpret: not found in superclass chain of", current);
+            }
+        }
+    }
+
+    /**
+     * A strict convenience wrapper around {@link #lookupInMethodDictSlow(NativeObject)} that only
+     * returns compiled methods.
+     * <p>
+     * This acts as a safe filter. It returns {@code null} if the underlying lookup results in a
+     * structural failure (such as #doesNotUnderstand: or #cannotInterpret:) OR if the lookup
+     * resolves to a non-method object (Object-As-Method).
+     *
+     * @param selector The message selector to look up.
+     * @return The compiled method, or {@code null} if not found or not a method.
+     */
     public CompiledCodeObject lookupMethodInMethodDictSlow(final NativeObject selector) {
-        return (CompiledCodeObject) lookupInMethodDictSlow(selector);
+        final Object result = lookupInMethodDictSlow(selector);
+        if (result instanceof CompiledCodeObject compiledCode) {
+            return compiledCode;
+        }
+        return null;
     }
 
     public void flushCachesForSelector(final NativeObject selector) {
@@ -576,7 +673,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
             throw SqueakException.create("ClassObject must have slots:", this);
         }
         writer.writeObject(getSuperclass());
-        writer.writeObject(getMethodDict());
+        writer.writeObject(getMethodDictOrNil());
         writer.writeSmallInteger(format);
         writer.writeObjects(getOtherPointers());
     }

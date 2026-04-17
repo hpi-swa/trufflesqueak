@@ -47,6 +47,6 @@ public abstract class LookupMethodNode extends AbstractNode {
         if (cachedEntry.getResult() == null) {
             cachedEntry.setResult(classObject.lookupInMethodDictSlow(selector));
         }
-        return cachedEntry.getResult(); /* `null` return signals a doesNotUnderstand. */
+        return cachedEntry.getResult(); /* `null` return signals DNU or CI. */
     }
 }
