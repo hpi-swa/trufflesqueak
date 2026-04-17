@@ -55,8 +55,7 @@ public final class CheckForInterruptsInLoopNode extends AbstractNode {
         }
         /* Exclude interrupts case from compilation. */
         CompilerDirectives.transferToInterpreter();
-        FrameAccess.setInstructionPointer(frame, pc);
-        FrameAccess.setStackPointer(frame, sp);
+        FrameAccess.externalizePCAndSP(frame, pc, sp);
         final Object[] specialObjects = image.specialObjectsArray.getObjectStorage();
         boolean switchToNewProcess = false;
         if (istate.tryInterruptPending()) {

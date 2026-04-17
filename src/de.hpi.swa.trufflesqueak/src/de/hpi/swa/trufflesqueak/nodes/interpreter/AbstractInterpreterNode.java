@@ -370,7 +370,6 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     }
 
     protected static final Object pop(final VirtualFrame frame, final int sp) {
-        /* Unreachable stack entries are lazily nilled in FrameAccess.iterateStackObjects */
         final int slotIndex = FrameAccess.getStackStart() + sp;
         return frame.getObjectStatic(slotIndex);
     }
@@ -385,7 +384,6 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
 
     @ExplodeLoop
     private static Object[] popNExploded(final VirtualFrame frame, final int sp, final int numPop) {
-        /* Unreachable stack entries are lazily nilled in FrameAccess.iterateStackObjects */
         final int firstSlotIndex = FrameAccess.getStackStart() + sp - numPop;
         final Object[] stackValues = new Object[numPop];
         for (int i = 0; i < numPop; i++) {

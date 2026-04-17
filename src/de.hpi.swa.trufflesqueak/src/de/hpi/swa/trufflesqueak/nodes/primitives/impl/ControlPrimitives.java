@@ -855,12 +855,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 130)
     protected abstract static class PrimFullGCNode extends AbstractPrimitiveWithFrameNode implements Primitive0 {
         @Specialization
-        protected final Object doGC(final VirtualFrame frame, @SuppressWarnings("unused") final Object receiver,
+        protected static final Object doGC(final VirtualFrame frame, @SuppressWarnings("unused") final Object receiver,
+                        @Bind final SqueakImageContext image,
                         @Cached final CheckForInterruptsFullNode interruptNode,
                         @Cached final PushToStackNode pushNode) {
-
-            final Object result = GCHelper.doGC(getContext(), true);
-
+            final Object result = GCHelper.doGC(image, true);
             try {
                 interruptNode.execute(frame);
             } catch (final ProcessSwitch ps) {
@@ -875,12 +874,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 131)
     protected abstract static class PrimIncrementalGCNode extends AbstractPrimitiveWithFrameNode implements Primitive0 {
         @Specialization
-        protected final Object doGC(final VirtualFrame frame, @SuppressWarnings("unused") final Object receiver,
+        protected static final Object doGC(final VirtualFrame frame, @SuppressWarnings("unused") final Object receiver,
+                        @Bind final SqueakImageContext image,
                         @Cached final CheckForInterruptsFullNode interruptNode,
                         @Cached final PushToStackNode pushNode) {
-
-            final Object result = GCHelper.doGC(getContext(), false);
-
+            final Object result = GCHelper.doGC(image, false);
             try {
                 interruptNode.execute(frame);
             } catch (final ProcessSwitch ps) {
