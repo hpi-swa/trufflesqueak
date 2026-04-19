@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.logging.Level;
 
 import de.hpi.swa.trufflesqueak.util.DebugUtils;
+import org.graalvm.collections.EconomicMap;
 import org.graalvm.collections.UnmodifiableEconomicMap;
 
 import com.oracle.truffle.api.Assumption;
@@ -117,7 +118,7 @@ public final class SqueakImageContext {
     @CompilationFinal private ClassObject doubleByteArrayClass;
     @CompilationFinal private ClassObject wordArrayClass;
     @CompilationFinal private ClassObject doubleWordArrayClass;
-    public final NativeObject cannotInterpretSelector = new NativeObject(); // TODO: use selector
+    public final NativeObject cannotInterpretSelector = new NativeObject();
     public final ClassObject blockClosureClass = new ClassObject(this);
     @CompilationFinal private ClassObject fullBlockClosureClass;
     public final ClassObject largeNegativeIntegerClass = new ClassObject(this);
@@ -149,12 +150,18 @@ public final class SqueakImageContext {
                     ArrayUtils.EMPTY_ARRAY, compiledMethodClass);
     public final VirtualFrame externalSenderFrame = Truffle.getRuntime().createVirtualFrame(FrameAccess.newWith(NilObject.SINGLETON, null, NilObject.SINGLETON), dummyMethod.getFrameDescriptor());
 
+    // The maximum message arity that supports DNU shortcuts.
+    public static final int MAX_DNU_SHORTCUT_ARITY = 3;
+
+    @CompilationFinal(dimensions = 1) private NativeObject[] dnuShortcutSelectors = new NativeObject[0];
+
     /* Method Cache */
     private static final int METHOD_CACHE_SIZE = 2 << 12;
     private static final int METHOD_CACHE_MASK = METHOD_CACHE_SIZE - 1;
     private static final int METHOD_CACHE_REPROBES = 4;
     private int methodCacheRandomish;
     @CompilationFinal(dimensions = 1) private final MethodCacheEntry[] methodCache = new MethodCacheEntry[METHOD_CACHE_SIZE];
+    private final EconomicMap<NativeObject, CyclicAssumption> absentSelectorAssumptions = EconomicMap.create();
 
     /* Interpreter state */
     private int primFailCode = -1;
@@ -234,8 +241,6 @@ public final class SqueakImageContext {
         }
         assert homePath != null && homePath.exists() : "Home directory does not exist: " + homePath;
         initializeMethodCache();
-
-        DebugUtils.registerContext(this);
     }
 
     public static SqueakImageContext get(final Node node) {
@@ -420,6 +425,28 @@ public final class SqueakImageContext {
 
     public boolean toggleCurrentMarkingFlag() {
         return currentMarkingFlag = !currentMarkingFlag;
+    }
+
+    public NativeObject getDNUShortcutSelector(final int arity) {
+        if (0 <= arity && arity < dnuShortcutSelectors.length) {
+            return dnuShortcutSelectors[arity];
+        }
+        return null;
+    }
+
+    public void setDNUShortcutSelectors(final NativeObject[] newSelectors) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        dnuShortcutSelectors = newSelectors;
+        flushMethodCache();
+    }
+
+    private boolean isDNUShortcutSelector(final NativeObject selector) {
+        for (final NativeObject shortcutSelector : dnuShortcutSelectors) {
+            if (selector == shortcutSelector) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /* SpurMemoryManager>>#setHiddenRootsObj: */
@@ -646,9 +673,31 @@ public final class SqueakImageContext {
         }
     }
 
-    public void flushCachesForSelector(final NativeObject selector) {
-        flushCachesForSelectorInClassTable(selector);
-        flushMethodCacheForSelector(selector);
+    @TruffleBoundary
+    public Assumption getAbsentSelectorAssumption(final NativeObject selector) {
+        CyclicAssumption absentAssumption = absentSelectorAssumptions.get(selector);
+        if (absentAssumption == null) {
+            absentAssumption = new CyclicAssumption("Absent selector globally: " + selector.asStringUnsafe());
+            absentSelectorAssumptions.put(selector, absentAssumption);
+        }
+        return absentAssumption.getAssumption();
+    }
+
+    @TruffleBoundary
+    private void invalidateAllAbsentSelectorAssumptions() {
+        for (final CyclicAssumption absentAssumption : absentSelectorAssumptions.getValues()) {
+            absentAssumption.invalidate("Fallback method (DNU/CI) shadowed or modified");
+        }
+        absentSelectorAssumptions.clear();
+    }
+
+    @TruffleBoundary
+    private void invalidateAbsentSelectorAssumption(final NativeObject selector) {
+        final CyclicAssumption absentAssumption = absentSelectorAssumptions.get(selector);
+        if (absentAssumption != null) {
+            absentAssumption.invalidate("Absent selector flushed globally");
+            absentSelectorAssumptions.removeKey(selector);
+        }
     }
 
     public TruffleFile getHomePath() {
@@ -1038,17 +1087,27 @@ public final class SqueakImageContext {
 
     /* Clear all cache entries (prim 89). */
     public void flushMethodCache() {
+        invalidateAllAbsentSelectorAssumptions();
         for (int i = 0; i < METHOD_CACHE_SIZE; i++) {
             methodCache[i].freeAndRelease();
         }
     }
 
     /* Clear cache entries for selector (prim 119). */
-    private void flushMethodCacheForSelector(final NativeObject selector) {
-        if (selector == doesNotUnderstand || selector == cannotInterpretSelector) {
+    public void flushCachesForSelector(final NativeObject selector) {
+        if (selector == doesNotUnderstand || selector == cannotInterpretSelector || isDNUShortcutSelector(selector)) {
+            // A core fallback changed. Invalidate the entire method cache to ensure
+            // no missing selectors are holding onto the stale fallback method.
             flushMethodCache();
-            return;
+            flushCachesForSelectorInClassTable(selector);
+        } else {
+            invalidateAbsentSelectorAssumption(selector);
+            flushCachesForSelectorInClassTable(selector);
+            flushMethodCacheForSelector(selector);
         }
+    }
+
+    private void flushMethodCacheForSelector(final NativeObject selector) {
         for (int i = 0; i < METHOD_CACHE_SIZE; i++) {
             if (methodCache[i].getSelector() == selector) {
                 methodCache[i].freeAndRelease();
