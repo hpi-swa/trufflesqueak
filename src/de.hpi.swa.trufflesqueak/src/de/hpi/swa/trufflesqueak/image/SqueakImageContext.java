@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.logging.Level;
 
 import de.hpi.swa.trufflesqueak.util.DebugUtils;
+import org.graalvm.collections.EconomicMap;
 import org.graalvm.collections.UnmodifiableEconomicMap;
 
 import com.oracle.truffle.api.Assumption;
@@ -155,6 +156,7 @@ public final class SqueakImageContext {
     private static final int METHOD_CACHE_REPROBES = 4;
     private int methodCacheRandomish;
     @CompilationFinal(dimensions = 1) private final MethodCacheEntry[] methodCache = new MethodCacheEntry[METHOD_CACHE_SIZE];
+    private final EconomicMap<NativeObject, CyclicAssumption> absentSelectorAssumptions = EconomicMap.create();
 
     /* Interpreter state */
     private int primFailCode = -1;
@@ -234,8 +236,6 @@ public final class SqueakImageContext {
         }
         assert homePath != null && homePath.exists() : "Home directory does not exist: " + homePath;
         initializeMethodCache();
-
-        DebugUtils.registerContext(this);
     }
 
     public static SqueakImageContext get(final Node node) {
@@ -646,7 +646,39 @@ public final class SqueakImageContext {
         }
     }
 
+    @TruffleBoundary
+    public Assumption getAbsentSelectorAssumption(final NativeObject selector) {
+        CyclicAssumption absentAssumption = absentSelectorAssumptions.get(selector);
+        if (absentAssumption == null) {
+            absentAssumption = new CyclicAssumption("Absent selector globally: " + selector.asStringUnsafe());
+            absentSelectorAssumptions.put(selector, absentAssumption);
+        }
+        return absentAssumption.getAssumption();
+    }
+
+    @TruffleBoundary
+    private void invalidateAllAbsentSelectorAssumptions() {
+        for (final CyclicAssumption absentAssumption : absentSelectorAssumptions.getValues()) {
+            absentAssumption.invalidate("Fallback method (DNU/CI) shadowed or modified");
+        }
+        absentSelectorAssumptions.clear();
+    }
+
+    @TruffleBoundary
+    private void invalidateAbsentSelectorAssumption(final NativeObject selector) {
+        if (selector == doesNotUnderstand || selector == cannotInterpretSelector) {
+            invalidateAllAbsentSelectorAssumptions();
+            return;
+        }
+        final CyclicAssumption absentAssumption = absentSelectorAssumptions.get(selector);
+        if (absentAssumption != null) {
+            absentAssumption.invalidate("Absent selector flushed globally");
+            absentSelectorAssumptions.removeKey(selector);
+        }
+    }
+
     public void flushCachesForSelector(final NativeObject selector) {
+        invalidateAbsentSelectorAssumption(selector);
         flushCachesForSelectorInClassTable(selector);
         flushMethodCacheForSelector(selector);
     }
@@ -1045,10 +1077,6 @@ public final class SqueakImageContext {
 
     /* Clear cache entries for selector (prim 119). */
     private void flushMethodCacheForSelector(final NativeObject selector) {
-        if (selector == doesNotUnderstand || selector == cannotInterpretSelector) {
-            flushMethodCache();
-            return;
-        }
         for (int i = 0; i < METHOD_CACHE_SIZE; i++) {
             if (methodCache[i].getSelector() == selector) {
                 methodCache[i].freeAndRelease();

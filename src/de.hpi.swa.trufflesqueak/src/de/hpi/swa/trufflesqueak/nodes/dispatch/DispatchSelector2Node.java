@@ -129,7 +129,7 @@ public final class DispatchSelector2Node extends DispatchSelectorNode {
             assert checkArgumentCount(method, 2);
             if (method.hasPrimitive()) {
                 final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.getOrCreateIndexedOrNamed(method);
-                if (primitiveNode instanceof Primitive2 primitive2) {
+                if (primitiveNode instanceof final Primitive2 primitive2) {
                     return new DispatchDirectPrimitive2Node(assumptions, method, primitive2);
                 }
                 DispatchUtils.logMissingPrimitive(primitiveNode, method);
@@ -139,7 +139,8 @@ public final class DispatchSelector2Node extends DispatchSelectorNode {
 
         private static DispatchDirectMessageFallback2Node createMessageFallbackNode(final NativeObject selector, final Assumption[] assumptions, final ClassObject receiverClass) {
             final CompiledCodeObject fallbackMethod = receiverClass.resolveDispatchFailure(selector);
-            return new DispatchDirectMessageFallback2Node(assumptions, selector, fallbackMethod);
+            final Assumption[] finalAssumptions = DispatchUtils.getAssumptionsForMessageFallback(assumptions, selector, fallbackMethod);
+            return new DispatchDirectMessageFallback2Node(finalAssumptions, selector, fallbackMethod);
         }
     }
 

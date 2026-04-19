@@ -101,7 +101,8 @@ public final class DispatchSelector5Node extends DispatchSelectorNode {
 
         private static DispatchDirectMessageFallback5Node createMessageFallbackNode(final NativeObject selector, final Assumption[] assumptions, final ClassObject receiverClass) {
             final CompiledCodeObject fallbackMethod = receiverClass.resolveDispatchFailure(selector);
-            return new DispatchDirectMessageFallback5Node(assumptions, selector, fallbackMethod);
+            final Assumption[] finalAssumptions = DispatchUtils.getAssumptionsForMessageFallback(assumptions, selector, fallbackMethod);
+            return new DispatchDirectMessageFallback5Node(finalAssumptions, selector, fallbackMethod);
         }
     }
 

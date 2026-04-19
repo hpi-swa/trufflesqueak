@@ -190,7 +190,8 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
 
         private static DispatchDirectMessageFallbackNaryNode createMessageFallbackNode(final NativeObject selector, final Assumption[] assumptions, final ClassObject receiverClass) {
             final CompiledCodeObject fallbackMethod = receiverClass.resolveDispatchFailure(selector);
-            return new DispatchDirectMessageFallbackNaryNode(assumptions, selector, fallbackMethod);
+            final Assumption[] finalAssumptions = DispatchUtils.getAssumptionsForMessageFallback(assumptions, selector, fallbackMethod);
+            return new DispatchDirectMessageFallbackNaryNode(finalAssumptions, selector, fallbackMethod);
         }
     }
 
