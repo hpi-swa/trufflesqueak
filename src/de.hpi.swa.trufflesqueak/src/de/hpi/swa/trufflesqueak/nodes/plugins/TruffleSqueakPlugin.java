@@ -11,15 +11,22 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.dsl.Bind;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.DirectCallNode;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.interop.JavaObjectWrapper;
+import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
+import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.AbstractInterpreterNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
@@ -103,6 +110,42 @@ public final class TruffleSqueakPlugin extends AbstractPrimitiveFactoryHolder {
             } else {
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveSetDNUShortcutSelectors")
+    protected abstract static class PrimSetDNUShortcutSelectorsNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
+        @Specialization
+        protected final Object doSet(final Object receiver, final ArrayObject array,
+                        @Bind final Node node,
+                        @Cached final ArrayObjectNodes.ArrayObjectToObjectArrayCopyNode toObjectArrayNode) {
+
+            final Object[] elements = toObjectArrayNode.execute(node, array);
+            final int arraySize = elements.length;
+
+            if (arraySize > SqueakImageContext.MAX_DNU_SHORTCUT_ARITY + 1) {
+                CompilerDirectives.transferToInterpreter();
+                throw PrimitiveFailed.BAD_ARGUMENT;
+            }
+
+            final NativeObject[] isolatedSelectors = new NativeObject[arraySize];
+
+            for (int i = 0; i < arraySize; i++) {
+                final Object element = elements[i];
+
+                if (element instanceof final NativeObject nativeObject) {
+                    isolatedSelectors[i] = nativeObject;
+                } else if (element == NilObject.SINGLETON) {
+                    isolatedSelectors[i] = null;
+                } else {
+                    CompilerDirectives.transferToInterpreter();
+                    throw PrimitiveFailed.BAD_ARGUMENT;
+                }
+            }
+
+            getContext().setDNUShortcutSelectors(isolatedSelectors);
+            return receiver;
         }
     }
 }

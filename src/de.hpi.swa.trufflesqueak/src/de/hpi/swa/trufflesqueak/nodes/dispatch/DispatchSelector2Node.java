@@ -137,10 +137,15 @@ public final class DispatchSelector2Node extends DispatchSelectorNode {
             return new DispatchDirectMethod2Node(assumptions, method);
         }
 
-        private static DispatchDirectMessageFallback2Node createMessageFallbackNode(final NativeObject selector, final Assumption[] assumptions, final ClassObject receiverClass) {
-            final CompiledCodeObject fallbackMethod = receiverClass.resolveDispatchFailure(selector);
-            final Assumption[] finalAssumptions = DispatchUtils.getAssumptionsForMessageFallback(assumptions, selector, fallbackMethod);
-            return new DispatchDirectMessageFallback2Node(finalAssumptions, selector, fallbackMethod);
+        private static DispatchDirect2Node createMessageFallbackNode(final NativeObject selector, final Assumption[] assumptions, final ClassObject receiverClass) {
+            final ClassObject.DispatchFailureResult result = receiverClass.resolveDispatchFailure(selector, 2);
+            final Assumption[] finalAssumptions = DispatchUtils.getAssumptionsForMessageFallback(assumptions, selector, result.fallbackMethod());
+
+            return switch (result.convention()) {
+                case SHORTCUT_DNU -> new DispatchDirectShortcutFallback2Node(finalAssumptions, selector, result.fallbackMethod());
+                case STANDARD_DNU -> new DispatchDirectDNUFallback2Node(finalAssumptions, selector, result.fallbackMethod());
+                case CANNOT_INTERPRET -> new DispatchDirectCannotInterpretFallback2Node(finalAssumptions, selector, result.fallbackMethod(), result.fallbackDepth(), result.fallbackSelector());
+            };
         }
     }
 
@@ -219,21 +224,68 @@ public final class DispatchSelector2Node extends DispatchSelectorNode {
         }
     }
 
-    static final class DispatchDirectMessageFallback2Node extends DispatchDirectWithSender2Node {
-        private final NativeObject selector;
-        @Child private DirectCallNode callNode;
-        @Child private CreateMessageNode createMessageNode = CreateMessageNodeGen.create();
+    abstract static class AbstractDispatchDirectFallback2Node extends DispatchDirectWithSender2Node {
+        protected final NativeObject selector;
+        @Child protected DirectCallNode callNode;
 
-        DispatchDirectMessageFallback2Node(final Assumption[] assumptions, final NativeObject selector, final CompiledCodeObject dnuMethod) {
+        AbstractDispatchDirectFallback2Node(final Assumption[] assumptions, final NativeObject selector, final CompiledCodeObject targetMethod) {
             super(assumptions);
             this.selector = selector;
-            callNode = DirectCallNode.create(dnuMethod.getCallTarget());
+            this.callNode = DirectCallNode.create(targetMethod.getCallTarget());
+        }
+
+        @Override
+        public abstract Object execute(VirtualFrame frame, Object receiver, Object arg1, Object arg2);
+    }
+
+    static final class DispatchDirectDNUFallback2Node extends AbstractDispatchDirectFallback2Node {
+        @Child private CreateMessageNode createMessageNode = CreateMessageNodeGen.create();
+
+        DispatchDirectDNUFallback2Node(final Assumption[] assumptions, final NativeObject selector, final CompiledCodeObject dnuMethod) {
+            super(assumptions, selector, dnuMethod);
         }
 
         @Override
         public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2) {
             final PointersObject message = createMessageNode.execute(selector, receiver, new Object[]{arg1, arg2});
             return callNode.call(FrameAccess.newMessageFallbackWith(senderNode.execute(frame), receiver, message));
+        }
+    }
+
+    static final class DispatchDirectCannotInterpretFallback2Node extends AbstractDispatchDirectFallback2Node {
+        private final int fallbackDepth;
+        private final NativeObject ciSelector;
+        @Child private CreateMessageNode createMessageNode = CreateMessageNodeGen.create();
+
+        DispatchDirectCannotInterpretFallback2Node(final Assumption[] assumptions, final NativeObject selector, final CompiledCodeObject ciMethod, final int fallbackDepth,
+                        final NativeObject ciSelector) {
+            super(assumptions, selector, ciMethod);
+            this.fallbackDepth = fallbackDepth;
+            this.ciSelector = ciSelector;
+        }
+
+        @Override
+        public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2) {
+            final PointersObject message = DispatchUtils.buildNestedMessage(
+                            createMessageNode,
+                            selector,
+                            ciSelector,
+                            receiver,
+                            new Object[]{arg1, arg2},
+                            fallbackDepth);
+            return callNode.call(FrameAccess.newMessageFallbackWith(senderNode.execute(frame), receiver, message));
+        }
+    }
+
+    static final class DispatchDirectShortcutFallback2Node extends AbstractDispatchDirectFallback2Node {
+
+        DispatchDirectShortcutFallback2Node(final Assumption[] assumptions, final NativeObject selector, final CompiledCodeObject shortcutMethod) {
+            super(assumptions, selector, shortcutMethod);
+        }
+
+        @Override
+        public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2) {
+            return callNode.call(FrameAccess.newWith(senderNode.execute(frame), null, receiver, arg1, arg2, selector));
         }
     }
 
@@ -272,7 +324,14 @@ public final class DispatchSelector2Node extends DispatchSelectorNode {
             final ClassObject receiverClass = classNode.executeLookup(node, receiver);
             final Object lookupResult = getContext(node).lookup(receiverClass, selector);
             final CompiledCodeObject method = methodNode.execute(node, getContext(node), 2, canPrimFail, selector, receiverClass, lookupResult);
-            final Object result = tryPrimitiveNode.execute(frame, method, receiver, arg1, arg2);
+
+            final Object result;
+            if (lookupResult instanceof CompiledCodeObject) {
+                result = tryPrimitiveNode.execute(frame, method, receiver, arg1, arg2);
+            } else {
+                result = null;
+            }
+
             if (result != null) {
                 return result;
             } else {
@@ -347,9 +406,20 @@ public final class DispatchSelector2Node extends DispatchSelectorNode {
             protected static final Object[] doMessageFallback(final Node node, final AbstractSqueakObject sender, final Object receiver, final Object arg1, final Object arg2,
                             final ClassObject receiverClass,
                             @SuppressWarnings("unused") final Object lookupResult, final NativeObject selector,
-                            @Cached(inline = false) final AbstractPointersObjectWriteNode writeNode) {
+                            @Cached(inline = false) final AbstractPointersObjectWriteNode writeNode,
+                            @Cached(inline = false) final CreateMessageNode createMessageNode) {
+                final ClassObject.DispatchFailureResult result = getContext(node).findMethodCacheEntry(receiverClass, selector).getOrCreateDispatchFailureResult(2);
+                if (result.convention() == ClassObject.FallbackConvention.SHORTCUT_DNU) {
+                    return FrameAccess.newWith(sender, null, receiver, arg1, arg2, selector);
+                }
+
                 final Object[] arguments = new Object[]{arg1, arg2};
-                final PointersObject message = getContext(node).newMessage(writeNode, selector, receiverClass, arguments);
+                final PointersObject message;
+                if (result.convention() == ClassObject.FallbackConvention.CANNOT_INTERPRET) {
+                    message = DispatchUtils.buildNestedMessage(createMessageNode, selector, result.fallbackSelector(), receiver, arguments, result.fallbackDepth());
+                } else {
+                    message = getContext(node).newMessage(writeNode, selector, receiverClass, arguments);
+                }
                 return FrameAccess.newMessageFallbackWith(sender, receiver, message);
             }
 
