@@ -117,7 +117,7 @@ public final class SqueakImageContext {
     @CompilationFinal private ClassObject doubleByteArrayClass;
     @CompilationFinal private ClassObject wordArrayClass;
     @CompilationFinal private ClassObject doubleWordArrayClass;
-    public final NativeObject cannotInterpretSelector = new NativeObject(); // TODO: use selector
+    public final NativeObject cannotInterpretSelector = new NativeObject();
     public final ClassObject blockClosureClass = new ClassObject(this);
     @CompilationFinal private ClassObject fullBlockClosureClass;
     public final ClassObject largeNegativeIntegerClass = new ClassObject(this);
@@ -148,6 +148,11 @@ public final class SqueakImageContext {
                     CompiledCodeHeaderUtils.makeHeaderWord(true, 0, 0, 0, true, true),
                     ArrayUtils.EMPTY_ARRAY, compiledMethodClass);
     public final VirtualFrame externalSenderFrame = Truffle.getRuntime().createVirtualFrame(FrameAccess.newWith(NilObject.SINGLETON, null, NilObject.SINGLETON), dummyMethod.getFrameDescriptor());
+
+    // The maximum message arity that supports DNU shortcuts.
+    public static final int MAX_DNU_SHORTCUT_ARITY = 3;
+
+    @CompilationFinal(dimensions = 1) private NativeObject[] dnuShortcutSelectors = new NativeObject[0];
 
     /* Method Cache */
     private static final int METHOD_CACHE_SIZE = 2 << 12;
@@ -419,6 +424,19 @@ public final class SqueakImageContext {
 
     public boolean toggleCurrentMarkingFlag() {
         return currentMarkingFlag = !currentMarkingFlag;
+    }
+
+    public NativeObject getDNUShortcutSelector(final int arity) {
+        if (0 <= arity && arity < dnuShortcutSelectors.length) {
+            return dnuShortcutSelectors[arity];
+        }
+        return null;
+    }
+
+    public void setDNUShortcutSelectors(final NativeObject[] newSelectors) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        dnuShortcutSelectors = newSelectors;
+        flushMethodCache();
     }
 
     /* SpurMemoryManager>>#setHiddenRootsObj: */
@@ -1069,6 +1087,7 @@ public final class SqueakImageContext {
 
     /* Clear all cache entries (prim 89). */
     public void flushMethodCache() {
+        invalidateAllAbsentSelectorAssumptions();
         for (int i = 0; i < METHOD_CACHE_SIZE; i++) {
             methodCache[i].freeAndRelease();
         }

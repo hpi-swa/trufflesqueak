@@ -10,6 +10,7 @@ import java.util.ArrayList;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeInterface;
 
@@ -18,6 +19,7 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
@@ -85,6 +87,17 @@ public final class DispatchUtils {
         finalAssumptions[classAssumptions.length] = fallbackMethod.getCallTargetStable();
         finalAssumptions[classAssumptions.length + 1] = SqueakImageContext.getSlow().getAbsentSelectorAssumption(selector);
         return finalAssumptions;
+    }
+
+    @ExplodeLoop
+    static PointersObject buildNestedMessage(final CreateMessageNode createMessageNode,
+                    final NativeObject originalSelector, final NativeObject cannotInterpretSelector,
+                    final Object receiver, final Object[] arguments, final int fallbackDepth) {
+        PointersObject message = createMessageNode.execute(originalSelector, receiver, arguments);
+        for (int i = 1; i < fallbackDepth; i++) {
+            message = createMessageNode.execute(cannotInterpretSelector, receiver, new Object[]{message});
+        }
+        return message;
     }
 
     static void logMissingPrimitive(final AbstractPrimitiveNode primitiveNode, final CompiledCodeObject code) {

@@ -276,7 +276,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind final Node node,
                         @Cached("selector") final NativeObject cachedSelector,
                         @Cached("create(receiver)") final LookupClassGuard guard,
-                        @Cached("create(selector, guard)") final DispatchDirectNaryNode dispatchDirectNode,
+                        @Cached final ArrayObjectSizeNode sizeNode,
+                        @Bind("sizeNode.execute(node, argumentsArray)") final int arity,
+                        @Cached("create(selector, guard, arity)") final DispatchDirectNaryNode dispatchDirectNode,
                         @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode) {
             final Object[] arguments = getObjectArrayNode.execute(node, argumentsArray);
             return dispatchDirectNode.executeWithCheckedArguments(frame, receiver, arguments);
@@ -511,7 +513,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         "dispatchDirectNode.getAssumptions()"}, limit = "3")
         protected static final Object doCached(final VirtualFrame frame, @SuppressWarnings("unused") final ClassObject lookupClass, final Object receiver, final Object[] arguments,
                         @SuppressWarnings("unused") @Cached("lookupClass") final ClassObject cachedLookupClass,
-                        @Cached("create(selector, cachedLookupClass)") final DispatchDirectNaryNode dispatchDirectNode) {
+                        @Cached("create(selector, cachedLookupClass, arguments.length)") final DispatchDirectNaryNode dispatchDirectNode) {
             return dispatchDirectNode.executeWithCheckedArguments(frame, receiver, arguments);
         }
     }
