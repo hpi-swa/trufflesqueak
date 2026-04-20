@@ -11,6 +11,7 @@ import static de.hpi.swa.trufflesqueak.util.UnsafeUtils.uncheckedCast;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.EarlyInline;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.HostCompilerDirectives.InliningCutoff;
 import com.oracle.truffle.api.frame.Frame;
@@ -251,18 +252,24 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
      * Bytecode
      */
 
+    @EarlyInline
     protected static final byte getByte(final byte[] bc, final int pc) {
         return UnsafeUtils.getByte(bc, pc);
     }
 
+    @EarlyInline
     protected static final int getUnsignedInt(final byte[] bc, final int pc) {
-        return Byte.toUnsignedInt(getByte(bc, pc));
+        return getByte(bc, pc) & 0xFF;
     }
 
     protected final Object handleReturn(final VirtualFrame frame, final int currentPC, final int pc, final int sp, final Object result, final int loopCounter) {
         if (loopCounter > 0) {
             LoopNode.reportLoopCount(this, loopCounter);
         }
+        return handleReturn(frame, currentPC, pc, sp, result);
+    }
+
+    protected final Object handleReturn(final VirtualFrame frame, final int currentPC, final int pc, final int sp, final Object result) {
         if (isBlock) {
             return handleBlockReturn(frame, currentPC, pc, sp, result);
         } else {
@@ -277,7 +284,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         return handleNormalReturn(frame, currentPC, result);
     }
 
-    private Object handleNormalReturn(final VirtualFrame frame, final int currentPC, final Object result) {
+    protected final Object handleNormalReturn(final VirtualFrame frame, final int currentPC, final Object result) {
         final byte profile = getProfile(currentPC);
         if (FrameAccess.hasModifiedSender(frame)) {
             enter(currentPC, profile, BRANCH1);
@@ -408,7 +415,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         }
     }
 
-    protected final void sendMustBeBooleanInInterpreter(final VirtualFrame frame, final int pc, final int sp, final Object stackValue) {
+    protected final SqueakException sendMustBeBooleanInInterpreter(final VirtualFrame frame, final int pc, final int sp, final Object stackValue) {
         CompilerDirectives.transferToInterpreter();
         FrameAccess.externalizePCAndSP(frame, pc, sp);
         final SqueakImageContext image = getContext();
@@ -419,6 +426,11 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     protected static final RuntimeException unknownBytecode() {
         CompilerDirectives.transferToInterpreter();
         throw CompilerDirectives.shouldNotReachHere("Unknown bytecode");
+    }
+
+    protected static final RuntimeException unknownBytecode(final int pc, final int b) {
+        CompilerDirectives.transferToInterpreter();
+        throw CompilerDirectives.shouldNotReachHere("Unknown bytecode: " + b + " at pc = " + pc);
     }
 
     public static final int calculateShortOffset(final int bytecode) {

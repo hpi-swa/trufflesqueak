@@ -209,11 +209,13 @@ public final class FrameAccess {
         frame.setIntStatic(SlotIndices.STACK_POINTER, value);
     }
 
+    @CompilerDirectives.EarlyInline
     public static void externalizePCAndSP(final VirtualFrame frame, final int pc, final int sp) {
         setInstructionPointer(frame, pc);
         setStackPointer(frame, sp);
     }
 
+    @CompilerDirectives.EarlyInline
     public static int internalizePC(final VirtualFrame frame, final int pc) {
         final int framePC = getInstructionPointer(frame);
         if (pc != framePC) {
