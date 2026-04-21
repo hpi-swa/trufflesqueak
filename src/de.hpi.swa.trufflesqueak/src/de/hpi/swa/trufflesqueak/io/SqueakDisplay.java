@@ -688,6 +688,9 @@ public final class SqueakDisplay {
                     if (cursorData != null) {
                         SDL_RunOnMainThread(setCursorTask, MemorySegment.NULL, false);
                     }
+                    if (OS.isMacOS()) {
+                        MacMenuShortcutDisabler.disableSystemShortcuts();
+                    }
                 }, arena), MemorySegment.NULL, true);
             }
         } else {
@@ -721,18 +724,19 @@ public final class SqueakDisplay {
                 final MemorySegment imageBuffer = arena.allocateFrom(ValueLayout.JAVA_BYTE, imageBytes);
                 final MemorySegment ioStream = SDL_IOFromMem(imageBuffer, imageBytes.length);
                 if (ioStream == MemorySegment.NULL) {
-                    warning(getSDLError());
+                    warning("SDL_IOFromMem failed: " + getSDLError());
                     return;
                 }
 
                 // Load the PNG directly from the IO stream
-                final MemorySegment iconSurface = checkSdlError(SDL_LoadPNG_IO(ioStream, true));
+                final MemorySegment iconSurface = SDL_LoadPNG_IO(ioStream, true);
 
                 if (iconSurface != MemorySegment.NULL) {
-                    checkSdlError(SDL_SetWindowIcon(window, iconSurface));
+                    SDL_SetWindowIcon(window, iconSurface);
+                    warning("SDL_SetWindowIcon failed: " + getSDLError());
                     SDL_DestroySurface(iconSurface);
                 } else {
-                    warning(getSDLError());
+                    warning("SDL_LoadPNG_IO failed: " + getSDLError());
                 }
             }
         } catch (final IOException e) {
