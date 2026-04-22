@@ -11,7 +11,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.EarlyInline;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
-import com.oracle.truffle.api.HostCompilerDirectives.InliningCutoff;
 import com.oracle.truffle.api.bytecode.BytecodeDSLAccess;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -105,7 +104,6 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     static final class ReadLiteralVariableNode extends AbstractNode {
         private final SqueakObjectAt0NodeGen at0Node = insert((SqueakObjectAt0NodeGen) SqueakObjectAt0NodeGen.create());
 
-        @InliningCutoff
         Object execute(final Node node, final Object literal) {
             return at0Node.execute(node, literal, ASSOCIATION.VALUE);
         }
@@ -123,7 +121,6 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         return followForwarded(currentPC, dispatch(frame, currentPC, receiver));
     }
 
-    @InliningCutoff
     private Object dispatch(final VirtualFrame frame, final int currentPC, final Object receiver) {
         try {
             return ACCESS.uncheckedCast(getData(currentPC), Dispatch0NodeGen.class).execute(frame, receiver);
@@ -136,7 +133,6 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         return followForwarded(currentPC, dispatch(frame, currentPC, receiver, arg));
     }
 
-    @InliningCutoff
     private Object dispatch(final VirtualFrame frame, final int currentPC, final Object receiver, final Object arg) {
         try {
             return ACCESS.uncheckedCast(getData(currentPC), Dispatch1NodeGen.class).execute(frame, receiver, arg);
@@ -149,7 +145,6 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         return followForwarded(currentPC, dispatch(frame, currentPC, receiver, arg1, arg2));
     }
 
-    @InliningCutoff
     private Object dispatch(final VirtualFrame frame, final int currentPC, final Object receiver, final Object arg1, final Object arg2) {
         try {
             return ACCESS.uncheckedCast(getData(currentPC), Dispatch2NodeGen.class).execute(frame, receiver, arg1, arg2);
@@ -162,7 +157,6 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         return followForwarded(currentPC, dispatchNary(frame, currentPC, receiver, arguments));
     }
 
-    @InliningCutoff
     private Object dispatchNary(final VirtualFrame frame, final int currentPC, final Object receiver, final Object[] arguments) {
         try {
             return ACCESS.uncheckedCast(getData(currentPC), DispatchNaryNodeGen.class).execute(frame, receiver, arguments);
@@ -297,7 +291,6 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         }
     }
 
-    @InliningCutoff
     private Object handleBlockReturn(final VirtualFrame frame, final int currentPC, final int pc, final int sp, final Object result) {
         // Target is sender of closure's home context.
         final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
