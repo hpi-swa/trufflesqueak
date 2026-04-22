@@ -6,14 +6,13 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.interpreter;
 
-import static de.hpi.swa.trufflesqueak.util.UnsafeUtils.uncheckedCast;
-
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.EarlyInline;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.HostCompilerDirectives.InliningCutoff;
+import com.oracle.truffle.api.bytecode.BytecodeDSLAccess;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.InstrumentableNode;
@@ -55,6 +54,7 @@ import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrumentableNode implements BytecodeOSRNode, InstrumentableNode {
     private static final String[] READONLY_CLASSES = {"ClassBinding", "ReadOnlyVariableBinding"};
+    protected static final BytecodeDSLAccess ACCESS = BytecodeDSLAccessProvider.getBytecodeDSLAccess(true);
     protected static final int LOCAL_RETURN_PC = -2;
 
     protected static final byte BRANCH1 = 0b1;
@@ -126,7 +126,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     @InliningCutoff
     private Object dispatch(final VirtualFrame frame, final int currentPC, final Object receiver) {
         try {
-            return uncheckedCast(getData(currentPC), Dispatch0NodeGen.class).execute(frame, receiver);
+            return ACCESS.uncheckedCast(getData(currentPC), Dispatch0NodeGen.class).execute(frame, receiver);
         } catch (final AbstractStandardSendReturn r) {
             return handleReturnException(frame, currentPC, r);
         }
@@ -139,7 +139,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     @InliningCutoff
     private Object dispatch(final VirtualFrame frame, final int currentPC, final Object receiver, final Object arg) {
         try {
-            return uncheckedCast(getData(currentPC), Dispatch1NodeGen.class).execute(frame, receiver, arg);
+            return ACCESS.uncheckedCast(getData(currentPC), Dispatch1NodeGen.class).execute(frame, receiver, arg);
         } catch (final AbstractStandardSendReturn r) {
             return handleReturnException(frame, currentPC, r);
         }
@@ -152,7 +152,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     @InliningCutoff
     private Object dispatch(final VirtualFrame frame, final int currentPC, final Object receiver, final Object arg1, final Object arg2) {
         try {
-            return uncheckedCast(getData(currentPC), Dispatch2NodeGen.class).execute(frame, receiver, arg1, arg2);
+            return ACCESS.uncheckedCast(getData(currentPC), Dispatch2NodeGen.class).execute(frame, receiver, arg1, arg2);
         } catch (final AbstractStandardSendReturn r) {
             return handleReturnException(frame, currentPC, r);
         }
@@ -165,7 +165,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     @InliningCutoff
     private Object dispatchNary(final VirtualFrame frame, final int currentPC, final Object receiver, final Object[] arguments) {
         try {
-            return uncheckedCast(getData(currentPC), DispatchNaryNodeGen.class).execute(frame, receiver, arguments);
+            return ACCESS.uncheckedCast(getData(currentPC), DispatchNaryNodeGen.class).execute(frame, receiver, arguments);
         } catch (final AbstractStandardSendReturn r) {
             return handleReturnException(frame, currentPC, r);
         }

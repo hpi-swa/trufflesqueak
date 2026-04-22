@@ -6,8 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
-import static de.hpi.swa.trufflesqueak.util.UnsafeUtils.uncheckedCast;
-
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -266,7 +264,7 @@ public final class DispatchSelector5Node extends DispatchSelectorNode {
                             @Cached("getOrCreateIndexedOrNamed(cachedMethod)") final AbstractPrimitiveNode primitiveNode,
                             @Cached final InlinedBranchProfile primitiveFailedProfile) {
                 try {
-                    return uncheckedCast(primitiveNode, Primitive5.class).execute(frame, receiver, arg1, arg2, arg3, arg4, arg5);
+                    return ((Primitive5) primitiveNode).execute(frame, receiver, arg1, arg2, arg3, arg4, arg5);
                 } catch (final PrimitiveFailed pf) {
                     primitiveFailedProfile.enter(node);
                     DispatchUtils.handlePrimitiveFailedIndirect(node, method, pf);
@@ -292,7 +290,7 @@ public final class DispatchSelector5Node extends DispatchSelectorNode {
             private static Object tryPrimitive(final DispatchPrimitiveNode primitiveNode, final MaterializedFrame frame, final Node node, final CompiledCodeObject method, final Object receiver,
                             final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5) {
                 try {
-                    return uncheckedCast(primitiveNode, DispatchPrimitiveNode.DispatchPrimitive5Node.class).execute(frame, receiver, arg1, arg2, arg3, arg4, arg5);
+                    return ((DispatchPrimitiveNode.DispatchPrimitive5Node) primitiveNode).execute(frame, receiver, arg1, arg2, arg3, arg4, arg5);
                 } catch (final PrimitiveFailed pf) {
                     DispatchUtils.handlePrimitiveFailedIndirect(node, method, pf);
                     return null;

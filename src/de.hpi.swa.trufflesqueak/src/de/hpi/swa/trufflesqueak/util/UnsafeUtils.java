@@ -466,9 +466,4 @@ public final class UnsafeUtils {
     public static void invokeCleaner(final ByteBuffer directBuffer) {
         UNSAFE.invokeCleaner(directBuffer);
     }
-
-    @SuppressWarnings("unchecked")
-    public static <T> T uncheckedCast(final Object obj, @SuppressWarnings("unused") final Class<T> clazz) {
-        return (T) obj;
-    }
 }
