@@ -20,6 +20,7 @@ import com.oracle.truffle.api.nodes.RootNode;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.interop.JavaObjectWrapper;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.AbstractInterpreterNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
@@ -88,6 +89,13 @@ public final class TruffleSqueakPlugin extends AbstractPrimitiveFactoryHolder {
                 rootNode.accept(node -> {
                     if (node instanceof final DirectCallNode dcn) {
                         callNodes.add(dcn);
+                    } else if (node instanceof AbstractInterpreterNode ain) {
+                        ain.visitDataNodes(dataNode -> {
+                            if (dataNode instanceof DirectCallNode dcn) {
+                                callNodes.add(dcn);
+                            }
+                            return true;
+                        });
                     }
                     return true;
                 });

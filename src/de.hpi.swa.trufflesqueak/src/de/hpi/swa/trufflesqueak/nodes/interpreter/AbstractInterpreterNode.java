@@ -23,6 +23,7 @@ import com.oracle.truffle.api.nodes.BytecodeOSRNode;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.NodeVisitor;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 
@@ -462,6 +463,14 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
 
     protected final void setData(final long pc, final Object value) {
         UnsafeUtils.putObject(data, pc, value);
+    }
+
+    public final void visitDataNodes(final NodeVisitor nodeVisitor) {
+        for (var entry : data) {
+            if (entry instanceof final Node node) {
+                node.accept(nodeVisitor);
+            }
+        }
     }
 
     /*

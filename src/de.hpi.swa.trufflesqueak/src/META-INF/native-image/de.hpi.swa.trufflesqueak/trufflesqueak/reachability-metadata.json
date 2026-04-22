@@ -49,13 +49,43 @@
         { "name": "getCallCount", "parameterTypes": [ ] },
         { "name": "getCallAndLoopCount", "parameterTypes": [ ] },
         { "name": "getKnownCallSiteCount", "parameterTypes": [ ] },
+        { "name": "getName", "parameterTypes": [ ] },
         { "name": "getNonTrivialNodeCount", "parameterTypes": [ ] },
+        { "name": "getRootNode", "parameterTypes": [ ] },
+        { "name": "highestCompiledTier", "parameterTypes": [ ] },
         { "name": "toString", "parameterTypes": [ ] }
       ]
     },
-    { "type": "com.oracle.truffle.runtime.OptimizedCallTarget$ArgumentsProfile" },
-    { "type": "com.oracle.truffle.runtime.OptimizedCallTarget$ReturnProfile" },
-    { "type": "com.oracle.truffle.runtime.OptimizedDirectCallNode" },
+    {
+      "type": "com.oracle.truffle.runtime.OptimizedCallTarget$ArgumentsProfile",
+      "methods": [
+        { "name": "getSimpleName", "parameterTypes": [ ] },
+        { "name": "getTypes", "parameterTypes": [ ] }
+      ]
+    },
+    {
+      "type": "com.oracle.truffle.runtime.OptimizedCallTarget$ReturnProfile",
+      "methods": [
+        { "name": "getSimpleName", "parameterTypes": [ ] },
+        { "name": "getType", "parameterTypes": [ ] }
+      ]
+    },
+    {
+      "type": "com.oracle.truffle.api.nodes.DirectCallNode",
+      "methods": [
+        { "name": "getCallCount", "parameterTypes": [ ] },
+        { "name": "getCurrentCallTarget", "parameterTypes": [ ] },
+        { "name": "isInliningForced", "parameterTypes": [ ] }
+      ]
+    },
+    {
+      "type": "com.oracle.truffle.runtime.OptimizedDirectCallNode",
+      "methods": [
+        { "name": "getCallCount", "parameterTypes": [ ] },
+        { "name": "getCurrentCallTarget", "parameterTypes": [ ] },
+        { "name": "isInliningForced", "parameterTypes": [ ] }
+      ]
+    },
     {
       "type": "com.oracle.truffle.runtime.OptimizedTruffleRuntime",
       "methods": [{ "name": "getCompileQueue", "parameterTypes": [ ] }]
