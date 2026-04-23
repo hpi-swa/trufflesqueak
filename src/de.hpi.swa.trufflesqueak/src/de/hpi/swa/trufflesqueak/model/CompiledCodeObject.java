@@ -494,7 +494,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         if (litVar instanceof final AbstractSqueakObjectWithClassAndHash obj && !obj.isNotForwarded()) {
             CompilerDirectives.transferToInterpreter();
             final AbstractSqueakObjectWithClassAndHash forwarded = obj.getForwardingPointer();
-            UnsafeUtils.putObject(literals, longIndex, forwarded);
+            setLiteral(longIndex, forwarded);
             return forwarded;
         } else {
             return litVar;

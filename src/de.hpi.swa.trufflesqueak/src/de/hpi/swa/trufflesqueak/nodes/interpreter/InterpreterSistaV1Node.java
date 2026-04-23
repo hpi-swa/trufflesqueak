@@ -21,7 +21,9 @@ import com.oracle.truffle.api.HostCompilerDirectives.BytecodeInterpreterHandlerC
 import com.oracle.truffle.api.HostCompilerDirectives.BytecodeInterpreterHandlerConfig.Argument;
 import com.oracle.truffle.api.HostCompilerDirectives.BytecodeInterpreterSwitch;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.impl.FrameWithoutBoxing;
 import com.oracle.truffle.api.nodes.BytecodeOSRNode;
+import com.oracle.truffle.api.nodes.ControlFlowException;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
@@ -142,7 +144,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
 
         while (pc < endPC) {
             final int currentPC = pc++;
-            final int b = getUnsignedInt(bc, currentPC);
+            final int b = currentBytecode(bc, currentPC);
             switch (b) {
                 /* 1 byte bytecodes */
                 case BC.PUSH_RCVR_VAR_0, BC.PUSH_RCVR_VAR_1, BC.PUSH_RCVR_VAR_2, BC.PUSH_RCVR_VAR_3, BC.PUSH_RCVR_VAR_4, BC.PUSH_RCVR_VAR_5, BC.PUSH_RCVR_VAR_6, BC.PUSH_RCVR_VAR_7, //
@@ -355,35 +357,35 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @Override
     @BytecodeInterpreterSwitch
     @BytecodeInterpreterHandlerConfig(maximumOperationCode = BC.STORE_AND_POP_REMOTE_TEMP_LONG, arguments = {
-                    @Argument, // Denotes `this' pointer
+                    @Argument, // this
                     @Argument(returnValue = true), // pc
-                    @Argument(expand = Argument.ExpansionKind.MATERIALIZED, fields = {@Argument.Field(name = "bytecode")}),
+                    @Argument(expand = Argument.ExpansionKind.MATERIALIZED, fields = {@Argument.Field(name = "bytecode")}), // state
                     @Argument(expand = VIRTUAL), // virtualState
-                    @Argument(expand = MATERIALIZED, fields = {@Argument.Field(name = "indexedLocals"), @Argument.Field(name = "indexedPrimitiveLocals")}), // frame
+                    @Argument(expand = MATERIALIZED, fields = { // frame
+                                    @Argument.Field(name = "indexedTags"),
+                                    @Argument.Field(name = "indexedPrimitiveLocals"),
+                                    @Argument.Field(name = "indexedLocals")}),
     })
     @EarlyEscapeAnalysis
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.MERGE_EXPLODE)
-    public Object execute(final VirtualFrame frame, final int startPC, final int startSP) {
+    public Object execute(final VirtualFrame frame_, final int startPC, final int startSP) {
+        final FrameWithoutBoxing frame = ACCESS.uncheckedCast(frame_, FrameWithoutBoxing.class);
+        final byte[] bc = ACCESS.uncheckedCast(code.getBytes(), byte[].class);
         assert isBlock == FrameAccess.hasClosure(frame);
 
-        final SqueakImageContext image = getContext();
-
         final LoopCounter loopCounter = CompilerDirectives.inCompiledCode() && CompilerDirectives.hasNextTier() ? new LoopCounter() : null;
-
         int pc = startPC;
-        final State state = new State(code.getBytes(), loopCounter);
+        final State state = new State(bc, loopCounter);
         final VirtualState virtualState = new VirtualState(startSP);
 
         Object returnValue = null;
-        try {
-            while (pc != LOCAL_RETURN_PC) {
-                CompilerAsserts.partialEvaluationConstant(pc);
-                CompilerAsserts.partialEvaluationConstant(virtualState.sp);
-                CompilerAsserts.partialEvaluationConstant(virtualState.extA);
-                CompilerAsserts.partialEvaluationConstant(virtualState.extB);
-                final int opcode = nextOpcode(pc, state, virtualState, frame);
-                CompilerAsserts.partialEvaluationConstant(opcode);
-                switch (HostCompilerDirectives.markThreadedSwitch(opcode)) {
+        while (pc != LOCAL_RETURN_PC) {
+            CompilerAsserts.partialEvaluationConstant(pc);
+            CompilerAsserts.partialEvaluationConstant(virtualState.sp);
+            CompilerAsserts.partialEvaluationConstant(virtualState.extA);
+            CompilerAsserts.partialEvaluationConstant(virtualState.extB);
+            try {
+                switch (HostCompilerDirectives.markThreadedSwitch(currentBytecode(bc, pc))) {
                     /* 1 byte bytecodes */
                     case BC.PUSH_RCVR_VAR_0: {
                         pc = handlePushReceiverVariable0(pc, state, virtualState, frame);
@@ -1113,22 +1115,22 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         break;
                     }
                     default: {
-                        throw unknownBytecode(pc, getUnsignedInt(state.bytecode, pc));
+                        throw unknownBytecode(pc, currentBytecode(bc, pc));
                     }
                 }
+            } catch (final OSRException e) {
+                return e.osrResult;
+            } catch (final StackOverflowError e) {
+                CompilerDirectives.transferToInterpreter();
+                throw getContext().tryToSignalLowSpace(frame, e);
             }
-        } catch (final OSRException e) {
-            return e.osrResult;
-        } catch (final StackOverflowError e) {
-            CompilerDirectives.transferToInterpreter();
-            throw image.tryToSignalLowSpace(frame, e);
         }
         assert returnValue != null;
         return returnValue;
     }
 
     @SuppressWarnings("serial")
-    private static class OSRException extends RuntimeException {
+    private static final class OSRException extends ControlFlowException {
         private final Object osrResult;
 
         OSRException(final Object osrResult) {
@@ -1137,10 +1139,15 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     }
 
     @EarlyInline
-    @SuppressWarnings("static-method")
+    @SuppressWarnings({"unused", "static-method"})
     @BytecodeInterpreterFetchOpcode
-    private int nextOpcode(final int pc, final State state, @SuppressWarnings("unused") final VirtualState virtualState, @SuppressWarnings("unused") final VirtualFrame frame) {
-        return getUnsignedInt(state.bytecode, pc);
+    private int currentBytecode(final int pc, final State state, @SuppressWarnings("unused") final VirtualState virtualState, @SuppressWarnings("unused") final VirtualFrame frame) {
+        return currentBytecode(state.bytecode, pc);
+    }
+
+    @EarlyInline
+    private static int currentBytecode(final byte[] bytecode, final int pc) {
+        return getUnsignedInt(bytecode, pc);
     }
 
     // =========================================================================
