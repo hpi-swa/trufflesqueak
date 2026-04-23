@@ -358,13 +358,14 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @BytecodeInterpreterSwitch
     @BytecodeInterpreterHandlerConfig(maximumOperationCode = BC.STORE_AND_POP_REMOTE_TEMP_LONG, arguments = {
                     @Argument, // this
-                    @Argument(returnValue = true), // pc
-                    @Argument(expand = Argument.ExpansionKind.MATERIALIZED, fields = {@Argument.Field(name = "bytecode")}), // state
-                    @Argument(expand = VIRTUAL), // virtualState
                     @Argument(expand = MATERIALIZED, fields = { // frame
                                     @Argument.Field(name = "indexedTags"),
                                     @Argument.Field(name = "indexedPrimitiveLocals"),
                                     @Argument.Field(name = "indexedLocals")}),
+                    @Argument(returnValue = true), // pc
+                    @Argument(expand = VIRTUAL), // vstate
+                    @Argument(expand = Argument.ExpansionKind.MATERIALIZED, fields = { // state
+                                    @Argument.Field(name = "bytecode")}),
     })
     @EarlyEscapeAnalysis
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.MERGE_EXPLODE)
@@ -376,380 +377,380 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final LoopCounter loopCounter = CompilerDirectives.inCompiledCode() && CompilerDirectives.hasNextTier() ? new LoopCounter() : null;
         int pc = startPC;
         final State state = new State(bc, loopCounter);
-        final VirtualState virtualState = new VirtualState(startSP);
+        final VirtualState vstate = new VirtualState(startSP);
 
         Object returnValue = null;
         while (pc != LOCAL_RETURN_PC) {
             CompilerAsserts.partialEvaluationConstant(pc);
-            CompilerAsserts.partialEvaluationConstant(virtualState.sp);
-            CompilerAsserts.partialEvaluationConstant(virtualState.extA);
-            CompilerAsserts.partialEvaluationConstant(virtualState.extB);
+            CompilerAsserts.partialEvaluationConstant(vstate.sp);
+            CompilerAsserts.partialEvaluationConstant(vstate.extA);
+            CompilerAsserts.partialEvaluationConstant(vstate.extB);
             try {
                 switch (HostCompilerDirectives.markThreadedSwitch(currentBytecode(bc, pc))) {
                     /* 1 byte bytecodes */
                     case BC.PUSH_RCVR_VAR_0: {
-                        pc = handlePushReceiverVariable0(pc, state, virtualState, frame);
+                        pc = handlePushReceiverVariable0(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_RCVR_VAR_1: {
-                        pc = handlePushReceiverVariable1(pc, state, virtualState, frame);
+                        pc = handlePushReceiverVariable1(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_RCVR_VAR_2: {
-                        pc = handlePushReceiverVariable2(pc, state, virtualState, frame);
+                        pc = handlePushReceiverVariable2(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_RCVR_VAR_3: {
-                        pc = handlePushReceiverVariable3(pc, state, virtualState, frame);
+                        pc = handlePushReceiverVariable3(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_RCVR_VAR_4: {
-                        pc = handlePushReceiverVariable4(pc, state, virtualState, frame);
+                        pc = handlePushReceiverVariable4(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_RCVR_VAR_5: {
-                        pc = handlePushReceiverVariable5(pc, state, virtualState, frame);
+                        pc = handlePushReceiverVariable5(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_RCVR_VAR_6: {
-                        pc = handlePushReceiverVariable6(pc, state, virtualState, frame);
+                        pc = handlePushReceiverVariable6(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_RCVR_VAR_7: {
-                        pc = handlePushReceiverVariable7(pc, state, virtualState, frame);
+                        pc = handlePushReceiverVariable7(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_RCVR_VAR_8: {
-                        pc = handlePushReceiverVariable8(pc, state, virtualState, frame);
+                        pc = handlePushReceiverVariable8(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_RCVR_VAR_9: {
-                        pc = handlePushReceiverVariable9(pc, state, virtualState, frame);
+                        pc = handlePushReceiverVariable9(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_RCVR_VAR_A: {
-                        pc = handlePushReceiverVariableA(pc, state, virtualState, frame);
+                        pc = handlePushReceiverVariableA(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_RCVR_VAR_B: {
-                        pc = handlePushReceiverVariableB(pc, state, virtualState, frame);
+                        pc = handlePushReceiverVariableB(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_RCVR_VAR_C: {
-                        pc = handlePushReceiverVariableC(pc, state, virtualState, frame);
+                        pc = handlePushReceiverVariableC(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_RCVR_VAR_D: {
-                        pc = handlePushReceiverVariableD(pc, state, virtualState, frame);
+                        pc = handlePushReceiverVariableD(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_RCVR_VAR_E: {
-                        pc = handlePushReceiverVariableE(pc, state, virtualState, frame);
+                        pc = handlePushReceiverVariableE(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_RCVR_VAR_F: {
-                        pc = handlePushReceiverVariableF(pc, state, virtualState, frame);
+                        pc = handlePushReceiverVariableF(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_VAR_0: {
-                        pc = handlePushLiteralVariable0(pc, state, virtualState, frame);
+                        pc = handlePushLiteralVariable0(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_VAR_1: {
-                        pc = handlePushLiteralVariable1(pc, state, virtualState, frame);
+                        pc = handlePushLiteralVariable1(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_VAR_2: {
-                        pc = handlePushLiteralVariable2(pc, state, virtualState, frame);
+                        pc = handlePushLiteralVariable2(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_VAR_3: {
-                        pc = handlePushLiteralVariable3(pc, state, virtualState, frame);
+                        pc = handlePushLiteralVariable3(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_VAR_4: {
-                        pc = handlePushLiteralVariable4(pc, state, virtualState, frame);
+                        pc = handlePushLiteralVariable4(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_VAR_5: {
-                        pc = handlePushLiteralVariable5(pc, state, virtualState, frame);
+                        pc = handlePushLiteralVariable5(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_VAR_6: {
-                        pc = handlePushLiteralVariable6(pc, state, virtualState, frame);
+                        pc = handlePushLiteralVariable6(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_VAR_7: {
-                        pc = handlePushLiteralVariable7(pc, state, virtualState, frame);
+                        pc = handlePushLiteralVariable7(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_VAR_8: {
-                        pc = handlePushLiteralVariable8(pc, state, virtualState, frame);
+                        pc = handlePushLiteralVariable8(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_VAR_9: {
-                        pc = handlePushLiteralVariable9(pc, state, virtualState, frame);
+                        pc = handlePushLiteralVariable9(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_VAR_A: {
-                        pc = handlePushLiteralVariableA(pc, state, virtualState, frame);
+                        pc = handlePushLiteralVariableA(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_VAR_B: {
-                        pc = handlePushLiteralVariableB(pc, state, virtualState, frame);
+                        pc = handlePushLiteralVariableB(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_VAR_C: {
-                        pc = handlePushLiteralVariableC(pc, state, virtualState, frame);
+                        pc = handlePushLiteralVariableC(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_VAR_D: {
-                        pc = handlePushLiteralVariableD(pc, state, virtualState, frame);
+                        pc = handlePushLiteralVariableD(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_VAR_E: {
-                        pc = handlePushLiteralVariableE(pc, state, virtualState, frame);
+                        pc = handlePushLiteralVariableE(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_VAR_F: {
-                        pc = handlePushLiteralVariableF(pc, state, virtualState, frame);
+                        pc = handlePushLiteralVariableF(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_CONST_00: {
-                        pc = handlePushLiteralConstant00(pc, state, virtualState, frame);
+                        pc = handlePushLiteralConstant00(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_CONST_01: {
-                        pc = handlePushLiteralConstant01(pc, state, virtualState, frame);
+                        pc = handlePushLiteralConstant01(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_CONST_02: {
-                        pc = handlePushLiteralConstant02(pc, state, virtualState, frame);
+                        pc = handlePushLiteralConstant02(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_CONST_03: {
-                        pc = handlePushLiteralConstant03(pc, state, virtualState, frame);
+                        pc = handlePushLiteralConstant03(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_CONST_04: {
-                        pc = handlePushLiteralConstant04(pc, state, virtualState, frame);
+                        pc = handlePushLiteralConstant04(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_CONST_05: {
-                        pc = handlePushLiteralConstant05(pc, state, virtualState, frame);
+                        pc = handlePushLiteralConstant05(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_CONST_06: {
-                        pc = handlePushLiteralConstant06(pc, state, virtualState, frame);
+                        pc = handlePushLiteralConstant06(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_CONST_07: {
-                        pc = handlePushLiteralConstant07(pc, state, virtualState, frame);
+                        pc = handlePushLiteralConstant07(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_CONST_08: {
-                        pc = handlePushLiteralConstant08(pc, state, virtualState, frame);
+                        pc = handlePushLiteralConstant08(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_CONST_09: {
-                        pc = handlePushLiteralConstant09(pc, state, virtualState, frame);
+                        pc = handlePushLiteralConstant09(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_CONST_0A: {
-                        pc = handlePushLiteralConstant0A(pc, state, virtualState, frame);
+                        pc = handlePushLiteralConstant0A(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_CONST_0B: {
-                        pc = handlePushLiteralConstant0B(pc, state, virtualState, frame);
+                        pc = handlePushLiteralConstant0B(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_CONST_0C: {
-                        pc = handlePushLiteralConstant0C(pc, state, virtualState, frame);
+                        pc = handlePushLiteralConstant0C(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_CONST_0D: {
-                        pc = handlePushLiteralConstant0D(pc, state, virtualState, frame);
+                        pc = handlePushLiteralConstant0D(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_CONST_0E: {
-                        pc = handlePushLiteralConstant0E(pc, state, virtualState, frame);
+                        pc = handlePushLiteralConstant0E(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_CONST_0F: {
-                        pc = handlePushLiteralConstant0F(pc, state, virtualState, frame);
+                        pc = handlePushLiteralConstant0F(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_CONST_10: {
-                        pc = handlePushLiteralConstant10(pc, state, virtualState, frame);
+                        pc = handlePushLiteralConstant10(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_CONST_11: {
-                        pc = handlePushLiteralConstant11(pc, state, virtualState, frame);
+                        pc = handlePushLiteralConstant11(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_CONST_12: {
-                        pc = handlePushLiteralConstant12(pc, state, virtualState, frame);
+                        pc = handlePushLiteralConstant12(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_CONST_13: {
-                        pc = handlePushLiteralConstant13(pc, state, virtualState, frame);
+                        pc = handlePushLiteralConstant13(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_CONST_14: {
-                        pc = handlePushLiteralConstant14(pc, state, virtualState, frame);
+                        pc = handlePushLiteralConstant14(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_CONST_15: {
-                        pc = handlePushLiteralConstant15(pc, state, virtualState, frame);
+                        pc = handlePushLiteralConstant15(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_CONST_16: {
-                        pc = handlePushLiteralConstant16(pc, state, virtualState, frame);
+                        pc = handlePushLiteralConstant16(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_CONST_17: {
-                        pc = handlePushLiteralConstant17(pc, state, virtualState, frame);
+                        pc = handlePushLiteralConstant17(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_CONST_18: {
-                        pc = handlePushLiteralConstant18(pc, state, virtualState, frame);
+                        pc = handlePushLiteralConstant18(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_CONST_19: {
-                        pc = handlePushLiteralConstant19(pc, state, virtualState, frame);
+                        pc = handlePushLiteralConstant19(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_CONST_1A: {
-                        pc = handlePushLiteralConstant1A(pc, state, virtualState, frame);
+                        pc = handlePushLiteralConstant1A(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_CONST_1B: {
-                        pc = handlePushLiteralConstant1B(pc, state, virtualState, frame);
+                        pc = handlePushLiteralConstant1B(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_CONST_1C: {
-                        pc = handlePushLiteralConstant1C(pc, state, virtualState, frame);
+                        pc = handlePushLiteralConstant1C(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_CONST_1D: {
-                        pc = handlePushLiteralConstant1D(pc, state, virtualState, frame);
+                        pc = handlePushLiteralConstant1D(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_CONST_1E: {
-                        pc = handlePushLiteralConstant1E(pc, state, virtualState, frame);
+                        pc = handlePushLiteralConstant1E(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_LIT_CONST_1F: {
-                        pc = handlePushLiteralConstant1F(pc, state, virtualState, frame);
+                        pc = handlePushLiteralConstant1F(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_TEMP_VAR_0: {
-                        pc = handlePushTemporaryVariable0(pc, state, virtualState, frame);
+                        pc = handlePushTemporaryVariable0(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_TEMP_VAR_1: {
-                        pc = handlePushTemporaryVariable1(pc, state, virtualState, frame);
+                        pc = handlePushTemporaryVariable1(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_TEMP_VAR_2: {
-                        pc = handlePushTemporaryVariable2(pc, state, virtualState, frame);
+                        pc = handlePushTemporaryVariable2(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_TEMP_VAR_3: {
-                        pc = handlePushTemporaryVariable3(pc, state, virtualState, frame);
+                        pc = handlePushTemporaryVariable3(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_TEMP_VAR_4: {
-                        pc = handlePushTemporaryVariable4(pc, state, virtualState, frame);
+                        pc = handlePushTemporaryVariable4(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_TEMP_VAR_5: {
-                        pc = handlePushTemporaryVariable5(pc, state, virtualState, frame);
+                        pc = handlePushTemporaryVariable5(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_TEMP_VAR_6: {
-                        pc = handlePushTemporaryVariable6(pc, state, virtualState, frame);
+                        pc = handlePushTemporaryVariable6(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_TEMP_VAR_7: {
-                        pc = handlePushTemporaryVariable7(pc, state, virtualState, frame);
+                        pc = handlePushTemporaryVariable7(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_TEMP_VAR_8: {
-                        pc = handlePushTemporaryVariable8(pc, state, virtualState, frame);
+                        pc = handlePushTemporaryVariable8(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_TEMP_VAR_9: {
-                        pc = handlePushTemporaryVariable9(pc, state, virtualState, frame);
+                        pc = handlePushTemporaryVariable9(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_TEMP_VAR_A: {
-                        pc = handlePushTemporaryVariableA(pc, state, virtualState, frame);
+                        pc = handlePushTemporaryVariableA(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_TEMP_VAR_B: {
-                        pc = handlePushTemporaryVariableB(pc, state, virtualState, frame);
+                        pc = handlePushTemporaryVariableB(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_RECEIVER: {
-                        pc = handlePushReceiver(pc, state, virtualState, frame);
+                        pc = handlePushReceiver(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_CONSTANT_TRUE: {
-                        pc = handlePushConstantTrue(pc, state, virtualState, frame);
+                        pc = handlePushConstantTrue(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_CONSTANT_FALSE: {
-                        pc = handlePushConstantFalse(pc, state, virtualState, frame);
+                        pc = handlePushConstantFalse(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_CONSTANT_NIL: {
-                        pc = handlePushConstantNil(pc, state, virtualState, frame);
+                        pc = handlePushConstantNil(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_CONSTANT_ZERO: {
-                        pc = handlePushConstantZero(pc, state, virtualState, frame);
+                        pc = handlePushConstantZero(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_CONSTANT_ONE: {
-                        pc = handlePushConstantOne(pc, state, virtualState, frame);
+                        pc = handlePushConstantOne(frame, pc, vstate, state);
                         break;
                     }
                     case BC.EXT_PUSH_PSEUDO_VARIABLE: {
-                        pc = handlePushPseudoVariable(pc, state, virtualState, frame);
+                        pc = handlePushPseudoVariable(frame, pc, vstate, state);
                         break;
                     }
                     case BC.DUPLICATE_TOP: {
-                        pc = handleDuplicateTop(pc, state, virtualState, frame);
+                        pc = handleDuplicateTop(frame, pc, vstate, state);
                         break;
                     }
                     case BC.RETURN_RECEIVER: {
                         state.reportLoopCountOnReturn(this);
-                        returnValue = handleReturn(frame, pc, pc + 1, virtualState.sp, FrameAccess.getReceiver(frame));
+                        returnValue = handleReturn(frame, pc, pc + 1, vstate.sp, FrameAccess.getReceiver(frame));
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_TRUE: {
                         state.reportLoopCountOnReturn(this);
-                        returnValue = handleReturn(frame, pc, pc + 1, virtualState.sp, BooleanObject.TRUE);
+                        returnValue = handleReturn(frame, pc, pc + 1, vstate.sp, BooleanObject.TRUE);
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_FALSE: {
                         state.reportLoopCountOnReturn(this);
-                        returnValue = handleReturn(frame, pc, pc + 1, virtualState.sp, BooleanObject.FALSE);
+                        returnValue = handleReturn(frame, pc, pc + 1, vstate.sp, BooleanObject.FALSE);
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_NIL: {
                         state.reportLoopCountOnReturn(this);
-                        returnValue = handleReturn(frame, pc, pc + 1, virtualState.sp, NilObject.SINGLETON);
+                        returnValue = handleReturn(frame, pc, pc + 1, vstate.sp, NilObject.SINGLETON);
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_TOP_FROM_METHOD: {
                         state.reportLoopCountOnReturn(this);
-                        returnValue = handleReturn(frame, pc, pc + 1, virtualState.sp, top(frame, virtualState.sp));
+                        returnValue = handleReturn(frame, pc, pc + 1, vstate.sp, top(frame, vstate.sp));
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
@@ -761,357 +762,357 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     }
                     case BC.RETURN_TOP_FROM_BLOCK: {
                         state.reportLoopCountOnReturn(this);
-                        returnValue = handleNormalReturn(frame, pc, top(frame, virtualState.sp));
+                        returnValue = handleNormalReturn(frame, pc, top(frame, vstate.sp));
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.EXT_NOP: {
-                        pc = handleNoOperation(pc, state, virtualState, frame);
+                        pc = handleNoOperation(frame, pc, vstate, state);
                         break;
                     }
                     case BC.BYTECODE_PRIM_ADD: {
-                        pc = handlePrimitiveAdd(pc, state, virtualState, frame);
+                        pc = handlePrimitiveAdd(frame, pc, vstate, state);
                         break;
                     }
                     case BC.BYTECODE_PRIM_SUBTRACT: {
-                        pc = handlePrimitiveSubtract(pc, state, virtualState, frame);
+                        pc = handlePrimitiveSubtract(frame, pc, vstate, state);
                         break;
                     }
                     case BC.BYTECODE_PRIM_LESS_THAN: {
-                        pc = handlePrimitiveLessThan(pc, state, virtualState, frame);
+                        pc = handlePrimitiveLessThan(frame, pc, vstate, state);
                         break;
                     }
                     case BC.BYTECODE_PRIM_GREATER_THAN: {
-                        pc = handlePrimitiveGreaterThan(pc, state, virtualState, frame);
+                        pc = handlePrimitiveGreaterThan(frame, pc, vstate, state);
                         break;
                     }
                     case BC.BYTECODE_PRIM_LESS_OR_EQUAL: {
-                        pc = handlePrimitiveLessOrEqual(pc, state, virtualState, frame);
+                        pc = handlePrimitiveLessOrEqual(frame, pc, vstate, state);
                         break;
                     }
                     case BC.BYTECODE_PRIM_GREATER_OR_EQUAL: {
-                        pc = handlePrimitiveGreaterOrEqual(pc, state, virtualState, frame);
+                        pc = handlePrimitiveGreaterOrEqual(frame, pc, vstate, state);
                         break;
                     }
                     case BC.BYTECODE_PRIM_EQUAL: {
-                        pc = handlePrimitiveEqual(pc, state, virtualState, frame);
+                        pc = handlePrimitiveEqual(frame, pc, vstate, state);
                         break;
                     }
                     case BC.BYTECODE_PRIM_NOT_EQUAL: {
-                        pc = handlePrimitiveNotEqual(pc, state, virtualState, frame);
+                        pc = handlePrimitiveNotEqual(frame, pc, vstate, state);
                         break;
                     }
                     case BC.BYTECODE_PRIM_BIT_AND: {
-                        pc = handlePrimitiveBitAnd(pc, state, virtualState, frame);
+                        pc = handlePrimitiveBitAnd(frame, pc, vstate, state);
                         break;
                     }
                     case BC.BYTECODE_PRIM_BIT_OR: {
-                        pc = handlePrimitiveBitOr(pc, state, virtualState, frame);
+                        pc = handlePrimitiveBitOr(frame, pc, vstate, state);
                         break;
                     }
                     case BC.BYTECODE_PRIM_SIZE: {
-                        pc = handlePrimitiveSize(pc, state, virtualState, frame);
+                        pc = handlePrimitiveSize(frame, pc, vstate, state);
                         break;
                     }
                     case BC.BYTECODE_PRIM_IDENTICAL: {
-                        pc = handlePrimitiveIdentical(pc, state, virtualState, frame);
+                        pc = handlePrimitiveIdentical(frame, pc, vstate, state);
                         break;
                     }
                     case BC.BYTECODE_PRIM_CLASS: {
-                        pc = handlePrimitiveClass(pc, state, virtualState, frame);
+                        pc = handlePrimitiveClass(frame, pc, vstate, state);
                         break;
                     }
                     case BC.BYTECODE_PRIM_NOT_IDENTICAL: {
-                        pc = handlePrimitiveNotIdentical(pc, state, virtualState, frame);
+                        pc = handlePrimitiveNotIdentical(frame, pc, vstate, state);
                         break;
                     }
                     case BC.BYTECODE_PRIM_NEXT, BC.BYTECODE_PRIM_AT_END, BC.BYTECODE_PRIM_VALUE, BC.BYTECODE_PRIM_NEW, BC.BYTECODE_PRIM_POINT_X, BC.BYTECODE_PRIM_POINT_Y, //
                         BC.SEND_LIT_SEL0_0, BC.SEND_LIT_SEL0_1, BC.SEND_LIT_SEL0_2, BC.SEND_LIT_SEL0_3, BC.SEND_LIT_SEL0_4, BC.SEND_LIT_SEL0_5, BC.SEND_LIT_SEL0_6, BC.SEND_LIT_SEL0_7, //
                         BC.SEND_LIT_SEL0_8, BC.SEND_LIT_SEL0_9, BC.SEND_LIT_SEL0_A, BC.SEND_LIT_SEL0_B, BC.SEND_LIT_SEL0_C, BC.SEND_LIT_SEL0_D, BC.SEND_LIT_SEL0_E, BC.SEND_LIT_SEL0_F: {
-                        pc = handleSend0(pc, state, virtualState, frame);
+                        pc = handleSend0(frame, pc, vstate, state);
                         break;
                     }
                     case BC.BYTECODE_PRIM_MULTIPLY, BC.BYTECODE_PRIM_DIVIDE, BC.BYTECODE_PRIM_MOD, BC.BYTECODE_PRIM_MAKE_POINT, BC.BYTECODE_PRIM_BIT_SHIFT, //
                         BC.BYTECODE_PRIM_DIV, BC.BYTECODE_PRIM_AT, BC.BYTECODE_PRIM_NEXT_PUT, BC.BYTECODE_PRIM_VALUE_WITH_ARG, BC.BYTECODE_PRIM_DO, BC.BYTECODE_PRIM_NEW_WITH_ARG, //
                         BC.SEND_LIT_SEL1_0, BC.SEND_LIT_SEL1_1, BC.SEND_LIT_SEL1_2, BC.SEND_LIT_SEL1_3, BC.SEND_LIT_SEL1_4, BC.SEND_LIT_SEL1_5, BC.SEND_LIT_SEL1_6, BC.SEND_LIT_SEL1_7, //
                         BC.SEND_LIT_SEL1_8, BC.SEND_LIT_SEL1_9, BC.SEND_LIT_SEL1_A, BC.SEND_LIT_SEL1_B, BC.SEND_LIT_SEL1_C, BC.SEND_LIT_SEL1_D, BC.SEND_LIT_SEL1_E, BC.SEND_LIT_SEL1_F: {
-                        pc = handleSend1(pc, state, virtualState, frame);
+                        pc = handleSend1(frame, pc, vstate, state);
                         break;
                     }
                     case BC.BYTECODE_PRIM_AT_PUT, //
                         BC.SEND_LIT_SEL2_0, BC.SEND_LIT_SEL2_1, BC.SEND_LIT_SEL2_2, BC.SEND_LIT_SEL2_3, BC.SEND_LIT_SEL2_4, BC.SEND_LIT_SEL2_5, BC.SEND_LIT_SEL2_6, BC.SEND_LIT_SEL2_7, //
                         BC.SEND_LIT_SEL2_8, BC.SEND_LIT_SEL2_9, BC.SEND_LIT_SEL2_A, BC.SEND_LIT_SEL2_B, BC.SEND_LIT_SEL2_C, BC.SEND_LIT_SEL2_D, BC.SEND_LIT_SEL2_E, BC.SEND_LIT_SEL2_F: {
-                        pc = handleSend2(pc, state, virtualState, frame);
+                        pc = handleSend2(frame, pc, vstate, state);
                         break;
                     }
                     case BC.SHORT_UJUMP_0: {
-                        pc = handleShortUnconditionalJump0(pc, state, virtualState, frame);
+                        pc = handleShortUnconditionalJump0(frame, pc, vstate, state);
                         break;
                     }
                     case BC.SHORT_UJUMP_1: {
-                        pc = handleShortUnconditionalJump1(pc, state, virtualState, frame);
+                        pc = handleShortUnconditionalJump1(frame, pc, vstate, state);
                         break;
                     }
                     case BC.SHORT_UJUMP_2: {
-                        pc = handleShortUnconditionalJump2(pc, state, virtualState, frame);
+                        pc = handleShortUnconditionalJump2(frame, pc, vstate, state);
                         break;
                     }
                     case BC.SHORT_UJUMP_3: {
-                        pc = handleShortUnconditionalJump3(pc, state, virtualState, frame);
+                        pc = handleShortUnconditionalJump3(frame, pc, vstate, state);
                         break;
                     }
                     case BC.SHORT_UJUMP_4: {
-                        pc = handleShortUnconditionalJump4(pc, state, virtualState, frame);
+                        pc = handleShortUnconditionalJump4(frame, pc, vstate, state);
                         break;
                     }
                     case BC.SHORT_UJUMP_5: {
-                        pc = handleShortUnconditionalJump5(pc, state, virtualState, frame);
+                        pc = handleShortUnconditionalJump5(frame, pc, vstate, state);
                         break;
                     }
                     case BC.SHORT_UJUMP_6: {
-                        pc = handleShortUnconditionalJump6(pc, state, virtualState, frame);
+                        pc = handleShortUnconditionalJump6(frame, pc, vstate, state);
                         break;
                     }
                     case BC.SHORT_UJUMP_7: {
-                        pc = handleShortUnconditionalJump7(pc, state, virtualState, frame);
+                        pc = handleShortUnconditionalJump7(frame, pc, vstate, state);
                         break;
                     }
                     case BC.SHORT_CJUMP_TRUE_0: {
-                        pc = handleShortConditionalJumpTrue0(pc, state, virtualState, frame);
+                        pc = handleShortConditionalJumpTrue0(frame, pc, vstate, state);
                         break;
                     }
                     case BC.SHORT_CJUMP_TRUE_1: {
-                        pc = handleShortConditionalJumpTrue1(pc, state, virtualState, frame);
+                        pc = handleShortConditionalJumpTrue1(frame, pc, vstate, state);
                         break;
                     }
                     case BC.SHORT_CJUMP_TRUE_2: {
-                        pc = handleShortConditionalJumpTrue2(pc, state, virtualState, frame);
+                        pc = handleShortConditionalJumpTrue2(frame, pc, vstate, state);
                         break;
                     }
                     case BC.SHORT_CJUMP_TRUE_3: {
-                        pc = handleShortConditionalJumpTrue3(pc, state, virtualState, frame);
+                        pc = handleShortConditionalJumpTrue3(frame, pc, vstate, state);
                         break;
                     }
                     case BC.SHORT_CJUMP_TRUE_4: {
-                        pc = handleShortConditionalJumpTrue4(pc, state, virtualState, frame);
+                        pc = handleShortConditionalJumpTrue4(frame, pc, vstate, state);
                         break;
                     }
                     case BC.SHORT_CJUMP_TRUE_5: {
-                        pc = handleShortConditionalJumpTrue5(pc, state, virtualState, frame);
+                        pc = handleShortConditionalJumpTrue5(frame, pc, vstate, state);
                         break;
                     }
                     case BC.SHORT_CJUMP_TRUE_6: {
-                        pc = handleShortConditionalJumpTrue6(pc, state, virtualState, frame);
+                        pc = handleShortConditionalJumpTrue6(frame, pc, vstate, state);
                         break;
                     }
                     case BC.SHORT_CJUMP_TRUE_7: {
-                        pc = handleShortConditionalJumpTrue7(pc, state, virtualState, frame);
+                        pc = handleShortConditionalJumpTrue7(frame, pc, vstate, state);
                         break;
                     }
                     case BC.SHORT_CJUMP_FALSE_0: {
-                        pc = handleShortConditionalJumpFalse0(pc, state, virtualState, frame);
+                        pc = handleShortConditionalJumpFalse0(frame, pc, vstate, state);
                         break;
                     }
                     case BC.SHORT_CJUMP_FALSE_1: {
-                        pc = handleShortConditionalJumpFalse1(pc, state, virtualState, frame);
+                        pc = handleShortConditionalJumpFalse1(frame, pc, vstate, state);
                         break;
                     }
                     case BC.SHORT_CJUMP_FALSE_2: {
-                        pc = handleShortConditionalJumpFalse2(pc, state, virtualState, frame);
+                        pc = handleShortConditionalJumpFalse2(frame, pc, vstate, state);
                         break;
                     }
                     case BC.SHORT_CJUMP_FALSE_3: {
-                        pc = handleShortConditionalJumpFalse3(pc, state, virtualState, frame);
+                        pc = handleShortConditionalJumpFalse3(frame, pc, vstate, state);
                         break;
                     }
                     case BC.SHORT_CJUMP_FALSE_4: {
-                        pc = handleShortConditionalJumpFalse4(pc, state, virtualState, frame);
+                        pc = handleShortConditionalJumpFalse4(frame, pc, vstate, state);
                         break;
                     }
                     case BC.SHORT_CJUMP_FALSE_5: {
-                        pc = handleShortConditionalJumpFalse5(pc, state, virtualState, frame);
+                        pc = handleShortConditionalJumpFalse5(frame, pc, vstate, state);
                         break;
                     }
                     case BC.SHORT_CJUMP_FALSE_6: {
-                        pc = handleShortConditionalJumpFalse6(pc, state, virtualState, frame);
+                        pc = handleShortConditionalJumpFalse6(frame, pc, vstate, state);
                         break;
                     }
                     case BC.SHORT_CJUMP_FALSE_7: {
-                        pc = handleShortConditionalJumpFalse7(pc, state, virtualState, frame);
+                        pc = handleShortConditionalJumpFalse7(frame, pc, vstate, state);
                         break;
                     }
                     case BC.POP_INTO_RCVR_VAR_0: {
-                        pc = handlePopIntoReceiverVariable0(pc, state, virtualState, frame);
+                        pc = handlePopIntoReceiverVariable0(frame, pc, vstate, state);
                         break;
                     }
                     case BC.POP_INTO_RCVR_VAR_1: {
-                        pc = handlePopIntoReceiverVariable1(pc, state, virtualState, frame);
+                        pc = handlePopIntoReceiverVariable1(frame, pc, vstate, state);
                         break;
                     }
                     case BC.POP_INTO_RCVR_VAR_2: {
-                        pc = handlePopIntoReceiverVariable2(pc, state, virtualState, frame);
+                        pc = handlePopIntoReceiverVariable2(frame, pc, vstate, state);
                         break;
                     }
                     case BC.POP_INTO_RCVR_VAR_3: {
-                        pc = handlePopIntoReceiverVariable3(pc, state, virtualState, frame);
+                        pc = handlePopIntoReceiverVariable3(frame, pc, vstate, state);
                         break;
                     }
                     case BC.POP_INTO_RCVR_VAR_4: {
-                        pc = handlePopIntoReceiverVariable4(pc, state, virtualState, frame);
+                        pc = handlePopIntoReceiverVariable4(frame, pc, vstate, state);
                         break;
                     }
                     case BC.POP_INTO_RCVR_VAR_5: {
-                        pc = handlePopIntoReceiverVariable5(pc, state, virtualState, frame);
+                        pc = handlePopIntoReceiverVariable5(frame, pc, vstate, state);
                         break;
                     }
                     case BC.POP_INTO_RCVR_VAR_6: {
-                        pc = handlePopIntoReceiverVariable6(pc, state, virtualState, frame);
+                        pc = handlePopIntoReceiverVariable6(frame, pc, vstate, state);
                         break;
                     }
                     case BC.POP_INTO_RCVR_VAR_7: {
-                        pc = handlePopIntoReceiverVariable7(pc, state, virtualState, frame);
+                        pc = handlePopIntoReceiverVariable7(frame, pc, vstate, state);
                         break;
                     }
                     case BC.POP_INTO_TEMP_VAR_0: {
-                        pc = handlePopIntoTemporaryVariable0(pc, state, virtualState, frame);
+                        pc = handlePopIntoTemporaryVariable0(frame, pc, vstate, state);
                         break;
                     }
                     case BC.POP_INTO_TEMP_VAR_1: {
-                        pc = handlePopIntoTemporaryVariable1(pc, state, virtualState, frame);
+                        pc = handlePopIntoTemporaryVariable1(frame, pc, vstate, state);
                         break;
                     }
                     case BC.POP_INTO_TEMP_VAR_2: {
-                        pc = handlePopIntoTemporaryVariable2(pc, state, virtualState, frame);
+                        pc = handlePopIntoTemporaryVariable2(frame, pc, vstate, state);
                         break;
                     }
                     case BC.POP_INTO_TEMP_VAR_3: {
-                        pc = handlePopIntoTemporaryVariable3(pc, state, virtualState, frame);
+                        pc = handlePopIntoTemporaryVariable3(frame, pc, vstate, state);
                         break;
                     }
                     case BC.POP_INTO_TEMP_VAR_4: {
-                        pc = handlePopIntoTemporaryVariable4(pc, state, virtualState, frame);
+                        pc = handlePopIntoTemporaryVariable4(frame, pc, vstate, state);
                         break;
                     }
                     case BC.POP_INTO_TEMP_VAR_5: {
-                        pc = handlePopIntoTemporaryVariable5(pc, state, virtualState, frame);
+                        pc = handlePopIntoTemporaryVariable5(frame, pc, vstate, state);
                         break;
                     }
                     case BC.POP_INTO_TEMP_VAR_6: {
-                        pc = handlePopIntoTemporaryVariable6(pc, state, virtualState, frame);
+                        pc = handlePopIntoTemporaryVariable6(frame, pc, vstate, state);
                         break;
                     }
                     case BC.POP_INTO_TEMP_VAR_7: {
-                        pc = handlePopIntoTemporaryVariable7(pc, state, virtualState, frame);
+                        pc = handlePopIntoTemporaryVariable7(frame, pc, vstate, state);
                         break;
                     }
                     case BC.POP_STACK: {
-                        pc = handlePopStack(pc, state, virtualState, frame);
+                        pc = handlePopStack(frame, pc, vstate, state);
                         break;
                     }
                     /* 2 byte bytecodes */
                     case BC.EXT_A: {
-                        pc = handleExtA(pc, state, virtualState, frame);
+                        pc = handleExtA(frame, pc, vstate, state);
                         break;
                     }
                     case BC.EXT_B: {
-                        pc = handleExtB(pc, state, virtualState, frame);
+                        pc = handleExtB(frame, pc, vstate, state);
                         break;
                     }
                     case BC.EXT_PUSH_RECEIVER_VARIABLE: {
-                        pc = handleExtendedPushReceiverVariable(pc, state, virtualState, frame);
+                        pc = handleExtendedPushReceiverVariable(frame, pc, vstate, state);
                         break;
                     }
                     case BC.EXT_PUSH_LITERAL_VARIABLE: {
-                        pc = handleExtendedPushLiteralVariable(pc, state, virtualState, frame);
+                        pc = handleExtendedPushLiteralVariable(frame, pc, vstate, state);
                         break;
                     }
                     case BC.EXT_PUSH_LITERAL: {
-                        pc = handleExtendedPushLiteralConstant(pc, state, virtualState, frame);
+                        pc = handleExtendedPushLiteralConstant(frame, pc, vstate, state);
                         break;
                     }
                     case BC.LONG_PUSH_TEMPORARY_VARIABLE: {
-                        pc = handleLongPushTemporaryVariable(pc, state, virtualState, frame);
+                        pc = handleLongPushTemporaryVariable(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_NEW_ARRAY: {
-                        pc = handlePushNewArray(pc, state, virtualState, frame);
+                        pc = handlePushNewArray(frame, pc, vstate, state);
                         break;
                     }
                     case BC.EXT_PUSH_INTEGER: {
-                        pc = handleExtendedPushInteger(pc, state, virtualState, frame);
+                        pc = handleExtendedPushInteger(frame, pc, vstate, state);
                         break;
                     }
                     case BC.EXT_PUSH_CHARACTER: {
-                        pc = handleExtendedPushCharacter(pc, state, virtualState, frame);
+                        pc = handleExtendedPushCharacter(frame, pc, vstate, state);
                         break;
                     }
                     case BC.EXT_SEND: {
-                        pc = handleExtendedSend(pc, state, virtualState, frame);
+                        pc = handleExtendedSend(frame, pc, vstate, state);
                         break;
                     }
                     case BC.EXT_SEND_SUPER: {
-                        pc = handleExtendedSuperSend(pc, state, virtualState, frame);
+                        pc = handleExtendedSuperSend(frame, pc, vstate, state);
                         break;
                     }
                     case BC.EXT_UNCONDITIONAL_JUMP: {
-                        pc = handleExtendedUnconditionalJump(pc, state, virtualState, frame);
+                        pc = handleExtendedUnconditionalJump(frame, pc, vstate, state);
                         break;
                     }
                     case BC.EXT_JUMP_IF_TRUE: {
-                        pc = handleExtendedConditionalJumpTrue(pc, state, virtualState, frame);
+                        pc = handleExtendedConditionalJumpTrue(frame, pc, vstate, state);
                         break;
                     }
                     case BC.EXT_JUMP_IF_FALSE: {
-                        pc = handleExtendedConditionalJumpFalse(pc, state, virtualState, frame);
+                        pc = handleExtendedConditionalJumpFalse(frame, pc, vstate, state);
                         break;
                     }
                     case BC.EXT_STORE_AND_POP_RECEIVER_VARIABLE: {
-                        pc = handleExtendedStoreAndPopReceiverVariable(pc, state, virtualState, frame);
+                        pc = handleExtendedStoreAndPopReceiverVariable(frame, pc, vstate, state);
                         break;
                     }
                     case BC.EXT_STORE_AND_POP_LITERAL_VARIABLE: {
-                        pc = handleExtendedStoreAndPopLiteralVariable(pc, state, virtualState, frame);
+                        pc = handleExtendedStoreAndPopLiteralVariable(frame, pc, vstate, state);
                         break;
                     }
                     case BC.LONG_STORE_AND_POP_TEMPORARY_VARIABLE: {
-                        pc = handleLongStoreAndPopTemporaryVariable(pc, state, virtualState, frame);
+                        pc = handleLongStoreAndPopTemporaryVariable(frame, pc, vstate, state);
                         break;
                     }
                     case BC.EXT_STORE_RECEIVER_VARIABLE: {
-                        pc = handleExtendedStoreReceiverVariable(pc, state, virtualState, frame);
+                        pc = handleExtendedStoreReceiverVariable(frame, pc, vstate, state);
                         break;
                     }
                     case BC.EXT_STORE_LITERAL_VARIABLE: {
-                        pc = handleExtendedStoreLiteralVariable(pc, state, virtualState, frame);
+                        pc = handleExtendedStoreLiteralVariable(frame, pc, vstate, state);
                         break;
                     }
                     case BC.LONG_STORE_TEMPORARY_VARIABLE: {
-                        pc = handleLongStoreTemporaryVariable(pc, state, virtualState, frame);
+                        pc = handleLongStoreTemporaryVariable(frame, pc, vstate, state);
                         break;
                     }
                     /* 3 byte bytecodes */
                     case BC.CALL_PRIMITIVE: {
-                        pc = handleCallPrimitive(pc, state, virtualState, frame);
+                        pc = handleCallPrimitive(frame, pc, vstate, state);
                         break;
                     }
                     case BC.EXT_PUSH_FULL_CLOSURE: {
-                        pc = handleExtendedPushFullClosure(pc, state, virtualState, frame);
+                        pc = handleExtendedPushFullClosure(frame, pc, vstate, state);
                         break;
                     }
                     case BC.EXT_PUSH_CLOSURE: {
-                        pc = handleExtendedPushClosure(pc, state, virtualState, frame);
+                        pc = handleExtendedPushClosure(frame, pc, vstate, state);
                         break;
                     }
                     case BC.PUSH_REMOTE_TEMP_LONG: {
-                        pc = handleLongPushRemoteTemporaryVariable(pc, state, virtualState, frame);
+                        pc = handleLongPushRemoteTemporaryVariable(frame, pc, vstate, state);
                         break;
                     }
                     case BC.STORE_REMOTE_TEMP_LONG: {
-                        pc = handleLongStoreRemoteTemporaryVariable(pc, state, virtualState, frame);
+                        pc = handleLongStoreRemoteTemporaryVariable(frame, pc, vstate, state);
                         break;
                     }
                     case BC.STORE_AND_POP_REMOTE_TEMP_LONG: {
-                        pc = handleLongStoreAndPopRemoteTemporaryVariable(pc, state, virtualState, frame);
+                        pc = handleLongStoreAndPopRemoteTemporaryVariable(frame, pc, vstate, state);
                         break;
                     }
                     default: {
@@ -1141,7 +1142,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     @SuppressWarnings({"unused", "static-method"})
     @BytecodeInterpreterFetchOpcode
-    private int currentBytecode(final int pc, final State state, @SuppressWarnings("unused") final VirtualState virtualState, @SuppressWarnings("unused") final VirtualFrame frame) {
+    private int currentBytecode(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
         return currentBytecode(state.bytecode, pc);
     }
 
@@ -1156,660 +1157,660 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_RCVR_VAR_0, safepoint = false)
-    private int handlePushReceiverVariable0(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushReceiverVariable(pc, virtualState, frame, 0x0);
+    private int handlePushReceiverVariable0(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushReceiverVariable(frame, pc, vstate, 0x0);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_RCVR_VAR_1, safepoint = false)
-    private int handlePushReceiverVariable1(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushReceiverVariable(pc, virtualState, frame, 0x1);
+    private int handlePushReceiverVariable1(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushReceiverVariable(frame, pc, vstate, 0x1);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_RCVR_VAR_2, safepoint = false)
-    private int handlePushReceiverVariable2(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushReceiverVariable(pc, virtualState, frame, 0x2);
+    private int handlePushReceiverVariable2(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushReceiverVariable(frame, pc, vstate, 0x2);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_RCVR_VAR_3, safepoint = false)
-    private int handlePushReceiverVariable3(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushReceiverVariable(pc, virtualState, frame, 0x3);
+    private int handlePushReceiverVariable3(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushReceiverVariable(frame, pc, vstate, 0x3);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_RCVR_VAR_4, safepoint = false)
-    private int handlePushReceiverVariable4(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushReceiverVariable(pc, virtualState, frame, 0x4);
+    private int handlePushReceiverVariable4(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushReceiverVariable(frame, pc, vstate, 0x4);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_RCVR_VAR_5, safepoint = false)
-    private int handlePushReceiverVariable5(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushReceiverVariable(pc, virtualState, frame, 0x5);
+    private int handlePushReceiverVariable5(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushReceiverVariable(frame, pc, vstate, 0x5);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_RCVR_VAR_6, safepoint = false)
-    private int handlePushReceiverVariable6(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushReceiverVariable(pc, virtualState, frame, 0x6);
+    private int handlePushReceiverVariable6(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushReceiverVariable(frame, pc, vstate, 0x6);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_RCVR_VAR_7, safepoint = false)
-    private int handlePushReceiverVariable7(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushReceiverVariable(pc, virtualState, frame, 0x7);
+    private int handlePushReceiverVariable7(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushReceiverVariable(frame, pc, vstate, 0x7);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_RCVR_VAR_8, safepoint = false)
-    private int handlePushReceiverVariable8(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushReceiverVariable(pc, virtualState, frame, 0x8);
+    private int handlePushReceiverVariable8(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushReceiverVariable(frame, pc, vstate, 0x8);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_RCVR_VAR_9, safepoint = false)
-    private int handlePushReceiverVariable9(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushReceiverVariable(pc, virtualState, frame, 0x9);
+    private int handlePushReceiverVariable9(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushReceiverVariable(frame, pc, vstate, 0x9);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_RCVR_VAR_A, safepoint = false)
-    private int handlePushReceiverVariableA(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushReceiverVariable(pc, virtualState, frame, 0xA);
+    private int handlePushReceiverVariableA(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushReceiverVariable(frame, pc, vstate, 0xA);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_RCVR_VAR_B, safepoint = false)
-    private int handlePushReceiverVariableB(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushReceiverVariable(pc, virtualState, frame, 0xB);
+    private int handlePushReceiverVariableB(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushReceiverVariable(frame, pc, vstate, 0xB);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_RCVR_VAR_C, safepoint = false)
-    private int handlePushReceiverVariableC(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushReceiverVariable(pc, virtualState, frame, 0xC);
+    private int handlePushReceiverVariableC(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushReceiverVariable(frame, pc, vstate, 0xC);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_RCVR_VAR_D, safepoint = false)
-    private int handlePushReceiverVariableD(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushReceiverVariable(pc, virtualState, frame, 0xD);
+    private int handlePushReceiverVariableD(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushReceiverVariable(frame, pc, vstate, 0xD);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_RCVR_VAR_E, safepoint = false)
-    private int handlePushReceiverVariableE(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushReceiverVariable(pc, virtualState, frame, 0xE);
+    private int handlePushReceiverVariableE(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushReceiverVariable(frame, pc, vstate, 0xE);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_RCVR_VAR_F, safepoint = false)
-    private int handlePushReceiverVariableF(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushReceiverVariable(pc, virtualState, frame, 0xF);
+    private int handlePushReceiverVariableF(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushReceiverVariable(frame, pc, vstate, 0xF);
     }
 
     @EarlyInline
-    private int handlePushReceiverVariable(final int pc, final VirtualState virtualState, final VirtualFrame frame, final int index) {
-        pushFollowed(frame, pc, virtualState.sp++, ACCESS.uncheckedCast(getData(pc), SqueakObjectAt0NodeGen.class).execute(this, FrameAccess.getReceiver(frame), index));
+    private int handlePushReceiverVariable(final VirtualFrame frame, final int pc, final VirtualState vstate, final int index) {
+        pushFollowed(frame, pc, vstate.sp++, ACCESS.uncheckedCast(getData(pc), SqueakObjectAt0NodeGen.class).execute(this, FrameAccess.getReceiver(frame), index));
         return pc + 1;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_VAR_0, safepoint = false)
-    private int handlePushLiteralVariable0(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralVariable(pc, virtualState, frame, 0x0);
+    private int handlePushLiteralVariable0(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralVariable(frame, pc, vstate, 0x0);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_VAR_1, safepoint = false)
-    private int handlePushLiteralVariable1(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralVariable(pc, virtualState, frame, 0x1);
+    private int handlePushLiteralVariable1(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralVariable(frame, pc, vstate, 0x1);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_VAR_2, safepoint = false)
-    private int handlePushLiteralVariable2(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralVariable(pc, virtualState, frame, 0x2);
+    private int handlePushLiteralVariable2(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralVariable(frame, pc, vstate, 0x2);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_VAR_3, safepoint = false)
-    private int handlePushLiteralVariable3(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralVariable(pc, virtualState, frame, 0x3);
+    private int handlePushLiteralVariable3(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralVariable(frame, pc, vstate, 0x3);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_VAR_4, safepoint = false)
-    private int handlePushLiteralVariable4(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralVariable(pc, virtualState, frame, 0x4);
+    private int handlePushLiteralVariable4(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralVariable(frame, pc, vstate, 0x4);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_VAR_5, safepoint = false)
-    private int handlePushLiteralVariable5(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralVariable(pc, virtualState, frame, 0x5);
+    private int handlePushLiteralVariable5(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralVariable(frame, pc, vstate, 0x5);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_VAR_6, safepoint = false)
-    private int handlePushLiteralVariable6(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralVariable(pc, virtualState, frame, 0x6);
+    private int handlePushLiteralVariable6(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralVariable(frame, pc, vstate, 0x6);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_VAR_7, safepoint = false)
-    private int handlePushLiteralVariable7(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralVariable(pc, virtualState, frame, 0x7);
+    private int handlePushLiteralVariable7(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralVariable(frame, pc, vstate, 0x7);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_VAR_8, safepoint = false)
-    private int handlePushLiteralVariable8(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralVariable(pc, virtualState, frame, 0x8);
+    private int handlePushLiteralVariable8(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralVariable(frame, pc, vstate, 0x8);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_VAR_9, safepoint = false)
-    private int handlePushLiteralVariable9(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralVariable(pc, virtualState, frame, 0x9);
+    private int handlePushLiteralVariable9(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralVariable(frame, pc, vstate, 0x9);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_VAR_A, safepoint = false)
-    private int handlePushLiteralVariableA(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralVariable(pc, virtualState, frame, 0xA);
+    private int handlePushLiteralVariableA(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralVariable(frame, pc, vstate, 0xA);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_VAR_B, safepoint = false)
-    private int handlePushLiteralVariableB(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralVariable(pc, virtualState, frame, 0xB);
+    private int handlePushLiteralVariableB(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralVariable(frame, pc, vstate, 0xB);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_VAR_C, safepoint = false)
-    private int handlePushLiteralVariableC(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralVariable(pc, virtualState, frame, 0xC);
+    private int handlePushLiteralVariableC(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralVariable(frame, pc, vstate, 0xC);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_VAR_D, safepoint = false)
-    private int handlePushLiteralVariableD(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralVariable(pc, virtualState, frame, 0xD);
+    private int handlePushLiteralVariableD(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralVariable(frame, pc, vstate, 0xD);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_VAR_E, safepoint = false)
-    private int handlePushLiteralVariableE(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralVariable(pc, virtualState, frame, 0xE);
+    private int handlePushLiteralVariableE(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralVariable(frame, pc, vstate, 0xE);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_VAR_F, safepoint = false)
-    private int handlePushLiteralVariableF(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralVariable(pc, virtualState, frame, 0xF);
+    private int handlePushLiteralVariableF(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralVariable(frame, pc, vstate, 0xF);
     }
 
     @EarlyInline
-    private int handlePushLiteralVariable(final int pc, final VirtualState virtualState, final VirtualFrame frame, final int index) {
-        push(frame, virtualState.sp++, readLiteralVariable(pc, index));
+    private int handlePushLiteralVariable(final VirtualFrame frame, final int pc, final VirtualState vstate, final int index) {
+        push(frame, vstate.sp++, readLiteralVariable(pc, index));
         return pc + 1;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_CONST_00, safepoint = false)
-    private int handlePushLiteralConstant00(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralConstant(pc, virtualState, frame, 0x00);
+    private int handlePushLiteralConstant00(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralConstant(frame, pc, vstate, 0x00);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_CONST_01, safepoint = false)
-    private int handlePushLiteralConstant01(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralConstant(pc, virtualState, frame, 0x01);
+    private int handlePushLiteralConstant01(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralConstant(frame, pc, vstate, 0x01);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_CONST_02, safepoint = false)
-    private int handlePushLiteralConstant02(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralConstant(pc, virtualState, frame, 0x02);
+    private int handlePushLiteralConstant02(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralConstant(frame, pc, vstate, 0x02);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_CONST_03, safepoint = false)
-    private int handlePushLiteralConstant03(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralConstant(pc, virtualState, frame, 0x03);
+    private int handlePushLiteralConstant03(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralConstant(frame, pc, vstate, 0x03);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_CONST_04, safepoint = false)
-    private int handlePushLiteralConstant04(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralConstant(pc, virtualState, frame, 0x04);
+    private int handlePushLiteralConstant04(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralConstant(frame, pc, vstate, 0x04);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_CONST_05, safepoint = false)
-    private int handlePushLiteralConstant05(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralConstant(pc, virtualState, frame, 0x05);
+    private int handlePushLiteralConstant05(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralConstant(frame, pc, vstate, 0x05);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_CONST_06, safepoint = false)
-    private int handlePushLiteralConstant06(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralConstant(pc, virtualState, frame, 0x06);
+    private int handlePushLiteralConstant06(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralConstant(frame, pc, vstate, 0x06);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_CONST_07, safepoint = false)
-    private int handlePushLiteralConstant07(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralConstant(pc, virtualState, frame, 0x07);
+    private int handlePushLiteralConstant07(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralConstant(frame, pc, vstate, 0x07);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_CONST_08, safepoint = false)
-    private int handlePushLiteralConstant08(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralConstant(pc, virtualState, frame, 0x08);
+    private int handlePushLiteralConstant08(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralConstant(frame, pc, vstate, 0x08);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_CONST_09, safepoint = false)
-    private int handlePushLiteralConstant09(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralConstant(pc, virtualState, frame, 0x09);
+    private int handlePushLiteralConstant09(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralConstant(frame, pc, vstate, 0x09);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_CONST_0A, safepoint = false)
-    private int handlePushLiteralConstant0A(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralConstant(pc, virtualState, frame, 0x0A);
+    private int handlePushLiteralConstant0A(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralConstant(frame, pc, vstate, 0x0A);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_CONST_0B, safepoint = false)
-    private int handlePushLiteralConstant0B(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralConstant(pc, virtualState, frame, 0x0B);
+    private int handlePushLiteralConstant0B(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralConstant(frame, pc, vstate, 0x0B);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_CONST_0C, safepoint = false)
-    private int handlePushLiteralConstant0C(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralConstant(pc, virtualState, frame, 0x0C);
+    private int handlePushLiteralConstant0C(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralConstant(frame, pc, vstate, 0x0C);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_CONST_0D, safepoint = false)
-    private int handlePushLiteralConstant0D(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralConstant(pc, virtualState, frame, 0x0D);
+    private int handlePushLiteralConstant0D(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralConstant(frame, pc, vstate, 0x0D);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_CONST_0E, safepoint = false)
-    private int handlePushLiteralConstant0E(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralConstant(pc, virtualState, frame, 0x0E);
+    private int handlePushLiteralConstant0E(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralConstant(frame, pc, vstate, 0x0E);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_CONST_0F, safepoint = false)
-    private int handlePushLiteralConstant0F(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralConstant(pc, virtualState, frame, 0x0F);
+    private int handlePushLiteralConstant0F(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralConstant(frame, pc, vstate, 0x0F);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_CONST_10, safepoint = false)
-    private int handlePushLiteralConstant10(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralConstant(pc, virtualState, frame, 0x10);
+    private int handlePushLiteralConstant10(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralConstant(frame, pc, vstate, 0x10);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_CONST_11, safepoint = false)
-    private int handlePushLiteralConstant11(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralConstant(pc, virtualState, frame, 0x11);
+    private int handlePushLiteralConstant11(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralConstant(frame, pc, vstate, 0x11);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_CONST_12, safepoint = false)
-    private int handlePushLiteralConstant12(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralConstant(pc, virtualState, frame, 0x12);
+    private int handlePushLiteralConstant12(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralConstant(frame, pc, vstate, 0x12);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_CONST_13, safepoint = false)
-    private int handlePushLiteralConstant13(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralConstant(pc, virtualState, frame, 0x13);
+    private int handlePushLiteralConstant13(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralConstant(frame, pc, vstate, 0x13);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_CONST_14, safepoint = false)
-    private int handlePushLiteralConstant14(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralConstant(pc, virtualState, frame, 0x14);
+    private int handlePushLiteralConstant14(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralConstant(frame, pc, vstate, 0x14);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_CONST_15, safepoint = false)
-    private int handlePushLiteralConstant15(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralConstant(pc, virtualState, frame, 0x15);
+    private int handlePushLiteralConstant15(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralConstant(frame, pc, vstate, 0x15);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_CONST_16, safepoint = false)
-    private int handlePushLiteralConstant16(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralConstant(pc, virtualState, frame, 0x16);
+    private int handlePushLiteralConstant16(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralConstant(frame, pc, vstate, 0x16);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_CONST_17, safepoint = false)
-    private int handlePushLiteralConstant17(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralConstant(pc, virtualState, frame, 0x17);
+    private int handlePushLiteralConstant17(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralConstant(frame, pc, vstate, 0x17);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_CONST_18, safepoint = false)
-    private int handlePushLiteralConstant18(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralConstant(pc, virtualState, frame, 0x18);
+    private int handlePushLiteralConstant18(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralConstant(frame, pc, vstate, 0x18);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_CONST_19, safepoint = false)
-    private int handlePushLiteralConstant19(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralConstant(pc, virtualState, frame, 0x19);
+    private int handlePushLiteralConstant19(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralConstant(frame, pc, vstate, 0x19);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_CONST_1A, safepoint = false)
-    private int handlePushLiteralConstant1A(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralConstant(pc, virtualState, frame, 0x1A);
+    private int handlePushLiteralConstant1A(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralConstant(frame, pc, vstate, 0x1A);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_CONST_1B, safepoint = false)
-    private int handlePushLiteralConstant1B(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralConstant(pc, virtualState, frame, 0x1B);
+    private int handlePushLiteralConstant1B(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralConstant(frame, pc, vstate, 0x1B);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_CONST_1C, safepoint = false)
-    private int handlePushLiteralConstant1C(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralConstant(pc, virtualState, frame, 0x1C);
+    private int handlePushLiteralConstant1C(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralConstant(frame, pc, vstate, 0x1C);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_CONST_1D, safepoint = false)
-    private int handlePushLiteralConstant1D(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralConstant(pc, virtualState, frame, 0x1D);
+    private int handlePushLiteralConstant1D(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralConstant(frame, pc, vstate, 0x1D);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_CONST_1E, safepoint = false)
-    private int handlePushLiteralConstant1E(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralConstant(pc, virtualState, frame, 0x1E);
+    private int handlePushLiteralConstant1E(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralConstant(frame, pc, vstate, 0x1E);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_LIT_CONST_1F, safepoint = false)
-    private int handlePushLiteralConstant1F(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushLiteralConstant(pc, virtualState, frame, 0x1F);
+    private int handlePushLiteralConstant1F(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushLiteralConstant(frame, pc, vstate, 0x1F);
     }
 
     @EarlyInline
-    private int handlePushLiteralConstant(final int pc, final VirtualState virtualState, final VirtualFrame frame, final int index) {
-        push(frame, virtualState.sp++, getAndResolveLiteral(pc, index));
+    private int handlePushLiteralConstant(final VirtualFrame frame, final int pc, final VirtualState vstate, final int index) {
+        push(frame, vstate.sp++, getAndResolveLiteral(pc, index));
         return pc + 1;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_TEMP_VAR_0, safepoint = false)
-    private int handlePushTemporaryVariable0(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushTemporaryVariable(pc, virtualState, frame, 0x0);
+    private int handlePushTemporaryVariable0(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushTemporaryVariable(frame, pc, vstate, 0x0);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_TEMP_VAR_1, safepoint = false)
-    private int handlePushTemporaryVariable1(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushTemporaryVariable(pc, virtualState, frame, 0x1);
+    private int handlePushTemporaryVariable1(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushTemporaryVariable(frame, pc, vstate, 0x1);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_TEMP_VAR_2, safepoint = false)
-    private int handlePushTemporaryVariable2(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushTemporaryVariable(pc, virtualState, frame, 0x2);
+    private int handlePushTemporaryVariable2(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushTemporaryVariable(frame, pc, vstate, 0x2);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_TEMP_VAR_3, safepoint = false)
-    private int handlePushTemporaryVariable3(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushTemporaryVariable(pc, virtualState, frame, 0x3);
+    private int handlePushTemporaryVariable3(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushTemporaryVariable(frame, pc, vstate, 0x3);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_TEMP_VAR_4, safepoint = false)
-    private int handlePushTemporaryVariable4(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushTemporaryVariable(pc, virtualState, frame, 0x4);
+    private int handlePushTemporaryVariable4(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushTemporaryVariable(frame, pc, vstate, 0x4);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_TEMP_VAR_5, safepoint = false)
-    private int handlePushTemporaryVariable5(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushTemporaryVariable(pc, virtualState, frame, 0x5);
+    private int handlePushTemporaryVariable5(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushTemporaryVariable(frame, pc, vstate, 0x5);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_TEMP_VAR_6, safepoint = false)
-    private int handlePushTemporaryVariable6(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushTemporaryVariable(pc, virtualState, frame, 0x6);
+    private int handlePushTemporaryVariable6(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushTemporaryVariable(frame, pc, vstate, 0x6);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_TEMP_VAR_7, safepoint = false)
-    private int handlePushTemporaryVariable7(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushTemporaryVariable(pc, virtualState, frame, 0x7);
+    private int handlePushTemporaryVariable7(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushTemporaryVariable(frame, pc, vstate, 0x7);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_TEMP_VAR_8, safepoint = false)
-    private int handlePushTemporaryVariable8(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushTemporaryVariable(pc, virtualState, frame, 0x8);
+    private int handlePushTemporaryVariable8(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushTemporaryVariable(frame, pc, vstate, 0x8);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_TEMP_VAR_9, safepoint = false)
-    private int handlePushTemporaryVariable9(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushTemporaryVariable(pc, virtualState, frame, 0x9);
+    private int handlePushTemporaryVariable9(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushTemporaryVariable(frame, pc, vstate, 0x9);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_TEMP_VAR_A, safepoint = false)
-    private int handlePushTemporaryVariableA(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushTemporaryVariable(pc, virtualState, frame, 0xA);
+    private int handlePushTemporaryVariableA(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushTemporaryVariable(frame, pc, vstate, 0xA);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_TEMP_VAR_B, safepoint = false)
-    private int handlePushTemporaryVariableB(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePushTemporaryVariable(pc, virtualState, frame, 0xB);
+    private int handlePushTemporaryVariableB(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePushTemporaryVariable(frame, pc, vstate, 0xB);
     }
 
     @EarlyInline
-    private int handlePushTemporaryVariable(final int pc, @SuppressWarnings("unused") final VirtualState virtualState, final VirtualFrame frame, final int index) {
-        pushFollowed(frame, pc, virtualState.sp++, FrameAccess.getStackValue(frame, index));
+    private int handlePushTemporaryVariable(final VirtualFrame frame, final int pc, @SuppressWarnings("unused") final VirtualState vstate, final int index) {
+        pushFollowed(frame, pc, vstate.sp++, FrameAccess.getStackValue(frame, index));
         return pc + 1;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_RECEIVER, safepoint = false)
-    private int handlePushReceiver(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        pushFollowed(frame, pc, virtualState.sp++, FrameAccess.getReceiver(frame));
+    private int handlePushReceiver(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        pushFollowed(frame, pc, vstate.sp++, FrameAccess.getReceiver(frame));
         return pc + 1;
     }
 
     @EarlyInline
     @SuppressWarnings("static-method")
     @BytecodeInterpreterHandler(value = BC.PUSH_CONSTANT_TRUE, safepoint = false)
-    private int handlePushConstantTrue(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        push(frame, virtualState.sp++, BooleanObject.TRUE);
+    private int handlePushConstantTrue(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        push(frame, vstate.sp++, BooleanObject.TRUE);
         return pc + 1;
     }
 
     @EarlyInline
     @SuppressWarnings("static-method")
     @BytecodeInterpreterHandler(value = BC.PUSH_CONSTANT_FALSE, safepoint = false)
-    private int handlePushConstantFalse(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        push(frame, virtualState.sp++, BooleanObject.FALSE);
+    private int handlePushConstantFalse(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        push(frame, vstate.sp++, BooleanObject.FALSE);
         return pc + 1;
     }
 
     @EarlyInline
     @SuppressWarnings("static-method")
     @BytecodeInterpreterHandler(value = BC.PUSH_CONSTANT_NIL, safepoint = false)
-    private int handlePushConstantNil(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        push(frame, virtualState.sp++, NilObject.SINGLETON);
+    private int handlePushConstantNil(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        push(frame, vstate.sp++, NilObject.SINGLETON);
         return pc + 1;
     }
 
     @EarlyInline
     @SuppressWarnings("static-method")
     @BytecodeInterpreterHandler(value = BC.PUSH_CONSTANT_ZERO, safepoint = false)
-    private int handlePushConstantZero(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        push(frame, virtualState.sp++, 0L);
+    private int handlePushConstantZero(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        push(frame, vstate.sp++, 0L);
         return pc + 1;
     }
 
     @EarlyInline
     @SuppressWarnings("static-method")
     @BytecodeInterpreterHandler(value = BC.PUSH_CONSTANT_ONE, safepoint = false)
-    private int handlePushConstantOne(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        push(frame, virtualState.sp++, 1L);
+    private int handlePushConstantOne(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        push(frame, vstate.sp++, 1L);
         return pc + 1;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.EXT_PUSH_PSEUDO_VARIABLE, safepoint = false)
-    private int handlePushPseudoVariable(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        if (virtualState.extB == 0) {
-            push(frame, virtualState.sp++, getOrCreateContext(frame, pc));
+    private int handlePushPseudoVariable(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
+        if (vstate.extB == 0) {
+            push(frame, vstate.sp++, getOrCreateContext(frame, pc));
         } else {
             throw unknownBytecode(pc, getByte(state.bytecode, pc));
         }
-        assert virtualState.extA == 0;
+        assert vstate.extA == 0;
         return pc + 1;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.DUPLICATE_TOP, safepoint = false)
-    private int handleDuplicateTop(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        pushFollowed(frame, pc, virtualState.sp, top(frame, virtualState.sp));
-        virtualState.sp++;
+    private int handleDuplicateTop(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        pushFollowed(frame, pc, vstate.sp, top(frame, vstate.sp));
+        vstate.sp++;
         return pc + 1;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.EXT_PUSH_RECEIVER_VARIABLE, safepoint = false)
-    private int handleExtendedPushReceiverVariable(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        final int index = getByteExtendedWithExtA(pc, state, virtualState);
-        pushFollowed(frame, pc, virtualState.sp++, ACCESS.uncheckedCast(getData(pc), SqueakObjectAt0NodeGen.class).execute(this, FrameAccess.getReceiver(frame), index));
+    private int handleExtendedPushReceiverVariable(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
+        final int index = getByteExtendedWithExtA(pc, vstate, state);
+        pushFollowed(frame, pc, vstate.sp++, ACCESS.uncheckedCast(getData(pc), SqueakObjectAt0NodeGen.class).execute(this, FrameAccess.getReceiver(frame), index));
         return pc + 2;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.EXT_PUSH_LITERAL_VARIABLE, safepoint = false)
-    private int handleExtendedPushLiteralVariable(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        final int index = getByteExtendedWithExtA(pc, state, virtualState);
-        push(frame, virtualState.sp++, readLiteralVariable(pc, index));
+    private int handleExtendedPushLiteralVariable(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
+        final int index = getByteExtendedWithExtA(pc, vstate, state);
+        push(frame, vstate.sp++, readLiteralVariable(pc, index));
         return pc + 2;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.EXT_PUSH_LITERAL, safepoint = false)
-    private int handleExtendedPushLiteralConstant(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        final int index = getByteExtendedWithExtA(pc, state, virtualState);
-        push(frame, virtualState.sp++, getAndResolveLiteral(pc, index));
+    private int handleExtendedPushLiteralConstant(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
+        final int index = getByteExtendedWithExtA(pc, vstate, state);
+        push(frame, vstate.sp++, getAndResolveLiteral(pc, index));
         return pc + 2;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.LONG_PUSH_TEMPORARY_VARIABLE, safepoint = false)
-    private int handleLongPushTemporaryVariable(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        pushFollowed(frame, pc, virtualState.sp++, FrameAccess.getStackValue(frame, getUnsignedInt(state.bytecode, pc + 1)));
+    private int handleLongPushTemporaryVariable(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
+        pushFollowed(frame, pc, vstate.sp++, FrameAccess.getStackValue(frame, getUnsignedInt(state.bytecode, pc + 1)));
         return pc + 2;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_NEW_ARRAY, safepoint = false)
-    private int handlePushNewArray(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
+    private int handlePushNewArray(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
         final int param = getByte(state.bytecode, pc + 1);
         final int arraySize = param & 127;
         CompilerAsserts.partialEvaluationConstant(arraySize);
         final Object[] values;
         if (param < 0) {
-            values = popN(frame, virtualState.sp, arraySize);
-            virtualState.sp -= arraySize;
+            values = popN(frame, vstate.sp, arraySize);
+            vstate.sp -= arraySize;
         } else {
             values = ArrayUtils.withAll(arraySize, NilObject.SINGLETON);
         }
-        push(frame, virtualState.sp++, ArrayObject.createWithStorage(getContext().arrayClass, values));
+        push(frame, vstate.sp++, ArrayObject.createWithStorage(getContext().arrayClass, values));
         return pc + 2;
     }
 
     @EarlyInline
     @SuppressWarnings("static-method")
     @BytecodeInterpreterHandler(value = BC.EXT_PUSH_INTEGER, safepoint = false)
-    private int handleExtendedPushInteger(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        push(frame, virtualState.sp++, (long) getByteExtended(state.bytecode, pc + 1, virtualState.extB));
-        virtualState.resetExtB();
+    private int handleExtendedPushInteger(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
+        push(frame, vstate.sp++, (long) getByteExtended(state.bytecode, pc + 1, vstate.extB));
+        vstate.resetExtB();
         return pc + 2;
     }
 
     @EarlyInline
     @SuppressWarnings("static-method")
     @BytecodeInterpreterHandler(value = BC.EXT_PUSH_CHARACTER, safepoint = false)
-    private int handleExtendedPushCharacter(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        final int intValue = getByteExtendedWithExtA(pc, state, virtualState);
-        push(frame, virtualState.sp++, CharacterObject.valueOf(intValue));
-        virtualState.resetExtA();
+    private int handleExtendedPushCharacter(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
+        final int intValue = getByteExtendedWithExtA(pc, vstate, state);
+        push(frame, vstate.sp++, CharacterObject.valueOf(intValue));
+        vstate.resetExtA();
         return pc + 2;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.EXT_PUSH_FULL_CLOSURE, safepoint = false)
-    private int handleExtendedPushFullClosure(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        final int literalIndex = getByteExtendedWithExtA(pc, state, virtualState);
+    private int handleExtendedPushFullClosure(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
+        final int literalIndex = getByteExtendedWithExtA(pc, vstate, state);
         final CompiledCodeObject block = (CompiledCodeObject) code.getLiteral(literalIndex);
         assert block.assertNotForwarded();
         CompilerAsserts.partialEvaluationConstant(block);
         final byte byteB = getByte(state.bytecode, pc + 2);
         final int numCopied = Byte.toUnsignedInt(byteB) & 63;
         CompilerAsserts.partialEvaluationConstant(numCopied);
-        final Object[] copiedValues = popN(frame, virtualState.sp, numCopied);
-        virtualState.sp -= numCopied;
+        final Object[] copiedValues = popN(frame, vstate.sp, numCopied);
+        vstate.sp -= numCopied;
         final boolean ignoreContext = (byteB & 0x40) != 0;
         final boolean receiverOnStack = (byteB & 0x80) != 0;
         final ContextObject outerContext = ignoreContext ? null : getOrCreateContext(frame, pc);
-        final Object receiver = receiverOnStack ? pop(frame, --virtualState.sp) : FrameAccess.getReceiver(frame);
-        push(frame, virtualState.sp++, new BlockClosureObject(false, block, block.getNumArgs(), copiedValues, receiver, outerContext));
-        virtualState.resetExtA();
+        final Object receiver = receiverOnStack ? pop(frame, --vstate.sp) : FrameAccess.getReceiver(frame);
+        push(frame, vstate.sp++, new BlockClosureObject(false, block, block.getNumArgs(), copiedValues, receiver, outerContext));
+        vstate.resetExtA();
         return pc + 3;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.EXT_PUSH_CLOSURE, safepoint = false)
-    private int handleExtendedPushClosure(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
+    private int handleExtendedPushClosure(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
         final int byteA = getUnsignedInt(state.bytecode, pc + 1);
-        final int numCopied = (byteA >> 3 & 0x7) + (virtualState.extA >> 4) * 8;
+        final int numCopied = (byteA >> 3 & 0x7) + (vstate.extA >> 4) * 8;
         CompilerAsserts.partialEvaluationConstant(numCopied);
-        final Object[] copiedValues = popN(frame, virtualState.sp, numCopied);
-        virtualState.sp -= numCopied;
-        push(frame, virtualState.sp++, createBlockClosure(frame, ACCESS.uncheckedCast(getData(pc), CompiledCodeObject.class), copiedValues, getOrCreateContext(frame, pc)));
-        final int blockSize = getByteExtended(state.bytecode, pc + 2, virtualState.extB);
+        final Object[] copiedValues = popN(frame, vstate.sp, numCopied);
+        vstate.sp -= numCopied;
+        push(frame, vstate.sp++, createBlockClosure(frame, ACCESS.uncheckedCast(getData(pc), CompiledCodeObject.class), copiedValues, getOrCreateContext(frame, pc)));
+        final int blockSize = getByteExtended(state.bytecode, pc + 2, vstate.extB);
         CompilerAsserts.partialEvaluationConstant(blockSize);
-        virtualState.resetExtAB();
+        vstate.resetExtAB();
         return pc + 3 + blockSize;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.PUSH_REMOTE_TEMP_LONG, safepoint = false)
-    private int handleLongPushRemoteTemporaryVariable(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
+    private int handleLongPushRemoteTemporaryVariable(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
         final int remoteTempIndex = getUnsignedInt(state.bytecode, pc + 1);
         final int tempVectorIndex = getUnsignedInt(state.bytecode, pc + 2);
-        pushFollowed(frame, pc, virtualState.sp++, ACCESS.uncheckedCast(getData(pc), SqueakObjectAt0NodeGen.class).execute(this, FrameAccess.getStackValue(frame, tempVectorIndex), remoteTempIndex));
+        pushFollowed(frame, pc, vstate.sp++, ACCESS.uncheckedCast(getData(pc), SqueakObjectAt0NodeGen.class).execute(this, FrameAccess.getStackValue(frame, tempVectorIndex), remoteTempIndex));
         return pc + 3;
     }
 
@@ -1819,118 +1820,118 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.POP_INTO_RCVR_VAR_0, safepoint = false)
-    private int handlePopIntoReceiverVariable0(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePopIntoReceiverVariable(pc, virtualState, frame, 0);
+    private int handlePopIntoReceiverVariable0(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePopIntoReceiverVariable(frame, pc, vstate, 0);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.POP_INTO_RCVR_VAR_1, safepoint = false)
-    private int handlePopIntoReceiverVariable1(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePopIntoReceiverVariable(pc, virtualState, frame, 1);
+    private int handlePopIntoReceiverVariable1(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePopIntoReceiverVariable(frame, pc, vstate, 1);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.POP_INTO_RCVR_VAR_2, safepoint = false)
-    private int handlePopIntoReceiverVariable2(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePopIntoReceiverVariable(pc, virtualState, frame, 2);
+    private int handlePopIntoReceiverVariable2(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePopIntoReceiverVariable(frame, pc, vstate, 2);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.POP_INTO_RCVR_VAR_3, safepoint = false)
-    private int handlePopIntoReceiverVariable3(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePopIntoReceiverVariable(pc, virtualState, frame, 3);
+    private int handlePopIntoReceiverVariable3(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePopIntoReceiverVariable(frame, pc, vstate, 3);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.POP_INTO_RCVR_VAR_4, safepoint = false)
-    private int handlePopIntoReceiverVariable4(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePopIntoReceiverVariable(pc, virtualState, frame, 4);
+    private int handlePopIntoReceiverVariable4(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePopIntoReceiverVariable(frame, pc, vstate, 4);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.POP_INTO_RCVR_VAR_5, safepoint = false)
-    private int handlePopIntoReceiverVariable5(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePopIntoReceiverVariable(pc, virtualState, frame, 5);
+    private int handlePopIntoReceiverVariable5(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePopIntoReceiverVariable(frame, pc, vstate, 5);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.POP_INTO_RCVR_VAR_6, safepoint = false)
-    private int handlePopIntoReceiverVariable6(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePopIntoReceiverVariable(pc, virtualState, frame, 6);
+    private int handlePopIntoReceiverVariable6(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePopIntoReceiverVariable(frame, pc, vstate, 6);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.POP_INTO_RCVR_VAR_7, safepoint = false)
-    private int handlePopIntoReceiverVariable7(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePopIntoReceiverVariable(pc, virtualState, frame, 7);
+    private int handlePopIntoReceiverVariable7(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePopIntoReceiverVariable(frame, pc, vstate, 7);
     }
 
     @EarlyInline
-    private int handlePopIntoReceiverVariable(final int pc, final VirtualState virtualState, final VirtualFrame frame, final int index) {
-        ACCESS.uncheckedCast(getData(pc), SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), index, pop(frame, --virtualState.sp));
+    private int handlePopIntoReceiverVariable(final VirtualFrame frame, final int pc, final VirtualState vstate, final int index) {
+        ACCESS.uncheckedCast(getData(pc), SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), index, pop(frame, --vstate.sp));
         return pc + 1;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.POP_INTO_TEMP_VAR_0, safepoint = false)
-    private int handlePopIntoTemporaryVariable0(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePopIntoTemporaryVariable(pc, virtualState, frame, 0);
+    private int handlePopIntoTemporaryVariable0(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePopIntoTemporaryVariable(frame, pc, vstate, 0);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.POP_INTO_TEMP_VAR_1, safepoint = false)
-    private int handlePopIntoTemporaryVariable1(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePopIntoTemporaryVariable(pc, virtualState, frame, 1);
+    private int handlePopIntoTemporaryVariable1(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePopIntoTemporaryVariable(frame, pc, vstate, 1);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.POP_INTO_TEMP_VAR_2, safepoint = false)
-    private int handlePopIntoTemporaryVariable2(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePopIntoTemporaryVariable(pc, virtualState, frame, 2);
+    private int handlePopIntoTemporaryVariable2(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePopIntoTemporaryVariable(frame, pc, vstate, 2);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.POP_INTO_TEMP_VAR_3, safepoint = false)
-    private int handlePopIntoTemporaryVariable3(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePopIntoTemporaryVariable(pc, virtualState, frame, 3);
+    private int handlePopIntoTemporaryVariable3(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePopIntoTemporaryVariable(frame, pc, vstate, 3);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.POP_INTO_TEMP_VAR_4, safepoint = false)
-    private int handlePopIntoTemporaryVariable4(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePopIntoTemporaryVariable(pc, virtualState, frame, 4);
+    private int handlePopIntoTemporaryVariable4(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePopIntoTemporaryVariable(frame, pc, vstate, 4);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.POP_INTO_TEMP_VAR_5, safepoint = false)
-    private int handlePopIntoTemporaryVariable5(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePopIntoTemporaryVariable(pc, virtualState, frame, 5);
+    private int handlePopIntoTemporaryVariable5(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePopIntoTemporaryVariable(frame, pc, vstate, 5);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.POP_INTO_TEMP_VAR_6, safepoint = false)
-    private int handlePopIntoTemporaryVariable6(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePopIntoTemporaryVariable(pc, virtualState, frame, 6);
+    private int handlePopIntoTemporaryVariable6(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePopIntoTemporaryVariable(frame, pc, vstate, 6);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.POP_INTO_TEMP_VAR_7, safepoint = false)
-    private int handlePopIntoTemporaryVariable7(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handlePopIntoTemporaryVariable(pc, virtualState, frame, 7);
+    private int handlePopIntoTemporaryVariable7(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handlePopIntoTemporaryVariable(frame, pc, vstate, 7);
     }
 
     @EarlyInline
     @SuppressWarnings("static-method")
-    private int handlePopIntoTemporaryVariable(final int pc, final VirtualState virtualState, final VirtualFrame frame, final int index) {
-        FrameAccess.setStackValue(frame, index, pop(frame, --virtualState.sp));
+    private int handlePopIntoTemporaryVariable(final VirtualFrame frame, final int pc, final VirtualState vstate, final int index) {
+        FrameAccess.setStackValue(frame, index, pop(frame, --vstate.sp));
         return pc + 1;
     }
 
     @EarlyInline
     @SuppressWarnings("static-method")
     @BytecodeInterpreterHandler(value = BC.POP_STACK, safepoint = false)
-    private int handlePopStack(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        pop(frame, --virtualState.sp);
+    private int handlePopStack(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        pop(frame, --vstate.sp);
         return pc + 1;
     }
 
@@ -1940,71 +1941,71 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.EXT_STORE_AND_POP_RECEIVER_VARIABLE, safepoint = false)
-    private int handleExtendedStoreAndPopReceiverVariable(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        final int index = getByteExtendedWithExtA(pc, state, virtualState);
-        ACCESS.uncheckedCast(getData(pc), SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), index, pop(frame, --virtualState.sp));
-        virtualState.resetExtA();
+    private int handleExtendedStoreAndPopReceiverVariable(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
+        final int index = getByteExtendedWithExtA(pc, vstate, state);
+        ACCESS.uncheckedCast(getData(pc), SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), index, pop(frame, --vstate.sp));
+        vstate.resetExtA();
         return pc + 2;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.EXT_STORE_AND_POP_LITERAL_VARIABLE, safepoint = false)
-    private int handleExtendedStoreAndPopLiteralVariable(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        final int index = getByteExtendedWithExtA(pc, state, virtualState);
-        ACCESS.uncheckedCast(getData(pc), SqueakObjectAtPut0Node.class).execute(this, getAndResolveLiteral(pc, index), ASSOCIATION.VALUE, pop(frame, --virtualState.sp));
-        virtualState.resetExtA();
+    private int handleExtendedStoreAndPopLiteralVariable(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
+        final int index = getByteExtendedWithExtA(pc, vstate, state);
+        ACCESS.uncheckedCast(getData(pc), SqueakObjectAtPut0Node.class).execute(this, getAndResolveLiteral(pc, index), ASSOCIATION.VALUE, pop(frame, --vstate.sp));
+        vstate.resetExtA();
         return pc + 2;
     }
 
     @EarlyInline
     @SuppressWarnings("static-method")
     @BytecodeInterpreterHandler(value = BC.LONG_STORE_AND_POP_TEMPORARY_VARIABLE, safepoint = false)
-    private int handleLongStoreAndPopTemporaryVariable(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        FrameAccess.setStackValue(frame, getUnsignedInt(state.bytecode, pc + 1), pop(frame, --virtualState.sp));
+    private int handleLongStoreAndPopTemporaryVariable(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
+        FrameAccess.setStackValue(frame, getUnsignedInt(state.bytecode, pc + 1), pop(frame, --vstate.sp));
         return pc + 2;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.EXT_STORE_RECEIVER_VARIABLE, safepoint = false)
-    private int handleExtendedStoreReceiverVariable(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        final int index = getByteExtendedWithExtA(pc, state, virtualState);
-        ACCESS.uncheckedCast(getData(pc), SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), index, top(frame, virtualState.sp));
-        virtualState.resetExtA();
+    private int handleExtendedStoreReceiverVariable(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
+        final int index = getByteExtendedWithExtA(pc, vstate, state);
+        ACCESS.uncheckedCast(getData(pc), SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), index, top(frame, vstate.sp));
+        vstate.resetExtA();
         return pc + 2;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.EXT_STORE_LITERAL_VARIABLE, safepoint = false)
-    private int handleExtendedStoreLiteralVariable(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        final int index = getByteExtendedWithExtA(pc, state, virtualState);
-        ACCESS.uncheckedCast(getData(pc), SqueakObjectAtPut0Node.class).execute(this, getAndResolveLiteral(pc, index), ASSOCIATION.VALUE, top(frame, virtualState.sp));
-        virtualState.resetExtA();
+    private int handleExtendedStoreLiteralVariable(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
+        final int index = getByteExtendedWithExtA(pc, vstate, state);
+        ACCESS.uncheckedCast(getData(pc), SqueakObjectAtPut0Node.class).execute(this, getAndResolveLiteral(pc, index), ASSOCIATION.VALUE, top(frame, vstate.sp));
+        vstate.resetExtA();
         return pc + 2;
     }
 
     @EarlyInline
     @SuppressWarnings("static-method")
     @BytecodeInterpreterHandler(value = BC.LONG_STORE_TEMPORARY_VARIABLE, safepoint = false)
-    private int handleLongStoreTemporaryVariable(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        FrameAccess.setStackValue(frame, getUnsignedInt(state.bytecode, pc + 1), top(frame, virtualState.sp));
+    private int handleLongStoreTemporaryVariable(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
+        FrameAccess.setStackValue(frame, getUnsignedInt(state.bytecode, pc + 1), top(frame, vstate.sp));
         return pc + 2;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.STORE_REMOTE_TEMP_LONG, safepoint = false)
-    private int handleLongStoreRemoteTemporaryVariable(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
+    private int handleLongStoreRemoteTemporaryVariable(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
         final int remoteTempIndex = getUnsignedInt(state.bytecode, pc + 1);
         final int tempVectorIndex = getUnsignedInt(state.bytecode, pc + 2);
-        ACCESS.uncheckedCast(getData(pc), SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getStackValue(frame, tempVectorIndex), remoteTempIndex, top(frame, virtualState.sp));
+        ACCESS.uncheckedCast(getData(pc), SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getStackValue(frame, tempVectorIndex), remoteTempIndex, top(frame, vstate.sp));
         return pc + 3;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.STORE_AND_POP_REMOTE_TEMP_LONG, safepoint = false)
-    private int handleLongStoreAndPopRemoteTemporaryVariable(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
+    private int handleLongStoreAndPopRemoteTemporaryVariable(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
         final int remoteTempIndex = getUnsignedInt(state.bytecode, pc + 1);
         final int tempVectorIndex = getUnsignedInt(state.bytecode, pc + 2);
-        ACCESS.uncheckedCast(getData(pc), SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getStackValue(frame, tempVectorIndex), remoteTempIndex, pop(frame, --virtualState.sp));
+        ACCESS.uncheckedCast(getData(pc), SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getStackValue(frame, tempVectorIndex), remoteTempIndex, pop(frame, --vstate.sp));
         return pc + 3;
     }
 
@@ -2014,9 +2015,9 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_ADD, safepoint = false)
-    private int handlePrimitiveAdd(final int pc, final @SuppressWarnings("unused") State state, final VirtualState virtualState, final VirtualFrame frame) {
-        final Object arg = pop(frame, --virtualState.sp);
-        final Object receiver = popReceiver(frame, --virtualState.sp);
+    private int handlePrimitiveAdd(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        final Object arg = pop(frame, --vstate.sp);
+        final Object receiver = popReceiver(frame, --vstate.sp);
         final byte profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
@@ -2036,19 +2037,19 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             result = PrimSmallFloatAddNode.doDouble(lhs, rhs);
         } else {
             enter(pc, profile, BRANCH1);
-            FrameAccess.externalizePCAndSP(frame, nextPC, virtualState.sp);
+            FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver, arg);
             nextPC = FrameAccess.internalizePC(frame, nextPC);
         }
-        push(frame, virtualState.sp++, result);
+        push(frame, vstate.sp++, result);
         return nextPC;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_SUBTRACT, safepoint = false)
-    private int handlePrimitiveSubtract(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        final Object arg = pop(frame, --virtualState.sp);
-        final Object receiver = popReceiver(frame, --virtualState.sp);
+    private int handlePrimitiveSubtract(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        final Object arg = pop(frame, --vstate.sp);
+        final Object receiver = popReceiver(frame, --vstate.sp);
         final byte profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
@@ -2068,19 +2069,19 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             result = PrimSmallFloatSubtractNode.doDouble(lhs, rhs);
         } else {
             enter(pc, profile, BRANCH1);
-            FrameAccess.externalizePCAndSP(frame, nextPC, virtualState.sp);
+            FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver, arg);
             nextPC = FrameAccess.internalizePC(frame, nextPC);
         }
-        push(frame, virtualState.sp++, result);
+        push(frame, vstate.sp++, result);
         return nextPC;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_LESS_THAN, safepoint = false)
-    private int handlePrimitiveLessThan(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        final Object arg = pop(frame, --virtualState.sp);
-        final Object receiver = popReceiver(frame, --virtualState.sp);
+    private int handlePrimitiveLessThan(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        final Object arg = pop(frame, --vstate.sp);
+        final Object receiver = popReceiver(frame, --vstate.sp);
         final byte profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
@@ -2092,19 +2093,19 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             result = PrimSmallFloatLessThanNode.doDouble(lhs, rhs);
         } else {
             enter(pc, profile, BRANCH1);
-            FrameAccess.externalizePCAndSP(frame, nextPC, virtualState.sp);
+            FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver, arg);
             nextPC = FrameAccess.internalizePC(frame, nextPC);
         }
-        push(frame, virtualState.sp++, result);
+        push(frame, vstate.sp++, result);
         return nextPC;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_GREATER_THAN, safepoint = false)
-    private int handlePrimitiveGreaterThan(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        final Object arg = pop(frame, --virtualState.sp);
-        final Object receiver = popReceiver(frame, --virtualState.sp);
+    private int handlePrimitiveGreaterThan(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        final Object arg = pop(frame, --vstate.sp);
+        final Object receiver = popReceiver(frame, --vstate.sp);
         final byte profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
@@ -2116,19 +2117,19 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             result = PrimSmallFloatGreaterThanNode.doDouble(lhs, rhs);
         } else {
             enter(pc, profile, BRANCH1);
-            FrameAccess.externalizePCAndSP(frame, nextPC, virtualState.sp);
+            FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver, arg);
             nextPC = FrameAccess.internalizePC(frame, nextPC);
         }
-        push(frame, virtualState.sp++, result);
+        push(frame, vstate.sp++, result);
         return nextPC;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_LESS_OR_EQUAL, safepoint = false)
-    private int handlePrimitiveLessOrEqual(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        final Object arg = pop(frame, --virtualState.sp);
-        final Object receiver = popReceiver(frame, --virtualState.sp);
+    private int handlePrimitiveLessOrEqual(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        final Object arg = pop(frame, --vstate.sp);
+        final Object receiver = popReceiver(frame, --vstate.sp);
         final byte profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
@@ -2140,19 +2141,19 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             result = PrimSmallFloatLessOrEqualNode.doDouble(lhs, rhs);
         } else {
             enter(pc, profile, BRANCH1);
-            FrameAccess.externalizePCAndSP(frame, nextPC, virtualState.sp);
+            FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver, arg);
             nextPC = FrameAccess.internalizePC(frame, nextPC);
         }
-        push(frame, virtualState.sp++, result);
+        push(frame, vstate.sp++, result);
         return nextPC;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_GREATER_OR_EQUAL, safepoint = false)
-    private int handlePrimitiveGreaterOrEqual(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        final Object arg = pop(frame, --virtualState.sp);
-        final Object receiver = popReceiver(frame, --virtualState.sp);
+    private int handlePrimitiveGreaterOrEqual(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        final Object arg = pop(frame, --vstate.sp);
+        final Object receiver = popReceiver(frame, --vstate.sp);
         final byte profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
@@ -2164,19 +2165,19 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             result = PrimSmallFloatGreaterOrEqualNode.doDouble(lhs, rhs);
         } else {
             enter(pc, profile, BRANCH1);
-            FrameAccess.externalizePCAndSP(frame, nextPC, virtualState.sp);
+            FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver, arg);
             nextPC = FrameAccess.internalizePC(frame, nextPC);
         }
-        push(frame, virtualState.sp++, result);
+        push(frame, vstate.sp++, result);
         return nextPC;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_EQUAL, safepoint = false)
-    private int handlePrimitiveEqual(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        final Object arg = pop(frame, --virtualState.sp);
-        final Object receiver = popReceiver(frame, --virtualState.sp);
+    private int handlePrimitiveEqual(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        final Object arg = pop(frame, --vstate.sp);
+        final Object receiver = popReceiver(frame, --vstate.sp);
         final byte profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
@@ -2188,19 +2189,19 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             result = PrimSmallFloatEqualNode.doDouble(lhs, rhs);
         } else {
             enter(pc, profile, BRANCH1);
-            FrameAccess.externalizePCAndSP(frame, nextPC, virtualState.sp);
+            FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver, arg);
             nextPC = FrameAccess.internalizePC(frame, nextPC);
         }
-        push(frame, virtualState.sp++, result);
+        push(frame, vstate.sp++, result);
         return nextPC;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_NOT_EQUAL, safepoint = false)
-    private int handlePrimitiveNotEqual(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        final Object arg = pop(frame, --virtualState.sp);
-        final Object receiver = popReceiver(frame, --virtualState.sp);
+    private int handlePrimitiveNotEqual(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        final Object arg = pop(frame, --vstate.sp);
+        final Object receiver = popReceiver(frame, --vstate.sp);
         final byte profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
@@ -2212,19 +2213,19 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             result = PrimSmallFloatNotEqualNode.doDouble(lhs, rhs);
         } else {
             enter(pc, profile, BRANCH1);
-            FrameAccess.externalizePCAndSP(frame, nextPC, virtualState.sp);
+            FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver, arg);
             nextPC = FrameAccess.internalizePC(frame, nextPC);
         }
-        push(frame, virtualState.sp++, result);
+        push(frame, vstate.sp++, result);
         return nextPC;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_BIT_AND, safepoint = false)
-    private int handlePrimitiveBitAnd(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        final Object arg = pop(frame, --virtualState.sp);
-        final Object receiver = popReceiver(frame, --virtualState.sp);
+    private int handlePrimitiveBitAnd(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        final Object arg = pop(frame, --vstate.sp);
+        final Object receiver = popReceiver(frame, --vstate.sp);
         final byte profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
@@ -2233,19 +2234,19 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             result = PrimBitAndNode.doLong(lhs, rhs);
         } else {
             enter(pc, profile, BRANCH1);
-            FrameAccess.externalizePCAndSP(frame, nextPC, virtualState.sp);
+            FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver, arg);
             nextPC = FrameAccess.internalizePC(frame, nextPC);
         }
-        push(frame, virtualState.sp++, result);
+        push(frame, vstate.sp++, result);
         return nextPC;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_BIT_OR, safepoint = false)
-    private int handlePrimitiveBitOr(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        final Object arg = pop(frame, --virtualState.sp);
-        final Object receiver = popReceiver(frame, --virtualState.sp);
+    private int handlePrimitiveBitOr(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        final Object arg = pop(frame, --vstate.sp);
+        final Object receiver = popReceiver(frame, --vstate.sp);
         final byte profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
@@ -2254,18 +2255,18 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             result = PrimBitOrNode.doLong(lhs, rhs);
         } else {
             enter(pc, profile, BRANCH1);
-            FrameAccess.externalizePCAndSP(frame, nextPC, virtualState.sp);
+            FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver, arg);
             nextPC = FrameAccess.internalizePC(frame, nextPC);
         }
-        push(frame, virtualState.sp++, result);
+        push(frame, vstate.sp++, result);
         return nextPC;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_SIZE, safepoint = false)
-    private int handlePrimitiveSize(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        final Object receiver = popReceiver(frame, --virtualState.sp);
+    private int handlePrimitiveSize(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        final Object receiver = popReceiver(frame, --vstate.sp);
         final byte profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
@@ -2274,37 +2275,37 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             result = (long) nativeObject.getByteLength();
         } else { // TODO: OSVM also special cases arrays
             enter(pc, profile, BRANCH1);
-            FrameAccess.externalizePCAndSP(frame, nextPC, virtualState.sp);
+            FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver);
             nextPC = FrameAccess.internalizePC(frame, nextPC);
         }
-        push(frame, virtualState.sp++, result);
+        push(frame, vstate.sp++, result);
         return nextPC;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_IDENTICAL, safepoint = false)
-    private int handlePrimitiveIdentical(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        final Object arg = pop(frame, --virtualState.sp);
-        final Object receiver = popReceiver(frame, --virtualState.sp);
-        push(frame, virtualState.sp++, ACCESS.uncheckedCast(getData(pc), SqueakObjectIdentityNodeGen.class).execute(this, receiver, arg));
+    private int handlePrimitiveIdentical(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        final Object arg = pop(frame, --vstate.sp);
+        final Object receiver = popReceiver(frame, --vstate.sp);
+        push(frame, vstate.sp++, ACCESS.uncheckedCast(getData(pc), SqueakObjectIdentityNodeGen.class).execute(this, receiver, arg));
         return pc + 1;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_CLASS, safepoint = false)
-    private int handlePrimitiveClass(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        final Object receiver = popReceiver(frame, --virtualState.sp);
-        push(frame, virtualState.sp++, ACCESS.uncheckedCast(getData(pc), SqueakObjectClassNodeGen.class).executeLookup(this, receiver));
+    private int handlePrimitiveClass(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        final Object receiver = popReceiver(frame, --vstate.sp);
+        push(frame, vstate.sp++, ACCESS.uncheckedCast(getData(pc), SqueakObjectClassNodeGen.class).executeLookup(this, receiver));
         return pc + 1;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_NOT_IDENTICAL, safepoint = false)
-    private int handlePrimitiveNotIdentical(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        final Object arg = pop(frame, --virtualState.sp);
-        final Object receiver = popReceiver(frame, --virtualState.sp);
-        push(frame, virtualState.sp++, !ACCESS.uncheckedCast(getData(pc), SqueakObjectIdentityNodeGen.class).execute(this, receiver, arg));
+    private int handlePrimitiveNotIdentical(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        final Object arg = pop(frame, --vstate.sp);
+        final Object receiver = popReceiver(frame, --vstate.sp);
+        push(frame, vstate.sp++, !ACCESS.uncheckedCast(getData(pc), SqueakObjectIdentityNodeGen.class).execute(this, receiver, arg));
         return pc + 1;
     }
 
@@ -2315,11 +2316,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     BC.SEND_LIT_SEL0_4, BC.SEND_LIT_SEL0_5, BC.SEND_LIT_SEL0_6, BC.SEND_LIT_SEL0_7,
                     BC.SEND_LIT_SEL0_8, BC.SEND_LIT_SEL0_9, BC.SEND_LIT_SEL0_A, BC.SEND_LIT_SEL0_B,
                     BC.SEND_LIT_SEL0_C, BC.SEND_LIT_SEL0_D, BC.SEND_LIT_SEL0_E, BC.SEND_LIT_SEL0_F}, safepoint = false)
-    private int handleSend0(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
+    private int handleSend0(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         int nextPC = pc + 1;
-        final Object receiver = popReceiver(frame, --virtualState.sp);
-        FrameAccess.externalizePCAndSP(frame, nextPC, virtualState.sp);
-        push(frame, virtualState.sp++, send(frame, pc, receiver));
+        final Object receiver = popReceiver(frame, --vstate.sp);
+        FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
+        push(frame, vstate.sp++, send(frame, pc, receiver));
         nextPC = FrameAccess.internalizePC(frame, nextPC);
         return nextPC;
     }
@@ -2332,12 +2333,12 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     BC.SEND_LIT_SEL1_4, BC.SEND_LIT_SEL1_5, BC.SEND_LIT_SEL1_6, BC.SEND_LIT_SEL1_7,
                     BC.SEND_LIT_SEL1_8, BC.SEND_LIT_SEL1_9, BC.SEND_LIT_SEL1_A, BC.SEND_LIT_SEL1_B,
                     BC.SEND_LIT_SEL1_C, BC.SEND_LIT_SEL1_D, BC.SEND_LIT_SEL1_E, BC.SEND_LIT_SEL1_F}, safepoint = false)
-    private int handleSend1(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
+    private int handleSend1(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         int nextPC = pc + 1;
-        final Object arg = pop(frame, --virtualState.sp);
-        final Object receiver = popReceiver(frame, --virtualState.sp);
-        FrameAccess.externalizePCAndSP(frame, nextPC, virtualState.sp);
-        push(frame, virtualState.sp++, send(frame, pc, receiver, arg));
+        final Object arg = pop(frame, --vstate.sp);
+        final Object receiver = popReceiver(frame, --vstate.sp);
+        FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
+        push(frame, vstate.sp++, send(frame, pc, receiver, arg));
         nextPC = FrameAccess.internalizePC(frame, nextPC);
         return nextPC;
     }
@@ -2348,40 +2349,40 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     BC.SEND_LIT_SEL2_4, BC.SEND_LIT_SEL2_5, BC.SEND_LIT_SEL2_6, BC.SEND_LIT_SEL2_7,
                     BC.SEND_LIT_SEL2_8, BC.SEND_LIT_SEL2_9, BC.SEND_LIT_SEL2_A, BC.SEND_LIT_SEL2_B,
                     BC.SEND_LIT_SEL2_C, BC.SEND_LIT_SEL2_D, BC.SEND_LIT_SEL2_E, BC.SEND_LIT_SEL2_F}, safepoint = false)
-    private int handleSend2(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
+    private int handleSend2(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         int nextPC = pc + 1;
-        final Object arg2 = pop(frame, --virtualState.sp);
-        final Object arg1 = pop(frame, --virtualState.sp);
-        final Object receiver = popReceiver(frame, --virtualState.sp);
-        FrameAccess.externalizePCAndSP(frame, nextPC, virtualState.sp);
-        push(frame, virtualState.sp++, send(frame, pc, receiver, arg1, arg2));
+        final Object arg2 = pop(frame, --vstate.sp);
+        final Object arg1 = pop(frame, --vstate.sp);
+        final Object receiver = popReceiver(frame, --vstate.sp);
+        FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
+        push(frame, vstate.sp++, send(frame, pc, receiver, arg1, arg2));
         nextPC = FrameAccess.internalizePC(frame, nextPC);
         return nextPC;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.EXT_SEND, safepoint = false)
-    private int handleExtendedSend(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
+    private int handleExtendedSend(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
         int nextPC = pc + 2;
         final int byte1 = getUnsignedInt(state.bytecode, pc + 1);
-        final int numArgs = (byte1 & 7) + (virtualState.extB << 3);
+        final int numArgs = (byte1 & 7) + (vstate.extB << 3);
         CompilerAsserts.partialEvaluationConstant(numArgs);
-        final Object[] arguments = popN(frame, virtualState.sp, numArgs);
-        virtualState.sp -= numArgs;
-        final Object receiver = popReceiver(frame, --virtualState.sp);
-        FrameAccess.externalizePCAndSP(frame, nextPC, virtualState.sp);
-        push(frame, virtualState.sp++, sendNary(frame, pc, receiver, arguments));
+        final Object[] arguments = popN(frame, vstate.sp, numArgs);
+        vstate.sp -= numArgs;
+        final Object receiver = popReceiver(frame, --vstate.sp);
+        FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
+        push(frame, vstate.sp++, sendNary(frame, pc, receiver, arguments));
         nextPC = FrameAccess.internalizePC(frame, nextPC);
-        virtualState.resetExtAB();
+        vstate.resetExtAB();
         return nextPC;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.EXT_SEND_SUPER, safepoint = false)
-    private int handleExtendedSuperSend(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
+    private int handleExtendedSuperSend(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
         int nextPC = pc + 2;
         final boolean isDirected;
-        final int extB = virtualState.extB;
+        final int extB = vstate.extB;
         final int extBValue;
         if (extB >= 64) {
             isDirected = true;
@@ -2393,15 +2394,15 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final int byte1 = getUnsignedInt(state.bytecode, pc + 1);
         final int numArgs = (byte1 & 7) + (extBValue << 3);
         CompilerAsserts.partialEvaluationConstant(numArgs);
-        final ClassObject lookupClass = isDirected ? ((ClassObject) pop(frame, --virtualState.sp)).getResolvedSuperclass() : null;
-        final Object[] arguments = popN(frame, virtualState.sp, numArgs);
-        virtualState.sp -= numArgs;
-        final Object receiver = popReceiver(frame, --virtualState.sp);
-        FrameAccess.externalizePCAndSP(frame, nextPC, virtualState.sp);
+        final ClassObject lookupClass = isDirected ? ((ClassObject) pop(frame, --vstate.sp)).getResolvedSuperclass() : null;
+        final Object[] arguments = popN(frame, vstate.sp, numArgs);
+        vstate.sp -= numArgs;
+        final Object receiver = popReceiver(frame, --vstate.sp);
+        FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
         CompilerAsserts.partialEvaluationConstant(isDirected);
-        pushFollowed(frame, pc, virtualState.sp++, sendSuper(frame, isDirected, pc, lookupClass, receiver, arguments));
+        pushFollowed(frame, pc, vstate.sp++, sendSuper(frame, isDirected, pc, lookupClass, receiver, arguments));
         nextPC = FrameAccess.internalizePC(frame, nextPC);
-        virtualState.resetExtAB();
+        vstate.resetExtAB();
         return nextPC;
     }
 
@@ -2411,54 +2412,54 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.SHORT_UJUMP_0, safepoint = true)
-    private int handleShortUnconditionalJump0(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handleShortUnconditionalJump(pc, state, virtualState, frame, 2);
+    private int handleShortUnconditionalJump0(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
+        return handleShortUnconditionalJump(frame, pc, vstate, state, 2);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.SHORT_UJUMP_1, safepoint = true)
-    private int handleShortUnconditionalJump1(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handleShortUnconditionalJump(pc, state, virtualState, frame, 3);
+    private int handleShortUnconditionalJump1(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
+        return handleShortUnconditionalJump(frame, pc, vstate, state, 3);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.SHORT_UJUMP_2, safepoint = true)
-    private int handleShortUnconditionalJump2(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handleShortUnconditionalJump(pc, state, virtualState, frame, 4);
+    private int handleShortUnconditionalJump2(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
+        return handleShortUnconditionalJump(frame, pc, vstate, state, 4);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.SHORT_UJUMP_3, safepoint = true)
-    private int handleShortUnconditionalJump3(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handleShortUnconditionalJump(pc, state, virtualState, frame, 5);
+    private int handleShortUnconditionalJump3(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
+        return handleShortUnconditionalJump(frame, pc, vstate, state, 5);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.SHORT_UJUMP_4, safepoint = true)
-    private int handleShortUnconditionalJump4(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handleShortUnconditionalJump(pc, state, virtualState, frame, 6);
+    private int handleShortUnconditionalJump4(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
+        return handleShortUnconditionalJump(frame, pc, vstate, state, 6);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.SHORT_UJUMP_5, safepoint = true)
-    private int handleShortUnconditionalJump5(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handleShortUnconditionalJump(pc, state, virtualState, frame, 7);
+    private int handleShortUnconditionalJump5(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
+        return handleShortUnconditionalJump(frame, pc, vstate, state, 7);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.SHORT_UJUMP_6, safepoint = true)
-    private int handleShortUnconditionalJump6(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handleShortUnconditionalJump(pc, state, virtualState, frame, 8);
+    private int handleShortUnconditionalJump6(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
+        return handleShortUnconditionalJump(frame, pc, vstate, state, 8);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.SHORT_UJUMP_7, safepoint = true)
-    private int handleShortUnconditionalJump7(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handleShortUnconditionalJump(pc, state, virtualState, frame, 9);
+    private int handleShortUnconditionalJump7(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
+        return handleShortUnconditionalJump(frame, pc, vstate, state, 9);
     }
 
     @EarlyInline
-    private int handleShortUnconditionalJump(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame, final int onePlusJumpOffset) {
+    private int handleShortUnconditionalJump(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state, final int onePlusJumpOffset) {
         final int nextPC = pc + onePlusJumpOffset;
         if (onePlusJumpOffset < 0) {
             if (CompilerDirectives.hasNextTier()) {
@@ -2466,7 +2467,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                 if (CompilerDirectives.injectBranchProbability(LoopCounter.CHECK_LOOP_PROBABILITY, counter >= LoopCounter.CHECK_LOOP_STRIDE)) {
                     LoopNode.reportLoopCount(this, counter);
                     if (CompilerDirectives.inInterpreter() && !isBlock && BytecodeOSRNode.pollOSRBackEdge(this, counter)) {
-                        final Object osrReturnValue = BytecodeOSRNode.tryOSR(this, ((virtualState.sp & 0xFF) << 16) | nextPC, null, null, frame);
+                        final Object osrReturnValue = BytecodeOSRNode.tryOSR(this, ((vstate.sp & 0xFF) << 16) | nextPC, null, null, frame);
                         if (osrReturnValue != null) {
                             assert !FrameAccess.hasModifiedSender(frame);
                             FrameAccess.terminateFrame(frame);
@@ -2484,7 +2485,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                 }
             }
             if (getData(pc) instanceof final CheckForInterruptsInLoopNode checkForInterruptsNode) {
-                checkForInterruptsNode.execute(frame, nextPC, virtualState.sp);
+                checkForInterruptsNode.execute(frame, nextPC, vstate.sp);
             }
         }
         return nextPC;
@@ -2492,55 +2493,55 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.SHORT_CJUMP_TRUE_0, safepoint = false)
-    private int handleShortConditionalJumpTrue0(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handleShortConditionalJumpTrue(pc, virtualState, frame, 1);
+    private int handleShortConditionalJumpTrue0(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handleShortConditionalJumpTrue(frame, pc, vstate, 1);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.SHORT_CJUMP_TRUE_1, safepoint = false)
-    private int handleShortConditionalJumpTrue1(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handleShortConditionalJumpTrue(pc, virtualState, frame, 2);
+    private int handleShortConditionalJumpTrue1(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handleShortConditionalJumpTrue(frame, pc, vstate, 2);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.SHORT_CJUMP_TRUE_2, safepoint = false)
-    private int handleShortConditionalJumpTrue2(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handleShortConditionalJumpTrue(pc, virtualState, frame, 3);
+    private int handleShortConditionalJumpTrue2(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handleShortConditionalJumpTrue(frame, pc, vstate, 3);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.SHORT_CJUMP_TRUE_3, safepoint = false)
-    private int handleShortConditionalJumpTrue3(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handleShortConditionalJumpTrue(pc, virtualState, frame, 4);
+    private int handleShortConditionalJumpTrue3(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handleShortConditionalJumpTrue(frame, pc, vstate, 4);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.SHORT_CJUMP_TRUE_4, safepoint = false)
-    private int handleShortConditionalJumpTrue4(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handleShortConditionalJumpTrue(pc, virtualState, frame, 5);
+    private int handleShortConditionalJumpTrue4(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handleShortConditionalJumpTrue(frame, pc, vstate, 5);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.SHORT_CJUMP_TRUE_5, safepoint = false)
-    private int handleShortConditionalJumpTrue5(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handleShortConditionalJumpTrue(pc, virtualState, frame, 6);
+    private int handleShortConditionalJumpTrue5(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handleShortConditionalJumpTrue(frame, pc, vstate, 6);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.SHORT_CJUMP_TRUE_6, safepoint = false)
-    private int handleShortConditionalJumpTrue6(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handleShortConditionalJumpTrue(pc, virtualState, frame, 7);
+    private int handleShortConditionalJumpTrue6(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handleShortConditionalJumpTrue(frame, pc, vstate, 7);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.SHORT_CJUMP_TRUE_7, safepoint = false)
-    private int handleShortConditionalJumpTrue7(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handleShortConditionalJumpTrue(pc, virtualState, frame, 8);
+    private int handleShortConditionalJumpTrue7(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handleShortConditionalJumpTrue(frame, pc, vstate, 8);
     }
 
     @EarlyInline
-    private int handleShortConditionalJumpTrue(final int pc, final VirtualState virtualState, final VirtualFrame frame, final int jumpOffset) {
-        final Object stackValue = pop(frame, --virtualState.sp);
+    private int handleShortConditionalJumpTrue(final VirtualFrame frame, final int pc, final VirtualState vstate, final int jumpOffset) {
+        final Object stackValue = pop(frame, --vstate.sp);
         final int nextPC = pc + 1;
         if (stackValue instanceof final Boolean condition) {
             if (ACCESS.uncheckedCast(getData(pc), CountingConditionProfile.class).profile(condition)) {
@@ -2549,61 +2550,61 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                 return nextPC;
             }
         } else {
-            throw sendMustBeBooleanInInterpreter(frame, nextPC, virtualState.sp, stackValue);
+            throw sendMustBeBooleanInInterpreter(frame, nextPC, vstate.sp, stackValue);
         }
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.SHORT_CJUMP_FALSE_0, safepoint = false)
-    private int handleShortConditionalJumpFalse0(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handleShortConditionalJumpFalse(pc, virtualState, frame, 1);
+    private int handleShortConditionalJumpFalse0(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handleShortConditionalJumpFalse(frame, pc, vstate, 1);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.SHORT_CJUMP_FALSE_1, safepoint = false)
-    private int handleShortConditionalJumpFalse1(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handleShortConditionalJumpFalse(pc, virtualState, frame, 2);
+    private int handleShortConditionalJumpFalse1(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handleShortConditionalJumpFalse(frame, pc, vstate, 2);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.SHORT_CJUMP_FALSE_2, safepoint = false)
-    private int handleShortConditionalJumpFalse2(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handleShortConditionalJumpFalse(pc, virtualState, frame, 3);
+    private int handleShortConditionalJumpFalse2(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handleShortConditionalJumpFalse(frame, pc, vstate, 3);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.SHORT_CJUMP_FALSE_3, safepoint = false)
-    private int handleShortConditionalJumpFalse3(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handleShortConditionalJumpFalse(pc, virtualState, frame, 4);
+    private int handleShortConditionalJumpFalse3(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handleShortConditionalJumpFalse(frame, pc, vstate, 4);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.SHORT_CJUMP_FALSE_4, safepoint = false)
-    private int handleShortConditionalJumpFalse4(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handleShortConditionalJumpFalse(pc, virtualState, frame, 5);
+    private int handleShortConditionalJumpFalse4(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handleShortConditionalJumpFalse(frame, pc, vstate, 5);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.SHORT_CJUMP_FALSE_5, safepoint = false)
-    private int handleShortConditionalJumpFalse5(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handleShortConditionalJumpFalse(pc, virtualState, frame, 6);
+    private int handleShortConditionalJumpFalse5(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handleShortConditionalJumpFalse(frame, pc, vstate, 6);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.SHORT_CJUMP_FALSE_6, safepoint = false)
-    private int handleShortConditionalJumpFalse6(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handleShortConditionalJumpFalse(pc, virtualState, frame, 7);
+    private int handleShortConditionalJumpFalse6(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handleShortConditionalJumpFalse(frame, pc, vstate, 7);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.SHORT_CJUMP_FALSE_7, safepoint = false)
-    private int handleShortConditionalJumpFalse7(final int pc, @SuppressWarnings("unused") final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        return handleShortConditionalJumpFalse(pc, virtualState, frame, 8);
+    private int handleShortConditionalJumpFalse7(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        return handleShortConditionalJumpFalse(frame, pc, vstate, 8);
     }
 
     @EarlyInline
-    private int handleShortConditionalJumpFalse(final int pc, final VirtualState virtualState, final VirtualFrame frame, final int jumpOffset) {
-        final Object stackValue = pop(frame, --virtualState.sp);
+    private int handleShortConditionalJumpFalse(final VirtualFrame frame, final int pc, final VirtualState vstate, final int jumpOffset) {
+        final Object stackValue = pop(frame, --vstate.sp);
         final int nextPC = pc + 1;
         if (stackValue instanceof final Boolean condition) {
             if (ACCESS.uncheckedCast(getData(pc), CountingConditionProfile.class).profile(!condition)) {
@@ -2612,14 +2613,14 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                 return nextPC;
             }
         } else {
-            throw sendMustBeBooleanInInterpreter(frame, nextPC, virtualState.sp, stackValue);
+            throw sendMustBeBooleanInInterpreter(frame, nextPC, vstate.sp, stackValue);
         }
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.EXT_UNCONDITIONAL_JUMP, safepoint = true)
-    private int handleExtendedUnconditionalJump(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        final int jumpOffset = calculateLongExtendedOffset(getByte(state.bytecode, pc + 1), virtualState.extB);
+    private int handleExtendedUnconditionalJump(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
+        final int jumpOffset = calculateLongExtendedOffset(getByte(state.bytecode, pc + 1), vstate.extB);
         final int nextPC = pc + 2 + jumpOffset;
         if (jumpOffset < 0) {
             if (CompilerDirectives.hasNextTier()) {
@@ -2627,7 +2628,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                 if (CompilerDirectives.injectBranchProbability(LoopCounter.CHECK_LOOP_PROBABILITY, counter >= LoopCounter.CHECK_LOOP_STRIDE)) {
                     LoopNode.reportLoopCount(this, counter);
                     if (CompilerDirectives.inInterpreter() && !isBlock && BytecodeOSRNode.pollOSRBackEdge(this, counter)) {
-                        final Object osrReturnValue = BytecodeOSRNode.tryOSR(this, ((virtualState.sp & 0xFF) << 16) | nextPC, null, null, frame);
+                        final Object osrReturnValue = BytecodeOSRNode.tryOSR(this, ((vstate.sp & 0xFF) << 16) | nextPC, null, null, frame);
                         if (osrReturnValue != null) {
                             assert !FrameAccess.hasModifiedSender(frame);
                             FrameAccess.terminateFrame(frame);
@@ -2645,46 +2646,46 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                 }
             }
             if (getData(pc) instanceof final CheckForInterruptsInLoopNode checkForInterruptsNode) {
-                checkForInterruptsNode.execute(frame, nextPC, virtualState.sp);
+                checkForInterruptsNode.execute(frame, nextPC, vstate.sp);
             }
         }
-        virtualState.resetExtAB();
+        vstate.resetExtAB();
         return nextPC;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.EXT_JUMP_IF_TRUE, safepoint = false)
-    private int handleExtendedConditionalJumpTrue(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        final Object stackValue = pop(frame, --virtualState.sp);
-        final int jumpOffset = getByteExtended(state.bytecode, pc + 1, virtualState.extB);
+    private int handleExtendedConditionalJumpTrue(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
+        final Object stackValue = pop(frame, --vstate.sp);
+        final int jumpOffset = getByteExtended(state.bytecode, pc + 1, vstate.extB);
         final int nextPC = pc + 2;
         if (stackValue instanceof final Boolean condition) {
-            virtualState.resetExtAB();
+            vstate.resetExtAB();
             if (ACCESS.uncheckedCast(getData(pc), CountingConditionProfile.class).profile(condition)) {
                 return nextPC + jumpOffset;
             } else {
                 return nextPC;
             }
         } else {
-            throw sendMustBeBooleanInInterpreter(frame, nextPC, virtualState.sp, stackValue);
+            throw sendMustBeBooleanInInterpreter(frame, nextPC, vstate.sp, stackValue);
         }
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.EXT_JUMP_IF_FALSE, safepoint = false)
-    private int handleExtendedConditionalJumpFalse(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        final Object stackValue = pop(frame, --virtualState.sp);
-        final int jumpOffset = getByteExtended(state.bytecode, pc + 1, virtualState.extB);
+    private int handleExtendedConditionalJumpFalse(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
+        final Object stackValue = pop(frame, --vstate.sp);
+        final int jumpOffset = getByteExtended(state.bytecode, pc + 1, vstate.extB);
         final int nextPC = pc + 2;
         if (stackValue instanceof final Boolean condition) {
-            virtualState.resetExtAB();
+            vstate.resetExtAB();
             if (ACCESS.uncheckedCast(getData(pc), CountingConditionProfile.class).profile(!condition)) {
                 return nextPC + jumpOffset;
             } else {
                 return nextPC;
             }
         } else {
-            throw sendMustBeBooleanInInterpreter(frame, nextPC, virtualState.sp, stackValue);
+            throw sendMustBeBooleanInInterpreter(frame, nextPC, vstate.sp, stackValue);
         }
     }
 
@@ -2695,36 +2696,36 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     @SuppressWarnings({"unused", "static-method"})
     @BytecodeInterpreterHandler(value = BC.EXT_NOP, safepoint = false)
-    private int handleNoOperation(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        virtualState.resetExtAB();
+    private int handleNoOperation(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
+        vstate.resetExtAB();
         return pc + 1;
     }
 
     @EarlyInline
     @SuppressWarnings({"unused", "static-method"})
     @BytecodeInterpreterHandler(value = BC.EXT_A, safepoint = false)
-    private int handleExtA(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
-        virtualState.extA = (virtualState.extA << 8) + getUnsignedInt(state.bytecode, pc + 1);
+    private int handleExtA(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
+        vstate.extA = (vstate.extA << 8) + getUnsignedInt(state.bytecode, pc + 1);
         return pc + 2;
     }
 
     @EarlyInline
     @SuppressWarnings({"unused", "static-method"})
     @BytecodeInterpreterHandler(value = BC.EXT_B, safepoint = false)
-    private int handleExtB(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
+    private int handleExtB(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
         final int byteValue = getUnsignedInt(state.bytecode, pc + 1);
-        virtualState.extB = virtualState.extB == 0 && byteValue > 127 ? byteValue - 256 : (virtualState.extB << 8) + byteValue;
-        assert virtualState.extB != 0 : "is numExtB needed?";
+        vstate.extB = vstate.extB == 0 && byteValue > 127 ? byteValue - 256 : (vstate.extB << 8) + byteValue;
+        assert vstate.extB != 0 : "is numExtB needed?";
         return pc + 2;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.CALL_PRIMITIVE, safepoint = false)
-    private int handleCallPrimitive(final int pc, final State state, final VirtualState virtualState, final VirtualFrame frame) {
+    private int handleCallPrimitive(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
         if (getUnsignedInt(state.bytecode, pc + 3) == BC.LONG_STORE_TEMPORARY_VARIABLE) {
-            assert virtualState.sp > 0;
+            assert vstate.sp > 0;
             // ToDo: should this push instead of setting the top of the stack
-            FrameAccess.setStackValue(frame, virtualState.sp - 1, getErrorObject());
+            FrameAccess.setStackValue(frame, vstate.sp - 1, getErrorObject());
         }
         return pc + 3;
     }
@@ -2732,10 +2733,10 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     // =========================================================================
 
     @EarlyInline
-    private static int getByteExtendedWithExtA(final int pc, final State state, final VirtualState virtualState) {
-        final int index = getByteExtended(state.bytecode, pc + 1, virtualState.extA);
+    private static int getByteExtendedWithExtA(final int pc, final VirtualState vstate, final State state) {
+        final int index = getByteExtended(state.bytecode, pc + 1, vstate.extA);
         CompilerAsserts.partialEvaluationConstant(index);
-        virtualState.resetExtA();
+        vstate.resetExtA();
         return index;
     }
 
