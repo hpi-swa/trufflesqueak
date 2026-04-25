@@ -85,8 +85,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @ValueType
     private static final class VirtualState {
         int sp;
-        int extA;
-        int extB;
+        long extBA;
 
         @EarlyInline
         VirtualState(final int sp) {
@@ -94,18 +93,52 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         }
 
         @EarlyInline
-        void resetExtA() {
-            extA = 0;
+        int getExtA() {
+            return (int) extBA;
         }
 
         @EarlyInline
-        void resetExtB() {
-            extB = 0;
+        int getExtB() {
+            return (int) (extBA >> 32);
+        }
+
+        @EarlyInline
+        void updateExtA(final int bytecode) {
+            final int newExtA = ((int) extBA << 8) | bytecode;
+            extBA = (extBA >>> 32 << 32) | Integer.toUnsignedLong(newExtA);
+        }
+
+        @EarlyInline
+        void updateExtB(final int bytecode) {
+            /*
+             * OSVM maintains a counter (numExtB) to determine whether an EXT_B byte code is the
+             * first in a series. Here, we use extB == 0 to indicate that the byte code is the
+             * first. At the moment, Squeak only emits single EXT_B byte codes, so this method will
+             * always work. However, when the image starts using sequences of EXT_B byte codes and
+             * the value being encoded is a positive integer with positions 7, 15 or 23 as the
+             * highest set bit, the decoded value will be interpreted as a negative integer. For
+             * example, the emitted sequence for the value 0x8765 would be 0x00, 0x87, 0x65. If we
+             * assume that the encoder will never try to encode the value 0 (since that is the
+             * default value without any emitted byte codes), we can detect the case of the leading
+             * zero byte by setting the upper byte of extB and relying on the next byte to shift
+             * that byte out of the extB register.
+             */
+            final int extB = (int) (extBA >> 32);
+            final int newExtB;
+            if (extB == 0) {
+                /* leading byte is signed */
+                /* make sure newExtB is non-zero for next byte processing */
+                newExtB = bytecode == 0 ? 0x80000000 : (byte) bytecode;
+            } else {
+                /* subsequent bytes are unsigned */
+                newExtB = (extB << 8) | bytecode;
+            }
+            extBA = ((long) newExtB << 32) | Integer.toUnsignedLong((int) extBA);
         }
 
         @EarlyInline
         void resetExtAB() {
-            extA = extB = 0;
+            extBA = 0;
         }
     }
 
@@ -139,8 +172,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
 
         int pc = startPC;
         assert pc < endPC;
-        int extA = 0;
-        int extB = 0;
+        final VirtualState vstate = new VirtualState(0);
 
         while (pc < endPC) {
             final int currentPC = pc++;
@@ -171,14 +203,14 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     break;
                 }
                 case BC.EXT_PUSH_PSEUDO_VARIABLE: {
-                    if (extB == 0) {
+                    if (vstate.getExtB() == 0) {
                         break;
                     } else {
                         throw unknownBytecode();
                     }
                 }
                 case BC.EXT_NOP:
-                    extA = extB = 0;
+                    vstate.resetExtAB();
                     break;
                 case BC.BYTECODE_PRIM_SIZE, BC.BYTECODE_PRIM_NEXT, BC.BYTECODE_PRIM_AT_END, BC.BYTECODE_PRIM_VALUE, BC.BYTECODE_PRIM_NEW, BC.BYTECODE_PRIM_POINT_X, BC.BYTECODE_PRIM_POINT_Y: {
                     setData(currentPC, insert(Dispatch0NodeGen.create(image.getSpecialSelector(b - BC.BYTECODE_PRIM_ADD))));
@@ -238,30 +270,28 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                 }
                 /* 2 byte bytecodes */
                 case BC.EXT_A: {
-                    extA = (extA << 8) + getUnsignedInt(bc, pc++);
+                    vstate.updateExtA(getUnsignedInt(bc, pc++));
                     break;
                 }
                 case BC.EXT_B: {
-                    final int byteValue = getUnsignedInt(bc, pc++);
-                    extB = extB == 0 && byteValue > 127 ? byteValue - 256 : (extB << 8) + byteValue;
-                    assert extB != 0 : "should use numExtB?";
+                    vstate.updateExtB(getUnsignedInt(bc, pc++));
                     break;
                 }
                 case BC.EXT_PUSH_RECEIVER_VARIABLE: {
                     setData(currentPC, insert(SqueakObjectAt0NodeGen.create()));
                     pc++;
-                    extA = 0;
+                    vstate.resetExtAB();
                     break;
                 }
                 case BC.EXT_PUSH_LITERAL_VARIABLE: {
-                    setData(currentPC, getLiteralVariableOrCreateLiteralNode(code.getAndResolveLiteral(getByteExtended(bc, pc, extA))));
+                    setData(currentPC, getLiteralVariableOrCreateLiteralNode(code.getAndResolveLiteral(getByteExtended(bc, pc, vstate.getExtA()))));
                     pc++;
-                    extA = 0;
+                    vstate.resetExtAB();
                     break;
                 }
                 case BC.EXT_PUSH_LITERAL, BC.EXT_PUSH_CHARACTER: {
                     pc++;
-                    extA = 0;
+                    vstate.resetExtAB();
                     break;
                 }
                 case BC.LONG_PUSH_TEMPORARY_VARIABLE, BC.PUSH_NEW_ARRAY, BC.LONG_STORE_AND_POP_TEMPORARY_VARIABLE, BC.LONG_STORE_TEMPORARY_VARIABLE: {
@@ -270,21 +300,21 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                 }
                 case BC.EXT_PUSH_INTEGER: {
                     pc++;
-                    extB = 0;
+                    vstate.resetExtAB();
                     break;
                 }
                 case BC.EXT_SEND: {
                     final int byte1 = getUnsignedInt(bc, pc++);
-                    final int literalIndex = (byte1 >> 3) + (extA << 5);
+                    final int literalIndex = (byte1 >> 3) + (vstate.getExtA() << 5);
                     final NativeObject selector = (NativeObject) code.getAndResolveLiteral(literalIndex);
                     setData(currentPC, insert(DispatchNaryNodeGen.create(selector)));
-                    extA = extB = 0;
+                    vstate.resetExtAB();
                     break;
                 }
                 case BC.EXT_SEND_SUPER: {
-                    final boolean isDirected = extB >= 64;
+                    final boolean isDirected = vstate.getExtB() >= 64;
                     final int byte1 = getUnsignedInt(bc, pc++);
-                    final int literalIndex = (byte1 >> 3) + (extA << 5);
+                    final int literalIndex = (byte1 >> 3) + (vstate.getExtA() << 5);
                     final NativeObject selector = (NativeObject) code.getAndResolveLiteral(literalIndex);
                     final Node node;
                     if (isDirected) {
@@ -294,27 +324,27 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         node = DispatchSuperNaryNodeGen.create(methodClass, selector);
                     }
                     setData(currentPC, insert(node));
-                    extA = extB = 0;
+                    vstate.resetExtAB();
                     break;
                 }
                 case BC.EXT_UNCONDITIONAL_JUMP: {
-                    final int jumpOffset = calculateLongExtendedOffset(getByte(bc, pc++), extB);
+                    final int jumpOffset = calculateLongExtendedOffset(getByte(bc, pc++), vstate.getExtB());
                     if (jumpOffset < 0) {
                         setData(currentPC, insert(createCheckForInterruptsInLoopNode(currentPC, 2, jumpOffset)));
                     }
-                    extA = extB = 0;
+                    vstate.resetExtAB();
                     break;
                 }
                 case BC.EXT_JUMP_IF_TRUE, BC.EXT_JUMP_IF_FALSE: {
                     setData(currentPC, CountingConditionProfile.create());
                     pc++;
-                    extA = extB = 0;
+                    vstate.resetExtAB();
                     break;
                 }
                 case BC.EXT_STORE_AND_POP_RECEIVER_VARIABLE, BC.EXT_STORE_AND_POP_LITERAL_VARIABLE, BC.EXT_STORE_RECEIVER_VARIABLE, BC.EXT_STORE_LITERAL_VARIABLE: {
                     setData(currentPC, insert(SqueakObjectAtPut0NodeGen.create()));
                     pc++;
-                    extA = 0;
+                    vstate.resetExtAB();
                     break;
                 }
                 /* 3 byte bytecodes */
@@ -324,17 +354,18 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                 }
                 case BC.EXT_PUSH_FULL_CLOSURE: {
                     pc += 2;
-                    extA = 0;
+                    vstate.resetExtAB();
                     break;
                 }
                 case BC.EXT_PUSH_CLOSURE: {
                     final int byteA = getUnsignedInt(bc, pc++);
+                    final int extA = vstate.getExtA();
                     final int numArgs = (byteA & 0x07) + (extA & 0x0F) * 8;
                     final int numCopied = (byteA >> 3 & 0x7) + (extA >> 4) * 8;
-                    final int blockSize = getByteExtended(bc, pc++, extB);
+                    final int blockSize = getByteExtended(bc, pc++, vstate.getExtB());
                     setData(currentPC, createBlock(code, pc, numArgs, numCopied, blockSize));
                     pc += blockSize;
-                    extA = extB = 0;
+                    vstate.resetExtAB();
                     break;
                 }
                 case BC.PUSH_REMOTE_TEMP_LONG: {
@@ -383,8 +414,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         while (pc != LOCAL_RETURN_PC) {
             CompilerAsserts.partialEvaluationConstant(pc);
             CompilerAsserts.partialEvaluationConstant(vstate.sp);
-            CompilerAsserts.partialEvaluationConstant(vstate.extA);
-            CompilerAsserts.partialEvaluationConstant(vstate.extB);
+            CompilerAsserts.partialEvaluationConstant(vstate.extBA);
             try {
                 switch (HostCompilerDirectives.markThreadedSwitch(currentBytecode(bc, pc))) {
                     /* 1 byte bytecodes */
@@ -1685,12 +1715,12 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.EXT_PUSH_PSEUDO_VARIABLE, safepoint = false)
     private int handlePushPseudoVariable(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
-        if (vstate.extB == 0) {
+        if (vstate.getExtB() == 0) {
             push(frame, vstate.sp++, getOrCreateContext(frame, pc));
         } else {
             throw unknownBytecode(pc, getByte(state.bytecode, pc));
         }
-        assert vstate.extA == 0;
+        assert vstate.getExtA() == 0;
         return pc + 1;
     }
 
@@ -1754,8 +1784,8 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @SuppressWarnings("static-method")
     @BytecodeInterpreterHandler(value = BC.EXT_PUSH_INTEGER, safepoint = false)
     private int handleExtendedPushInteger(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
-        push(frame, vstate.sp++, (long) getByteExtended(state.bytecode, pc + 1, vstate.extB));
-        vstate.resetExtB();
+        push(frame, vstate.sp++, (long) getByteExtended(state.bytecode, pc + 1, vstate.getExtB()));
+        vstate.resetExtAB();
         return pc + 2;
     }
 
@@ -1765,7 +1795,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handleExtendedPushCharacter(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
         final int intValue = getByteExtendedWithExtA(pc, vstate, state);
         push(frame, vstate.sp++, CharacterObject.valueOf(intValue));
-        vstate.resetExtA();
+        vstate.resetExtAB();
         return pc + 2;
     }
 
@@ -1786,7 +1816,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final ContextObject outerContext = ignoreContext ? null : getOrCreateContext(frame, pc);
         final Object receiver = receiverOnStack ? pop(frame, --vstate.sp) : FrameAccess.getReceiver(frame);
         push(frame, vstate.sp++, new BlockClosureObject(false, block, block.getNumArgs(), copiedValues, receiver, outerContext));
-        vstate.resetExtA();
+        vstate.resetExtAB();
         return pc + 3;
     }
 
@@ -1794,12 +1824,12 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @BytecodeInterpreterHandler(value = BC.EXT_PUSH_CLOSURE, safepoint = false)
     private int handleExtendedPushClosure(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
         final int byteA = getUnsignedInt(state.bytecode, pc + 1);
-        final int numCopied = (byteA >> 3 & 0x7) + (vstate.extA >> 4) * 8;
+        final int numCopied = (byteA >> 3 & 0x7) + (vstate.getExtA() >> 4) * 8;
         CompilerAsserts.partialEvaluationConstant(numCopied);
         final Object[] copiedValues = popN(frame, vstate.sp, numCopied);
         vstate.sp -= numCopied;
         push(frame, vstate.sp++, createBlockClosure(frame, ACCESS.uncheckedCast(getData(pc), CompiledCodeObject.class), copiedValues, getOrCreateContext(frame, pc)));
-        final int blockSize = getByteExtended(state.bytecode, pc + 2, vstate.extB);
+        final int blockSize = getByteExtended(state.bytecode, pc + 2, vstate.getExtB());
         CompilerAsserts.partialEvaluationConstant(blockSize);
         vstate.resetExtAB();
         return pc + 3 + blockSize;
@@ -1944,7 +1974,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handleExtendedStoreAndPopReceiverVariable(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
         final int index = getByteExtendedWithExtA(pc, vstate, state);
         ACCESS.uncheckedCast(getData(pc), SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), index, pop(frame, --vstate.sp));
-        vstate.resetExtA();
+        vstate.resetExtAB();
         return pc + 2;
     }
 
@@ -1953,7 +1983,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handleExtendedStoreAndPopLiteralVariable(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
         final int index = getByteExtendedWithExtA(pc, vstate, state);
         ACCESS.uncheckedCast(getData(pc), SqueakObjectAtPut0Node.class).execute(this, getAndResolveLiteral(pc, index), ASSOCIATION.VALUE, pop(frame, --vstate.sp));
-        vstate.resetExtA();
+        vstate.resetExtAB();
         return pc + 2;
     }
 
@@ -1970,7 +2000,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handleExtendedStoreReceiverVariable(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
         final int index = getByteExtendedWithExtA(pc, vstate, state);
         ACCESS.uncheckedCast(getData(pc), SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), index, top(frame, vstate.sp));
-        vstate.resetExtA();
+        vstate.resetExtAB();
         return pc + 2;
     }
 
@@ -1979,7 +2009,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handleExtendedStoreLiteralVariable(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
         final int index = getByteExtendedWithExtA(pc, vstate, state);
         ACCESS.uncheckedCast(getData(pc), SqueakObjectAtPut0Node.class).execute(this, getAndResolveLiteral(pc, index), ASSOCIATION.VALUE, top(frame, vstate.sp));
-        vstate.resetExtA();
+        vstate.resetExtAB();
         return pc + 2;
     }
 
@@ -2365,7 +2395,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handleExtendedSend(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
         int nextPC = pc + 2;
         final int byte1 = getUnsignedInt(state.bytecode, pc + 1);
-        final int numArgs = (byte1 & 7) + (vstate.extB << 3);
+        final int numArgs = (byte1 & 7) + (vstate.getExtB() << 3);
         CompilerAsserts.partialEvaluationConstant(numArgs);
         final Object[] arguments = popN(frame, vstate.sp, numArgs);
         vstate.sp -= numArgs;
@@ -2382,7 +2412,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handleExtendedSuperSend(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
         int nextPC = pc + 2;
         final boolean isDirected;
-        final int extB = vstate.extB;
+        final int extB = vstate.getExtB();
         final int extBValue;
         if (extB >= 64) {
             isDirected = true;
@@ -2620,7 +2650,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.EXT_UNCONDITIONAL_JUMP, safepoint = true)
     private int handleExtendedUnconditionalJump(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
-        final int jumpOffset = calculateLongExtendedOffset(getByte(state.bytecode, pc + 1), vstate.extB);
+        final int jumpOffset = calculateLongExtendedOffset(getByte(state.bytecode, pc + 1), vstate.getExtB());
         final int nextPC = pc + 2 + jumpOffset;
         if (jumpOffset < 0) {
             if (CompilerDirectives.hasNextTier()) {
@@ -2657,7 +2687,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @BytecodeInterpreterHandler(value = BC.EXT_JUMP_IF_TRUE, safepoint = false)
     private int handleExtendedConditionalJumpTrue(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
         final Object stackValue = pop(frame, --vstate.sp);
-        final int jumpOffset = getByteExtended(state.bytecode, pc + 1, vstate.extB);
+        final int jumpOffset = getByteExtended(state.bytecode, pc + 1, vstate.getExtB());
         final int nextPC = pc + 2;
         if (stackValue instanceof final Boolean condition) {
             vstate.resetExtAB();
@@ -2675,7 +2705,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @BytecodeInterpreterHandler(value = BC.EXT_JUMP_IF_FALSE, safepoint = false)
     private int handleExtendedConditionalJumpFalse(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
         final Object stackValue = pop(frame, --vstate.sp);
-        final int jumpOffset = getByteExtended(state.bytecode, pc + 1, vstate.extB);
+        final int jumpOffset = getByteExtended(state.bytecode, pc + 1, vstate.getExtB());
         final int nextPC = pc + 2;
         if (stackValue instanceof final Boolean condition) {
             vstate.resetExtAB();
@@ -2705,7 +2735,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @SuppressWarnings({"unused", "static-method"})
     @BytecodeInterpreterHandler(value = BC.EXT_A, safepoint = false)
     private int handleExtA(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
-        vstate.extA = (vstate.extA << 8) + getUnsignedInt(state.bytecode, pc + 1);
+        vstate.updateExtA(getUnsignedInt(state.bytecode, pc + 1));
         return pc + 2;
     }
 
@@ -2713,9 +2743,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @SuppressWarnings({"unused", "static-method"})
     @BytecodeInterpreterHandler(value = BC.EXT_B, safepoint = false)
     private int handleExtB(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
-        final int byteValue = getUnsignedInt(state.bytecode, pc + 1);
-        vstate.extB = vstate.extB == 0 && byteValue > 127 ? byteValue - 256 : (vstate.extB << 8) + byteValue;
-        assert vstate.extB != 0 : "is numExtB needed?";
+        vstate.updateExtB(getUnsignedInt(state.bytecode, pc + 1));
         return pc + 2;
     }
 
@@ -2734,9 +2762,9 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
 
     @EarlyInline
     private static int getByteExtendedWithExtA(final int pc, final VirtualState vstate, final State state) {
-        final int index = getByteExtended(state.bytecode, pc + 1, vstate.extA);
+        final int index = getByteExtended(state.bytecode, pc + 1, vstate.getExtA());
         CompilerAsserts.partialEvaluationConstant(index);
-        vstate.resetExtA();
+        vstate.resetExtAB();
         return index;
     }
 
