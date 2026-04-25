@@ -583,7 +583,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         break;
                     }
                     case BC.POP_STACK: {
-                        pop(frame, --sp);
+                        --sp;
                         break;
                     }
                     case BC.DUPLICATE_TOP: {
