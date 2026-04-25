@@ -646,39 +646,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         break;
                     }
                     case BC.SHORT_UJUMP_0, BC.SHORT_UJUMP_1, BC.SHORT_UJUMP_2, BC.SHORT_UJUMP_3, BC.SHORT_UJUMP_4, BC.SHORT_UJUMP_5, BC.SHORT_UJUMP_6, BC.SHORT_UJUMP_7: {
-                        final int offset = calculateShortOffset(b);
-                        pc += offset;
-                        if (offset < 0) {
-                            if (CompilerDirectives.hasNextTier()) {
-                                if (CompilerDirectives.inCompiledCode()) {
-                                    counter = ++loopCounter.value;
-                                } else {
-                                    counter++;
-                                }
-                                if (CompilerDirectives.injectBranchProbability(LoopCounter.CHECK_LOOP_PROBABILITY, counter >= LoopCounter.CHECK_LOOP_STRIDE)) {
-                                    LoopNode.reportLoopCount(this, counter);
-                                    if (CompilerDirectives.inInterpreter() && !isBlock && BytecodeOSRNode.pollOSRBackEdge(this, counter)) {
-                                        final Object osrReturnValue = BytecodeOSRNode.tryOSR(this, ((sp & 0xFF) << 16) | pc, null, null, frame);
-                                        if (osrReturnValue != null) {
-                                            assert !FrameAccess.hasModifiedSender(frame);
-                                            FrameAccess.terminateFrame(frame);
-                                            return osrReturnValue;
-                                        }
-                                    }
-                                    if (CompilerDirectives.inCompiledCode()) {
-                                        loopCounter.value = 0;
-                                    } else {
-                                        counter = 0;
-                                    }
-                                }
-                                if (CompilerDirectives.inCompiledCode()) {
-                                    counter = 0;
-                                }
-                            }
-                            if (getData(currentPC) instanceof final CheckForInterruptsInLoopNode checkForInterruptsNode) {
-                                checkForInterruptsNode.execute(frame, pc, sp);
-                            }
-                        }
+                        pc += calculateShortOffset(b);
                         break;
                     }
                     case BC.SHORT_CJUMP_FALSE_0, BC.SHORT_CJUMP_FALSE_1, BC.SHORT_CJUMP_FALSE_2, BC.SHORT_CJUMP_FALSE_3, BC.SHORT_CJUMP_FALSE_4, BC.SHORT_CJUMP_FALSE_5, BC.SHORT_CJUMP_FALSE_6, BC.SHORT_CJUMP_FALSE_7: {

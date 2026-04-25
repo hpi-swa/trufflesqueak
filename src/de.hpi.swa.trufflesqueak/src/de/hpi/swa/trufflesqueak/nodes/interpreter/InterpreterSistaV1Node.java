@@ -2411,84 +2411,59 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     // =========================================================================
 
     @EarlyInline
-    @BytecodeInterpreterHandler(value = BC.SHORT_UJUMP_0, safepoint = true)
+    @SuppressWarnings({"unused", "static-method"})
+    @BytecodeInterpreterHandler(value = BC.SHORT_UJUMP_0, safepoint = false)
     private int handleShortUnconditionalJump0(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
-        return handleShortUnconditionalJump(frame, pc, vstate, state, 2);
+        return pc + 2;
     }
 
     @EarlyInline
-    @BytecodeInterpreterHandler(value = BC.SHORT_UJUMP_1, safepoint = true)
+    @SuppressWarnings({"unused", "static-method"})
+    @BytecodeInterpreterHandler(value = BC.SHORT_UJUMP_1, safepoint = false)
     private int handleShortUnconditionalJump1(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
-        return handleShortUnconditionalJump(frame, pc, vstate, state, 3);
+        return pc + 3;
     }
 
     @EarlyInline
-    @BytecodeInterpreterHandler(value = BC.SHORT_UJUMP_2, safepoint = true)
+    @SuppressWarnings({"unused", "static-method"})
+    @BytecodeInterpreterHandler(value = BC.SHORT_UJUMP_2, safepoint = false)
     private int handleShortUnconditionalJump2(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
-        return handleShortUnconditionalJump(frame, pc, vstate, state, 4);
+        return pc + 4;
     }
 
     @EarlyInline
-    @BytecodeInterpreterHandler(value = BC.SHORT_UJUMP_3, safepoint = true)
+    @SuppressWarnings({"unused", "static-method"})
+    @BytecodeInterpreterHandler(value = BC.SHORT_UJUMP_3, safepoint = false)
     private int handleShortUnconditionalJump3(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
-        return handleShortUnconditionalJump(frame, pc, vstate, state, 5);
+        return pc + 5;
     }
 
     @EarlyInline
-    @BytecodeInterpreterHandler(value = BC.SHORT_UJUMP_4, safepoint = true)
+    @SuppressWarnings({"unused", "static-method"})
+    @BytecodeInterpreterHandler(value = BC.SHORT_UJUMP_4, safepoint = false)
     private int handleShortUnconditionalJump4(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
-        return handleShortUnconditionalJump(frame, pc, vstate, state, 6);
+        return pc + 6;
     }
 
     @EarlyInline
-    @BytecodeInterpreterHandler(value = BC.SHORT_UJUMP_5, safepoint = true)
+    @SuppressWarnings({"unused", "static-method"})
+    @BytecodeInterpreterHandler(value = BC.SHORT_UJUMP_5, safepoint = false)
     private int handleShortUnconditionalJump5(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
-        return handleShortUnconditionalJump(frame, pc, vstate, state, 7);
+        return pc + 7;
     }
 
     @EarlyInline
-    @BytecodeInterpreterHandler(value = BC.SHORT_UJUMP_6, safepoint = true)
+    @SuppressWarnings({"unused", "static-method"})
+    @BytecodeInterpreterHandler(value = BC.SHORT_UJUMP_6, safepoint = false)
     private int handleShortUnconditionalJump6(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
-        return handleShortUnconditionalJump(frame, pc, vstate, state, 8);
+        return pc + 8;
     }
 
     @EarlyInline
-    @BytecodeInterpreterHandler(value = BC.SHORT_UJUMP_7, safepoint = true)
+    @SuppressWarnings({"unused", "static-method"})
+    @BytecodeInterpreterHandler(value = BC.SHORT_UJUMP_7, safepoint = false)
     private int handleShortUnconditionalJump7(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
-        return handleShortUnconditionalJump(frame, pc, vstate, state, 9);
-    }
-
-    @EarlyInline
-    private int handleShortUnconditionalJump(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state, final int onePlusJumpOffset) {
-        final int nextPC = pc + onePlusJumpOffset;
-        if (onePlusJumpOffset < 0) {
-            if (CompilerDirectives.hasNextTier()) {
-                final int counter = CompilerDirectives.inCompiledCode() ? ++state.loopCounter.value : ++state.interpreterLoopCounter;
-                if (CompilerDirectives.injectBranchProbability(LoopCounter.CHECK_LOOP_PROBABILITY, counter >= LoopCounter.CHECK_LOOP_STRIDE)) {
-                    LoopNode.reportLoopCount(this, counter);
-                    if (CompilerDirectives.inInterpreter() && !isBlock && BytecodeOSRNode.pollOSRBackEdge(this, counter)) {
-                        final Object osrReturnValue = BytecodeOSRNode.tryOSR(this, ((vstate.sp & 0xFF) << 16) | nextPC, null, null, frame);
-                        if (osrReturnValue != null) {
-                            assert !FrameAccess.hasModifiedSender(frame);
-                            FrameAccess.terminateFrame(frame);
-                            throw new OSRException(osrReturnValue);
-                        }
-                    }
-                    if (CompilerDirectives.inCompiledCode()) {
-                        state.loopCounter.value = 0;
-                    } else {
-                        state.interpreterLoopCounter = 0;
-                    }
-                }
-                if (CompilerDirectives.inCompiledCode()) {
-                    state.interpreterLoopCounter = 0;
-                }
-            }
-            if (getData(pc) instanceof final CheckForInterruptsInLoopNode checkForInterruptsNode) {
-                checkForInterruptsNode.execute(frame, nextPC, vstate.sp);
-            }
-        }
-        return nextPC;
+        return pc + 9;
     }
 
     @EarlyInline
