@@ -10,6 +10,7 @@ import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.HostCompilerDirectives;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateCached;
@@ -62,6 +63,7 @@ public final class DispatchSelector1Node extends DispatchSelectorNode {
 
         @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "doDirect")
+        @HostCompilerDirectives.InliningCutoff
         @SuppressWarnings("truffle-static-method")
         protected final Object doIndirect(final VirtualFrame frame, final Object receiver, final Object arg1,
                         @Cached final DispatchIndirect1Node dispatchNode) {
