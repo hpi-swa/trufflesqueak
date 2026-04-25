@@ -468,15 +468,22 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
      * Profiling
      */
 
+    @EarlyInline
     protected final byte getProfile(final int pc) {
         return UnsafeUtils.getByte(ACCESS.uncheckedCast(profiles, byte[].class), pc);
     }
 
+    @EarlyInline
     protected final void enter(final int currentPC, final byte profile, final byte stateBit) {
         if ((profile & stateBit) == 0) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             UnsafeUtils.putByte(profiles, currentPC, (byte) (profile | stateBit));
         }
+    }
+
+    @EarlyInline
+    protected final boolean isActive(final byte profile, final byte stateBit) {
+        return (profile & stateBit) == 0;
     }
 
     /*
