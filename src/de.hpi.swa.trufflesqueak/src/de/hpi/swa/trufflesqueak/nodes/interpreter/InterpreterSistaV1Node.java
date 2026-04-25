@@ -2789,6 +2789,10 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     /** See #booleanCheatFalseSistaV1 and #booleanCheatTrueSistaV1. */
     @EarlyInline
     private static int booleanCheat(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state, final boolean result) {
+        if (!CompilerDirectives.inInterpreter()) {
+            push(frame, vstate.sp++, result);
+            return pc + 1;
+        }
         int nextPC = pc + 1;
         final int nextBytecode = currentBytecode(state.bytecode, nextPC);
         if (BC.SHORT_CJUMP_FALSE_0 <= nextBytecode && nextBytecode <= BC.SHORT_CJUMP_FALSE_7) {
