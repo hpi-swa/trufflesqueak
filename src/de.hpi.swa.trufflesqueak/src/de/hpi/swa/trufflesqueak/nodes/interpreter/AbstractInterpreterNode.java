@@ -56,6 +56,9 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     protected static final BytecodeDSLAccess ACCESS = BytecodeDSLAccessProvider.getBytecodeDSLAccess(true);
     protected static final int LOCAL_RETURN_PC = -2;
 
+    protected static final Long BOXED_ZERO = 0L;
+    protected static final Long BOXED_ONE = 1L;
+
     protected static final byte BRANCH1 = 0b1;
     protected static final byte BRANCH2 = 0b10;
     protected static final byte BRANCH3 = 0b100;
