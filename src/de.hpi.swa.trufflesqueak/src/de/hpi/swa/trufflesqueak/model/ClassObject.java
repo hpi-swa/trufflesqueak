@@ -36,6 +36,20 @@ import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
  */
 @SuppressWarnings("static-method")
 public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
+    public enum FallbackConvention {
+        CANNOT_INTERPRET, // Use #cannotInterpret: and build nested Message objects
+        STANDARD_DNU,     // Use #doesNotUnderstand: and build a Message object
+        SHORTCUT_DNU      // Use #dnu...: and pass arguments and selector directly (no Message
+                          // object)
+    }
+
+    public record DispatchFailureResult(
+                    CompiledCodeObject fallbackMethod,
+                    int fallbackDepth,
+                    FallbackConvention convention,
+                    NativeObject fallbackSelector) {
+    }
+
     @CompilationFinal private CyclicAssumption classHierarchyAndMethodDictStable;
     @CompilationFinal private CyclicAssumption classFormatStable;
 
@@ -466,9 +480,10 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
      * @throws SqueakException if the fallback method cannot be found (fatal VM error).
      */
     @TruffleBoundary
-    public CompiledCodeObject resolveDispatchFailure(final NativeObject originalSelector) {
+    public DispatchFailureResult resolveDispatchFailure(final NativeObject originalSelector, final int arity) {
         CompilerAsserts.neverPartOfCompilation();
-        // Walk superclass chain to determine if #cannotInterpret:.
+
+        // Walk superclass chain to determine if this is a #cannotInterpret: case.
         ClassObject current = this;
         while (current != null) {
             assert current.assertNotForwarded();
@@ -478,31 +493,47 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
             current = current.getSuperclassOrNull();
         }
 
-        // If the walk terminates with null, we have a DNU.
+        // --- DNU Path (No nil method dictionaries) ---
         if (current == null) {
             assert originalSelector != image.doesNotUnderstand : "Fatal dispatch error: Recursive doesNotUnderstand:";
 
+            // Attempt the Shortcut DNU first
+            final NativeObject shortcutSelector = image.getDNUShortcutSelector(arity);
+            if (shortcutSelector != null) {
+                final CompiledCodeObject shortcutMethod = lookupMethodInMethodDictSlow(shortcutSelector);
+                if (shortcutMethod != null) {
+                    return new DispatchFailureResult(shortcutMethod, 1, FallbackConvention.SHORTCUT_DNU, shortcutSelector);
+                }
+            }
+
+            // Fall back to standard #doesNotUnderstand:
             final CompiledCodeObject dnuMethod = lookupMethodInMethodDictSlow(image.doesNotUnderstand);
             if (dnuMethod != null) {
-                return dnuMethod;
+                return new DispatchFailureResult(dnuMethod, 1, FallbackConvention.STANDARD_DNU, image.doesNotUnderstand);
             } else {
                 throw SqueakException.create("Fatal dispatch error: #doesNotUnderstand: not found in", this);
             }
-        } else {
-            // Search for #cannotInterpret: starting in the superclass of the missing method
-            // dictionary class.
-            final ClassObject startingClass = current.getSuperclassOrNull();
-            if (startingClass == null) {
-                throw SqueakException.create("Fatal dispatch error: hit nil method dictionary in class with no superclass while sending", originalSelector);
-            }
-
-            final CompiledCodeObject ciMethod = startingClass.lookupMethodInMethodDictSlow(image.cannotInterpretSelector);
-            if (ciMethod != null) {
-                return ciMethod;
-            } else {
-                throw SqueakException.create("Fatal dispatch error: #cannotInterpret: not found in superclass chain of", current);
-            }
         }
+
+        // --- CannotInterpret Path (Hit a nil dictionary) ---
+        int depth = 1;
+        ClassObject searchClass = current.getSuperclassOrNull();
+        final NativeObject selector = image.cannotInterpretSelector;
+        final int messageSelectorHash = selector.getSqueakHashInt();
+
+        while (searchClass != null) {
+            if (searchClass.methodDict == null) {
+                depth++;
+            } else {
+                final Object result = lookupMethodInDictionary(searchClass.getResolvedMethodDict(), selector, messageSelectorHash);
+                if (result instanceof CompiledCodeObject ciMethod) {
+                    return new DispatchFailureResult(ciMethod, depth, FallbackConvention.CANNOT_INTERPRET, selector);
+                }
+            }
+            searchClass = searchClass.getSuperclassOrNull();
+        }
+
+        throw SqueakException.create("Fatal dispatch error: #cannotInterpret: not found in superclass chain of", this);
     }
 
     /**

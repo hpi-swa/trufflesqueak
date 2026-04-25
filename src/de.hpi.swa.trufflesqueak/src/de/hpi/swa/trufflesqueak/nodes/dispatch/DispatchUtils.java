@@ -10,6 +10,7 @@ import java.util.ArrayList;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeInterface;
 
@@ -17,6 +18,8 @@ import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
@@ -63,6 +66,38 @@ public final class DispatchUtils {
             // be avoided.
             return list.toArray(new Assumption[0]);
         }
+    }
+
+    /**
+     * Creates the complete assumption array for a message fallback node (DNU or CI). On top of the
+     * standard class hierarchy stability, it registers two assumptions:
+     *
+     * Fallback Method Stability: Tracks the `callTargetStable` of the resolved fallback method
+     * itself. This ensures the AST node is invalidated if the actual #doesNotUnderstand: or
+     * #cannotInterpret: method is later modified or recompiled.
+     *
+     * Absent Selector Stability: Tracks an image-global assumption that the specific failing
+     * selector does not exist. If a method for this missing selector is compiled, the VM's cache
+     * flush (primitive 119) will trip this assumption globally. This prevents "stranded DNU" nodes
+     * by forcing them to drop and re-resolve to the newly added method.
+     */
+    static Assumption[] getAssumptionsForMessageFallback(final Assumption[] classAssumptions, final NativeObject selector, final CompiledCodeObject fallbackMethod) {
+        final Assumption[] finalAssumptions = new Assumption[classAssumptions.length + 2];
+        System.arraycopy(classAssumptions, 0, finalAssumptions, 0, classAssumptions.length);
+        finalAssumptions[classAssumptions.length] = fallbackMethod.getCallTargetStable();
+        finalAssumptions[classAssumptions.length + 1] = SqueakImageContext.getSlow().getAbsentSelectorAssumption(selector);
+        return finalAssumptions;
+    }
+
+    @ExplodeLoop
+    static PointersObject buildNestedMessage(final CreateMessageNode createMessageNode,
+                    final NativeObject originalSelector, final NativeObject cannotInterpretSelector,
+                    final Object receiver, final Object[] arguments, final int fallbackDepth) {
+        PointersObject message = createMessageNode.execute(originalSelector, receiver, arguments);
+        for (int i = 1; i < fallbackDepth; i++) {
+            message = createMessageNode.execute(cannotInterpretSelector, receiver, new Object[]{message});
+        }
+        return message;
     }
 
     static void logMissingPrimitive(final AbstractPrimitiveNode primitiveNode, final CompiledCodeObject code) {
