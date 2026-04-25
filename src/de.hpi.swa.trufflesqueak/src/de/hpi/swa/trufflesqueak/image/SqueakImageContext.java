@@ -439,6 +439,15 @@ public final class SqueakImageContext {
         flushMethodCache();
     }
 
+    private boolean isDNUShortcutSelector(final NativeObject selector) {
+        for (final NativeObject shortcutSelector : dnuShortcutSelectors) {
+            if (selector == shortcutSelector) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /* SpurMemoryManager>>#setHiddenRootsObj: */
     public void setHiddenRoots(final ArrayObject theHiddenRoots) {
         assert hiddenRoots == null && (theHiddenRoots.isObjectType() || isTesting());
@@ -683,21 +692,11 @@ public final class SqueakImageContext {
 
     @TruffleBoundary
     private void invalidateAbsentSelectorAssumption(final NativeObject selector) {
-        if (selector == doesNotUnderstand || selector == cannotInterpretSelector) {
-            invalidateAllAbsentSelectorAssumptions();
-            return;
-        }
         final CyclicAssumption absentAssumption = absentSelectorAssumptions.get(selector);
         if (absentAssumption != null) {
             absentAssumption.invalidate("Absent selector flushed globally");
             absentSelectorAssumptions.removeKey(selector);
         }
-    }
-
-    public void flushCachesForSelector(final NativeObject selector) {
-        invalidateAbsentSelectorAssumption(selector);
-        flushCachesForSelectorInClassTable(selector);
-        flushMethodCacheForSelector(selector);
     }
 
     public TruffleFile getHomePath() {
@@ -1094,6 +1093,19 @@ public final class SqueakImageContext {
     }
 
     /* Clear cache entries for selector (prim 119). */
+    public void flushCachesForSelector(final NativeObject selector) {
+        if (selector == doesNotUnderstand || selector == cannotInterpretSelector || isDNUShortcutSelector(selector)) {
+            // A core fallback changed. Invalidate the entire method cache to ensure
+            // no missing selectors are holding onto the stale fallback method.
+            flushMethodCache();
+            flushCachesForSelectorInClassTable(selector);
+        } else {
+            invalidateAbsentSelectorAssumption(selector);
+            flushCachesForSelectorInClassTable(selector);
+            flushMethodCacheForSelector(selector);
+        }
+    }
+
     private void flushMethodCacheForSelector(final NativeObject selector) {
         for (int i = 0; i < METHOD_CACHE_SIZE; i++) {
             if (methodCache[i].getSelector() == selector) {
