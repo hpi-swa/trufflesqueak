@@ -446,7 +446,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     }
 
     protected final Object getData(final long pc) {
-        return UnsafeUtils.getObject(data, pc);
+        return UnsafeUtils.getObject(ACCESS.uncheckedCast(data, Object[].class), pc);
     }
 
     protected final void setData(final long pc, final Object value) {
@@ -466,7 +466,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
      */
 
     protected final byte getProfile(final int pc) {
-        return UnsafeUtils.getByte(profiles, pc);
+        return UnsafeUtils.getByte(ACCESS.uncheckedCast(profiles, byte[].class), pc);
     }
 
     protected final void enter(final int currentPC, final byte profile, final byte stateBit) {
