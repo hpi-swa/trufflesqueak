@@ -2425,13 +2425,44 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final Object result;
         if (isActive(profile, BRANCH2) && receiver instanceof final NativeObject nativeObject && getContext().isByteString(nativeObject)) {
             result = (long) nativeObject.getByteLength();
-        } else if (isActive(profile, BRANCH1)) { // TODO: OSVM also special cases arrays
+        } else if (isActive(profile, BRANCH3) && receiver instanceof final ArrayObject arrayObject && arrayObject.isObjectType()) {
+            result = (long) arrayObject.getObjectLength();
+        } else if (isActive(profile, BRANCH4) && receiver instanceof final ArrayObject arrayObject && arrayObject.isLongType()) {
+            result = (long) arrayObject.getLongLength();
+        } else if (isActive(profile, BRANCH5) && receiver instanceof final ArrayObject arrayObject && arrayObject.isEmptyType()) {
+            result = (long) arrayObject.getEmptyLength();
+        } else if (isActive(profile, BRANCH6) && receiver instanceof final ArrayObject arrayObject && arrayObject.isDoubleType()) {
+            result = (long) arrayObject.getDoubleLength();
+        } else if (isActive(profile, BRANCH7) && receiver instanceof final ArrayObject arrayObject && arrayObject.isBooleanType()) {
+            result = (long) arrayObject.getBooleanLength();
+            // Not enough profile bits for isCharType().
+        } else if (isActive(profile, BRANCH1)) {
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver);
             nextPC = FrameAccess.internalizePC(frame, nextPC);
         } else {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            enter(pc, profile, receiver instanceof final NativeObject nativeObject && getContext().isByteString(nativeObject) ? BRANCH2 : BRANCH1);
+            final byte branch;
+            if (receiver instanceof final NativeObject nativeObject && getContext().isByteString(nativeObject)) {
+                branch = BRANCH2;
+            } else if (receiver instanceof final ArrayObject arrayObject) {
+                if (arrayObject.isObjectType()) {
+                    branch = BRANCH3;
+                } else if (arrayObject.isLongType()) {
+                    branch = BRANCH4;
+                } else if (arrayObject.isEmptyType()) {
+                    branch = BRANCH5;
+                } else if (arrayObject.isDoubleType()) {
+                    branch = BRANCH6;
+                } else if (arrayObject.isBooleanType()) {
+                    branch = BRANCH7;
+                } else {
+                    throw CompilerDirectives.shouldNotReachHere();
+                }
+            } else {
+                branch = BRANCH1;
+            }
+            enter(pc, profile, branch);
             return handlePrimitiveSize(frame, pc, vstate, state);
         }
         push(frame, vstate.sp++, result);
