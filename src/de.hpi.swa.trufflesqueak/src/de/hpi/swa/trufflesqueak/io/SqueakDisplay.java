@@ -447,6 +447,11 @@ public final class SqueakDisplay {
             resetDamage();
             frameRequested = false;
 
+            // Skip frame if staging buffer is outdated (e.g. after HiDPI resize)
+            if (stagingPitchBytes != width * Integer.BYTES) {
+                return;
+            }
+
             if (safeTop >= safeBottom || safeLeft >= safeRight) {
                 return;
             }
@@ -729,7 +734,9 @@ public final class SqueakDisplay {
                 final MemorySegment iconSurface = checkSdlError(SDL_LoadPNG_IO(ioStream, true));
 
                 if (iconSurface != MemorySegment.NULL) {
-                    checkSdlError(SDL_SetWindowIcon(window, iconSurface));
+                    if (!SDL_SetWindowIcon(window, iconSurface)) {
+                        warning(getSDLError());
+                    }
                     SDL_DestroySurface(iconSurface);
                 } else {
                     warning(getSDLError());
