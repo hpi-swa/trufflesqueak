@@ -2057,6 +2057,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                 branch = BRANCH1;
             }
             enter(pc, profile, branch);
+            vstate.sp += 2;
             return handlePrimitiveAdd(frame, pc, vstate, state);
         }
         push(frame, vstate.sp++, result);
@@ -2098,6 +2099,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                 branch = BRANCH1;
             }
             enter(pc, profile, branch);
+            vstate.sp += 2;
             return handlePrimitiveSubtract(frame, pc, vstate, state);
         }
         push(frame, vstate.sp++, result);
@@ -2131,6 +2133,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                 branch = BRANCH1;
             }
             enter(pc, profile, branch);
+            vstate.sp += 2;
             return handlePrimitiveLessThan(frame, pc, vstate, state);
         }
         push(frame, vstate.sp++, result);
@@ -2164,6 +2167,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                 branch = BRANCH1;
             }
             enter(pc, profile, branch);
+            vstate.sp += 2;
             return handlePrimitiveGreaterThan(frame, pc, vstate, state);
         }
         push(frame, vstate.sp++, result);
@@ -2197,6 +2201,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                 branch = BRANCH1;
             }
             enter(pc, profile, branch);
+            vstate.sp += 2;
             return handlePrimitiveLessOrEqual(frame, pc, vstate, state);
         }
         push(frame, vstate.sp++, result);
@@ -2230,6 +2235,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                 branch = BRANCH1;
             }
             enter(pc, profile, branch);
+            vstate.sp += 2;
             return handlePrimitiveGreaterOrEqual(frame, pc, vstate, state);
         }
         push(frame, vstate.sp++, result);
@@ -2263,6 +2269,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                 branch = BRANCH1;
             }
             enter(pc, profile, branch);
+            vstate.sp += 2;
             return handlePrimitiveEqual(frame, pc, vstate, state);
         }
         push(frame, vstate.sp++, result);
@@ -2296,6 +2303,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                 branch = BRANCH1;
             }
             enter(pc, profile, branch);
+            vstate.sp += 2;
             return handlePrimitiveNotEqual(frame, pc, vstate, state);
         }
         push(frame, vstate.sp++, result);
@@ -2319,6 +2327,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         } else {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             enter(pc, profile, receiver instanceof Long && arg instanceof Long ? BRANCH2 : BRANCH1);
+            vstate.sp += 2;
             return handlePrimitiveMultiply(frame, pc, vstate, state);
         }
         push(frame, vstate.sp++, result);
@@ -2364,6 +2373,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         } else {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             enter(pc, profile, receiver instanceof final Long lhs && arg instanceof final Long rhs && rhs != 0 && !isOverflowDivision(lhs, rhs) ? BRANCH2 : BRANCH1);
+            vstate.sp += 2;
             return handlePrimitiveDiv(frame, pc, vstate, state);
         }
         push(frame, vstate.sp++, result);
@@ -2387,6 +2397,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         } else {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             enter(pc, profile, receiver instanceof Long && arg instanceof Long ? BRANCH2 : BRANCH1);
+            vstate.sp += 2;
             return handlePrimitiveBitAnd(frame, pc, vstate, state);
         }
         push(frame, vstate.sp++, result);
@@ -2410,6 +2421,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         } else {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             enter(pc, profile, receiver instanceof Long && arg instanceof Long ? BRANCH2 : BRANCH1);
+            vstate.sp += 2;
             return handlePrimitiveBitOr(frame, pc, vstate, state);
         }
         push(frame, vstate.sp++, result);
@@ -2435,7 +2447,6 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             result = (long) arrayObject.getDoubleLength();
         } else if (isActive(profile, BRANCH7) && receiver instanceof final ArrayObject arrayObject && arrayObject.isBooleanType()) {
             result = (long) arrayObject.getBooleanLength();
-            // Not enough profile bits for isCharType().
         } else if (isActive(profile, BRANCH1)) {
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver);
@@ -2457,12 +2468,13 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                 } else if (arrayObject.isBooleanType()) {
                     branch = BRANCH7;
                 } else {
-                    throw CompilerDirectives.shouldNotReachHere();
+                    branch = BRANCH1; // Not enough profile bits for isCharType().
                 }
             } else {
                 branch = BRANCH1;
             }
             enter(pc, profile, branch);
+            vstate.sp++;
             return handlePrimitiveSize(frame, pc, vstate, state);
         }
         push(frame, vstate.sp++, result);

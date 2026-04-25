@@ -482,8 +482,8 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     }
 
     @EarlyInline
-    protected final boolean isActive(final byte profile, final byte stateBit) {
-        return (profile & stateBit) == 0;
+    protected static final boolean isActive(final byte profile, final byte stateBit) {
+        return (profile & stateBit) != 0;
     }
 
     /*
