@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.nodes.interpreter;
 
 import static com.oracle.truffle.api.HostCompilerDirectives.BytecodeInterpreterHandlerConfig.Argument.ExpansionKind.MATERIALIZED;
 import static com.oracle.truffle.api.HostCompilerDirectives.BytecodeInterpreterHandlerConfig.Argument.ExpansionKind.VIRTUAL;
+import static de.hpi.swa.trufflesqueak.nodes.SqueakGuards.isOverflowDivision;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -802,6 +803,10 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         pc = handlePrimitiveNotEqual(frame, pc, vstate, state);
                         break;
                     }
+                    case BC.BYTECODE_PRIM_DIV: {
+                        pc = handlePrimitiveDiv(frame, pc, vstate, state);
+                        break;
+                    }
                     case BC.BYTECODE_PRIM_BIT_AND: {
                         pc = handlePrimitiveBitAnd(frame, pc, vstate, state);
                         break;
@@ -833,7 +838,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         break;
                     }
                     case BC.BYTECODE_PRIM_MULTIPLY, BC.BYTECODE_PRIM_DIVIDE, BC.BYTECODE_PRIM_MOD, BC.BYTECODE_PRIM_MAKE_POINT, BC.BYTECODE_PRIM_BIT_SHIFT, //
-                        BC.BYTECODE_PRIM_DIV, BC.BYTECODE_PRIM_AT, BC.BYTECODE_PRIM_NEXT_PUT, BC.BYTECODE_PRIM_VALUE_WITH_ARG, BC.BYTECODE_PRIM_DO, BC.BYTECODE_PRIM_NEW_WITH_ARG, //
+                        BC.BYTECODE_PRIM_AT, BC.BYTECODE_PRIM_NEXT_PUT, BC.BYTECODE_PRIM_VALUE_WITH_ARG, BC.BYTECODE_PRIM_DO, BC.BYTECODE_PRIM_NEW_WITH_ARG, //
                         BC.SEND_LIT_SEL1_0, BC.SEND_LIT_SEL1_1, BC.SEND_LIT_SEL1_2, BC.SEND_LIT_SEL1_3, BC.SEND_LIT_SEL1_4, BC.SEND_LIT_SEL1_5, BC.SEND_LIT_SEL1_6, BC.SEND_LIT_SEL1_7, //
                         BC.SEND_LIT_SEL1_8, BC.SEND_LIT_SEL1_9, BC.SEND_LIT_SEL1_A, BC.SEND_LIT_SEL1_B, BC.SEND_LIT_SEL1_C, BC.SEND_LIT_SEL1_D, BC.SEND_LIT_SEL1_E, BC.SEND_LIT_SEL1_F: {
                         pc = handleSend1(frame, pc, vstate, state);
@@ -2222,6 +2227,34 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     }
 
     @EarlyInline
+    @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_DIV, safepoint = false)
+    private int handlePrimitiveDiv(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        final Object arg = pop(frame, --vstate.sp);
+        final Object receiver = pop(frame, --vstate.sp);
+        final byte profile = getProfile(pc);
+        int nextPC = pc + 1;
+        final Object result;
+        if (receiver instanceof final Long lhs && arg instanceof final Long rhs && rhs != 0 && !isOverflowDivision(lhs, rhs)) {
+            enter(pc, profile, BRANCH2);
+            final long q = lhs / rhs;
+            if ((lhs ^ rhs) < 0 && (q * rhs != lhs)) {
+                enter(pc, profile, BRANCH3);
+                result = q - 1;
+            } else {
+                enter(pc, profile, BRANCH4);
+                result = q;
+            }
+        } else {
+            enter(pc, profile, BRANCH1);
+            FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
+            result = send(frame, pc, receiver, arg);
+            nextPC = FrameAccess.internalizePC(frame, nextPC);
+        }
+        push(frame, vstate.sp++, result);
+        return nextPC;
+    }
+
+    @EarlyInline
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_BIT_AND, safepoint = false)
     private int handlePrimitiveBitAnd(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object arg = pop(frame, --vstate.sp);
@@ -2327,7 +2360,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = {BC.BYTECODE_PRIM_MULTIPLY, BC.BYTECODE_PRIM_DIVIDE, BC.BYTECODE_PRIM_MOD, BC.BYTECODE_PRIM_MAKE_POINT,
-                    BC.BYTECODE_PRIM_BIT_SHIFT, BC.BYTECODE_PRIM_DIV, BC.BYTECODE_PRIM_AT, BC.BYTECODE_PRIM_NEXT_PUT,
+                    BC.BYTECODE_PRIM_BIT_SHIFT, BC.BYTECODE_PRIM_AT, BC.BYTECODE_PRIM_NEXT_PUT,
                     BC.BYTECODE_PRIM_VALUE_WITH_ARG, BC.BYTECODE_PRIM_DO, BC.BYTECODE_PRIM_NEW_WITH_ARG,
                     BC.SEND_LIT_SEL1_0, BC.SEND_LIT_SEL1_1, BC.SEND_LIT_SEL1_2, BC.SEND_LIT_SEL1_3,
                     BC.SEND_LIT_SEL1_4, BC.SEND_LIT_SEL1_5, BC.SEND_LIT_SEL1_6, BC.SEND_LIT_SEL1_7,
