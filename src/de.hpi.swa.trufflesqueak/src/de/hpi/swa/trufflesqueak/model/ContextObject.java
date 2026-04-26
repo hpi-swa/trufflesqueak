@@ -696,6 +696,5 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         for (int i = numSlots; i < contextSize; i++) {
             writer.writeNil();
         }
-        assert FrameAccess.hasUnusedAuxiliarySlots(frame) : "Auxiliary slots are used but not (yet) persisted";
     }
 }

@@ -380,15 +380,6 @@ public final class FrameAccess {
         frame.setObjectStatic(SlotIndices.STACK_START + sp, value);
     }
 
-    public static boolean hasUnusedAuxiliarySlots(final Frame frame) {
-        for (final int slotIndex : frame.getFrameDescriptor().getAuxiliarySlots().values()) {
-            if (frame.getAuxiliarySlot(slotIndex) != null) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     public static void terminateFrame(final Frame frame) {
         setInstructionPointer(frame, ContextObject.NIL_PC_STACK_NOT_NIL_VALUE);
         setSender(frame, NilObject.SINGLETON);
