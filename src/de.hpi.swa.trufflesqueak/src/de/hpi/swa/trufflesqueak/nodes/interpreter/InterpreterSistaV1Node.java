@@ -2017,7 +2017,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_ADD, safepoint = false)
     private int handlePrimitiveAdd(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object arg = pop(frame, --vstate.sp);
-        final Object receiver = popReceiver(frame, --vstate.sp);
+        final Object receiver = pop(frame, --vstate.sp);
         final byte profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
@@ -2049,7 +2049,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_SUBTRACT, safepoint = false)
     private int handlePrimitiveSubtract(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object arg = pop(frame, --vstate.sp);
-        final Object receiver = popReceiver(frame, --vstate.sp);
+        final Object receiver = pop(frame, --vstate.sp);
         final byte profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
@@ -2081,7 +2081,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_LESS_THAN, safepoint = false)
     private int handlePrimitiveLessThan(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object arg = pop(frame, --vstate.sp);
-        final Object receiver = popReceiver(frame, --vstate.sp);
+        final Object receiver = pop(frame, --vstate.sp);
         final byte profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
@@ -2105,7 +2105,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_GREATER_THAN, safepoint = false)
     private int handlePrimitiveGreaterThan(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object arg = pop(frame, --vstate.sp);
-        final Object receiver = popReceiver(frame, --vstate.sp);
+        final Object receiver = pop(frame, --vstate.sp);
         final byte profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
@@ -2129,7 +2129,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_LESS_OR_EQUAL, safepoint = false)
     private int handlePrimitiveLessOrEqual(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object arg = pop(frame, --vstate.sp);
-        final Object receiver = popReceiver(frame, --vstate.sp);
+        final Object receiver = pop(frame, --vstate.sp);
         final byte profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
@@ -2153,7 +2153,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_GREATER_OR_EQUAL, safepoint = false)
     private int handlePrimitiveGreaterOrEqual(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object arg = pop(frame, --vstate.sp);
-        final Object receiver = popReceiver(frame, --vstate.sp);
+        final Object receiver = pop(frame, --vstate.sp);
         final byte profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
@@ -2177,7 +2177,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_EQUAL, safepoint = false)
     private int handlePrimitiveEqual(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object arg = pop(frame, --vstate.sp);
-        final Object receiver = popReceiver(frame, --vstate.sp);
+        final Object receiver = pop(frame, --vstate.sp);
         final byte profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
@@ -2201,7 +2201,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_NOT_EQUAL, safepoint = false)
     private int handlePrimitiveNotEqual(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object arg = pop(frame, --vstate.sp);
-        final Object receiver = popReceiver(frame, --vstate.sp);
+        final Object receiver = pop(frame, --vstate.sp);
         final byte profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
@@ -2225,7 +2225,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_BIT_AND, safepoint = false)
     private int handlePrimitiveBitAnd(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object arg = pop(frame, --vstate.sp);
-        final Object receiver = popReceiver(frame, --vstate.sp);
+        final Object receiver = pop(frame, --vstate.sp);
         final byte profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
@@ -2246,7 +2246,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_BIT_OR, safepoint = false)
     private int handlePrimitiveBitOr(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object arg = pop(frame, --vstate.sp);
-        final Object receiver = popReceiver(frame, --vstate.sp);
+        final Object receiver = pop(frame, --vstate.sp);
         final byte profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
@@ -2266,7 +2266,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_SIZE, safepoint = false)
     private int handlePrimitiveSize(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
-        final Object receiver = popReceiver(frame, --vstate.sp);
+        final Object receiver = pop(frame, --vstate.sp);
         final byte profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
@@ -2287,7 +2287,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_IDENTICAL, safepoint = false)
     private int handlePrimitiveIdentical(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object arg = pop(frame, --vstate.sp);
-        final Object receiver = popReceiver(frame, --vstate.sp);
+        final Object receiver = pop(frame, --vstate.sp);
         push(frame, vstate.sp++, ACCESS.uncheckedCast(getData(pc), SqueakObjectIdentityNodeGen.class).execute(this, receiver, arg));
         return pc + 1;
     }
@@ -2295,7 +2295,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_CLASS, safepoint = false)
     private int handlePrimitiveClass(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
-        final Object receiver = popReceiver(frame, --vstate.sp);
+        final Object receiver = pop(frame, --vstate.sp);
         push(frame, vstate.sp++, ACCESS.uncheckedCast(getData(pc), SqueakObjectClassNodeGen.class).executeLookup(this, receiver));
         return pc + 1;
     }
@@ -2304,7 +2304,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_NOT_IDENTICAL, safepoint = false)
     private int handlePrimitiveNotIdentical(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object arg = pop(frame, --vstate.sp);
-        final Object receiver = popReceiver(frame, --vstate.sp);
+        final Object receiver = pop(frame, --vstate.sp);
         push(frame, vstate.sp++, !ACCESS.uncheckedCast(getData(pc), SqueakObjectIdentityNodeGen.class).execute(this, receiver, arg));
         return pc + 1;
     }
@@ -2318,7 +2318,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     BC.SEND_LIT_SEL0_C, BC.SEND_LIT_SEL0_D, BC.SEND_LIT_SEL0_E, BC.SEND_LIT_SEL0_F}, safepoint = false)
     private int handleSend0(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         int nextPC = pc + 1;
-        final Object receiver = popReceiver(frame, --vstate.sp);
+        final Object receiver = pop(frame, --vstate.sp);
         FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
         push(frame, vstate.sp++, send(frame, pc, receiver));
         nextPC = FrameAccess.internalizePC(frame, nextPC);
@@ -2336,7 +2336,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handleSend1(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         int nextPC = pc + 1;
         final Object arg = pop(frame, --vstate.sp);
-        final Object receiver = popReceiver(frame, --vstate.sp);
+        final Object receiver = pop(frame, --vstate.sp);
         FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
         push(frame, vstate.sp++, send(frame, pc, receiver, arg));
         nextPC = FrameAccess.internalizePC(frame, nextPC);
@@ -2353,7 +2353,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         int nextPC = pc + 1;
         final Object arg2 = pop(frame, --vstate.sp);
         final Object arg1 = pop(frame, --vstate.sp);
-        final Object receiver = popReceiver(frame, --vstate.sp);
+        final Object receiver = pop(frame, --vstate.sp);
         FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
         push(frame, vstate.sp++, send(frame, pc, receiver, arg1, arg2));
         nextPC = FrameAccess.internalizePC(frame, nextPC);
@@ -2369,7 +2369,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         CompilerAsserts.partialEvaluationConstant(numArgs);
         final Object[] arguments = popN(frame, vstate.sp, numArgs);
         vstate.sp -= numArgs;
-        final Object receiver = popReceiver(frame, --vstate.sp);
+        final Object receiver = pop(frame, --vstate.sp);
         FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
         push(frame, vstate.sp++, sendNary(frame, pc, receiver, arguments));
         nextPC = FrameAccess.internalizePC(frame, nextPC);
@@ -2397,7 +2397,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final ClassObject lookupClass = isDirected ? ((ClassObject) pop(frame, --vstate.sp)).getResolvedSuperclass() : null;
         final Object[] arguments = popN(frame, vstate.sp, numArgs);
         vstate.sp -= numArgs;
-        final Object receiver = popReceiver(frame, --vstate.sp);
+        final Object receiver = pop(frame, --vstate.sp);
         FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
         CompilerAsserts.partialEvaluationConstant(isDirected);
         pushFollowed(frame, pc, vstate.sp++, sendSuper(frame, isDirected, pc, lookupClass, receiver, arguments));
@@ -2724,7 +2724,6 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handleCallPrimitive(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
         if (getUnsignedInt(state.bytecode, pc + 3) == BC.LONG_STORE_TEMPORARY_VARIABLE) {
             assert vstate.sp > 0;
-            // ToDo: should this push instead of setting the top of the stack
             FrameAccess.setStackValue(frame, vstate.sp - 1, getErrorObject());
         }
         return pc + 3;

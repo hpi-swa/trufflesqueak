@@ -372,11 +372,6 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     }
 
     protected static final Object pop(final VirtualFrame frame, final int sp) {
-        final int slotIndex = FrameAccess.getStackStart() + sp;
-        return frame.getObjectStatic(slotIndex);
-    }
-
-    protected static final Object popReceiver(final VirtualFrame frame, final int sp) {
         return FrameAccess.getStackValue(frame, sp);
     }
 

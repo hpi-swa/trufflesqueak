@@ -498,7 +498,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         final int numArgs = getUnsignedInt(bc, pc++) >> 5;
                         final Object[] arguments = popN(frame, sp, numArgs);
                         sp -= numArgs;
-                        final Object receiver = popReceiver(frame, --sp);
+                        final Object receiver = pop(frame, --sp);
                         FrameAccess.externalizePCAndSP(frame, pc, sp);
                         push(frame, sp++, sendNary(frame, currentPC, receiver, arguments));
                         pc = FrameAccess.internalizePC(frame, pc);
@@ -514,7 +514,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 final int numArgs = byte2 & 31;
                                 final Object[] arguments = popN(frame, sp, numArgs);
                                 sp -= numArgs;
-                                final Object receiver = popReceiver(frame, --sp);
+                                final Object receiver = pop(frame, --sp);
                                 FrameAccess.externalizePCAndSP(frame, pc, sp);
                                 push(frame, sp++, sendNary(frame, currentPC, receiver, arguments));
                                 pc = FrameAccess.internalizePC(frame, pc);
@@ -524,7 +524,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 final int numArgs = byte2 & 31;
                                 final Object[] arguments = popN(frame, sp, numArgs);
                                 sp -= numArgs;
-                                final Object receiver = AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(popReceiver(frame, --sp));
+                                final Object receiver = AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(pop(frame, --sp));
                                 FrameAccess.externalizePCAndSP(frame, pc, sp);
                                 pushFollowed(frame, currentPC, sp++, sendSuper(frame, currentPC, receiver, arguments));
                                 pc = FrameAccess.internalizePC(frame, pc);
@@ -566,7 +566,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         final int numArgs = getUnsignedInt(bc, pc++) >> 5;
                         final Object[] arguments = popN(frame, sp, numArgs);
                         sp -= numArgs;
-                        final Object receiver = AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(popReceiver(frame, --sp));
+                        final Object receiver = AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(pop(frame, --sp));
                         FrameAccess.externalizePCAndSP(frame, pc, sp);
                         pushFollowed(frame, currentPC, sp++, sendSuper(frame, currentPC, receiver, arguments));
                         pc = FrameAccess.internalizePC(frame, pc);
@@ -576,7 +576,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         final int numArgs = getUnsignedInt(bc, pc++) >> 6;
                         final Object[] arguments = popN(frame, sp, numArgs);
                         sp -= numArgs;
-                        final Object receiver = popReceiver(frame, --sp);
+                        final Object receiver = pop(frame, --sp);
                         FrameAccess.externalizePCAndSP(frame, pc, sp);
                         push(frame, sp++, sendNary(frame, currentPC, receiver, arguments));
                         pc = FrameAccess.internalizePC(frame, pc);
@@ -754,7 +754,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     }
                     case BC.BYTECODE_PRIM_ADD: {
                         final Object arg = pop(frame, --sp);
-                        final Object receiver = popReceiver(frame, --sp);
+                        final Object receiver = pop(frame, --sp);
                         final byte profile = getProfile(currentPC);
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
@@ -782,7 +782,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     }
                     case BC.BYTECODE_PRIM_SUBTRACT: {
                         final Object arg = pop(frame, --sp);
-                        final Object receiver = popReceiver(frame, --sp);
+                        final Object receiver = pop(frame, --sp);
                         final byte profile = getProfile(currentPC);
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
@@ -810,7 +810,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     }
                     case BC.BYTECODE_PRIM_LESS_THAN: {
                         final Object arg = pop(frame, --sp);
-                        final Object receiver = popReceiver(frame, --sp);
+                        final Object receiver = pop(frame, --sp);
                         final byte profile = getProfile(currentPC);
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
@@ -830,7 +830,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     }
                     case BC.BYTECODE_PRIM_GREATER_THAN: {
                         final Object arg = pop(frame, --sp);
-                        final Object receiver = popReceiver(frame, --sp);
+                        final Object receiver = pop(frame, --sp);
                         final byte profile = getProfile(currentPC);
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
@@ -850,7 +850,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     }
                     case BC.BYTECODE_PRIM_LESS_OR_EQUAL: {
                         final Object arg = pop(frame, --sp);
-                        final Object receiver = popReceiver(frame, --sp);
+                        final Object receiver = pop(frame, --sp);
                         final byte profile = getProfile(currentPC);
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
@@ -870,7 +870,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     }
                     case BC.BYTECODE_PRIM_GREATER_OR_EQUAL: {
                         final Object arg = pop(frame, --sp);
-                        final Object receiver = popReceiver(frame, --sp);
+                        final Object receiver = pop(frame, --sp);
                         final byte profile = getProfile(currentPC);
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
@@ -890,7 +890,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     }
                     case BC.BYTECODE_PRIM_EQUAL: {
                         final Object arg = pop(frame, --sp);
-                        final Object receiver = popReceiver(frame, --sp);
+                        final Object receiver = pop(frame, --sp);
                         final byte profile = getProfile(currentPC);
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
@@ -910,7 +910,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     }
                     case BC.BYTECODE_PRIM_NOT_EQUAL: {
                         final Object arg = pop(frame, --sp);
-                        final Object receiver = popReceiver(frame, --sp);
+                        final Object receiver = pop(frame, --sp);
                         final byte profile = getProfile(currentPC);
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
@@ -930,7 +930,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     }
                     case BC.BYTECODE_PRIM_BIT_AND: {
                         final Object arg = pop(frame, --sp);
-                        final Object receiver = popReceiver(frame, --sp);
+                        final Object receiver = pop(frame, --sp);
                         final byte profile = getProfile(currentPC);
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
@@ -947,7 +947,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     }
                     case BC.BYTECODE_PRIM_BIT_OR: {
                         final Object arg = pop(frame, --sp);
-                        final Object receiver = popReceiver(frame, --sp);
+                        final Object receiver = pop(frame, --sp);
                         final byte profile = getProfile(currentPC);
                         final Object result;
                         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
@@ -964,25 +964,25 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     }
                     case BC.BYTECODE_PRIM_IDENTICAL: {
                         final Object arg = pop(frame, --sp);
-                        final Object receiver = popReceiver(frame, --sp);
+                        final Object receiver = pop(frame, --sp);
                         push(frame, sp++, ACCESS.uncheckedCast(getData(currentPC), SqueakObjectIdentityNodeGen.class).execute(this, receiver, arg));
                         break;
                     }
                     case BC.BYTECODE_PRIM_CLASS: {
-                        final Object receiver = popReceiver(frame, --sp);
+                        final Object receiver = pop(frame, --sp);
                         push(frame, sp++, ACCESS.uncheckedCast(getData(currentPC), SqueakObjectClassNodeGen.class).executeLookup(this, receiver));
                         break;
                     }
                     case BC.BYTECODE_PRIM_NOT_IDENTICAL: {
                         final Object arg = pop(frame, --sp);
-                        final Object receiver = popReceiver(frame, --sp);
+                        final Object receiver = pop(frame, --sp);
                         push(frame, sp++, !ACCESS.uncheckedCast(getData(currentPC), SqueakObjectIdentityNodeGen.class).execute(this, receiver, arg));
                         break;
                     }
                     case BC.BYTECODE_PRIM_SIZE, BC.BYTECODE_PRIM_NEXT, BC.BYTECODE_PRIM_AT_END, BC.BYTECODE_PRIM_VALUE, BC.BYTECODE_PRIM_NEW, BC.BYTECODE_PRIM_POINT_X, BC.BYTECODE_PRIM_POINT_Y, //
                         BC.SEND_LIT_SEL0_0, BC.SEND_LIT_SEL0_1, BC.SEND_LIT_SEL0_2, BC.SEND_LIT_SEL0_3, BC.SEND_LIT_SEL0_4, BC.SEND_LIT_SEL0_5, BC.SEND_LIT_SEL0_6, BC.SEND_LIT_SEL0_7, //
                         BC.SEND_LIT_SEL0_8, BC.SEND_LIT_SEL0_9, BC.SEND_LIT_SEL0_A, BC.SEND_LIT_SEL0_B, BC.SEND_LIT_SEL0_C, BC.SEND_LIT_SEL0_D, BC.SEND_LIT_SEL0_E, BC.SEND_LIT_SEL0_F: {
-                        final Object receiver = popReceiver(frame, --sp);
+                        final Object receiver = pop(frame, --sp);
                         FrameAccess.externalizePCAndSP(frame, pc, sp);
                         push(frame, sp++, send(frame, currentPC, receiver));
                         pc = FrameAccess.internalizePC(frame, pc);
@@ -993,7 +993,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         BC.SEND_LIT_SEL1_0, BC.SEND_LIT_SEL1_1, BC.SEND_LIT_SEL1_2, BC.SEND_LIT_SEL1_3, BC.SEND_LIT_SEL1_4, BC.SEND_LIT_SEL1_5, BC.SEND_LIT_SEL1_6, BC.SEND_LIT_SEL1_7, //
                         BC.SEND_LIT_SEL1_8, BC.SEND_LIT_SEL1_9, BC.SEND_LIT_SEL1_A, BC.SEND_LIT_SEL1_B, BC.SEND_LIT_SEL1_C, BC.SEND_LIT_SEL1_D, BC.SEND_LIT_SEL1_E, BC.SEND_LIT_SEL1_F: {
                         final Object arg = pop(frame, --sp);
-                        final Object receiver = popReceiver(frame, --sp);
+                        final Object receiver = pop(frame, --sp);
                         FrameAccess.externalizePCAndSP(frame, pc, sp);
                         push(frame, sp++, send(frame, currentPC, receiver, arg));
                         pc = FrameAccess.internalizePC(frame, pc);
@@ -1004,7 +1004,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         BC.SEND_LIT_SEL2_8, BC.SEND_LIT_SEL2_9, BC.SEND_LIT_SEL2_A, BC.SEND_LIT_SEL2_B, BC.SEND_LIT_SEL2_C, BC.SEND_LIT_SEL2_D, BC.SEND_LIT_SEL2_E, BC.SEND_LIT_SEL2_F: {
                         final Object arg2 = pop(frame, --sp);
                         final Object arg1 = pop(frame, --sp);
-                        final Object receiver = popReceiver(frame, --sp);
+                        final Object receiver = pop(frame, --sp);
                         FrameAccess.externalizePCAndSP(frame, pc, sp);
                         push(frame, sp++, send(frame, currentPC, receiver, arg1, arg2));
                         pc = FrameAccess.internalizePC(frame, pc);

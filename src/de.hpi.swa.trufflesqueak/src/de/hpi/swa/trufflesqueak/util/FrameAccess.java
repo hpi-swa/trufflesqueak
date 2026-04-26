@@ -372,20 +372,12 @@ public final class FrameAccess {
         }
     }
 
-    public static Object getSlotValue(final Frame frame, final int slotIndex) {
-        return frame.getObjectStatic(slotIndex);
-    }
-
-    public static void setSlotValue(final Frame frame, final int slotIndex, final Object value) {
-        frame.setObjectStatic(slotIndex, value);
-    }
-
     public static Object getStackValue(final Frame frame, final int sp) {
-        return getSlotValue(frame, SlotIndices.STACK_START + sp);
+        return frame.getObjectStatic(SlotIndices.STACK_START + sp);
     }
 
     public static void setStackValue(final Frame frame, final int sp, final Object value) {
-        setSlotValue(frame, SlotIndices.STACK_START + sp, value);
+        frame.setObjectStatic(SlotIndices.STACK_START + sp, value);
     }
 
     public static boolean hasUnusedAuxiliarySlots(final Frame frame) {
