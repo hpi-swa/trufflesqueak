@@ -1774,7 +1774,6 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handleExtendedPushCharacter(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
         final int intValue = getByteExtendedWithExtA(pc, vstate, state);
         push(frame, vstate.sp++, CharacterObject.valueOf(intValue));
-        vstate.resetExtA();
         return pc + 2;
     }
 
@@ -1795,7 +1794,6 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final ContextObject outerContext = ignoreContext ? null : getOrCreateContext(frame, pc);
         final Object receiver = receiverOnStack ? pop(frame, --vstate.sp) : FrameAccess.getReceiver(frame);
         push(frame, vstate.sp++, new BlockClosureObject(false, block, block.getNumArgs(), copiedValues, receiver, outerContext));
-        vstate.resetExtA();
         return pc + 3;
     }
 
@@ -1953,7 +1951,6 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handleExtendedStoreAndPopReceiverVariable(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
         final int index = getByteExtendedWithExtA(pc, vstate, state);
         ACCESS.uncheckedCast(getData(pc), SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), index, pop(frame, --vstate.sp));
-        vstate.resetExtA();
         return pc + 2;
     }
 
@@ -1962,7 +1959,6 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handleExtendedStoreAndPopLiteralVariable(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
         final int index = getByteExtendedWithExtA(pc, vstate, state);
         ACCESS.uncheckedCast(getData(pc), SqueakObjectAtPut0Node.class).execute(this, getAndResolveLiteral(pc, index), ASSOCIATION.VALUE, pop(frame, --vstate.sp));
-        vstate.resetExtA();
         return pc + 2;
     }
 
@@ -1979,7 +1975,6 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handleExtendedStoreReceiverVariable(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
         final int index = getByteExtendedWithExtA(pc, vstate, state);
         ACCESS.uncheckedCast(getData(pc), SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), index, top(frame, vstate.sp));
-        vstate.resetExtA();
         return pc + 2;
     }
 
@@ -1988,7 +1983,6 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handleExtendedStoreLiteralVariable(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
         final int index = getByteExtendedWithExtA(pc, vstate, state);
         ACCESS.uncheckedCast(getData(pc), SqueakObjectAtPut0Node.class).execute(this, getAndResolveLiteral(pc, index), ASSOCIATION.VALUE, top(frame, vstate.sp));
-        vstate.resetExtA();
         return pc + 2;
     }
 
