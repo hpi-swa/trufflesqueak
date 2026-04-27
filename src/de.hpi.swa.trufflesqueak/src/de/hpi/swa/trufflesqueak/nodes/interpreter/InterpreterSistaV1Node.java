@@ -113,12 +113,16 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
 
     private static final class State {
         private final byte[] bytecode;
+        private final boolean numericPrimsMixArithmetic;
+        private final boolean numericPrimsMixComparison;
         private final LoopCounter loopCounter;
         private int interpreterLoopCounter;
 
         @EarlyInline
-        State(final byte[] bytecode, final LoopCounter loopCounter) {
+        State(final byte[] bytecode, final SqueakImageContext image, final LoopCounter loopCounter) {
             this.bytecode = bytecode;
+            this.numericPrimsMixArithmetic = image.flags.numericPrimsMixArithmetic();
+            this.numericPrimsMixComparison = image.flags.numericPrimsMixComparison();
             this.loopCounter = loopCounter;
             this.interpreterLoopCounter = 0;
         }
@@ -378,7 +382,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
 
         final LoopCounter loopCounter = CompilerDirectives.inCompiledCode() && CompilerDirectives.hasNextTier() ? new LoopCounter() : null;
         int pc = startPC;
-        final State state = new State(bc, loopCounter);
+        final State state = new State(bc, getContext(), loopCounter);
         final VirtualState vstate = new VirtualState(startSP);
 
         Object returnValue = null;
@@ -2039,6 +2043,12 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
             enter(pc, profile, BRANCH5);
             result = PrimSmallFloatAddNode.doDouble(lhs, rhs);
+        } else if (state.numericPrimsMixArithmetic && receiver instanceof final Long lhs && arg instanceof final Double rhs) {
+            enter(pc, profile, BRANCH6);
+            result = PrimSmallFloatAddNode.doDouble(lhs, rhs);
+        } else if (state.numericPrimsMixArithmetic && receiver instanceof final Double lhs && arg instanceof final Long rhs) {
+            enter(pc, profile, BRANCH7);
+            result = PrimSmallFloatAddNode.doDouble(lhs, rhs);
         } else {
             enter(pc, profile, BRANCH1);
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
@@ -2071,6 +2081,12 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
             enter(pc, profile, BRANCH5);
             result = PrimSmallFloatSubtractNode.doDouble(lhs, rhs);
+        } else if (state.numericPrimsMixArithmetic && receiver instanceof final Long lhs && arg instanceof final Double rhs) {
+            enter(pc, profile, BRANCH6);
+            result = PrimSmallFloatSubtractNode.doDouble(lhs, rhs);
+        } else if (state.numericPrimsMixArithmetic && receiver instanceof final Double lhs && arg instanceof final Long rhs) {
+            enter(pc, profile, BRANCH7);
+            result = PrimSmallFloatSubtractNode.doDouble(lhs, rhs);
         } else {
             enter(pc, profile, BRANCH1);
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
@@ -2095,6 +2111,12 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
             enter(pc, profile, BRANCH3);
             result = PrimSmallFloatLessThanNode.doDouble(lhs, rhs);
+        } else if (state.numericPrimsMixComparison && receiver instanceof final Long lhs && arg instanceof final Double rhs) {
+            enter(pc, profile, BRANCH4);
+            result = lhs == (double) rhs ? PrimLessThanNode.doLong(lhs, rhs.longValue()) : PrimSmallFloatLessThanNode.doDouble(lhs, rhs);
+        } else if (state.numericPrimsMixComparison && receiver instanceof final Double lhs && arg instanceof final Long rhs) {
+            enter(pc, profile, BRANCH5);
+            result = (double) lhs == rhs ? PrimLessThanNode.doLong(lhs.longValue(), rhs) : PrimSmallFloatLessThanNode.doDouble(lhs, rhs);
         } else {
             enter(pc, profile, BRANCH1);
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
@@ -2119,6 +2141,12 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
             enter(pc, profile, BRANCH3);
             result = PrimSmallFloatGreaterThanNode.doDouble(lhs, rhs);
+        } else if (state.numericPrimsMixComparison && receiver instanceof final Long lhs && arg instanceof final Double rhs) {
+            enter(pc, profile, BRANCH4);
+            result = lhs == (double) rhs ? PrimGreaterThanNode.doLong(lhs, rhs.longValue()) : PrimSmallFloatGreaterThanNode.doDouble(lhs, rhs);
+        } else if (state.numericPrimsMixComparison && receiver instanceof final Double lhs && arg instanceof final Long rhs) {
+            enter(pc, profile, BRANCH5);
+            result = (double) lhs == rhs ? PrimGreaterThanNode.doLong(lhs.longValue(), rhs) : PrimSmallFloatGreaterThanNode.doDouble(lhs, rhs);
         } else {
             enter(pc, profile, BRANCH1);
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
@@ -2143,6 +2171,12 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
             enter(pc, profile, BRANCH3);
             result = PrimSmallFloatLessOrEqualNode.doDouble(lhs, rhs);
+        } else if (state.numericPrimsMixComparison && receiver instanceof final Long lhs && arg instanceof final Double rhs) {
+            enter(pc, profile, BRANCH4);
+            result = lhs == (double) rhs ? PrimLessOrEqualNode.doLong(lhs, rhs.longValue()) : PrimSmallFloatLessOrEqualNode.doDouble(lhs, rhs);
+        } else if (state.numericPrimsMixComparison && receiver instanceof final Double lhs && arg instanceof final Long rhs) {
+            enter(pc, profile, BRANCH5);
+            result = (double) lhs == rhs ? PrimLessOrEqualNode.doLong(lhs.longValue(), rhs) : PrimSmallFloatLessOrEqualNode.doDouble(lhs, rhs);
         } else {
             enter(pc, profile, BRANCH1);
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
@@ -2167,6 +2201,12 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
             enter(pc, profile, BRANCH3);
             result = PrimSmallFloatGreaterOrEqualNode.doDouble(lhs, rhs);
+        } else if (state.numericPrimsMixComparison && receiver instanceof final Long lhs && arg instanceof final Double rhs) {
+            enter(pc, profile, BRANCH4);
+            result = lhs == (double) rhs ? PrimGreaterOrEqualNode.doLong(lhs, rhs.longValue()) : PrimSmallFloatGreaterOrEqualNode.doDouble(lhs, rhs);
+        } else if (state.numericPrimsMixComparison && receiver instanceof final Double lhs && arg instanceof final Long rhs) {
+            enter(pc, profile, BRANCH5);
+            result = (double) lhs == rhs ? PrimGreaterOrEqualNode.doLong(lhs.longValue(), rhs) : PrimSmallFloatGreaterOrEqualNode.doDouble(lhs, rhs);
         } else {
             enter(pc, profile, BRANCH1);
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
@@ -2191,6 +2231,12 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
             enter(pc, profile, BRANCH3);
             result = PrimSmallFloatEqualNode.doDouble(lhs, rhs);
+        } else if (state.numericPrimsMixComparison && receiver instanceof final Long lhs && arg instanceof final Double rhs) {
+            enter(pc, profile, BRANCH4);
+            result = lhs == (double) rhs ? PrimEqualNode.doLong(lhs, rhs.longValue()) : BooleanObject.FALSE;
+        } else if (state.numericPrimsMixComparison && receiver instanceof final Double lhs && arg instanceof final Long rhs) {
+            enter(pc, profile, BRANCH5);
+            result = (double) lhs == rhs ? PrimEqualNode.doLong(lhs.longValue(), rhs) : BooleanObject.FALSE;
         } else {
             enter(pc, profile, BRANCH1);
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
@@ -2215,6 +2261,12 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
             enter(pc, profile, BRANCH3);
             result = PrimSmallFloatNotEqualNode.doDouble(lhs, rhs);
+        } else if (state.numericPrimsMixComparison && receiver instanceof final Long lhs && arg instanceof final Double rhs) {
+            enter(pc, profile, BRANCH4);
+            result = lhs == (double) rhs ? PrimNotEqualNode.doLong(lhs, rhs.longValue()) : BooleanObject.TRUE;
+        } else if (state.numericPrimsMixComparison && receiver instanceof final Double lhs && arg instanceof final Long rhs) {
+            enter(pc, profile, BRANCH5);
+            result = (double) lhs == rhs ? PrimNotEqualNode.doLong(lhs.longValue(), rhs) : BooleanObject.TRUE;
         } else {
             enter(pc, profile, BRANCH1);
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
@@ -2238,6 +2290,14 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             result = multiply(pc, profile, lhs, rhs);
         } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
             enter(pc, profile, BRANCH4);
+            final double r = lhs * rhs;
+            result = Double.isFinite(r) ? r : new FloatObject(r);
+        } else if (state.numericPrimsMixArithmetic && receiver instanceof final Long lhs && arg instanceof final Double rhs) {
+            enter(pc, profile, BRANCH5);
+            final double r = lhs * rhs;
+            result = Double.isFinite(r) ? r : new FloatObject(r);
+        } else if (state.numericPrimsMixArithmetic && receiver instanceof final Double lhs && arg instanceof final Long rhs) {
+            enter(pc, profile, BRANCH6);
             final double r = lhs * rhs;
             result = Double.isFinite(r) ? r : new FloatObject(r);
         } else {
