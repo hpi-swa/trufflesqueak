@@ -39,6 +39,7 @@ import de.hpi.swa.trufflesqueak.model.CharacterObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
@@ -2235,6 +2236,10 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
             enter(pc, profile, BRANCH2);
             result = multiply(pc, profile, lhs, rhs);
+        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
+            enter(pc, profile, BRANCH4);
+            final double r = lhs * rhs;
+            result = Double.isFinite(r) ? r : new FloatObject(r);
         } else {
             enter(pc, profile, BRANCH1);
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
