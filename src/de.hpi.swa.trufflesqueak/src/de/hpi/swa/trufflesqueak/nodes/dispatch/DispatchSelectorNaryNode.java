@@ -13,6 +13,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.HostCompilerDirectives;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.GenerateUncached;
@@ -703,21 +704,37 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
 
             @Specialization(guards = {"lookupResult == null", "arguments.length == cachedArity"}, limit = "1")
             @ExplodeLoop
-            protected static final Object[] doMessageFallback(final Node node, final AbstractSqueakObject sender, final Object receiver, final Object[] arguments, final ClassObject receiverClass,
+            protected static final Object[] doMessageFallbackCached(final Node node, final AbstractSqueakObject sender, final Object receiver, final Object[] arguments,
+                            final ClassObject receiverClass,
                             @SuppressWarnings("unused") final Object lookupResult, final NativeObject selector,
                             @Cached("arguments.length") final int cachedArity,
-                            @Cached(inline = false) final AbstractPointersObjectWriteNode writeNode,
-                            @Cached(inline = false) final CreateMessageNode createMessageNode) {
+                            @Shared("writeNode") @Cached(inline = false) final AbstractPointersObjectWriteNode writeNode,
+                            @Shared("createNode") @Cached(inline = false) final CreateMessageNode createMessageNode) {
+                return doMessageFallbackShared(node, sender, receiver, arguments, receiverClass, selector, cachedArity, writeNode, createMessageNode);
+            }
 
-                final ClassObject.DispatchFailureResult result = getContext(node).findMethodCacheEntry(receiverClass, selector).getOrCreateDispatchFailureResult(cachedArity);
+            @Specialization(guards = "lookupResult == null", replaces = "doMessageFallbackCached")
+            protected static final Object[] doMessageFallbackGeneric(final Node node, final AbstractSqueakObject sender, final Object receiver, final Object[] arguments,
+                            final ClassObject receiverClass,
+                            @SuppressWarnings("unused") final Object lookupResult, final NativeObject selector,
+                            @Shared("writeNode") @Cached(inline = false) final AbstractPointersObjectWriteNode writeNode,
+                            @Shared("createNode") @Cached(inline = false) final CreateMessageNode createMessageNode) {
+                return doMessageFallbackShared(node, sender, receiver, arguments, receiverClass, selector, arguments.length, writeNode, createMessageNode);
+            }
+
+            private static Object[] doMessageFallbackShared(final Node node, final AbstractSqueakObject sender, final Object receiver, final Object[] arguments, final ClassObject receiverClass,
+                            final NativeObject selector, final int arity, final AbstractPointersObjectWriteNode writeNode, final CreateMessageNode createMessageNode) {
+
+                final ClassObject.DispatchFailureResult result = getContext(node).findMethodCacheEntry(receiverClass, selector).getOrCreateDispatchFailureResult(arity);
 
                 if (result.convention() == ClassObject.FallbackConvention.SHORTCUT_DNU) {
-                    final Object[] shortcutArgs = new Object[cachedArity + 1];
-                    for (int i = 0; i < cachedArity; i++) {
-                        shortcutArgs[i] = arguments[i];
+                    final Object[] shortcutArgs = new Object[arity + 1];
+                    if (CompilerDirectives.isPartialEvaluationConstant(arity)) {
+                        copyExploded(arguments, shortcutArgs, arity);
+                    } else {
+                        System.arraycopy(arguments, 0, shortcutArgs, 0, arity);
                     }
-                    shortcutArgs[cachedArity] = selector;
-
+                    shortcutArgs[arity] = selector;
                     return FrameAccess.newWith(sender, null, receiver, shortcutArgs);
                 }
 
@@ -728,6 +745,19 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
                     message = getContext(node).newMessage(writeNode, selector, receiverClass, arguments);
                 }
                 return FrameAccess.newMessageFallbackWith(sender, receiver, message);
+            }
+
+            @ExplodeLoop
+            private static void copyExploded(final Object[] source, final Object[] dest, final int length) {
+                for (int i = 0; i < length; i++) {
+                    dest[i] = source[i];
+                }
+            }
+
+            @Specialization(guards = {"targetObject != null", "!isCompiledCodeObject(targetObject)"})
+            protected static final Object[] doObjectAsMethod(final Node node, final AbstractSqueakObject sender, final Object receiver, final Object[] arguments,
+                            @SuppressWarnings("unused") final ClassObject receiverClass, final Object targetObject, final NativeObject selector) {
+                return FrameAccess.newOAMWith(sender, targetObject, selector, getContext(node).asArrayOfObjects(arguments), receiver);
             }
         }
     }

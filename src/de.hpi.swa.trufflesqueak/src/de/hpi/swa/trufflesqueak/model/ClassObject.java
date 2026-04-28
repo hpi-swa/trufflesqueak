@@ -6,6 +6,7 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
+import de.hpi.swa.trufflesqueak.util.LogUtils;
 import org.graalvm.collections.UnmodifiableEconomicMap;
 
 import com.oracle.truffle.api.Assumption;
@@ -502,7 +503,12 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
             if (shortcutSelector != null) {
                 final CompiledCodeObject shortcutMethod = lookupMethodInMethodDictSlow(shortcutSelector);
                 if (shortcutMethod != null) {
-                    return new DispatchFailureResult(shortcutMethod, 1, FallbackConvention.SHORTCUT_DNU, shortcutSelector);
+                    if (shortcutMethod.getNumArgs() == arity + 1) {
+                        return new DispatchFailureResult(shortcutMethod, 1, FallbackConvention.SHORTCUT_DNU, shortcutSelector);
+                    } else {
+                        LogUtils.DEBUG.warning(() -> "Ignoring misconfigured DNU shortcut " + shortcutSelector.asStringUnsafe() +
+                                        ": expected " + (arity + 1) + " arguments, but got " + shortcutMethod.getNumArgs());
+                    }
                 }
             }
 

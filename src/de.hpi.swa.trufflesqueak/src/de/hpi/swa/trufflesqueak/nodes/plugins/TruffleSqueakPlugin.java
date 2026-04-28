@@ -134,7 +134,7 @@ public final class TruffleSqueakPlugin extends AbstractPrimitiveFactoryHolder {
             for (int i = 0; i < arraySize; i++) {
                 final Object element = elements[i];
 
-                if (element instanceof final NativeObject nativeObject) {
+                if (element instanceof final NativeObject nativeObject && getContext().isByteSymbol(nativeObject)) {
                     isolatedSelectors[i] = nativeObject;
                 } else if (element == NilObject.SINGLETON) {
                     isolatedSelectors[i] = null;
