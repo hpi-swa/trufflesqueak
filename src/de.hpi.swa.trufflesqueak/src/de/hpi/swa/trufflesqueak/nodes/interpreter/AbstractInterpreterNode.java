@@ -59,19 +59,27 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     protected static final Long BOXED_ZERO = 0L;
     protected static final Long BOXED_ONE = 1L;
 
-    protected static final byte BRANCH1 = 0b1;
-    protected static final byte BRANCH2 = 0b10;
-    protected static final byte BRANCH3 = 0b100;
-    protected static final byte BRANCH4 = 0b1000;
-    protected static final byte BRANCH5 = 0b10000;
-    protected static final byte BRANCH6 = 0b100000;
-    protected static final byte BRANCH7 = 0b1000000;
+    protected static final short BRANCH1 = 0b1;
+    protected static final short BRANCH2 = 0b10;
+    protected static final short BRANCH3 = 0b100;
+    protected static final short BRANCH4 = 0b1000;
+    protected static final short BRANCH5 = 0b10000;
+    protected static final short BRANCH6 = 0b100000;
+    protected static final short BRANCH7 = 0b1000000;
+    protected static final short BRANCH8 = 0b10000000;
+    protected static final short BRANCH9 = 0b100000000;
+    protected static final short BRANCH10 = 0b1000000000;
+    protected static final short BRANCH11 = 0b10000000000;
+    protected static final short BRANCH12 = 0b100000000000;
+    protected static final short BRANCH13 = 0b1000000000000;
+    protected static final short BRANCH14 = 0b10000000000000;
+    protected static final short BRANCH15 = 0b100000000000000;
 
     protected final CompiledCodeObject code;
     protected final boolean isBlock;
 
     @CompilationFinal(dimensions = 1) private final Object[] data;
-    @CompilationFinal(dimensions = 1) private final byte[] profiles;
+    @CompilationFinal(dimensions = 1) private final short[] profiles;
     @CompilationFinal private Object osrMetadata;
 
     @SuppressWarnings("this-escape")
@@ -81,7 +89,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         final int startPC = code.getStartPCZeroBased();
         final int endPC = code.getMaxPCZeroBased();
         data = new Object[endPC];
-        profiles = new byte[endPC];
+        profiles = new short[endPC];
         processBytecode(startPC, endPC);
     }
 
@@ -94,7 +102,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         final int startPC = code.getStartPCZeroBased();
         final int endPC = code.getMaxPCZeroBased();
         data = new Object[endPC];
-        profiles = new byte[endPC];
+        profiles = new short[endPC];
         processBytecode(startPC, endPC);
         osrMetadata = null;
     }
@@ -169,7 +177,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     }
 
     protected final Object handleReturnException(final VirtualFrame frame, final int currentPC, final AbstractStandardSendReturn returnException) {
-        final byte profile = getProfile(currentPC);
+        final short profile = getProfile(currentPC);
         enter(currentPC, profile, BRANCH1);
         if (returnException.targetIsFrame(frame)) {
             enter(currentPC, profile, BRANCH2);
@@ -190,7 +198,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
 
     /** Inlined version of {@link GetOrCreateContextWithFrameNode}. */
     protected final ContextObject getOrCreateContext(final VirtualFrame frame, final int currentPC) {
-        final byte profile = getProfile(currentPC);
+        final short profile = getProfile(currentPC);
         final ContextObject context = FrameAccess.getContext(frame);
         if (context != null) {
             enter(currentPC, profile, BRANCH1);
@@ -283,7 +291,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     }
 
     protected final Object handleNormalReturn(final VirtualFrame frame, final int currentPC, final Object result) {
-        final byte profile = getProfile(currentPC);
+        final short profile = getProfile(currentPC);
         if (FrameAccess.hasModifiedSender(frame)) {
             enter(currentPC, profile, BRANCH1);
             throw new NonVirtualReturn(result, FrameAccess.getSender(frame));
@@ -352,12 +360,12 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
      * Handling of forwarding pointers
      */
     private Object followForwarded(final int currentPC, final Object value) {
-        final byte profile = getProfile(currentPC);
+        final short profile = getProfile(currentPC);
         if (value instanceof final AbstractSqueakObjectWithClassAndHash object) {
-            enter(currentPC, profile, BRANCH6);
+            enter(currentPC, profile, BRANCH14);
             return object.resolveForwardingPointer();
         } else {
-            enter(currentPC, profile, BRANCH7);
+            enter(currentPC, profile, BRANCH15);
             return value;
         }
     }
@@ -468,15 +476,19 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
      * Profiling
      */
 
-    protected final byte getProfile(final int pc) {
-        return UnsafeUtils.getByte(ACCESS.uncheckedCast(profiles, byte[].class), pc);
+    protected final short getProfile(final int pc) {
+        return UnsafeUtils.getShort(ACCESS.uncheckedCast(profiles, short[].class), pc);
     }
 
-    protected final void enter(final int currentPC, final byte profile, final byte stateBit) {
+    protected final void enter(final int currentPC, final short profile, final short stateBit) {
         if ((profile & stateBit) == 0) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            UnsafeUtils.putByte(profiles, currentPC, (byte) (profile | stateBit));
+            UnsafeUtils.putShort(profiles, currentPC, (short) (profile | stateBit));
         }
+    }
+
+    protected static final boolean isActive(final short profile, final short stateBit) {
+        return (profile & stateBit) != 0;
     }
 
     /*

@@ -2026,7 +2026,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handlePrimitiveAdd(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
-        final byte profile = getProfile(pc);
+        final short profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
@@ -2064,7 +2064,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handlePrimitiveSubtract(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
-        final byte profile = getProfile(pc);
+        final short profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
@@ -2102,7 +2102,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handlePrimitiveLessThan(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
-        final byte profile = getProfile(pc);
+        final short profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
@@ -2132,7 +2132,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handlePrimitiveGreaterThan(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
-        final byte profile = getProfile(pc);
+        final short profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
@@ -2162,7 +2162,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handlePrimitiveLessOrEqual(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
-        final byte profile = getProfile(pc);
+        final short profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
@@ -2192,7 +2192,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handlePrimitiveGreaterOrEqual(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
-        final byte profile = getProfile(pc);
+        final short profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
@@ -2222,7 +2222,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handlePrimitiveEqual(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
-        final byte profile = getProfile(pc);
+        final short profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
@@ -2252,7 +2252,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handlePrimitiveNotEqual(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
-        final byte profile = getProfile(pc);
+        final short profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
@@ -2282,7 +2282,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handlePrimitiveMultiply(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
-        final byte profile = getProfile(pc);
+        final short profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
@@ -2311,7 +2311,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     }
 
     @EarlyInline
-    private Object multiply(final int pc, final byte profile, final long lhs, final long rhs) {
+    private Object multiply(final int pc, final short profile, final long lhs, final long rhs) {
         /* Inlined version of Math.multiplyExact(x, y) with large integer fallback. */
         final long result = lhs * rhs;
         final long ax = Math.abs(lhs);
@@ -2330,7 +2330,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handlePrimitiveDiv(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
-        final byte profile = getProfile(pc);
+        final short profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
         if (receiver instanceof final Long lhs && arg instanceof final Long rhs && rhs != 0 && !isOverflowDivision(lhs, rhs)) {
@@ -2358,7 +2358,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handlePrimitiveBitAnd(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
-        final byte profile = getProfile(pc);
+        final short profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
@@ -2379,7 +2379,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handlePrimitiveBitOr(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
-        final byte profile = getProfile(pc);
+        final short profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
@@ -2399,7 +2399,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_SIZE, safepoint = false)
     private int handlePrimitiveSize(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object receiver = pop(frame, --vstate.sp);
-        final byte profile = getProfile(pc);
+        final short profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
         if (receiver instanceof final NativeObject nativeObject && getContext().isByteString(nativeObject)) {
