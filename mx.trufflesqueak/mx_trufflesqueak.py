@@ -32,7 +32,7 @@ def trufflesqueak_standalone_deps():
 def libsmalltalkvm_build_args():
     build_args = []
     selected_march = (
-        "x86-64-v2"
+        "x86-64-v3"
         if mx.get_arch() == "amd64"
         else ("armv8.1-a" if mx.get_arch() == "aarch64" else "compatibility")
     )
@@ -79,7 +79,7 @@ def _trufflesqueak_gate_runner(args, tasks):
 
 
 def _unittest_config_participant(config):
-    (vmArgs, mainClass, mainClassArgs) = config
+    vmArgs, mainClass, mainClassArgs = config
     vmArgs += ["-Dpolyglotimpl.DisableClassPathIsolation=true"]
     vmArgs += ["--add-exports=java.base/jdk.internal.module=de.hpi.swa.trufflesqueak"]
     mainClassArgs += [
