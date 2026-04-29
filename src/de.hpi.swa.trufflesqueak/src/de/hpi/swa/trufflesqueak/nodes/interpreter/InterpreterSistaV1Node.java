@@ -2285,29 +2285,56 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final short profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
-        if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-            enter(pc, profile, BRANCH2);
+        if (isActive(profile, BRANCH2) && receiver instanceof final Long lhs && arg instanceof final Long rhs) {
             result = multiply(pc, profile, lhs, rhs);
-        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
-            enter(pc, profile, BRANCH4);
-            final double r = lhs * rhs;
-            result = Double.isFinite(r) ? r : new FloatObject(r);
-        } else if (state.numericPrimsMixArithmetic && receiver instanceof final Long lhs && arg instanceof final Double rhs) {
-            enter(pc, profile, BRANCH5);
-            final double r = lhs * rhs;
-            result = Double.isFinite(r) ? r : new FloatObject(r);
-        } else if (state.numericPrimsMixArithmetic && receiver instanceof final Double lhs && arg instanceof final Long rhs) {
-            enter(pc, profile, BRANCH6);
-            final double r = lhs * rhs;
-            result = Double.isFinite(r) ? r : new FloatObject(r);
-        } else {
-            enter(pc, profile, BRANCH1);
+        } else if (isActive(profile, BRANCH5) && receiver instanceof final Double lhs && arg instanceof final Double rhs) {
+            result = multiply(pc, profile, BRANCH6, BRANCH7, lhs, rhs);
+        } else if (isActive(profile, BRANCH8) && receiver instanceof final Long lhs && arg instanceof final Double rhs) {
+            result = multiply(pc, profile, BRANCH9, BRANCH10, lhs, rhs);
+        } else if (isActive(profile, BRANCH11) && receiver instanceof final Double lhs && arg instanceof final Long rhs) {
+            result = multiply(pc, profile, BRANCH12, BRANCH13, lhs, rhs);
+        } else if (isActive(profile, BRANCH1)) {
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver, arg);
             nextPC = FrameAccess.internalizePC(frame, nextPC);
+        } else {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            return specializePrimitiveMultiply(frame, pc, vstate, state, receiver, arg, profile);
         }
         push(frame, vstate.sp++, result);
         return nextPC;
+    }
+
+    private int specializePrimitiveMultiply(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state, final Object receiver, final Object arg, final short profile) {
+        final short branch;
+        if (receiver instanceof Long && arg instanceof Long) {
+            branch = BRANCH2;
+        } else if (receiver instanceof Double && arg instanceof Double) {
+            branch = BRANCH5;
+        } else if (state.numericPrimsMixArithmetic && receiver instanceof Long && arg instanceof Double) {
+            branch = BRANCH8;
+        } else if (state.numericPrimsMixArithmetic && receiver instanceof Double && arg instanceof Long) {
+            branch = BRANCH11;
+        } else {
+            branch = BRANCH1;
+        }
+        enter(pc, profile, branch);
+        vstate.sp += 2;
+        return handlePrimitiveMultiply(frame, pc, vstate, state);
+    }
+
+    @EarlyInline
+    private Object multiply(final int pc, final short profile, final short finiteBranch, final short notFiniteBranch, final double lhs, final double rhs) {
+        final Object result;
+        final double r = lhs * rhs;
+        if (Double.isFinite(r)) {
+            enter(pc, profile, finiteBranch);
+            result = r;
+        } else {
+            enter(pc, profile, notFiniteBranch);
+            result = new FloatObject(r);
+        }
+        return result;
     }
 
     @EarlyInline
@@ -2317,8 +2344,9 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final long ax = Math.abs(lhs);
         final long ay = Math.abs(rhs);
         if ((ax | ay) >>> 31 != 0) {
+            enter(pc, profile, BRANCH3);
             if (rhs != 0 && result / rhs != lhs || lhs == Long.MIN_VALUE && rhs == -1) {
-                enter(pc, profile, BRANCH3);
+                enter(pc, profile, BRANCH4);
                 return LargeIntegers.multiplyLarge(getContext(), lhs, rhs);
             }
         }
