@@ -39,6 +39,7 @@ import de.hpi.swa.trufflesqueak.model.CharacterObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
@@ -2235,6 +2236,9 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
             enter(pc, profile, BRANCH2);
             result = multiply(pc, profile, lhs, rhs);
+        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
+            enter(pc, profile, BRANCH4);
+            result = multiply(pc, profile, lhs, rhs);
         } else {
             enter(pc, profile, BRANCH1);
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
@@ -2252,10 +2256,23 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final long ax = Math.abs(lhs);
         final long ay = Math.abs(rhs);
         if ((ax | ay) >>> 31 != 0) {
+            enter(pc, profile, BRANCH3);
             if (rhs != 0 && result / rhs != lhs || lhs == Long.MIN_VALUE && rhs == -1) {
-                enter(pc, profile, BRANCH3);
                 return LargeIntegers.multiplyLarge(getContext(), lhs, rhs);
             }
+        }
+        return result;
+    }
+
+    @EarlyInline
+    private Object multiply(final int pc, final byte profile, final double lhs, final double rhs) {
+        final Object result;
+        final double r = lhs * rhs;
+        if (Double.isFinite(r)) {
+            result = r;
+        } else {
+            enter(pc, profile, BRANCH5);
+            result = new FloatObject(r);
         }
         return result;
     }
