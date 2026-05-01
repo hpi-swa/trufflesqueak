@@ -570,7 +570,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        protected static final boolean inLongSizeRange(final long arg) {
+        public static final boolean inLongSizeRange(final long arg) {
             return -Long.SIZE < arg;
         }
 

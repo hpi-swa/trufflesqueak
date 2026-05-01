@@ -6,10 +6,12 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.GenerateUncached;
@@ -178,6 +180,11 @@ public final class ArrayObjectNodes {
         @Specialization(guards = "obj.isCharType()")
         protected static final int doArrayObjectOfChars(final ArrayObject obj) {
             return obj.getCharLength();
+        }
+
+        @Fallback
+        protected static final int doFail(@SuppressWarnings("unused") final ArrayObject obj) {
+            throw CompilerDirectives.shouldNotReachHere();
         }
     }
 

@@ -102,6 +102,8 @@ public final class SqueakImageContext {
     public final ClassObject methodContextClass = new ClassObject(this);
     @CompilationFinal private ClassObject wideStringClass;
     public final ClassObject pointClass = new ClassObject(this);
+    @CompilationFinal public SlotLocation pointClassSlotX;
+    @CompilationFinal public SlotLocation pointClassSlotY;
     public final ClassObject largePositiveIntegerClass = new ClassObject(this);
     public final ClassObject messageClass = new ClassObject(this);
     public final ClassObject compiledMethodClass = new ClassObject(this);
@@ -1228,6 +1230,13 @@ public final class SqueakImageContext {
         final PointersObject point = new PointersObject(pointClass);
         writeNode.execute(point, POINT.X, xPos);
         writeNode.execute(point, POINT.Y, yPos);
+        return point;
+    }
+
+    public PointersObject asPoint(final Object xPos, final Object yPos) {
+        final PointersObject point = new PointersObject(pointClass);
+        pointClassSlotX.writeMustSucceed(point, xPos);
+        pointClassSlotY.writeMustSucceed(point, yPos);
         return point;
     }
 

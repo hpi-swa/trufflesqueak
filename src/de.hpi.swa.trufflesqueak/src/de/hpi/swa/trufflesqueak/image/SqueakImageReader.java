@@ -25,11 +25,16 @@ import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
+import de.hpi.swa.trufflesqueak.model.EmptyObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayout;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.METACLASS;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.POINT;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
+import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
@@ -338,6 +343,7 @@ public final class SqueakImageReader {
     private void initObjects() {
         initPrebuiltConstant();
         fillInClassObjects();
+        initializePointClassLayout();
         fillInObjects();
         fillInClassesFromCompactClassList();
     }
@@ -443,6 +449,19 @@ public final class SqueakImageReader {
         final ArrayObject classTablePage = (ArrayObject) chunkMap.get(hiddenRootsChunk.getWord(majorIndex)).asObject();
         final Object result = ArrayObjectReadNode.executeUncached(classTablePage, minorIndex);
         return result instanceof final ClassObject c ? c : null;
+    }
+
+    /** Generalize Point objects to Object@Object before filling in objects. */
+    private void initializePointClassLayout() {
+        final EmptyObject dummyObject = new EmptyObject((ClassObject) null);
+        final PointersObject point = new PointersObject(image.pointClass);
+        AbstractPointersObjectWriteNode.executeUncached(point, POINT.X, dummyObject);
+        AbstractPointersObjectWriteNode.executeUncached(point, POINT.Y, dummyObject);
+        final ObjectLayout layout = image.pointClass.getLayout();
+        image.pointClassSlotX = layout.getLocation(POINT.X);
+        image.pointClassSlotY = layout.getLocation(POINT.Y);
+        assert image.pointClassSlotX.canStore(dummyObject);
+        assert image.pointClassSlotY.canStore(dummyObject);
     }
 
     /* Calculate odd bits (see Behavior>>instSpec). */
