@@ -934,7 +934,7 @@ public abstract class SlotLocation {
         }
     }
 
-    private static final class ObjectInlineSlotLocation extends GenericLocation {
+    public static final class ObjectInlineSlotLocation extends GenericLocation {
         private final long address;
 
         private ObjectInlineSlotLocation(final int index) {

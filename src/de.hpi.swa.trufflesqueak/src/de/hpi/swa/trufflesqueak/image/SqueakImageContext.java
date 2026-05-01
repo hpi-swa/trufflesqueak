@@ -63,6 +63,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.trufflesqueak.model.layout.SlotLocation;
+import de.hpi.swa.trufflesqueak.model.layout.SlotLocation.ObjectInlineSlotLocation;
 import de.hpi.swa.trufflesqueak.nodes.DoItRootNode;
 import de.hpi.swa.trufflesqueak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
@@ -102,8 +103,8 @@ public final class SqueakImageContext {
     public final ClassObject methodContextClass = new ClassObject(this);
     @CompilationFinal private ClassObject wideStringClass;
     public final ClassObject pointClass = new ClassObject(this);
-    @CompilationFinal public SlotLocation pointClassSlotX;
-    @CompilationFinal public SlotLocation pointClassSlotY;
+    @CompilationFinal public ObjectInlineSlotLocation pointClassSlotX;
+    @CompilationFinal public ObjectInlineSlotLocation pointClassSlotY;
     public final ClassObject largePositiveIntegerClass = new ClassObject(this);
     public final ClassObject messageClass = new ClassObject(this);
     public final ClassObject compiledMethodClass = new ClassObject(this);
