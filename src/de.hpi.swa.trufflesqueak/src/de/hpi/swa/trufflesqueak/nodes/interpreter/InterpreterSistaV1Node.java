@@ -113,16 +113,14 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
 
     private static final class State {
         private final byte[] bytecode;
-        private final boolean numericPrimsMixArithmetic;
-        private final boolean numericPrimsMixComparison;
+        private final SqueakImageContext image;
         private final LoopCounter loopCounter;
         private int interpreterLoopCounter;
 
         @EarlyInline
         State(final byte[] bytecode, final SqueakImageContext image, final LoopCounter loopCounter) {
             this.bytecode = bytecode;
-            this.numericPrimsMixArithmetic = image.flags.numericPrimsMixArithmetic();
-            this.numericPrimsMixComparison = image.flags.numericPrimsMixComparison();
+            this.image = image;
             this.loopCounter = loopCounter;
             this.interpreterLoopCounter = 0;
         }
@@ -379,10 +377,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final FrameWithoutBoxing frame = ACCESS.uncheckedCast(frame_, FrameWithoutBoxing.class);
         final byte[] bc = ACCESS.uncheckedCast(code.getBytes(), byte[].class);
         assert isBlock == FrameAccess.hasClosure(frame);
+        final SqueakImageContext image = ACCESS.uncheckedCast(getContext(), SqueakImageContext.class);
 
         final LoopCounter loopCounter = CompilerDirectives.inCompiledCode() && CompilerDirectives.hasNextTier() ? new LoopCounter() : null;
         int pc = startPC;
-        final State state = new State(bc, getContext(), loopCounter);
+        final State state = new State(bc, image, loopCounter);
         final VirtualState vstate = new VirtualState(startSP);
 
         Object returnValue = null;
@@ -777,67 +776,67 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         break;
                     }
                     case BC.BYTECODE_PRIM_ADD: {
-                        pc = handlePrimitiveAdd(frame, pc, vstate, state);
+                        pc = bytecodePrimAdd(frame, pc, vstate, state);
                         break;
                     }
                     case BC.BYTECODE_PRIM_SUBTRACT: {
-                        pc = handlePrimitiveSubtract(frame, pc, vstate, state);
+                        pc = bytecodePrimSubtract(frame, pc, vstate, state);
                         break;
                     }
                     case BC.BYTECODE_PRIM_LESS_THAN: {
-                        pc = handlePrimitiveLessThan(frame, pc, vstate, state);
+                        pc = bytecodePrimLessThan(frame, pc, vstate, state);
                         break;
                     }
                     case BC.BYTECODE_PRIM_GREATER_THAN: {
-                        pc = handlePrimitiveGreaterThan(frame, pc, vstate, state);
+                        pc = bytecodePrimGreaterThan(frame, pc, vstate, state);
                         break;
                     }
                     case BC.BYTECODE_PRIM_LESS_OR_EQUAL: {
-                        pc = handlePrimitiveLessOrEqual(frame, pc, vstate, state);
+                        pc = bytecodePrimLessOrEqual(frame, pc, vstate, state);
                         break;
                     }
                     case BC.BYTECODE_PRIM_GREATER_OR_EQUAL: {
-                        pc = handlePrimitiveGreaterOrEqual(frame, pc, vstate, state);
+                        pc = bytecodePrimGreaterOrEqual(frame, pc, vstate, state);
                         break;
                     }
                     case BC.BYTECODE_PRIM_EQUAL: {
-                        pc = handlePrimitiveEqual(frame, pc, vstate, state);
+                        pc = bytecodePrimEqual(frame, pc, vstate, state);
                         break;
                     }
                     case BC.BYTECODE_PRIM_NOT_EQUAL: {
-                        pc = handlePrimitiveNotEqual(frame, pc, vstate, state);
+                        pc = bytecodePrimNotEqual(frame, pc, vstate, state);
                         break;
                     }
                     case BC.BYTECODE_PRIM_MULTIPLY: {
-                        pc = handlePrimitiveMultiply(frame, pc, vstate, state);
+                        pc = bytecodePrimMultiply(frame, pc, vstate, state);
                         break;
                     }
                     case BC.BYTECODE_PRIM_DIV: {
-                        pc = handlePrimitiveDiv(frame, pc, vstate, state);
+                        pc = bytecodePrimDiv(frame, pc, vstate, state);
                         break;
                     }
                     case BC.BYTECODE_PRIM_BIT_AND: {
-                        pc = handlePrimitiveBitAnd(frame, pc, vstate, state);
+                        pc = bytecodePrimBitAnd(frame, pc, vstate, state);
                         break;
                     }
                     case BC.BYTECODE_PRIM_BIT_OR: {
-                        pc = handlePrimitiveBitOr(frame, pc, vstate, state);
+                        pc = bytecodePrimBitOr(frame, pc, vstate, state);
                         break;
                     }
                     case BC.BYTECODE_PRIM_SIZE: {
-                        pc = handlePrimitiveSize(frame, pc, vstate, state);
+                        pc = bytecodePrimSize(frame, pc, vstate, state);
                         break;
                     }
                     case BC.BYTECODE_PRIM_IDENTICAL: {
-                        pc = handlePrimitiveIdentical(frame, pc, vstate, state);
+                        pc = bytecodePrimIdentical(frame, pc, vstate, state);
                         break;
                     }
                     case BC.BYTECODE_PRIM_CLASS: {
-                        pc = handlePrimitiveClass(frame, pc, vstate, state);
+                        pc = bytecodePrimClass(frame, pc, vstate, state);
                         break;
                     }
                     case BC.BYTECODE_PRIM_NOT_IDENTICAL: {
-                        pc = handlePrimitiveNotIdentical(frame, pc, vstate, state);
+                        pc = bytecodePrimNotIdentical(frame, pc, vstate, state);
                         break;
                     }
                     case BC.BYTECODE_PRIM_NEXT, BC.BYTECODE_PRIM_AT_END, BC.BYTECODE_PRIM_VALUE, BC.BYTECODE_PRIM_NEW, BC.BYTECODE_PRIM_POINT_X, BC.BYTECODE_PRIM_POINT_Y, //
@@ -1137,7 +1136,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                 return e.osrResult;
             } catch (final StackOverflowError e) {
                 CompilerDirectives.transferToInterpreter();
-                throw getContext().tryToSignalLowSpace(frame, e);
+                throw image.tryToSignalLowSpace(frame, e);
             }
         }
         assert returnValue != null;
@@ -1760,7 +1759,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         } else {
             values = ArrayUtils.withAll(arraySize, NilObject.SINGLETON);
         }
-        push(frame, vstate.sp++, ArrayObject.createWithStorage(getContext().arrayClass, values));
+        push(frame, vstate.sp++, ArrayObject.createWithStorage(state.image.arrayClass, values));
         return pc + 2;
     }
 
@@ -2023,37 +2022,36 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_ADD, safepoint = false)
-    private int handlePrimitiveAdd(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+    private int bytecodePrimAdd(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
         final short profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
-        if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-            enter(pc, profile, BRANCH2);
+        if (isActive(profile, BRANCH2) && receiver instanceof final Long lhs && arg instanceof final Long rhs) {
             /* Profiled version of LargeIntegers.add(image, lhs, rhs). */
             final long r = lhs + rhs;
             if (((lhs ^ r) & (rhs ^ r)) < 0) {
                 enter(pc, profile, BRANCH3);
-                result = LargeIntegers.addLarge(getContext(), lhs, rhs);
+                result = LargeIntegers.addLarge(state.image, lhs, rhs);
             } else {
                 enter(pc, profile, BRANCH4);
                 result = r;
             }
-        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
-            enter(pc, profile, BRANCH5);
+        } else if (isActive(profile, BRANCH5) && receiver instanceof final Double lhs && arg instanceof final Double rhs) {
             result = PrimSmallFloatAddNode.doDouble(lhs, rhs);
-        } else if (state.numericPrimsMixArithmetic && receiver instanceof final Long lhs && arg instanceof final Double rhs) {
-            enter(pc, profile, BRANCH6);
+        } else if (isActive(profile, BRANCH6) && receiver instanceof final Long lhs && arg instanceof final Double rhs) {
             result = PrimSmallFloatAddNode.doDouble(lhs, rhs);
-        } else if (state.numericPrimsMixArithmetic && receiver instanceof final Double lhs && arg instanceof final Long rhs) {
-            enter(pc, profile, BRANCH7);
+        } else if (isActive(profile, BRANCH7) && receiver instanceof final Double lhs && arg instanceof final Long rhs) {
             result = PrimSmallFloatAddNode.doDouble(lhs, rhs);
-        } else {
-            enter(pc, profile, BRANCH1);
+        } else if (isActive(profile, BRANCH1)) {
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver, arg);
             nextPC = FrameAccess.internalizePC(frame, nextPC);
+        } else {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            specializeBytecodePrimArithmetic(pc, vstate, state, receiver, arg, profile, BRANCH2, BRANCH5, BRANCH6, BRANCH7);
+            return bytecodePrimAdd(frame, pc, vstate, state);
         }
         push(frame, vstate.sp++, result);
         return nextPC;
@@ -2061,67 +2059,100 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_SUBTRACT, safepoint = false)
-    private int handlePrimitiveSubtract(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+    private int bytecodePrimSubtract(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
         final short profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
-        if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-            enter(pc, profile, BRANCH2);
+        if (isActive(profile, BRANCH2) && receiver instanceof final Long lhs && arg instanceof final Long rhs) {
             /* Profiled version of LargeIntegers.subtract(image, lhs, rhs). */
             final long r = lhs - rhs;
             if (((lhs ^ rhs) & (lhs ^ r)) < 0) {
                 enter(pc, profile, BRANCH3);
-                result = LargeIntegers.subtractLarge(getContext(), lhs, rhs);
+                result = LargeIntegers.subtractLarge(state.image, lhs, rhs);
             } else {
                 enter(pc, profile, BRANCH4);
                 result = r;
             }
-        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
-            enter(pc, profile, BRANCH5);
+        } else if (isActive(profile, BRANCH5) && receiver instanceof final Double lhs && arg instanceof final Double rhs) {
             result = PrimSmallFloatSubtractNode.doDouble(lhs, rhs);
-        } else if (state.numericPrimsMixArithmetic && receiver instanceof final Long lhs && arg instanceof final Double rhs) {
-            enter(pc, profile, BRANCH6);
+        } else if (isActive(profile, BRANCH6) && receiver instanceof final Long lhs && arg instanceof final Double rhs) {
             result = PrimSmallFloatSubtractNode.doDouble(lhs, rhs);
-        } else if (state.numericPrimsMixArithmetic && receiver instanceof final Double lhs && arg instanceof final Long rhs) {
-            enter(pc, profile, BRANCH7);
+        } else if (isActive(profile, BRANCH7) && receiver instanceof final Double lhs && arg instanceof final Long rhs) {
             result = PrimSmallFloatSubtractNode.doDouble(lhs, rhs);
-        } else {
-            enter(pc, profile, BRANCH1);
+        } else if (isActive(profile, BRANCH1)) {
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver, arg);
             nextPC = FrameAccess.internalizePC(frame, nextPC);
+        } else {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            specializeBytecodePrimArithmetic(pc, vstate, state, receiver, arg, profile, BRANCH2, BRANCH5, BRANCH6, BRANCH7);
+            return bytecodePrimSubtract(frame, pc, vstate, state);
         }
         push(frame, vstate.sp++, result);
         return nextPC;
     }
 
+    private void specializeBytecodePrimArithmetic(final int pc, final VirtualState vstate, final State state, final Object receiver, final Object arg, final short profile,
+                    final short stateBitLL, final short stateBitDD, final short stateBitLD, final short stateBitDL) {
+        vstate.sp += 2;
+        final short branch;
+        if (receiver instanceof Long && arg instanceof Long) {
+            branch = stateBitLL;
+        } else if (receiver instanceof Double && arg instanceof Double) {
+            branch = stateBitDD;
+        } else if (state.image.flags.numericPrimsMixArithmetic() && receiver instanceof Long && arg instanceof Double) {
+            branch = stateBitLD;
+        } else if (state.image.flags.numericPrimsMixArithmetic() && receiver instanceof Double && arg instanceof Long) {
+            branch = stateBitDL;
+        } else {
+            branch = BRANCH1;
+        }
+        enter(pc, profile, branch);
+    }
+
+    private void specializeBytecodePrimComparison(final int pc, final VirtualState vstate, final State state, final Object receiver, final Object arg, final short profile) {
+        vstate.sp += 2;
+        final short branch;
+        if (receiver instanceof Long && arg instanceof Long) {
+            branch = BRANCH2;
+        } else if (receiver instanceof Double && arg instanceof Double) {
+            branch = BRANCH3;
+        } else if (state.image.flags.numericPrimsMixComparison() && receiver instanceof Long && arg instanceof Double) {
+            branch = BRANCH4;
+        } else if (state.image.flags.numericPrimsMixComparison() && receiver instanceof Double && arg instanceof Long) {
+            branch = BRANCH5;
+        } else {
+            branch = BRANCH1;
+        }
+        enter(pc, profile, branch);
+    }
+
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_LESS_THAN, safepoint = false)
-    private int handlePrimitiveLessThan(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+    private int bytecodePrimLessThan(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
         final short profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
-        if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-            enter(pc, profile, BRANCH2);
+        if (isActive(profile, BRANCH2) && receiver instanceof final Long lhs && arg instanceof final Long rhs) {
             result = PrimLessThanNode.doLong(lhs, rhs);
-        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
-            enter(pc, profile, BRANCH3);
+        } else if (isActive(profile, BRANCH3) && receiver instanceof final Double lhs && arg instanceof final Double rhs) {
             result = PrimSmallFloatLessThanNode.doDouble(lhs, rhs);
-        } else if (state.numericPrimsMixComparison && receiver instanceof final Long lhs && arg instanceof final Double rhs) {
-            enter(pc, profile, BRANCH4);
+        } else if (isActive(profile, BRANCH4) && receiver instanceof final Long lhs && arg instanceof final Double rhs) {
             result = lhs == (double) rhs ? PrimLessThanNode.doLong(lhs, rhs.longValue()) : PrimSmallFloatLessThanNode.doDouble(lhs, rhs);
-        } else if (state.numericPrimsMixComparison && receiver instanceof final Double lhs && arg instanceof final Long rhs) {
-            enter(pc, profile, BRANCH5);
+        } else if (isActive(profile, BRANCH5) && receiver instanceof final Double lhs && arg instanceof final Long rhs) {
             result = (double) lhs == rhs ? PrimLessThanNode.doLong(lhs.longValue(), rhs) : PrimSmallFloatLessThanNode.doDouble(lhs, rhs);
-        } else {
-            enter(pc, profile, BRANCH1);
+        } else if (isActive(profile, BRANCH1)) {
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver, arg);
             nextPC = FrameAccess.internalizePC(frame, nextPC);
+        } else {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            specializeBytecodePrimComparison(pc, vstate, state, receiver, arg, profile);
+            return bytecodePrimLessThan(frame, pc, vstate, state);
         }
         push(frame, vstate.sp++, result);
         return nextPC;
@@ -2129,29 +2160,28 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_GREATER_THAN, safepoint = false)
-    private int handlePrimitiveGreaterThan(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+    private int bytecodePrimGreaterThan(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
         final short profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
-        if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-            enter(pc, profile, BRANCH2);
+        if (isActive(profile, BRANCH2) && receiver instanceof final Long lhs && arg instanceof final Long rhs) {
             result = PrimGreaterThanNode.doLong(lhs, rhs);
-        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
-            enter(pc, profile, BRANCH3);
+        } else if (isActive(profile, BRANCH3) && receiver instanceof final Double lhs && arg instanceof final Double rhs) {
             result = PrimSmallFloatGreaterThanNode.doDouble(lhs, rhs);
-        } else if (state.numericPrimsMixComparison && receiver instanceof final Long lhs && arg instanceof final Double rhs) {
-            enter(pc, profile, BRANCH4);
+        } else if (isActive(profile, BRANCH4) && receiver instanceof final Long lhs && arg instanceof final Double rhs) {
             result = lhs == (double) rhs ? PrimGreaterThanNode.doLong(lhs, rhs.longValue()) : PrimSmallFloatGreaterThanNode.doDouble(lhs, rhs);
-        } else if (state.numericPrimsMixComparison && receiver instanceof final Double lhs && arg instanceof final Long rhs) {
-            enter(pc, profile, BRANCH5);
+        } else if (isActive(profile, BRANCH5) && receiver instanceof final Double lhs && arg instanceof final Long rhs) {
             result = (double) lhs == rhs ? PrimGreaterThanNode.doLong(lhs.longValue(), rhs) : PrimSmallFloatGreaterThanNode.doDouble(lhs, rhs);
-        } else {
-            enter(pc, profile, BRANCH1);
+        } else if (isActive(profile, BRANCH1)) {
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver, arg);
             nextPC = FrameAccess.internalizePC(frame, nextPC);
+        } else {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            specializeBytecodePrimComparison(pc, vstate, state, receiver, arg, profile);
+            return bytecodePrimGreaterThan(frame, pc, vstate, state);
         }
         push(frame, vstate.sp++, result);
         return nextPC;
@@ -2159,29 +2189,28 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_LESS_OR_EQUAL, safepoint = false)
-    private int handlePrimitiveLessOrEqual(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+    private int bytecodePrimLessOrEqual(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
         final short profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
-        if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-            enter(pc, profile, BRANCH2);
+        if (isActive(profile, BRANCH2) && receiver instanceof final Long lhs && arg instanceof final Long rhs) {
             result = PrimLessOrEqualNode.doLong(lhs, rhs);
-        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
-            enter(pc, profile, BRANCH3);
+        } else if (isActive(profile, BRANCH3) && receiver instanceof final Double lhs && arg instanceof final Double rhs) {
             result = PrimSmallFloatLessOrEqualNode.doDouble(lhs, rhs);
-        } else if (state.numericPrimsMixComparison && receiver instanceof final Long lhs && arg instanceof final Double rhs) {
-            enter(pc, profile, BRANCH4);
+        } else if (isActive(profile, BRANCH4) && receiver instanceof final Long lhs && arg instanceof final Double rhs) {
             result = lhs == (double) rhs ? PrimLessOrEqualNode.doLong(lhs, rhs.longValue()) : PrimSmallFloatLessOrEqualNode.doDouble(lhs, rhs);
-        } else if (state.numericPrimsMixComparison && receiver instanceof final Double lhs && arg instanceof final Long rhs) {
-            enter(pc, profile, BRANCH5);
+        } else if (isActive(profile, BRANCH5) && receiver instanceof final Double lhs && arg instanceof final Long rhs) {
             result = (double) lhs == rhs ? PrimLessOrEqualNode.doLong(lhs.longValue(), rhs) : PrimSmallFloatLessOrEqualNode.doDouble(lhs, rhs);
-        } else {
-            enter(pc, profile, BRANCH1);
+        } else if (isActive(profile, BRANCH1)) {
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver, arg);
             nextPC = FrameAccess.internalizePC(frame, nextPC);
+        } else {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            specializeBytecodePrimComparison(pc, vstate, state, receiver, arg, profile);
+            return bytecodePrimLessOrEqual(frame, pc, vstate, state);
         }
         push(frame, vstate.sp++, result);
         return nextPC;
@@ -2189,29 +2218,28 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_GREATER_OR_EQUAL, safepoint = false)
-    private int handlePrimitiveGreaterOrEqual(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+    private int bytecodePrimGreaterOrEqual(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
         final short profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
-        if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-            enter(pc, profile, BRANCH2);
+        if (isActive(profile, BRANCH2) && receiver instanceof final Long lhs && arg instanceof final Long rhs) {
             result = PrimGreaterOrEqualNode.doLong(lhs, rhs);
-        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
-            enter(pc, profile, BRANCH3);
+        } else if (isActive(profile, BRANCH3) && receiver instanceof final Double lhs && arg instanceof final Double rhs) {
             result = PrimSmallFloatGreaterOrEqualNode.doDouble(lhs, rhs);
-        } else if (state.numericPrimsMixComparison && receiver instanceof final Long lhs && arg instanceof final Double rhs) {
-            enter(pc, profile, BRANCH4);
+        } else if (isActive(profile, BRANCH4) && receiver instanceof final Long lhs && arg instanceof final Double rhs) {
             result = lhs == (double) rhs ? PrimGreaterOrEqualNode.doLong(lhs, rhs.longValue()) : PrimSmallFloatGreaterOrEqualNode.doDouble(lhs, rhs);
-        } else if (state.numericPrimsMixComparison && receiver instanceof final Double lhs && arg instanceof final Long rhs) {
-            enter(pc, profile, BRANCH5);
+        } else if (isActive(profile, BRANCH5) && receiver instanceof final Double lhs && arg instanceof final Long rhs) {
             result = (double) lhs == rhs ? PrimGreaterOrEqualNode.doLong(lhs.longValue(), rhs) : PrimSmallFloatGreaterOrEqualNode.doDouble(lhs, rhs);
-        } else {
-            enter(pc, profile, BRANCH1);
+        } else if (isActive(profile, BRANCH1)) {
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver, arg);
             nextPC = FrameAccess.internalizePC(frame, nextPC);
+        } else {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            specializeBytecodePrimComparison(pc, vstate, state, receiver, arg, profile);
+            return bytecodePrimGreaterOrEqual(frame, pc, vstate, state);
         }
         push(frame, vstate.sp++, result);
         return nextPC;
@@ -2219,29 +2247,28 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_EQUAL, safepoint = false)
-    private int handlePrimitiveEqual(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+    private int bytecodePrimEqual(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
         final short profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
-        if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-            enter(pc, profile, BRANCH2);
+        if (isActive(profile, BRANCH2) && receiver instanceof final Long lhs && arg instanceof final Long rhs) {
             result = PrimEqualNode.doLong(lhs, rhs);
-        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
-            enter(pc, profile, BRANCH3);
+        } else if (isActive(profile, BRANCH3) && receiver instanceof final Double lhs && arg instanceof final Double rhs) {
             result = PrimSmallFloatEqualNode.doDouble(lhs, rhs);
-        } else if (state.numericPrimsMixComparison && receiver instanceof final Long lhs && arg instanceof final Double rhs) {
-            enter(pc, profile, BRANCH4);
+        } else if (isActive(profile, BRANCH4) && receiver instanceof final Long lhs && arg instanceof final Double rhs) {
             result = lhs == (double) rhs ? PrimEqualNode.doLong(lhs, rhs.longValue()) : BooleanObject.FALSE;
-        } else if (state.numericPrimsMixComparison && receiver instanceof final Double lhs && arg instanceof final Long rhs) {
-            enter(pc, profile, BRANCH5);
+        } else if (isActive(profile, BRANCH5) && receiver instanceof final Double lhs && arg instanceof final Long rhs) {
             result = (double) lhs == rhs ? PrimEqualNode.doLong(lhs.longValue(), rhs) : BooleanObject.FALSE;
-        } else {
-            enter(pc, profile, BRANCH1);
+        } else if (isActive(profile, BRANCH1)) {
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver, arg);
             nextPC = FrameAccess.internalizePC(frame, nextPC);
+        } else {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            specializeBytecodePrimComparison(pc, vstate, state, receiver, arg, profile);
+            return bytecodePrimEqual(frame, pc, vstate, state);
         }
         push(frame, vstate.sp++, result);
         return nextPC;
@@ -2249,29 +2276,28 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_NOT_EQUAL, safepoint = false)
-    private int handlePrimitiveNotEqual(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+    private int bytecodePrimNotEqual(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
         final short profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
-        if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-            enter(pc, profile, BRANCH2);
+        if (isActive(profile, BRANCH2) && receiver instanceof final Long lhs && arg instanceof final Long rhs) {
             result = PrimNotEqualNode.doLong(lhs, rhs);
-        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
-            enter(pc, profile, BRANCH3);
+        } else if (isActive(profile, BRANCH3) && receiver instanceof final Double lhs && arg instanceof final Double rhs) {
             result = PrimSmallFloatNotEqualNode.doDouble(lhs, rhs);
-        } else if (state.numericPrimsMixComparison && receiver instanceof final Long lhs && arg instanceof final Double rhs) {
-            enter(pc, profile, BRANCH4);
+        } else if (isActive(profile, BRANCH4) && receiver instanceof final Long lhs && arg instanceof final Double rhs) {
             result = lhs == (double) rhs ? PrimNotEqualNode.doLong(lhs, rhs.longValue()) : BooleanObject.TRUE;
-        } else if (state.numericPrimsMixComparison && receiver instanceof final Double lhs && arg instanceof final Long rhs) {
-            enter(pc, profile, BRANCH5);
+        } else if (isActive(profile, BRANCH5) && receiver instanceof final Double lhs && arg instanceof final Long rhs) {
             result = (double) lhs == rhs ? PrimNotEqualNode.doLong(lhs.longValue(), rhs) : BooleanObject.TRUE;
-        } else {
-            enter(pc, profile, BRANCH1);
+        } else if (isActive(profile, BRANCH1)) {
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver, arg);
             nextPC = FrameAccess.internalizePC(frame, nextPC);
+        } else {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            specializeBytecodePrimComparison(pc, vstate, state, receiver, arg, profile);
+            return bytecodePrimNotEqual(frame, pc, vstate, state);
         }
         push(frame, vstate.sp++, result);
         return nextPC;
@@ -2279,14 +2305,14 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_MULTIPLY, safepoint = false)
-    private int handlePrimitiveMultiply(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+    private int bytecodePrimMultiply(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
         final short profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
         if (isActive(profile, BRANCH2) && receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-            result = multiply(pc, profile, lhs, rhs);
+            result = multiply(pc, state, profile, lhs, rhs);
         } else if (isActive(profile, BRANCH5) && receiver instanceof final Double lhs && arg instanceof final Double rhs) {
             result = multiply(pc, profile, BRANCH6, BRANCH7, lhs, rhs);
         } else if (isActive(profile, BRANCH8) && receiver instanceof final Long lhs && arg instanceof final Double rhs) {
@@ -2299,28 +2325,27 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             nextPC = FrameAccess.internalizePC(frame, nextPC);
         } else {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            return specializePrimitiveMultiply(frame, pc, vstate, state, receiver, arg, profile);
+            specializeBytecodePrimArithmetic(pc, vstate, state, receiver, arg, profile, BRANCH2, BRANCH5, BRANCH8, BRANCH11);
+            return bytecodePrimMultiply(frame, pc, vstate, state);
         }
         push(frame, vstate.sp++, result);
         return nextPC;
     }
 
-    private int specializePrimitiveMultiply(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state, final Object receiver, final Object arg, final short profile) {
-        final short branch;
-        if (receiver instanceof Long && arg instanceof Long) {
-            branch = BRANCH2;
-        } else if (receiver instanceof Double && arg instanceof Double) {
-            branch = BRANCH5;
-        } else if (state.numericPrimsMixArithmetic && receiver instanceof Long && arg instanceof Double) {
-            branch = BRANCH8;
-        } else if (state.numericPrimsMixArithmetic && receiver instanceof Double && arg instanceof Long) {
-            branch = BRANCH11;
-        } else {
-            branch = BRANCH1;
+    @EarlyInline
+    private Object multiply(final int pc, final State state, final short profile, final long lhs, final long rhs) {
+        /* Inlined version of Math.multiplyExact(x, y) with large integer fallback. */
+        final long result = lhs * rhs;
+        final long ax = Math.abs(lhs);
+        final long ay = Math.abs(rhs);
+        if ((ax | ay) >>> 31 != 0) {
+            enter(pc, profile, BRANCH3);
+            if (rhs != 0 && result / rhs != lhs || lhs == Long.MIN_VALUE && rhs == -1) {
+                enter(pc, profile, BRANCH4);
+                return LargeIntegers.multiplyLarge(state.image, lhs, rhs);
+            }
         }
-        enter(pc, profile, branch);
-        vstate.sp += 2;
-        return handlePrimitiveMultiply(frame, pc, vstate, state);
+        return result;
     }
 
     @EarlyInline
@@ -2338,31 +2363,14 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     }
 
     @EarlyInline
-    private Object multiply(final int pc, final short profile, final long lhs, final long rhs) {
-        /* Inlined version of Math.multiplyExact(x, y) with large integer fallback. */
-        final long result = lhs * rhs;
-        final long ax = Math.abs(lhs);
-        final long ay = Math.abs(rhs);
-        if ((ax | ay) >>> 31 != 0) {
-            enter(pc, profile, BRANCH3);
-            if (rhs != 0 && result / rhs != lhs || lhs == Long.MIN_VALUE && rhs == -1) {
-                enter(pc, profile, BRANCH4);
-                return LargeIntegers.multiplyLarge(getContext(), lhs, rhs);
-            }
-        }
-        return result;
-    }
-
-    @EarlyInline
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_DIV, safepoint = false)
-    private int handlePrimitiveDiv(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+    private int bytecodePrimDiv(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
         final short profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
-        if (receiver instanceof final Long lhs && arg instanceof final Long rhs && rhs != 0 && !isOverflowDivision(lhs, rhs)) {
-            enter(pc, profile, BRANCH2);
+        if (isActive(profile, BRANCH2) && receiver instanceof final Long lhs && arg instanceof final Long rhs && rhs != 0 && !isOverflowDivision(lhs, rhs)) {
             final long q = lhs / rhs;
             if ((lhs ^ rhs) < 0 && (q * rhs != lhs)) {
                 enter(pc, profile, BRANCH3);
@@ -2371,53 +2379,82 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                 enter(pc, profile, BRANCH4);
                 result = q;
             }
-        } else {
-            enter(pc, profile, BRANCH1);
+        } else if (isActive(profile, BRANCH1)) {
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver, arg);
             nextPC = FrameAccess.internalizePC(frame, nextPC);
+        } else {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            specializeBytecodePrimDiv(pc, vstate, receiver, arg, profile);
+            return bytecodePrimDiv(frame, pc, vstate, state);
         }
         push(frame, vstate.sp++, result);
         return nextPC;
+    }
+
+    private void specializeBytecodePrimDiv(final int pc, final VirtualState vstate, final Object receiver, final Object arg, final short profile) {
+        vstate.sp += 2;
+        final short branch;
+        if (receiver instanceof final Long lhs && arg instanceof final Long rhs && rhs != 0 && !isOverflowDivision(lhs, rhs)) {
+            branch = BRANCH2;
+        } else {
+            branch = BRANCH1;
+        }
+        enter(pc, profile, branch);
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_BIT_AND, safepoint = false)
-    private int handlePrimitiveBitAnd(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+    private int bytecodePrimBitAnd(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
         final short profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
-        if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-            enter(pc, profile, BRANCH2);
+        if (isActive(profile, BRANCH2) && receiver instanceof final Long lhs && arg instanceof final Long rhs) {
             result = PrimBitAndNode.doLong(lhs, rhs);
-        } else {
-            enter(pc, profile, BRANCH1);
+        } else if (isActive(profile, BRANCH1)) {
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver, arg);
             nextPC = FrameAccess.internalizePC(frame, nextPC);
+        } else {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            specializeBytecodePrimBitOperation(pc, vstate, receiver, arg, profile);
+            return bytecodePrimBitAnd(frame, pc, vstate, state);
         }
         push(frame, vstate.sp++, result);
         return nextPC;
     }
 
+    private void specializeBytecodePrimBitOperation(final int pc, final VirtualState vstate, final Object receiver, final Object arg, final short profile) {
+        vstate.sp += 2;
+        final short branch;
+        if (receiver instanceof Long && arg instanceof Long) {
+            branch = BRANCH2;
+        } else {
+            branch = BRANCH1;
+        }
+        enter(pc, profile, branch);
+    }
+
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_BIT_OR, safepoint = false)
-    private int handlePrimitiveBitOr(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+    private int bytecodePrimBitOr(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
         final short profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
-        if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
-            enter(pc, profile, BRANCH2);
+        if (isActive(profile, BRANCH2) && receiver instanceof final Long lhs && arg instanceof final Long rhs) {
             result = PrimBitOrNode.doLong(lhs, rhs);
-        } else {
-            enter(pc, profile, BRANCH1);
+        } else if (isActive(profile, BRANCH1)) {
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver, arg);
             nextPC = FrameAccess.internalizePC(frame, nextPC);
+        } else {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            specializeBytecodePrimBitOperation(pc, vstate, receiver, arg, profile);
+            return bytecodePrimBitOr(frame, pc, vstate, state);
         }
         push(frame, vstate.sp++, result);
         return nextPC;
@@ -2425,27 +2462,79 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_SIZE, safepoint = false)
-    private int handlePrimitiveSize(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+    private int bytecodePrimSize(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
         final Object receiver = pop(frame, --vstate.sp);
         final short profile = getProfile(pc);
         int nextPC = pc + 1;
         final Object result;
-        if (receiver instanceof final NativeObject nativeObject && getContext().isByteString(nativeObject)) {
-            enter(pc, profile, BRANCH2);
+        if (isActive(profile, BRANCH2) && receiver instanceof final NativeObject nativeObject && state.image.isByteString(nativeObject)) {
             result = (long) nativeObject.getByteLength();
-        } else { // TODO: OSVM also special cases arrays
-            enter(pc, profile, BRANCH1);
+        } else if (isActive(profile, BRANCH3) && receiver instanceof final ArrayObject arrayObject) {
+            final int size;
+            if (isActive(profile, BRANCH4) && arrayObject.isObjectType()) {
+                size = arrayObject.getObjectLength();
+            } else if (isActive(profile, BRANCH5) && arrayObject.isLongType()) {
+                size = arrayObject.getLongLength();
+            } else if (isActive(profile, BRANCH6) && arrayObject.isEmptyType()) {
+                size = arrayObject.getEmptyLength();
+            } else if (isActive(profile, BRANCH7) && arrayObject.isDoubleType()) {
+                size = arrayObject.getDoubleLength();
+            } else if (isActive(profile, BRANCH8) && arrayObject.isBooleanType()) {
+                size = arrayObject.getBooleanLength();
+            } else if (isActive(profile, BRANCH9) && arrayObject.isCharType()) {
+                size = arrayObject.getCharLength();
+            } else {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                specializeBytecodePrimSize(pc, vstate, state, receiver, profile);
+                return bytecodePrimSize(frame, pc, vstate, state);
+            }
+            result = (long) size;
+        } else if (isActive(profile, BRANCH1)) {
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver);
             nextPC = FrameAccess.internalizePC(frame, nextPC);
+        } else {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            specializeBytecodePrimSize(pc, vstate, state, receiver, profile);
+            return bytecodePrimSize(frame, pc, vstate, state);
         }
         push(frame, vstate.sp++, result);
         return nextPC;
     }
 
+    private void specializeBytecodePrimSize(final int pc, final VirtualState vstate, final State state, final Object receiver, final short profile) {
+        vstate.sp += 1;
+        final short branch;
+        if (receiver instanceof final NativeObject nativeObject && state.image.isByteString(nativeObject)) {
+            branch = BRANCH2;
+        } else if (receiver instanceof final ArrayObject arrayObject) {
+            branch = BRANCH3;
+            final short typeBranch;
+            if (arrayObject.isObjectType()) {
+                typeBranch = BRANCH4;
+            } else if (arrayObject.isLongType()) {
+                typeBranch = BRANCH5;
+            } else if (arrayObject.isEmptyType()) {
+                typeBranch = BRANCH6;
+            } else if (arrayObject.isDoubleType()) {
+                typeBranch = BRANCH7;
+            } else if (arrayObject.isBooleanType()) {
+                typeBranch = BRANCH8;
+            } else if (arrayObject.isCharType()) {
+                typeBranch = BRANCH9;
+            } else {
+                throw CompilerDirectives.shouldNotReachHere();
+            }
+            enter(pc, profile, typeBranch);
+        } else {
+            branch = BRANCH1;
+        }
+        enter(pc, profile, branch);
+    }
+
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_IDENTICAL, safepoint = false)
-    private int handlePrimitiveIdentical(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+    private int bytecodePrimIdentical(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
         push(frame, vstate.sp++, ACCESS.uncheckedCast(getData(pc), SqueakObjectIdentityNodeGen.class).execute(this, receiver, arg));
@@ -2454,7 +2543,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_CLASS, safepoint = false)
-    private int handlePrimitiveClass(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+    private int bytecodePrimClass(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object receiver = pop(frame, --vstate.sp);
         push(frame, vstate.sp++, ACCESS.uncheckedCast(getData(pc), SqueakObjectClassNodeGen.class).executeLookup(this, receiver));
         return pc + 1;
@@ -2462,7 +2551,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_NOT_IDENTICAL, safepoint = false)
-    private int handlePrimitiveNotIdentical(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+    private int bytecodePrimNotIdentical(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
         push(frame, vstate.sp++, !ACCESS.uncheckedCast(getData(pc), SqueakObjectIdentityNodeGen.class).execute(this, receiver, arg));
