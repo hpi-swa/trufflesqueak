@@ -170,6 +170,8 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     BC.PUSH_RECEIVER, BC.PUSH_CONSTANT_TRUE, BC.PUSH_CONSTANT_FALSE, BC.PUSH_CONSTANT_NIL, BC.PUSH_CONSTANT_ZERO, BC.PUSH_CONSTANT_ONE, //
                     BC.RETURN_RECEIVER, BC.RETURN_TRUE, BC.RETURN_FALSE, BC.RETURN_NIL, BC.RETURN_TOP_FROM_METHOD, BC.RETURN_NIL_FROM_BLOCK, BC.RETURN_TOP_FROM_BLOCK, //
                     BC.DUPLICATE_TOP, //
+                    BC.BYTECODE_PRIM_ADD, BC.BYTECODE_PRIM_SUBTRACT, BC.BYTECODE_PRIM_LESS_THAN, BC.BYTECODE_PRIM_GREATER_THAN, BC.BYTECODE_PRIM_LESS_OR_EQUAL, BC.BYTECODE_PRIM_GREATER_OR_EQUAL, //
+                    BC.BYTECODE_PRIM_EQUAL, BC.BYTECODE_PRIM_NOT_EQUAL, BC.BYTECODE_PRIM_MULTIPLY, //
                     BC.POP_INTO_TEMP_VAR_0, BC.POP_INTO_TEMP_VAR_1, BC.POP_INTO_TEMP_VAR_2, BC.POP_INTO_TEMP_VAR_3, BC.POP_INTO_TEMP_VAR_4, BC.POP_INTO_TEMP_VAR_5, BC.POP_INTO_TEMP_VAR_6, BC.POP_INTO_TEMP_VAR_7, //
                     BC.POP_STACK: {
                     break;
@@ -192,8 +194,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     setData(currentPC, insert(SqueakObjectClassNodeGen.create()));
                     break;
                 }
-                case BC.BYTECODE_PRIM_ADD, BC.BYTECODE_PRIM_SUBTRACT, BC.BYTECODE_PRIM_LESS_THAN, BC.BYTECODE_PRIM_GREATER_THAN, BC.BYTECODE_PRIM_LESS_OR_EQUAL, BC.BYTECODE_PRIM_GREATER_OR_EQUAL, //
-                    BC.BYTECODE_PRIM_EQUAL, BC.BYTECODE_PRIM_NOT_EQUAL, BC.BYTECODE_PRIM_MULTIPLY, BC.BYTECODE_PRIM_DIVIDE, BC.BYTECODE_PRIM_MOD, BC.BYTECODE_PRIM_MAKE_POINT, BC.BYTECODE_PRIM_BIT_SHIFT, BC.BYTECODE_PRIM_DIV, //
+                case BC.BYTECODE_PRIM_DIVIDE, BC.BYTECODE_PRIM_MOD, BC.BYTECODE_PRIM_MAKE_POINT, BC.BYTECODE_PRIM_BIT_SHIFT, BC.BYTECODE_PRIM_DIV, //
                     BC.BYTECODE_PRIM_BIT_AND, BC.BYTECODE_PRIM_BIT_OR, BC.BYTECODE_PRIM_AT, BC.BYTECODE_PRIM_NEXT_PUT, BC.BYTECODE_PRIM_VALUE_WITH_ARG, BC.BYTECODE_PRIM_DO, BC.BYTECODE_PRIM_NEW_WITH_ARG: {
                     setData(currentPC, insert(Dispatch1NodeGen.create(image.getSpecialSelector(b - BC.BYTECODE_PRIM_ADD))));
                     break;
@@ -2055,7 +2056,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             nextPC = FrameAccess.internalizePC(frame, nextPC);
         } else {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            specializeBytecodePrimArithmetic(pc, vstate, state, receiver, arg, profile, BRANCH2, BRANCH5, BRANCH6, BRANCH7);
+            specializeBytecodePrimArithmetic(BC.BYTECODE_PRIM_ADD, pc, vstate, state, receiver, arg, profile, BRANCH2, BRANCH5, BRANCH6, BRANCH7);
             return bytecodePrimAdd(frame, pc, vstate, state);
         }
         push(frame, vstate.sp++, result);
@@ -2092,14 +2093,14 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             nextPC = FrameAccess.internalizePC(frame, nextPC);
         } else {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            specializeBytecodePrimArithmetic(pc, vstate, state, receiver, arg, profile, BRANCH2, BRANCH5, BRANCH6, BRANCH7);
+            specializeBytecodePrimArithmetic(BC.BYTECODE_PRIM_SUBTRACT, pc, vstate, state, receiver, arg, profile, BRANCH2, BRANCH5, BRANCH6, BRANCH7);
             return bytecodePrimSubtract(frame, pc, vstate, state);
         }
         push(frame, vstate.sp++, result);
         return nextPC;
     }
 
-    private void specializeBytecodePrimArithmetic(final int pc, final VirtualState vstate, final State state, final Object receiver, final Object arg, final short profile,
+    private void specializeBytecodePrimArithmetic(final int bytecode, final int pc, final VirtualState vstate, final State state, final Object receiver, final Object arg, final short profile,
                     final short stateBitLL, final short stateBitDD, final short stateBitLD, final short stateBitDL) {
         vstate.sp += 2;
         final short branch;
@@ -2113,11 +2114,12 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             branch = stateBitDL;
         } else {
             branch = BRANCH1;
+            setData(pc, insert(Dispatch1NodeGen.create(state.image.getSpecialSelector(bytecode - BC.BYTECODE_PRIM_ADD))));
         }
         enter(pc, profile, branch);
     }
 
-    private void specializeBytecodePrimComparison(final int pc, final VirtualState vstate, final State state, final Object receiver, final Object arg, final short profile) {
+    private void specializeBytecodePrimComparison(final int bytecode, final int pc, final VirtualState vstate, final State state, final Object receiver, final Object arg, final short profile) {
         vstate.sp += 2;
         final short branch;
         if (receiver instanceof Long && arg instanceof Long) {
@@ -2130,6 +2132,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             branch = BRANCH5;
         } else {
             branch = BRANCH1;
+            setData(pc, insert(Dispatch1NodeGen.create(state.image.getSpecialSelector(bytecode - BC.BYTECODE_PRIM_ADD))));
         }
         enter(pc, profile, branch);
     }
@@ -2156,7 +2159,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             nextPC = FrameAccess.internalizePC(frame, nextPC);
         } else {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            specializeBytecodePrimComparison(pc, vstate, state, receiver, arg, profile);
+            specializeBytecodePrimComparison(BC.BYTECODE_PRIM_LESS_THAN, pc, vstate, state, receiver, arg, profile);
             return bytecodePrimLessThan(frame, pc, vstate, state);
         }
         push(frame, vstate.sp++, result);
@@ -2185,7 +2188,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             nextPC = FrameAccess.internalizePC(frame, nextPC);
         } else {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            specializeBytecodePrimComparison(pc, vstate, state, receiver, arg, profile);
+            specializeBytecodePrimComparison(BC.BYTECODE_PRIM_GREATER_THAN, pc, vstate, state, receiver, arg, profile);
             return bytecodePrimGreaterThan(frame, pc, vstate, state);
         }
         push(frame, vstate.sp++, result);
@@ -2214,7 +2217,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             nextPC = FrameAccess.internalizePC(frame, nextPC);
         } else {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            specializeBytecodePrimComparison(pc, vstate, state, receiver, arg, profile);
+            specializeBytecodePrimComparison(BC.BYTECODE_PRIM_LESS_OR_EQUAL, pc, vstate, state, receiver, arg, profile);
             return bytecodePrimLessOrEqual(frame, pc, vstate, state);
         }
         push(frame, vstate.sp++, result);
@@ -2243,7 +2246,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             nextPC = FrameAccess.internalizePC(frame, nextPC);
         } else {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            specializeBytecodePrimComparison(pc, vstate, state, receiver, arg, profile);
+            specializeBytecodePrimComparison(BC.BYTECODE_PRIM_GREATER_OR_EQUAL, pc, vstate, state, receiver, arg, profile);
             return bytecodePrimGreaterOrEqual(frame, pc, vstate, state);
         }
         push(frame, vstate.sp++, result);
@@ -2272,7 +2275,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             nextPC = FrameAccess.internalizePC(frame, nextPC);
         } else {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            specializeBytecodePrimComparison(pc, vstate, state, receiver, arg, profile);
+            specializeBytecodePrimComparison(BC.BYTECODE_PRIM_EQUAL, pc, vstate, state, receiver, arg, profile);
             return bytecodePrimEqual(frame, pc, vstate, state);
         }
         push(frame, vstate.sp++, result);
@@ -2301,7 +2304,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             nextPC = FrameAccess.internalizePC(frame, nextPC);
         } else {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            specializeBytecodePrimComparison(pc, vstate, state, receiver, arg, profile);
+            specializeBytecodePrimComparison(BC.BYTECODE_PRIM_NOT_EQUAL, pc, vstate, state, receiver, arg, profile);
             return bytecodePrimNotEqual(frame, pc, vstate, state);
         }
         push(frame, vstate.sp++, result);
@@ -2330,7 +2333,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             nextPC = FrameAccess.internalizePC(frame, nextPC);
         } else {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            specializeBytecodePrimArithmetic(pc, vstate, state, receiver, arg, profile, BRANCH2, BRANCH5, BRANCH8, BRANCH11);
+            specializeBytecodePrimArithmetic(BC.BYTECODE_PRIM_MULTIPLY, pc, vstate, state, receiver, arg, profile, BRANCH2, BRANCH5, BRANCH8, BRANCH11);
             return bytecodePrimMultiply(frame, pc, vstate, state);
         }
         push(frame, vstate.sp++, result);
