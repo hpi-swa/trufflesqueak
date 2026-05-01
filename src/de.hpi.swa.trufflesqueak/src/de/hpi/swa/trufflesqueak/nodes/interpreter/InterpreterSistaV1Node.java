@@ -811,6 +811,10 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         pc = bytecodePrimMultiply(frame, pc, vstate, state);
                         break;
                     }
+                    case BC.BYTECODE_PRIM_DIVIDE: {
+                        pc = bytecodePrimDivide(frame, pc, vstate, state);
+                        break;
+                    }
                     case BC.BYTECODE_PRIM_DIV: {
                         pc = bytecodePrimDiv(frame, pc, vstate, state);
                         break;
@@ -845,7 +849,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         pc = handleSend0(frame, pc, vstate, state);
                         break;
                     }
-                    case BC.BYTECODE_PRIM_DIVIDE, BC.BYTECODE_PRIM_MOD, BC.BYTECODE_PRIM_MAKE_POINT, BC.BYTECODE_PRIM_BIT_SHIFT, //
+                    case BC.BYTECODE_PRIM_MOD, BC.BYTECODE_PRIM_MAKE_POINT, BC.BYTECODE_PRIM_BIT_SHIFT, //
                         BC.BYTECODE_PRIM_AT, BC.BYTECODE_PRIM_NEXT_PUT, BC.BYTECODE_PRIM_VALUE_WITH_ARG, BC.BYTECODE_PRIM_DO, BC.BYTECODE_PRIM_NEW_WITH_ARG, //
                         BC.SEND_LIT_SEL1_0, BC.SEND_LIT_SEL1_1, BC.SEND_LIT_SEL1_2, BC.SEND_LIT_SEL1_3, BC.SEND_LIT_SEL1_4, BC.SEND_LIT_SEL1_5, BC.SEND_LIT_SEL1_6, BC.SEND_LIT_SEL1_7, //
                         BC.SEND_LIT_SEL1_8, BC.SEND_LIT_SEL1_9, BC.SEND_LIT_SEL1_A, BC.SEND_LIT_SEL1_B, BC.SEND_LIT_SEL1_C, BC.SEND_LIT_SEL1_D, BC.SEND_LIT_SEL1_E, BC.SEND_LIT_SEL1_F: {
@@ -1747,6 +1751,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     }
 
     @EarlyInline
+    @SuppressWarnings("static-method")
     @BytecodeInterpreterHandler(value = BC.PUSH_NEW_ARRAY, safepoint = false)
     private int handlePushNewArray(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
         final int param = getByte(state.bytecode, pc + 1);
@@ -2363,6 +2368,71 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     }
 
     @EarlyInline
+    @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_DIVIDE, safepoint = false)
+    private int bytecodePrimDivide(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
+        final Object arg = pop(frame, --vstate.sp);
+        final Object receiver = pop(frame, --vstate.sp);
+        final short profile = getProfile(pc);
+        int nextPC = pc + 1;
+        final Object result;
+        if (isActive(profile, BRANCH2) && receiver instanceof final Long lhs && arg instanceof final Long rhs && rhs != 0 && lhs % rhs == 0) {
+            if (isOverflowDivision(lhs, rhs)) {
+                enter(pc, profile, BRANCH3);
+                result = LargeIntegers.createLongMinOverflowResult(state.image);
+            } else {
+                result = lhs / rhs;
+            }
+        } else if (isActive(profile, BRANCH5) && receiver instanceof final Double lhs && arg instanceof final Double rhs && rhs != 0) {
+            result = divide(pc, profile, BRANCH6, BRANCH7, lhs, rhs);
+        } else if (isActive(profile, BRANCH8) && receiver instanceof final Long lhs && arg instanceof final Double rhs && rhs != 0) {
+            result = divide(pc, profile, BRANCH9, BRANCH10, lhs, rhs);
+        } else if (isActive(profile, BRANCH11) && receiver instanceof final Double lhs && arg instanceof final Long rhs && rhs != 0) {
+            result = divide(pc, profile, BRANCH12, BRANCH13, lhs, rhs);
+        } else if (isActive(profile, BRANCH1)) {
+            FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
+            result = send(frame, pc, receiver, arg);
+            nextPC = FrameAccess.internalizePC(frame, nextPC);
+        } else {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            specializeBytecodePrimDivide(pc, vstate, receiver, arg, profile);
+            return bytecodePrimDivide(frame, pc, vstate, state);
+        }
+        push(frame, vstate.sp++, result);
+        return nextPC;
+    }
+
+    private void specializeBytecodePrimDivide(final int pc, final VirtualState vstate, final Object receiver, final Object arg, final short profile) {
+        vstate.sp += 2;
+        final short branch;
+        if (receiver instanceof final Long lhs && arg instanceof final Long rhs && rhs != 0 && lhs % rhs == 0) {
+            branch = BRANCH2;
+        } else if (receiver instanceof Double && arg instanceof final Double rhs && rhs != 0) {
+            branch = BRANCH5;
+        } else if (receiver instanceof Long && arg instanceof final Double rhs && rhs != 0) {
+            branch = BRANCH8;
+        } else if (receiver instanceof Double && arg instanceof final Long rhs && rhs != 0) {
+            branch = BRANCH11;
+        } else {
+            branch = BRANCH1;
+        }
+        enter(pc, profile, branch);
+    }
+
+    @EarlyInline
+    private Object divide(final int pc, final short profile, final short finiteBranch, final short notFiniteBranch, final double lhs, final double rhs) {
+        final Object result;
+        final double r = lhs / rhs;
+        if (Double.isFinite(r)) {
+            enter(pc, profile, finiteBranch);
+            result = r;
+        } else {
+            enter(pc, profile, notFiniteBranch);
+            result = new FloatObject(r);
+        }
+        return result;
+    }
+
+    @EarlyInline
     @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_DIV, safepoint = false)
     private int bytecodePrimDiv(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object arg = pop(frame, --vstate.sp);
@@ -2575,7 +2645,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     }
 
     @EarlyInline
-    @BytecodeInterpreterHandler(value = {BC.BYTECODE_PRIM_DIVIDE, BC.BYTECODE_PRIM_MOD, BC.BYTECODE_PRIM_MAKE_POINT,
+    @BytecodeInterpreterHandler(value = {BC.BYTECODE_PRIM_MOD, BC.BYTECODE_PRIM_MAKE_POINT,
                     BC.BYTECODE_PRIM_BIT_SHIFT, BC.BYTECODE_PRIM_AT, BC.BYTECODE_PRIM_NEXT_PUT,
                     BC.BYTECODE_PRIM_VALUE_WITH_ARG, BC.BYTECODE_PRIM_DO, BC.BYTECODE_PRIM_NEW_WITH_ARG,
                     BC.SEND_LIT_SEL1_0, BC.SEND_LIT_SEL1_1, BC.SEND_LIT_SEL1_2, BC.SEND_LIT_SEL1_3,
