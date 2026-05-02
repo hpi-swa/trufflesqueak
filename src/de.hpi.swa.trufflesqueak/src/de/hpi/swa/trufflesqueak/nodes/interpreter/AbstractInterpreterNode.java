@@ -38,7 +38,6 @@ import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
-import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.context.GetOrCreateContextWithFrameNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0NodeFactory.Dispatch0NodeGen;
@@ -103,14 +102,6 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
 
     @Override
     public abstract Object execute(VirtualFrame frame, int startPC, int startSP);
-
-    static final class ReadLiteralVariableNode extends AbstractNode {
-        private final SqueakObjectAt0NodeGen at0Node = insert((SqueakObjectAt0NodeGen) SqueakObjectAt0NodeGen.create());
-
-        Object execute(final Node node, final Object literal) {
-            return at0Node.execute(node, literal, ASSOCIATION.VALUE);
-        }
-    }
 
     protected static final CompiledCodeObject createBlock(final CompiledCodeObject code, final int pc, final int numArgs, final int numCopied, final int blockSize) {
         return code.createShadowBlock(code.getInitialPC() + pc, numArgs, numCopied, blockSize);
@@ -215,7 +206,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
             if (ArrayUtils.containsEqual(READONLY_CLASSES, squeakClassName)) {
                 return SqueakObjectAt0NodeGen.executeUncached(literal, ASSOCIATION.VALUE);
             } else {
-                return new ReadLiteralVariableNode();
+                return SqueakObjectAt0NodeGen.create();
             }
         } else {
             throw SqueakException.create("Unexpected literal", literal);
@@ -224,8 +215,8 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
 
     protected final Object readLiteralVariable(final int currentPC, final int index) {
         final Object literalVariableOrNode = getData(currentPC);
-        if (literalVariableOrNode instanceof final ReadLiteralVariableNode node) {
-            return node.execute(this, code.getAndResolveLiteral(index));
+        if (literalVariableOrNode instanceof final SqueakObjectAt0NodeGen node) {
+            return node.execute(this, code.getAndResolveLiteral(index), ASSOCIATION.VALUE);
         } else {
             return literalVariableOrNode;
         }
