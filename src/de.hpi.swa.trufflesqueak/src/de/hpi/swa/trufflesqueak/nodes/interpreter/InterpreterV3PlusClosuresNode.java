@@ -317,7 +317,6 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                 switch (HostCompilerDirectives.markThreadedSwitch(b)) {
                     case BC.PUSH_RCVR_VAR_0, BC.PUSH_RCVR_VAR_1, BC.PUSH_RCVR_VAR_2, BC.PUSH_RCVR_VAR_3, BC.PUSH_RCVR_VAR_4, BC.PUSH_RCVR_VAR_5, BC.PUSH_RCVR_VAR_6, BC.PUSH_RCVR_VAR_7, //
                         BC.PUSH_RCVR_VAR_8, BC.PUSH_RCVR_VAR_9, BC.PUSH_RCVR_VAR_A, BC.PUSH_RCVR_VAR_B, BC.PUSH_RCVR_VAR_C, BC.PUSH_RCVR_VAR_D, BC.PUSH_RCVR_VAR_E, BC.PUSH_RCVR_VAR_F: {
-                        FrameAccess.externalizePCAndSP(frame, pc, sp); // for ContextObject access
                         pushFollowed(frame, currentPC, sp++, ACCESS.uncheckedCast(getData(currentPC), SqueakObjectAt0NodeGen.class).execute(this, FrameAccess.getReceiver(frame), b & 0xF));
                         break;
                     }
@@ -330,7 +329,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         BC.PUSH_LIT_CONST_08, BC.PUSH_LIT_CONST_09, BC.PUSH_LIT_CONST_0A, BC.PUSH_LIT_CONST_0B, BC.PUSH_LIT_CONST_0C, BC.PUSH_LIT_CONST_0D, BC.PUSH_LIT_CONST_0E, BC.PUSH_LIT_CONST_0F, //
                         BC.PUSH_LIT_CONST_10, BC.PUSH_LIT_CONST_11, BC.PUSH_LIT_CONST_12, BC.PUSH_LIT_CONST_13, BC.PUSH_LIT_CONST_14, BC.PUSH_LIT_CONST_15, BC.PUSH_LIT_CONST_16, BC.PUSH_LIT_CONST_17, //
                         BC.PUSH_LIT_CONST_18, BC.PUSH_LIT_CONST_19, BC.PUSH_LIT_CONST_1A, BC.PUSH_LIT_CONST_1B, BC.PUSH_LIT_CONST_1C, BC.PUSH_LIT_CONST_1D, BC.PUSH_LIT_CONST_1E, BC.PUSH_LIT_CONST_1F: {
-                        push(frame, sp++, getAndResolveLiteral(currentPC, b & 0x1F));
+                        push(frame, sp++, code.getLiteral(b & 0x1F));
                         break;
                     }
                     case BC.PUSH_LIT_VAR_00, BC.PUSH_LIT_VAR_01, BC.PUSH_LIT_VAR_02, BC.PUSH_LIT_VAR_03, BC.PUSH_LIT_VAR_04, BC.PUSH_LIT_VAR_05, BC.PUSH_LIT_VAR_06, BC.PUSH_LIT_VAR_07, //
@@ -587,7 +586,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         break;
                     }
                     case BC.DUPLICATE_TOP: {
-                        pushFollowed(frame, currentPC, sp, top(frame, sp));
+                        push(frame, sp, top(frame, sp));
                         sp++;
                         break;
                     }

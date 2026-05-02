@@ -1562,7 +1562,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
 
     @EarlyInline
     private int handlePushLiteralConstant(final VirtualFrame frame, final int pc, final VirtualState vstate, final int index) {
-        push(frame, vstate.sp++, getAndResolveLiteral(pc, index));
+        push(frame, vstate.sp++, code.getLiteral(index));
         return pc + 1;
     }
 
@@ -1706,7 +1706,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.DUPLICATE_TOP, safepoint = false)
     private int handleDuplicateTop(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
-        pushFollowed(frame, pc, vstate.sp, top(frame, vstate.sp));
+        push(frame, vstate.sp, top(frame, vstate.sp));
         vstate.sp++;
         return pc + 1;
     }
