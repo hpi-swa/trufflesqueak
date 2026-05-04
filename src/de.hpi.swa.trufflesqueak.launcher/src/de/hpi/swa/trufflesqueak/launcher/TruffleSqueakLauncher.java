@@ -209,6 +209,7 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
             // contextBuilder.option(ENGINE_DYNAMIC_COMPILATION_THRESHOLDS_OPTION,
             // Boolean.toString(false));
         }
+        contextBuilder.option("engine.CompilerThreads", "1");
         contextBuilder.option("engine.FirstTierCompilationThreshold", "5000");
         contextBuilder.option("engine.FirstTierMinInvokeThreshold", "20");
         contextBuilder.option("engine.LastTierCompilationThreshold", "50000");
