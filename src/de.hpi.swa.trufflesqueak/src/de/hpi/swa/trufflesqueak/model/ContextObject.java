@@ -580,7 +580,9 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
 
     // The context represents primitive call which needs to be skipped when unwinding call stack.
     public boolean isPrimitiveContext() {
-        return !hasClosure() && getCodeObject().hasPrimitive() && getInstructionPointerForBytecodeLoop() == 0;
+        return getInstructionPointerForBytecodeLoop() == 0 && //
+                        !hasClosure() && !isUnwindMarked() && !isExceptionHandlerMarked() && //
+                        getCodeObject().hasPrimitive();
     }
 
     @TruffleBoundary

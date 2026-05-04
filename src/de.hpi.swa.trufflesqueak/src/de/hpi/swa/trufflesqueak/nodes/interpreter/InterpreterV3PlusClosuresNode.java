@@ -405,7 +405,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         break;
                     }
                     case BC.RETURN_TOP_FROM_METHOD: {
-                        returnValue = handleReturn(frame, currentPC, pc, sp, top(frame, sp),
+                        returnValue = handleReturn(frame, currentPC, pc, sp - 1, top(frame, sp),
                                         CompilerDirectives.inCompiledCode() && CompilerDirectives.hasNextTier() ? loopCounter.value : counter);
                         pc = LOCAL_RETURN_PC;
                         break;

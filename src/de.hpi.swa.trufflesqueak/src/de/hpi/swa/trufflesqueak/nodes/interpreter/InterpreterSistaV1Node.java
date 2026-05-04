@@ -790,7 +790,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     }
                     case BC.RETURN_TOP_FROM_METHOD: {
                         state.reportLoopCountOnReturn(this);
-                        returnValue = handleReturn(frame, pc, pc + 1, vstate.sp, top(frame, vstate.sp));
+                        returnValue = handleReturn(frame, pc, pc + 1, vstate.sp - 1, top(frame, vstate.sp));
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
