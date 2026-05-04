@@ -121,15 +121,8 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
         contextBuilder.option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.QUIET, Boolean.toString(quiet));
         contextBuilder.arguments(getLanguageId(), imageArguments);
         final String runtimeName = getRuntimeName();
-        final boolean hasGraalCompiler = runtimeName.contains("Graal");
-        addEnableEngineModeLatency = addEnableEngineModeLatency && hasGraalCompiler;
-        if (addEnableEngineModeLatency) {
-            contextBuilder.option(ENGINE_MODE_OPTION, ENGINE_MODE_LATENCY);
-        }
-        addDisableDynamicCompilationThresholds = addDisableDynamicCompilationThresholds && hasGraalCompiler;
-        if (addDisableDynamicCompilationThresholds) {
-            contextBuilder.option(ENGINE_DYNAMIC_COMPILATION_THRESHOLDS_OPTION, Boolean.toString(false));
-        }
+
+        configureEngine(contextBuilder, runtimeName);
         contextBuilder.allowAllAccess(true);
         final SqueakTranscriptForwarder out;
         final SqueakTranscriptForwarder err;
@@ -203,6 +196,24 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
         vmThread.start();
         PlatformEventLoop.run();
         System.exit(vmExitCode[0]);
+    }
+
+    private void configureEngine(final Context.Builder contextBuilder, final String runtimeName) {
+        final boolean hasGraalCompiler = runtimeName.contains("Graal");
+        addEnableEngineModeLatency = addEnableEngineModeLatency && hasGraalCompiler;
+        if (addEnableEngineModeLatency) {
+            // contextBuilder.option(ENGINE_MODE_OPTION, ENGINE_MODE_LATENCY);
+        }
+        addDisableDynamicCompilationThresholds = addDisableDynamicCompilationThresholds && hasGraalCompiler;
+        if (addDisableDynamicCompilationThresholds) {
+            // contextBuilder.option(ENGINE_DYNAMIC_COMPILATION_THRESHOLDS_OPTION,
+            // Boolean.toString(false));
+        }
+        contextBuilder.option("engine.FirstTierCompilationThreshold", "5000");
+        contextBuilder.option("engine.FirstTierMinInvokeThreshold", "20");
+        contextBuilder.option("engine.LastTierCompilationThreshold", "50000");
+        contextBuilder.option("engine.MinInvokeThreshold", "20");
+        contextBuilder.option("engine.SingleTierCompilationThreshold", "50000");
     }
 
     @Override
