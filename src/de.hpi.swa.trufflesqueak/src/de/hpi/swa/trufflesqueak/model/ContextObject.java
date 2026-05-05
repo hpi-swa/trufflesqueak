@@ -382,10 +382,8 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         }
         final Object result = Truffle.getRuntime().iterateFrames(frameInstance -> {
             final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
-            if (FrameAccess.isTruffleSqueakFrame(current)) {
-                if (this == FrameAccess.getContext(current)) {
-                    return Boolean.TRUE;
-                }
+            if (FrameAccess.isTruffleSqueakFrame(current) && this == FrameAccess.getContext(current)) {
+                return Boolean.TRUE;
             }
             return null;
         });
