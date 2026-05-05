@@ -331,8 +331,8 @@ shallow-clone-graal() {
   target_version="${GRAALVM_TRUFFLE_VERSION:-${TRUFFLE_VERSION}}"
   shallow-clone-graalvm-project https://github.com/oracle/graal.git "${target_version}"
   echo "[graal repo (${target_version}) cloned successfully]"
-  # $(cd ${BASE_DIRECTORY}/../graal && git apply "${SCRIPT_DIRECTORY}/graalvm-25.0.2.patch")
-  # echo "[graal repo patched successfully]"
+  $(cd ${BASE_DIRECTORY}/../graal && git apply "${SCRIPT_DIRECTORY}/graalvm-25.1.0.patch")
+  echo "[graal repo patched successfully]"
 }
 
 eval "$@"

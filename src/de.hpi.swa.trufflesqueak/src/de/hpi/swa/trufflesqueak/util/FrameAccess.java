@@ -80,10 +80,10 @@ public final class FrameAccess {
         private static final int ARGUMENTS_START = 3;
     }
 
-    private static final class SlotIndices {
+    public static final class SlotIndices {
         private static final int THIS_CONTEXT = 0;
-        private static final int INSTRUCTION_POINTER = 1;
-        private static final int STACK_POINTER = 2;
+        public static final int INSTRUCTION_POINTER = 1;
+        public static final int STACK_POINTER = 2;
         private static final int STACK_START = 3;
     }
 

@@ -1,0 +1,183 @@
+diff --git a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/frame/FrameExtensions.java b/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/frame/FrameExtensions.java
+index 93bd741e3ba..b0ac6ccffc5 100644
+--- a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/frame/FrameExtensions.java
++++ b/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/frame/FrameExtensions.java
+@@ -64,6 +64,8 @@ public abstract class FrameExtensions {
+      */
+     public abstract void setObject(Frame frame, int slot, Object value);
+ 
++    public abstract void setObjectStatic(Frame frame, int slot, Object value);
++
+     /**
+      * Stores a boolean into the frame.
+      *
+@@ -85,6 +87,10 @@ public abstract class FrameExtensions {
+      */
+     public abstract void setInt(Frame frame, int slot, int value);
+ 
++    public abstract int getIntStatic(Frame frame, int slot);
++
++    public abstract void setIntStatic(Frame frame, int slot, int value);
++
+     /**
+      * Stores a long into the frame.
+      *
+@@ -230,6 +236,8 @@ public abstract class FrameExtensions {
+      */
+     public abstract Object uncheckedGetObject(Frame frame, int slot);
+ 
++    public abstract Object uncheckedGetObjectStatic(Frame frame, int slot);
++
+     /**
+      * Copies a value from one slot to another.
+      *
+diff --git a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/impl/FrameExtensionsSafe.java b/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/impl/FrameExtensionsSafe.java
+index 239dc5962af..ed17182cae5 100644
+--- a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/impl/FrameExtensionsSafe.java
++++ b/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/impl/FrameExtensionsSafe.java
+@@ -67,6 +67,11 @@ final class FrameExtensionsSafe extends FrameExtensions {
+         }
+     }
+ 
++    @Override
++    public Object uncheckedGetObjectStatic(Frame frame, int slot) {
++        return frame.getObjectStatic(slot);
++    }
++
+     @Override
+     public boolean expectBoolean(Frame frame, int slot) throws UnexpectedResultException {
+         return frame.expectBoolean(slot);
+@@ -107,6 +112,11 @@ final class FrameExtensionsSafe extends FrameExtensions {
+         frame.setObject(slot, value);
+     }
+ 
++    @Override
++    public void setObjectStatic(Frame frame, int slot, Object value) {
++        frame.setObjectStatic(slot, value);
++    }
++
+     @Override
+     public void setBoolean(Frame frame, int slot, boolean value) {
+         frame.setBoolean(slot, value);
+@@ -122,6 +132,16 @@ final class FrameExtensionsSafe extends FrameExtensions {
+         frame.setInt(slot, value);
+     }
+ 
++    @Override
++    public int getIntStatic(Frame frame, int slot) {
++        return frame.getIntStatic(slot);
++    }
++
++    @Override
++    public void setIntStatic(Frame frame, int slot, int value) {
++        frame.setIntStatic(slot, value);
++    }
++
+     @Override
+     public void setLong(Frame frame, int slot, long value) {
+         frame.setLong(slot, value);
+diff --git a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/impl/FrameExtensionsUnsafe.java b/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/impl/FrameExtensionsUnsafe.java
+index a828622ba38..945f1631631 100644
+--- a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/impl/FrameExtensionsUnsafe.java
++++ b/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/impl/FrameExtensionsUnsafe.java
+@@ -61,16 +61,36 @@ final class FrameExtensionsUnsafe extends FrameExtensions {
+         return ((FrameWithoutBoxing) frame).unsafeUncheckedGetObject(slot);
+     }
+ 
++    @Override
++    public Object uncheckedGetObjectStatic(Frame frame, int slot) {
++        return ((FrameWithoutBoxing) frame).unsafeUncheckedGetObjectStatic(slot);
++    }
++
+     @Override
+     public void setObject(Frame frame, int slot, Object value) {
+         ((FrameWithoutBoxing) frame).unsafeSetObject(slot, value);
+     }
+ 
++    @Override
++    public void setObjectStatic(Frame frame, int slot, Object value) {
++        ((FrameWithoutBoxing) frame).unsafeSetObjectStatic(slot, value);
++    }
++
+     @Override
+     public void setInt(Frame frame, int slot, int value) {
+         ((FrameWithoutBoxing) frame).unsafeSetInt(slot, value);
+     }
+ 
++    @Override
++    public int getIntStatic(Frame frame, int slot) {
++        return ((FrameWithoutBoxing) frame).unsafeGetIntStatic(slot);
++    }
++
++    @Override
++    public void setIntStatic(Frame frame, int slot, int value) {
++        ((FrameWithoutBoxing) frame).unsafeSetIntStatic(slot, value);
++    }
++
+     @Override
+     public void setBoolean(Frame frame, int slot, boolean value) {
+         ((FrameWithoutBoxing) frame).unsafeSetBoolean(slot, value);
+diff --git a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/impl/FrameWithoutBoxing.java b/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/impl/FrameWithoutBoxing.java
+index 6be57e0fd53..47ff71a0719 100644
+--- a/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/impl/FrameWithoutBoxing.java
++++ b/truffle/src/com.oracle.truffle.api/src/com/oracle/truffle/api/impl/FrameWithoutBoxing.java
+@@ -821,6 +821,12 @@ public final class FrameWithoutBoxing implements VirtualFrame, MaterializedFrame
+         return getIndexedLocals()[slot];
+     }
+ 
++    Object unsafeUncheckedGetObjectStatic(int slot) {
++        assert checkStaticGet(slot, STATIC_OBJECT_TAG) : "Unexpected read of static object value";
++
++        return unsafeGetObject(getIndexedLocals(), getObjectOffset(slot), true, OBJECT_LOCATION);
++    }
++
+     @Override
+     public void setObjectStatic(int slot, Object value) {
+         assert checkStatic(slot) : UNEXPECTED_STATIC_WRITE;
+@@ -832,6 +838,16 @@ public final class FrameWithoutBoxing implements VirtualFrame, MaterializedFrame
+         getIndexedLocals()[slot] = value;
+     }
+ 
++    void unsafeSetObjectStatic(int slot, Object value) {
++        assert checkStatic(slot) : UNEXPECTED_STATIC_WRITE;
++        // We use this check instead of the assert keyword to update the tags in PE'd code.
++        if (ASSERTIONS_ENABLED) {
++            indexedTags[slot] = STATIC_OBJECT_TAG;
++        }
++
++        unsafePutObject(getIndexedLocals(), getObjectOffset(slot), value, OBJECT_LOCATION);
++    }
++
+     @Override
+     public byte getByteStatic(int slot) {
+         assert checkStaticGet(slot, STATIC_BYTE_TAG) : "Unexpected read of static byte value";
+@@ -875,6 +891,12 @@ public final class FrameWithoutBoxing implements VirtualFrame, MaterializedFrame
+         return narrow(getIndexedPrimitiveLocals()[slot]);
+     }
+ 
++    int unsafeGetIntStatic(int slot) throws FrameSlotTypeException {
++        assert checkStaticGet(slot, STATIC_INT_TAG) : "Unexpected read of static int value";
++
++        return unsafeGetLongAndNarrowInt(getIndexedPrimitiveLocals(), getPrimitiveOffset(slot), true, PRIMITIVE_LOCATION);
++    }
++
+     @Override
+     public void setIntStatic(int slot, int value) {
+         assert checkStatic(slot) : UNEXPECTED_STATIC_WRITE;
+@@ -886,6 +908,16 @@ public final class FrameWithoutBoxing implements VirtualFrame, MaterializedFrame
+         getIndexedPrimitiveLocals()[slot] = extend(value);
+     }
+ 
++    void unsafeSetIntStatic(int slot, int value) {
++        assert checkStatic(slot) : UNEXPECTED_STATIC_WRITE;
++        // We use this check instead of the assert keyword to update the tags in PE'd code.
++        if (ASSERTIONS_ENABLED) {
++            indexedTags[slot] = STATIC_INT_TAG;
++        }
++
++        unsafePutLongAndExtendInt(getIndexedPrimitiveLocals(), getPrimitiveOffset(slot), value, PRIMITIVE_LOCATION);
++    }
++
+     @Override
+     public long getLongStatic(int slot) {
+         assert checkStaticGet(slot, STATIC_LONG_TAG) : "Unexpected read of static long value";

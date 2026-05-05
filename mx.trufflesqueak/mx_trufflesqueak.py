@@ -79,7 +79,7 @@ def _trufflesqueak_gate_runner(args, tasks):
 
 
 def _unittest_config_participant(config):
-    (vmArgs, mainClass, mainClassArgs) = config
+    vmArgs, mainClass, mainClassArgs = config
     vmArgs += ["-Dpolyglotimpl.DisableClassPathIsolation=true"]
     vmArgs += ["--add-exports=java.base/jdk.internal.module=de.hpi.swa.trufflesqueak"]
     mainClassArgs += [

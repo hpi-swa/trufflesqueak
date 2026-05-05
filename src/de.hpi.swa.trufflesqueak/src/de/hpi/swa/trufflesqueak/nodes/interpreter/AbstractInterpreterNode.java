@@ -13,6 +13,7 @@ import com.oracle.truffle.api.CompilerDirectives.EarlyInline;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.bytecode.BytecodeDSLAccess;
 import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameExtensions;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.InstrumentableNode;
 import com.oracle.truffle.api.instrumentation.StandardTags;
@@ -48,12 +49,14 @@ import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.D
 import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsInLoopNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
+import de.hpi.swa.trufflesqueak.util.FrameAccess.SlotIndices;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrumentableNode implements BytecodeOSRNode, InstrumentableNode {
     private static final String[] READONLY_CLASSES = {"ClassBinding", "ReadOnlyVariableBinding"};
     protected static final BytecodeDSLAccess ACCESS = BytecodeDSLAccessProvider.getBytecodeDSLAccess(true);
+    private static final FrameExtensions FRAMES = ACCESS.getFrameExtensions();
     protected static final int LOCAL_RETURN_PC = -2;
 
     protected static final Long BOXED_ZERO = 0L;
@@ -300,7 +303,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         if (homeContext.canBeReturnedTo()) {
             final ContextObject firstMarkedContext = firstUnwindMarkedOrThrowNLR(FrameAccess.getSender(frame), homeContext, result);
             if (firstMarkedContext != null) {
-                FrameAccess.externalizePCAndSP(frame, pc, sp);
+                externalizePCAndSP(frame, pc, sp);
                 if (getData(currentPC) == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     setData(currentPC, insert(Dispatch2NodeGen.create(getContext().aboutToReturnSelector)));
@@ -344,7 +347,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     private static CannotReturnToTarget cannotReturn(final VirtualFrame frame, final int pc, final int sp, final Object returnValue) {
         CompilerDirectives.transferToInterpreter();
         LogUtils.SCHEDULING.info("sendCannotReturn");
-        FrameAccess.externalizePCAndSP(frame, pc, sp);
+        externalizePCAndSP(frame, pc, sp);
         throw new CannotReturnToTarget(returnValue, GetOrCreateContextWithFrameNode.executeUncached(frame));
     }
 
@@ -371,11 +374,11 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     }
 
     protected static final void push(final VirtualFrame frame, final int sp, final Object value) {
-        FrameAccess.setStackValue(frame, sp, value);
+        setStackValue(frame, sp, value);
     }
 
     protected static final Object pop(final VirtualFrame frame, final int sp) {
-        return FrameAccess.getStackValue(frame, sp);
+        return getStackValue(frame, sp);
     }
 
     protected static final Object[] popN(final VirtualFrame frame, final int sp, final int numPop) {
@@ -387,13 +390,38 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         final int firstSlotIndex = FrameAccess.getStackStart() + sp - numPop;
         final Object[] stackValues = new Object[numPop];
         for (int i = 0; i < numPop; i++) {
-            stackValues[i] = frame.getObjectStatic(firstSlotIndex + i);
+            stackValues[i] = FRAMES.uncheckedGetObjectStatic(frame, firstSlotIndex + i);
         }
         return stackValues;
     }
 
     protected static final Object top(final VirtualFrame frame, final int sp) {
-        return FrameAccess.getStackValue(frame, sp - 1);
+        return getStackValue(frame, sp - 1);
+    }
+
+    private static Object getStackValue(final Frame frame, final int sp) {
+        return FRAMES.uncheckedGetObjectStatic(frame, FrameAccess.getStackStart() + sp);
+    }
+
+    private static void setStackValue(final Frame frame, final int sp, final Object value) {
+        FRAMES.setObjectStatic(frame, FrameAccess.getStackStart() + sp, value);
+    }
+
+    @EarlyInline
+    protected static final void externalizePCAndSP(final VirtualFrame frame, final int pc, final int sp) {
+        FRAMES.setIntStatic(frame, SlotIndices.INSTRUCTION_POINTER, pc);
+        FRAMES.setIntStatic(frame, SlotIndices.STACK_POINTER, sp);
+    }
+
+    @EarlyInline
+    protected static final int internalizePC(final VirtualFrame frame, final int pc) {
+        final int framePC = FRAMES.getIntStatic(frame, SlotIndices.INSTRUCTION_POINTER);
+        if (pc != framePC) {
+            CompilerDirectives.transferToInterpreter();
+            return framePC;
+        } else {
+            return pc;
+        }
     }
 
     protected final Object getErrorObject() {
@@ -409,7 +437,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
 
     protected final SqueakException sendMustBeBooleanInInterpreter(final VirtualFrame frame, final int pc, final int sp, final Object stackValue) {
         CompilerDirectives.transferToInterpreter();
-        FrameAccess.externalizePCAndSP(frame, pc, sp);
+        externalizePCAndSP(frame, pc, sp);
         final SqueakImageContext image = getContext();
         image.mustBeBooleanSelector.executeAsSymbolSlow(image, frame, stackValue);
         throw SqueakException.create("Should not be reached");
