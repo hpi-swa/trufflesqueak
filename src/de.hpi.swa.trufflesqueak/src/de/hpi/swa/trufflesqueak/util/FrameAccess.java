@@ -214,17 +214,6 @@ public final class FrameAccess {
         setStackPointer(frame, sp);
     }
 
-    @CompilerDirectives.EarlyInline
-    public static int internalizePC(final VirtualFrame frame, final int pc) {
-        final int framePC = getInstructionPointer(frame);
-        if (pc != framePC) {
-            CompilerDirectives.transferToInterpreter();
-            return framePC;
-        } else {
-            return pc;
-        }
-    }
-
     public static int getStackStart() {
         return SlotIndices.STACK_START;
     }

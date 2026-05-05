@@ -8,6 +8,8 @@ package de.hpi.swa.trufflesqueak.model;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameInstance;
 import org.graalvm.collections.UnmodifiableEconomicMap;
 
 import com.oracle.truffle.api.CallTarget;
@@ -370,6 +372,24 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         FrameAccess.setInstructionPointer(truffleFrame, instructionPointer);
         FrameAccess.setStackPointer(truffleFrame, stackPointer);
         return truffleFrame;
+    }
+
+    @TruffleBoundary
+    public boolean isActiveOnTruffleStack() {
+        // No Truffle frame means the receiver is not yet executing.
+        if (!hasTruffleFrame()) {
+            return false;
+        }
+        final Object result = Truffle.getRuntime().iterateFrames(frameInstance -> {
+            final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
+            if (FrameAccess.isTruffleSqueakFrame(current)) {
+                if (this == FrameAccess.getContext(current)) {
+                    return Boolean.TRUE;
+                }
+            }
+            return null;
+        });
+        return result != null;
     }
 
     public BlockClosureObject getClosure() {
