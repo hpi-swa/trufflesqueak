@@ -374,7 +374,8 @@ public final class FrameAccess {
     }
 
     public static boolean isTruffleSqueakFrame(final Frame frame) {
-        return frame.getFrameDescriptor().getInfo() instanceof CompiledCodeObject;
+        // Guard against elided Truffle frames (null) from READ_ONLY getFrame() requests
+        return frame != null && frame.getFrameDescriptor().getInfo() instanceof CompiledCodeObject;
     }
 
     public static Object[] newWith(final AbstractSqueakObject sender, final BlockClosureObject closure, final Object[] receiverAndArguments) {
