@@ -136,28 +136,15 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         } else if (senderContext.isDead()) {
             return sendCannotReturnOrReturnToTopLevel(activeContext, senderContext, returnValue);
         }
-        final ContextObject context;
-        if (senderContext.isPrimitiveContext()) {
-            context = (ContextObject) senderContext.getFrameSender(); // skip primitive contexts.
-        } else {
-            context = senderContext;
-        }
-        context.push(returnValue);
-        return context;
+        senderContext.push(returnValue);
+        return senderContext;
     }
 
     @TruffleBoundary
     private ContextObject commonNVReturn(final ContextObject activeContext, final NonVirtualReturn nvr) {
         // Normal returns with modified senders end up here with a target but no start Context.
         final Object returnValue = nvr.getReturnValue();
-        final ContextObject possibleTargetContext = nvr.getTargetContext();
-        final ContextObject targetContext;
-        // Skip over primitive contexts.
-        if (possibleTargetContext.isPrimitiveContext()) {
-            targetContext = (ContextObject) possibleTargetContext.getFrameSender();
-        } else {
-            targetContext = possibleTargetContext;
-        }
+        final ContextObject targetContext = nvr.getTargetContext();
         // Make sure that the targetContext can be returned to.
         if (!targetContext.hasClosure() && !targetContext.canBeReturnedTo()) {
             return sendCannotReturnOrReturnToTopLevel(activeContext, targetContext, returnValue);

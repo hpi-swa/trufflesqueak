@@ -31,7 +31,6 @@ failingTests := OrderedCollection new.
 {
     #FloatTest -> #(#testHashWithSmallishLargeNegativeInteger #testHashWithSmallishLargePositiveInteger #testIsDenormalized #testPrimTruncated).
     #IntegerTest -> #(#testRange).
-    #StringTest -> #("flaky" #testFindSelector).
     #SmallIntegerTest -> #(#testDivideMayOverflow).
 } collect: [:assoc | | testCase |
     testCase := Smalltalk at: assoc key.
