@@ -23,7 +23,7 @@ import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
     @CompilationFinal private ContextObject outerContext;
     @CompilationFinal private CompiledCodeObject block;
-    @CompilationFinal private int numArgs = -1;
+// @CompilationFinal private byte numArgs = -1;
     @CompilationFinal private Object receiver;
     @CompilationFinal(dimensions = 0) private Object[] copiedValues;
 
@@ -35,7 +35,8 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
         }
         outerContext = (ContextObject) chunk.getPointer(BLOCK_CLOSURE.OUTER_CONTEXT);
         final Object startPCOrMethod = chunk.getPointer(BLOCK_CLOSURE.START_PC_OR_METHOD);
-        numArgs = (int) (long) chunk.getPointer(BLOCK_CLOSURE.ARGUMENT_COUNT);
+        assert getSqueakHashInt() == 0;
+        setSqueakHash((int) (long) chunk.getPointer(BLOCK_CLOSURE.ARGUMENT_COUNT));
         if (startPCOrMethod instanceof final CompiledCodeObject code) {
             block = code;
             receiver = chunk.getPointer(BLOCK_CLOSURE.FULL_RECEIVER);
@@ -62,7 +63,7 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
         this.block = block;
         this.outerContext = outerContext;
         copiedValues = copied;
-        this.numArgs = numArgs;
+        setSqueakHash(numArgs);
         this.receiver = receiver;
     }
 
@@ -71,13 +72,13 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
         block = original.block;
         outerContext = original.outerContext;
         copiedValues = original.copiedValues;
-        numArgs = original.numArgs;
+        setNumArgs(original.getNumArgs());
         receiver = original.receiver;
     }
 
     @Override
     public void fillin(final SqueakImageChunk chunk) {
-        assert chunk.getHash() == getSqueakHashInt();
+        assert chunk.getHash() == 0;
         if (block == null && chunk.getPointer(BLOCK_CLOSURE.START_PC_OR_METHOD) instanceof final Long startPC) {
             block = outerContext.getMethodFromChunk().createShadowBlock(startPC.intValue());
         }
@@ -121,6 +122,7 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
     }
 
     public int getNumArgs() {
+        final int numArgs = getSqueakHashInt();
         assert numArgs != -1;
         return numArgs;
     }
@@ -167,7 +169,7 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
     }
 
     public void setNumArgs(final int numArgs) {
-        this.numArgs = numArgs;
+        setSqueakHash(numArgs);
     }
 
     public void setCopiedValue(final int index, final Object value) {
@@ -181,13 +183,13 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
     public void become(final BlockClosureObject other) {
         final ContextObject otherOuterContext = other.outerContext;
         final CompiledCodeObject otherBlock = other.block;
-        final int otherNumArgs = other.numArgs;
+        final int otherNumArgs = other.getNumCopied();
         final Object otherReceiver = other.receiver;
         final Object[] otherCopied = other.copiedValues;
 
         other.setOuterContext(outerContext);
         other.setBlock(block);
-        other.setNumArgs(numArgs);
+        other.setNumArgs(getNumArgs());
         other.setReceiver(receiver);
         other.setCopiedValues(copiedValues);
 
@@ -223,7 +225,8 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
     @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
-        return "a " + getSqueakClass().getClassName() + " @" + Integer.toHexString(hashCode()) + " (with " + (numArgs == -1 && block == null ? "no block" : getNumArgs() + " args") + " and " +
+        final int numArgs = getSqueakHashInt();
+        return "a " + getSqueakClass().getClassName() + " @" + Integer.toHexString(hashCode()) + " (with " + (numArgs == -1 && block == null ? "no block" : numArgs + " args") + " and " +
                         copiedValues.length + " copied values in " + outerContext + ")";
     }
 

@@ -427,7 +427,7 @@ public final class SqueakImageReader {
             final Object chunkObject = chunk.asObject();
             if (chunkObject instanceof final AbstractSqueakObjectWithHash obj) {
                 assert !(obj instanceof final AbstractSqueakObjectWithClassAndHash o) || !o.needsSqueakClass() : "object is missing class";
-                assert obj.getSqueakHashInt() == chunk.getHash() : "object is missing hash";
+                assert chunk.getHash() == 0 || obj.getSqueakHashInt() == chunk.getHash() : "object is missing hash";
                 obj.fillin(chunk);
             }
         }
