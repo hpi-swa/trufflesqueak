@@ -333,6 +333,9 @@ jobs:
       run: |
         tar -xzf trufflesqueak-*.tar.gz
         echo $(cd trufflesqueak-*-linux*/bin && pwd) >> $GITHUB_PATH
+    - name: Reload AWFY benchmarks
+      run: |
+        ${{ env.EXEC }} trufflesqueak ${{ env.COMMON_VM_ARGS }} -- $(pwd)/src/image-tests/prepareForBenchmarking.st
     - name: Run 'tinyBenchmarks'
       run: |
         ${{ env.EXEC }} trufflesqueak ${{ env.COMMON_VM_ARGS }} ${{ matrix.vm-args }} -- --evaluate "1 tinyBenchmarks"
