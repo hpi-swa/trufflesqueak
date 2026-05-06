@@ -214,6 +214,7 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
         contextBuilder.option("engine.LastTierCompilationThreshold", "100000");
         contextBuilder.option("engine.OSRCompilationThreshold", "200704");
         contextBuilder.option("engine.SingleTierCompilationThreshold", "100000");
+        contextBuilder.option("engine.DynamicCompilationThresholdsMinScale", "0.5");
     }
 
     @Override
