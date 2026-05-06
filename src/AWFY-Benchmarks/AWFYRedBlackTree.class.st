@@ -23,7 +23,7 @@ AWFYRedBlackTree >> at: key [
 
     | node |
     node := self findNode: key.
-    node isNil ifTrue: [ ^ nil ].
+    node ifNil: [ ^ nil ].
     ^ node value
 
 ]
@@ -107,7 +107,7 @@ AWFYRedBlackTree >> findNode: key [
 AWFYRedBlackTree >> forEach: block [
 
     | current |
-    root isNil ifTrue: [ ^ self ].
+    root ifNil: [ ^ self ].
     current := AWFYRedBlackTree treeMinimum: root.
     [ current notNil ] whileTrue: [
       block value: (AWFYRbtEntry key: current key value: current value).
@@ -123,14 +123,14 @@ AWFYRedBlackTree >> leftRotate: x [
 
     "Turn y's left subtree into x's right subtree"
     x right: y left.
-    y left notNil ifTrue: [
+    y left ifNotNil: [
       y left parent: x ].
 
     "Link x's parent to y"
     y parent: x parent.
-    x parent isNil
-      ifTrue: [ root := y ]
-      ifFalse: [
+    x parent
+      ifNil: [ root := y ]
+      ifNotNil: [
         x == x parent left ifTrue:  [ x parent left: y ]
                            ifFalse: [ x parent right: y ] ].
 
@@ -146,7 +146,7 @@ AWFYRedBlackTree >> remove: key [
 
     | x y z xParent |
     z := self findNode: key.
-    z isNil ifTrue: [ ^ nil ].
+    z ifNil: [ ^ nil ].
 
     "Y is the node to be unlinked from the tree."
     (z left isNil or: [ z right isNil ])
@@ -154,22 +154,21 @@ AWFYRedBlackTree >> remove: key [
       ifFalse: [ y := z successor ].
 
     "Y is guaranteed to be non-null at this point."
-    y left notNil
-      ifTrue:  [ x := y left ]
-      ifFalse: [ x := y right ].
+    y left
+      ifNotNil:  [ x := y left ]
+      ifNil: [ x := y right ].
 
     "X is the child of y which might potentially replace y in the tree.
      X might be null at this point."
-    x notNil
-      ifTrue: [
+    x ifNotNil: [
         x parent: y parent.
         xParent := x parent ]
-      ifFalse: [
+      ifNil: [
         xParent := y parent ].
 
-    y parent isNil
-      ifTrue:  [ root := x ]
-      ifFalse: [
+    y parent
+      ifNil:  [ root := x ]
+      ifNotNil: [
         y == y parent left
           ifTrue:  [ y parent left: x ]
           ifFalse: [ y parent right: x ] ].
@@ -183,17 +182,17 @@ AWFYRedBlackTree >> remove: key [
       y left:   z left.
       y right:  z right.
 
-      z left notNil ifTrue: [
+      z left ifNotNil: [
         z left parent: y ].
-      x right notNil ifTrue: [
+      x right ifNotNil: [
         z right parent: y ].
 
-      z parent notNil
-        ifTrue: [
+      z parent
+        ifNotNil: [
           z parent left == z
             ifTrue:  [ z parent left: y ]
             ifFalse: [ z parent right: y ] ]
-        ifFalse: [ root := y ] ]
+        ifNil: [ root := y ] ]
       ifFalse: [
         y color = #black ifTrue: [
           self remove: x andFixup: xParent ] ].
@@ -242,7 +241,7 @@ AWFYRedBlackTree >> remove: anX andFixup: anXParent [
               "Case 4"
               w color: xParent color.
               xParent color: #black.
-              w right notNil ifTrue: [
+              w right ifNotNil: [
                 w right color: #black ].
 
               self leftRotate: xParent.
@@ -277,14 +276,14 @@ AWFYRedBlackTree >> remove: anX andFixup: anXParent [
               "Case 4"
               w color: xParent color.
               xParent color: #black.
-              w left notNil ifTrue: [
+              w left ifNotNil: [
                 w left color: #black ].
 
               self rightRotate: xParent.
               x := root.
               xParent = x parent ] ] ].
 
-    x notNil ifTrue: [ x color: #black ]
+    x ifNotNil: [ x color: #black ]
 
 ]
 
@@ -296,13 +295,13 @@ AWFYRedBlackTree >> rightRotate: y [
 
     "Turn x's right subtree into y's left subtree"
     y left: x right.
-    x right notNil ifTrue: [ x right parent: y ].
+    x right ifNotNil: [ x right parent: y ].
 
     "Link y's parent to x"
     x parent: y parent.
-    y parent isNil
-      ifTrue: [ root := x ]
-      ifFalse: [
+    y parent
+      ifNil: [ root := x ]
+      ifNotNil: [
         y == y parent left
           ifTrue: [ y parent left: x ]
           ifFalse: [ y parent right: x ] ].
@@ -337,13 +336,12 @@ AWFYRedBlackTree >> treeAt: key insert: value [
 
     z := AWFYNode key: key value: value.
     z parent: y.
-    y isNil
-      ifTrue: [ root := z ]
-      ifFalse: [
+    y ifNil: [ root := z ]
+      ifNotNil: [
         (key compareTo: y key) < 0
           ifTrue:  [ y left: z ]
           ifFalse: [ y right: z ] ].
-    
+
     ^ AWFYInsertResult new: true node: z value: nil
 
 ]

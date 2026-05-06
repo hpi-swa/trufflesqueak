@@ -74,7 +74,7 @@ AWFYSimpleLoop >> init: aBB reducible: aBool [
     basicBlocks := AWFYSomIdentitySet new.
     children    := AWFYSomIdentitySet new.
 
-    aBB notNil ifTrue: [ basicBlocks add: aBB ]
+    aBB ifNotNil: [ basicBlocks add: aBB ]
 
 ]
 

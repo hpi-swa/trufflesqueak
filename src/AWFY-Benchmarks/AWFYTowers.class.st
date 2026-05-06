@@ -67,8 +67,7 @@ AWFYTowers >> popDiskFrom: pile [
     | top |
     
     top := piles at: pile.
-    top isNil
-      ifTrue: [
+    top ifNil: [
         self error: 'Attempting to remove a disk from an empty pile' ].
     
     piles at: pile put: top next.

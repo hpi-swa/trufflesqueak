@@ -59,7 +59,7 @@ AWFYHavlakLoopFinder >> doDFS: currentNode current: current [
 AWFYHavlakLoopFinder >> findLoops [
 
     | size |
-    cfg startBasicBlock isNil ifTrue: [ ^ self ].
+    cfg startBasicBlock ifNil: [ ^ self ].
     
     size := cfg numNodes.
     
@@ -88,7 +88,7 @@ AWFYHavlakLoopFinder >> findLoops [
       nodePool := AWFYVector new.
       nodeW := (nodes at: w) bb.
       
-      nodeW notNil ifTrue: [
+      nodeW ifNotNil: [
         | workList |
         self stepD: w nodePool: nodePool.
         
@@ -123,9 +123,9 @@ AWFYHavlakLoopFinder >> identifyEdges: size [
       type   at: w put: #BBNonHeader.
       
       nodeW := (nodes at: w) bb.
-      nodeW isNil
-        ifTrue:  [ type at: w put: #BBDead ]
-        ifFalse: [ self processEdges: nodeW w: w ] ]
+      nodeW
+        ifNil:  [ type at: w put: #BBDead ]
+        ifNotNil: [ self processEdges: nodeW w: w ] ]
 
 ]
 
@@ -182,10 +182,10 @@ AWFYHavlakLoopFinder >> setLoopAttribute: w nodePool: nodePool loop: loop [
     nodePool forEach: [:node |
       header at: node dfsNumber put: w.
       node union: (nodes at: w).
-      
-      node loop notNil
-        ifTrue: [ node loop parent: loop ]
-        ifFalse: [ loop addNode: node bb ] ]
+
+      node loop
+        ifNotNil: [ node loop parent: loop ]
+        ifNil: [ loop addNode: node bb ] ]
 
 ]
 

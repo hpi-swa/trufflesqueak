@@ -23,7 +23,7 @@ AWFYListElement >> initialize: n [
 
 { #category : #'as yet unclassified' }
 AWFYListElement >> length [
- next isNil ifTrue: [ ^ 1 ] ifFalse: [ ^ (1 + next length) ] 
+ next ifNil: [ ^ 1 ] ifNotNil: [ ^ (1 + next length) ] 
 ]
 
 { #category : #'as yet unclassified' }

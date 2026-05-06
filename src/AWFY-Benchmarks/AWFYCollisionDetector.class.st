@@ -34,7 +34,7 @@ AWFYCollisionDetector >> handleNewFrame: frame [
       newPosition := aircraft position.
       seen at: aircraft callsign put: true.
 
-      oldPosition isNil ifTrue: [
+      oldPosition ifNil: [
         "Treat newly introduced aircraft as if they were stationary"
         oldPosition := newPosition ].
 
@@ -57,7 +57,7 @@ AWFYCollisionDetector >> handleNewFrame: frame [
           | motion2 collision |
           motion2 := reduced at: j.
           collision := motion1 findIntersection: motion2.
-          collision notNil ifTrue: [
+          collision ifNotNil: [
             collisions append: (AWFYCollision a: motion1 callsign b: motion2 callsign pos: collision) ] ] ] ].
 
     ^ collisions
@@ -145,7 +145,7 @@ AWFYCollisionDetector >> put: motion and: voxel into: voxelMap [
 
     | array |
     array := voxelMap at: voxel.
-    array isNil ifTrue: [
+    array ifNil: [
       array := AWFYVector new.
       voxelMap at: voxel put: array ].
     array append: motion

@@ -33,14 +33,14 @@ AWFYControlFlowGraph >> createNode: name [
 
     | node |
 
-    (basicBlockMap at: name) notNil
-      ifTrue:  [ node := basicBlockMap at: name ]
-      ifFalse: [
+    (basicBlockMap at: name)
+      ifNotNil: [ node := basicBlockMap at: name ]
+      ifNil: [
         node := AWFYBasicBlock new: name.
         basicBlockMap at: name put: node ].
       
     self numNodes = 1 ifTrue: [startNode := node].
-    ^ node 
+    ^ node
 ]
 
 { #category : #'as yet unclassified' }

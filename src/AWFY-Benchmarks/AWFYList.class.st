@@ -23,7 +23,7 @@ AWFYList >> isShorter: x than: y [
     xTail := x. yTail := y.
     [ yTail isNil ]
       whileFalse: [
-        xTail isNil ifTrue: [ ^ true ].
+        xTail ifNil: [ ^ true ].
         xTail := xTail next.
         yTail := yTail next ].
 

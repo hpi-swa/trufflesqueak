@@ -78,7 +78,7 @@ AWFYNode >> successor [
 
     | x y |
     x := self.
-    x right notNil ifTrue: [
+    x right ifNotNil: [
       ^ AWFYRedBlackTree treeMinimum: x right ].
 
     y := x parent.

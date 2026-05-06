@@ -45,11 +45,11 @@ AWFYSomDictionary >> at: aKey put: aVal [
     i    := self bucketIdx: hash.
     current := buckets at: i.
     
-    current isNil
-      ifTrue: [
+    current
+      ifNil: [
         buckets at: i put: (self newEntry: aKey value: aVal hash: hash).
         size_ := size_ + 1 ]
-      ifFalse: [
+      ifNotNil: [
         self insertBucketEntry: aKey value: aVal hash: hash head: current ].
 
     size_ > buckets size ifTrue: [ self resize ]
@@ -89,7 +89,7 @@ AWFYSomDictionary >> containsKey: aKey [
 AWFYSomDictionary >> hash: key [
 
     | hash |
-    key isNil ifTrue: [ ^ 0 ].
+    key ifNil: [ ^ 0 ].
     hash := key customHash.
     ^ hash bitXor: (hash >> 16)
 
@@ -113,7 +113,7 @@ AWFYSomDictionary >> insertBucketEntry: key value: value hash: hash head: head [
       (current match: hash key: key) ifTrue: [
         current value: value.
         ^ self ].
-      current next isNil ifTrue: [
+      current next ifNil: [
         size_ := size_ + 1.
         current next: (self newEntry: key value: value hash: hash).
         ^ self ].
@@ -182,21 +182,21 @@ AWFYSomDictionary >> splitBucket: oldStorage bucket: i head: head [
     [current notNil] whileTrue: [
       (current hash bitAnd: oldStorage size) = 0
         ifTrue: [
-          loTail isNil
-            ifTrue:  [ loHead := current ]
-            ifFalse: [ loTail next: current ].
+          loTail
+            ifNil:  [ loHead := current ]
+            ifNotNil: [ loTail next: current ].
           loTail := current ]
         ifFalse: [
-          hiTail isNil
-            ifTrue:  [ hiHead := current ]
-            ifFalse: [ hiTail next: current ].
+          hiTail
+            ifNil:  [ hiHead := current ]
+            ifNotNil: [ hiTail next: current ].
           hiTail := current ].
       current := current next ].
-  
-    loTail notNil ifTrue: [
+
+    loTail ifNotNil: [
       loTail next: nil.
       buckets at: i put: loHead ].
-    hiTail notNil ifTrue: [
+    hiTail ifNotNil: [
       hiTail next: nil.
       buckets at: i + oldStorage size put: hiHead ]
 
@@ -208,12 +208,12 @@ AWFYSomDictionary >> transferEntries: oldStorage [
     1 to: oldStorage size do: [:i |
       | current |
       current := oldStorage at: i.
-      current notNil ifTrue: [
+      current ifNotNil: [
         oldStorage at: i put: nil.
-        current next isNil
-          ifTrue: [
+        current next
+          ifNil: [
             buckets at: 1 + (current hash bitAnd: (buckets size - 1)) put: current ]
-          ifFalse: [
+          ifNotNil: [
             self splitBucket: oldStorage bucket: i head: current ] ] ]
 
 ]
