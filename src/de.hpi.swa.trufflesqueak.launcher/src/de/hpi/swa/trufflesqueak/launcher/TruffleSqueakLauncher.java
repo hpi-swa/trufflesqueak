@@ -210,11 +210,10 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
             // Boolean.toString(false));
         }
         contextBuilder.option("engine.CompilerThreads", "1");
-        contextBuilder.option("engine.FirstTierCompilationThreshold", "5000");
-        contextBuilder.option("engine.FirstTierMinInvokeThreshold", "20");
-        contextBuilder.option("engine.LastTierCompilationThreshold", "50000");
-        contextBuilder.option("engine.MinInvokeThreshold", "20");
-        contextBuilder.option("engine.SingleTierCompilationThreshold", "50000");
+        contextBuilder.option("engine.FirstTierCompilationThreshold", "10000");
+        contextBuilder.option("engine.LastTierCompilationThreshold", "100000");
+        contextBuilder.option("engine.OSRCompilationThreshold", "200704");
+        contextBuilder.option("engine.SingleTierCompilationThreshold", "100000");
     }
 
     @Override
