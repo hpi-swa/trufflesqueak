@@ -24,7 +24,7 @@ public abstract class AbstractVariablePointersObject extends AbstractPointersObj
 
     public AbstractVariablePointersObject(final ClassObject classObject, final ObjectLayout layout, final int variableSize) {
         super(classObject, layout);
-        variablePart = ArrayUtils.withAll(variableSize, NilObject.SINGLETON);
+        variablePart = variableSize == 0 ? ArrayUtils.EMPTY_ARRAY : ArrayUtils.withAll(variableSize, NilObject.SINGLETON);
     }
 
     protected AbstractVariablePointersObject(final AbstractVariablePointersObject original) {

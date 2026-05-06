@@ -346,7 +346,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         final int instructionPointer;
         final int stackPointer;
         if (currentFrame != null) {
-            assert FrameAccess.getSender(currentFrame) != null : "Sender should not be null";
+            FrameAccess.assertSenderNotNull(currentFrame);
             FrameAccess.assertReceiverNotNull(currentFrame);
 
             final Object[] dummyArguments = currentFrame.getArguments();

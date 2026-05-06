@@ -21,7 +21,6 @@ import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
-import de.hpi.swa.trufflesqueak.image.SqueakImageConstants.ObjectHeader;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.interop.LookupMethodByStringNode;
@@ -96,7 +95,7 @@ public abstract class AbstractSqueakObjectWithHash extends AbstractSqueakObject 
 
     protected void initializeFrom(final SqueakImageChunk chunk) {
         /* The mark bit and the rest of the flags are set to zero when loading the image. */
-        squeakHashAndBits = ObjectHeader.getHash(chunk.getHeader()) << SQUEAK_HASH_SHIFT;
+        squeakHashAndBits = chunk.getHash() << SQUEAK_HASH_SHIFT;
         chunk.setObject(this);
     }
 

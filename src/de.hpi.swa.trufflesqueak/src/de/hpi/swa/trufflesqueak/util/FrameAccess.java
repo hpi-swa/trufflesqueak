@@ -32,7 +32,6 @@ import de.hpi.swa.trufflesqueak.model.ContextObject.FrameHandling;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
-import de.hpi.swa.trufflesqueak.nodes.context.GetOrCreateContextWithoutFrameNode;
 
 /**
  * TruffleSqueak frame argument layout.
@@ -508,17 +507,6 @@ public final class FrameAccess {
         assert arguments[ArgumentIndices.RECEIVER] != null;
         ArrayUtils.arraycopy(copied, 0, arguments, ArgumentIndices.ARGUMENTS_START + numArgs, numCopied);
         return arguments;
-    }
-
-    public static Object[] createFrameArguments(final VirtualFrame frame, final BlockClosureObject closure, final GetOrCreateContextWithoutFrameNode getOrCreateContextWithoutFrameNode) {
-        return FrameAccess.newClosureArgumentsTemplate(closure, getOrCreateContextWithoutFrameNode.execute(frame), 0);
-    }
-
-    public static Object[] createFrameArguments(final VirtualFrame frame, final BlockClosureObject closure, final GetOrCreateContextWithoutFrameNode getOrCreateContextWithoutFrameNode,
-                    final Object arg1) {
-        final Object[] frameArguments = FrameAccess.newClosureArgumentsTemplate(closure, getOrCreateContextWithoutFrameNode.execute(frame), 1);
-        frameArguments[FrameAccess.getArgumentStartIndex()] = arg1;
-        return frameArguments;
     }
 
     public static int expectedArgumentSize(final int numArgsAndCopied) {

@@ -51,7 +51,7 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
         if (hasBlockClosureClass) {
             setIsABlockClosure();
         }
-        copiedValues = new Object[extraSize];
+        copiedValues = extraSize == 0 ? ArrayUtils.EMPTY_ARRAY : new Object[extraSize];
     }
 
     public BlockClosureObject(final boolean hasBlockClosureClass, final CompiledCodeObject block, final int numArgs, final Object[] copied, final Object receiver, final ContextObject outerContext) {
