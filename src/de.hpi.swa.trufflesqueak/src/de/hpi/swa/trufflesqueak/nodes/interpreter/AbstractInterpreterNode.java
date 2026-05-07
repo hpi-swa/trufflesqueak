@@ -271,22 +271,27 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         if (isBlock) {
             return handleBlockReturn(frame, currentPC, pc, sp, result);
         } else {
-            return handleNormalReturn(frame, currentPC, result);
+            return handleNormalReturn(frame, currentPC, pc, sp, result);
         }
     }
 
-    protected final Object handleReturnFromBlock(final VirtualFrame frame, final int currentPC, final Object result, final int loopCounter) {
+    protected final Object handleReturnFromBlock(final VirtualFrame frame, final int currentPC, final int pc, final int sp, final Object result, final int loopCounter) {
         if (loopCounter > 0) {
             LoopNode.reportLoopCount(this, loopCounter);
         }
-        return handleNormalReturn(frame, currentPC, result);
+        return handleNormalReturn(frame, currentPC, pc, sp, result);
     }
 
-    protected final Object handleNormalReturn(final VirtualFrame frame, final int currentPC, final Object result) {
+    protected final Object handleNormalReturn(final VirtualFrame frame, final int currentPC, final int pc, final int sp, final Object result) {
         final byte profile = getProfile(currentPC);
         if (FrameAccess.hasModifiedSender(frame)) {
             enter(currentPC, profile, BRANCH1);
-            throw new NonVirtualReturn(result, FrameAccess.getSender(frame));
+            final AbstractSqueakObject sender = FrameAccess.getSender(frame);
+            if (sender instanceof ContextObject ctx && !ctx.isDead()) {
+                throw new NonVirtualReturn(result, sender);
+            } else {
+                throw cannotReturn(frame, pc, sp, result);
+            }
         } else {
             enter(currentPC, profile, BRANCH2);
             FrameAccess.terminateFrame(frame);
@@ -343,7 +348,6 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
 
     private static CannotReturnToTarget cannotReturn(final VirtualFrame frame, final int pc, final int sp, final Object returnValue) {
         CompilerDirectives.transferToInterpreter();
-        LogUtils.SCHEDULING.info("sendCannotReturn");
         FrameAccess.externalizePCAndSP(frame, pc, sp);
         throw new CannotReturnToTarget(returnValue, GetOrCreateContextWithFrameNode.executeUncached(frame));
     }

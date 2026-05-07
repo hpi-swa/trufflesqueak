@@ -18,7 +18,6 @@ CompiledMethod preferredBytecodeSetEncoderClass == EncoderForSistaV1
 
 nonTerminatingTestCases := OrderedCollection new.
 {
-    #ProcessTest -> #(#testResumeWithEnsureAfterBCR).
     #TestValueWithinFix -> TestValueWithinFix allTestSelectors.
 } collect: [:assoc | | testCase |
     testCase := Smalltalk at: assoc key.
