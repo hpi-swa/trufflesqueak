@@ -253,7 +253,7 @@
 
     exitCode := result hasPassed ifTrue: [ 0 ] ifFalse: [ 1 ].
 
-    "Presist image before retrying failures"
+    "Persist image before retrying failures"
     Smalltalk snapshot: true andQuit: false.
 
     retries := 3.
