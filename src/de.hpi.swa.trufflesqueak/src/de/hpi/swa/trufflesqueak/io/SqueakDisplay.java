@@ -654,6 +654,9 @@ public final class SqueakDisplay {
 
         clampDamageToBounds();
 
+        // Wait for the main thread to finish SDL_Init
+        PlatformEventLoop.waitUntilInitialized();
+
         if (window == MemorySegment.NULL) {
             final String imageFileName = new File(image.getImagePath()).getName();
             final String title = imageFileName.contains(SqueakLanguageConfig.IMPLEMENTATION_NAME) ? imageFileName

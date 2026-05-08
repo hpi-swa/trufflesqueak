@@ -43,6 +43,7 @@ import de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_Event;
 public final class PlatformEventLoop {
     private static final int EVENT_FETCH_BATCH_SIZE = 32;
     private static final CountDownLatch startLatch = new CountDownLatch(1);
+    private static final CountDownLatch initLatch = new CountDownLatch(1);
     private static volatile boolean isRunning = false;
     private static volatile boolean shutdownRequested = false;
     private static volatile Consumer<MemorySegment> eventHandler;
@@ -70,6 +71,14 @@ public final class PlatformEventLoop {
         if (isRunning) {
             isRunning = false;
             pushWakeUpEvent();
+        }
+    }
+
+    public static void waitUntilInitialized() {
+        try {
+            initLatch.await();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 
@@ -125,6 +134,7 @@ public final class PlatformEventLoop {
              * accidentally get trapped in the while-loop below.
              */
             isRunning = true;
+            initLatch.countDown();
             if (shutdownRequested) {
                 isRunning = false;
             } else {
