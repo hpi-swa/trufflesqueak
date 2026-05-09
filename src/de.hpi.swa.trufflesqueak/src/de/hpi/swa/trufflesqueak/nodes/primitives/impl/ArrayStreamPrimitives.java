@@ -260,24 +260,24 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 238)
     protected abstract static class PrimFloatArrayAtNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = {"receiver.isIntType()", "index <= receiver.getIntLength()"}, rewriteOn = RespecializeException.class)
+        @Specialization(guards = {"receiver.isIntType()", "inBounds1(index, receiver.getIntLength())"}, rewriteOn = RespecializeException.class)
         protected static final double doAtIntFinite(final NativeObject receiver, final long index) throws RespecializeException {
             return ensureFinite(Float.intBitsToFloat(receiver.getInt(index - 1)));
         }
 
-        @Specialization(guards = {"receiver.isIntType()", "index <= receiver.getIntLength()"}, replaces = "doAtIntFinite")
+        @Specialization(guards = {"receiver.isIntType()", "inBounds1(index, receiver.getIntLength())"}, replaces = "doAtIntFinite")
         protected static final Object doAtInt(final NativeObject receiver, final long index,
                         @Bind final Node node,
                         @Shared("normalizeNode") @Cached final FloatObjectNormalizeNode normalizeNode) {
             return normalizeNode.execute(node, Float.intBitsToFloat(receiver.getInt(index - 1)));
         }
 
-        @Specialization(guards = {"receiver.isLongType()", "index <= receiver.getLongLength()"}, rewriteOn = RespecializeException.class)
+        @Specialization(guards = {"receiver.isLongType()", "inBounds1(index, receiver.getLongLength())"}, rewriteOn = RespecializeException.class)
         protected static final double doAtLongFinite(final NativeObject receiver, final long index) throws RespecializeException {
             return ensureFinite(Double.longBitsToDouble(receiver.getLong(index - 1)));
         }
 
-        @Specialization(guards = {"receiver.isLongType()", "index <= receiver.getLongLength()"}, replaces = "doAtLongFinite")
+        @Specialization(guards = {"receiver.isLongType()", "inBounds1(index, receiver.getLongLength())"}, replaces = "doAtLongFinite")
         protected static final Object doAtLong(final NativeObject receiver, final long index,
                         @Bind final Node node,
                         @Shared("normalizeNode") @Cached final FloatObjectNormalizeNode normalizeNode) {
@@ -288,24 +288,24 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 239)
     protected abstract static class PrimFloatArrayAtPutNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
-        @Specialization(guards = {"receiver.isIntType()", "index <= receiver.getIntLength()"})
+        @Specialization(guards = {"receiver.isIntType()", "inBounds1(index, receiver.getIntLength())"})
         protected static final double doAtPutInt(final NativeObject receiver, final long index, final double value) {
             receiver.setInt(index - 1, Float.floatToRawIntBits((float) value));
             return value;
         }
 
-        @Specialization(guards = {"receiver.isIntType()", "index <= receiver.getIntLength()"})
+        @Specialization(guards = {"receiver.isIntType()", "inBounds1(index, receiver.getIntLength())"})
         protected static final double doAtPutIntLong(final NativeObject receiver, final long index, final long value) {
             return doAtPutInt(receiver, index, value);
         }
 
-        @Specialization(guards = {"receiver.isLongType()", "index <= receiver.getLongLength()"})
+        @Specialization(guards = {"receiver.isLongType()", "inBounds1(index, receiver.getLongLength())"})
         protected static final double doAtPutLong(final NativeObject receiver, final long index, final double value) {
             receiver.setLong(index - 1, Double.doubleToRawLongBits(value));
             return value;
         }
 
-        @Specialization(guards = {"receiver.isLongType()", "index <= receiver.getLongLength()"})
+        @Specialization(guards = {"receiver.isLongType()", "inBounds1(index, receiver.getLongLength())"})
         protected static final double doAtPutLongLong(final NativeObject receiver, final long index, final long value) {
             return doAtPutLong(receiver, index, value);
         }
