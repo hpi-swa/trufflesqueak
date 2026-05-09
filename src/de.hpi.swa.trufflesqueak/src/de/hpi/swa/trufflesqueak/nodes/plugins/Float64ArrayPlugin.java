@@ -100,7 +100,7 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
             return doDouble(receiver, index, value);
         }
 
-        @Specialization(guards = {"receiver.isIntType()", "inBounds1(index, receiver.getIntLength())", "isFraction(value, node)"})
+        @Specialization(guards = {"receiver.isLongType()", "inBounds1(index, receiver.getLongLength())", "isFraction(value, node)"})
         protected static final double doFraction(final NativeObject receiver, final long index, final PointersObject value,
                         @Bind final Node node,
                         @Cached final AbstractPointersObjectNodes.AbstractPointersObjectReadNode readNode) {
@@ -115,7 +115,7 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         protected static final boolean isFallback(final Node node, final NativeObject receiver, final long index, final Object value) {
-            return !(receiver.isIntType() && SqueakGuards.inBounds1(index, receiver.getIntLength()) && (value instanceof Double || value instanceof FloatObject || value instanceof Long ||
+            return !(receiver.isLongType() && SqueakGuards.inBounds1(index, receiver.getLongLength()) && (value instanceof Double || value instanceof FloatObject || value instanceof Long ||
                             (value instanceof PointersObject pointersObject && SqueakGuards.isFraction(pointersObject, node))));
         }
     }
