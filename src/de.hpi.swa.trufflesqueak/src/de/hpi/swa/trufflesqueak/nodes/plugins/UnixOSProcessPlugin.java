@@ -80,9 +80,11 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
             final SqueakImageContext image = getContext();
             if (index == 1) {
                 return image.asByteString(MiscUtils.getVMPath());
-            } else if (1 < index && index < image.getImageArguments().length) {
-                return image.asByteString(image.getImageArguments()[(int) index - 2]);
             } else {
+                final String[] imageArguments = image.getImageArguments();
+                if (1 < index && index <= (long) imageArguments.length + 1) {
+                    return image.asByteString(imageArguments[(int) (index - 2)]);
+                }
                 return NilObject.SINGLETON;
             }
         }
