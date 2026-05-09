@@ -1271,7 +1271,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 throw PrimitiveFailed.GENERIC_ERROR;
             } else {
                 final int arraySize = sizeNode.execute(node, argumentArray);
-                if (arraySize == methodObject.getNumArgs()) {
+                if (arraySize != methodObject.getNumArgs()) {
                     CompilerDirectives.transferToInterpreter();
                     throw PrimitiveFailed.BAD_NUMBER_OF_ARGUMENTS;
                 }
