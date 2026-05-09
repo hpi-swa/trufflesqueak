@@ -33,7 +33,7 @@ public final class DropPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveDropRequestFileHandle")
     protected abstract static class PrimDropRequestFileHandleNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
-        @Specialization(guards = "dropIndex <= getFileList(getContext()).length")
+        @Specialization(guards = "inBounds1(dropIndex, getFileList(getContext()).length)")
         protected final PointersObject doRequest(@SuppressWarnings("unused") final Object receiver, final long dropIndex) {
             final SqueakImageContext image = getContext();
             return FilePlugin.createFileHandleOrPrimFail(image,
@@ -51,7 +51,7 @@ public final class DropPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveDropRequestFileName")
     protected abstract static class PrimDropRequestFileNameNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
-        @Specialization(guards = "dropIndex <= getFileList(getContext()).length")
+        @Specialization(guards = "inBounds1(dropIndex, getFileList(getContext()).length)")
         protected final NativeObject doRequest(@SuppressWarnings("unused") final Object receiver, final long dropIndex) {
             final SqueakImageContext image = getContext();
             return image.asByteString(getFileList(image)[(int) dropIndex - 1]);
