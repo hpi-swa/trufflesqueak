@@ -395,7 +395,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 4", "isSigned"})
         protected static final long doAt4Signed(final NativeObject byteArray, final long byteOffsetLong, final long byteSize, final boolean isSigned) {
-            return PrimSignedInt16AtNode.signedInt16At(byteArray, byteOffsetLong);
+            return PrimSignedInt32AtNode.signedInt32At(byteArray, byteOffsetLong);
         }
 
         @SuppressWarnings("unused")
