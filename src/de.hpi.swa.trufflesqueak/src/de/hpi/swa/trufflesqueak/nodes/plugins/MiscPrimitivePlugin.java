@@ -397,7 +397,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveIndexOfAsciiInString")
     public abstract static class PrimIndexOfAsciiInStringNode extends AbstractPrimitiveNode implements Primitive3WithFallback {
 
-        @Specialization(guards = {"start >= 0", "string.isByteType()"})
+        @Specialization(guards = {"start > 0", "string.isByteType()"})
         protected static final long doNativeObject(@SuppressWarnings("unused") final Object receiver, final long value, final NativeObject string, final long start,
                         @Bind final Node node,
                         @Cached final InlinedBranchProfile foundProfile,
