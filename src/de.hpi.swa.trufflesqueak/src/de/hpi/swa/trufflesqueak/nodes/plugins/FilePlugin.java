@@ -94,7 +94,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         protected static final boolean inBounds(final long startIndex, final long count, final int slotSize) {
-            return startIndex >= 1 && startIndex + count - 1 <= slotSize;
+            return startIndex >= 1 && count >= 0 && count <= (long) slotSize - startIndex + 1;
         }
 
         protected static final boolean isStdioFileDescriptor(final PointersObject fd) {
