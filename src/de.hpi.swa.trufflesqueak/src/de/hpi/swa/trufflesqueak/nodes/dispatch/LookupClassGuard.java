@@ -185,7 +185,7 @@ public abstract class LookupClassGuard {
     }
 
     private static final class FloatObjectGuard extends LookupClassGuard {
-        private static final ForeignObjectGuard SINGLETON = new ForeignObjectGuard();
+        private static final FloatObjectGuard SINGLETON = new FloatObjectGuard();
 
         @Override
         public boolean check(final Object receiver) {
