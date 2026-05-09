@@ -75,7 +75,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
                         @Shared("firstDigitNonZeroProfile") @Cached final InlinedBranchProfile firstDigitNonZeroProfile,
                         @Shared("middleDigitsNonZeroProfile") @Cached final InlinedBranchProfile middleDigitsNonZeroProfile,
                         @Shared("lastDigitProfile") @Cached final InlinedBranchProfile lastDigitProfile) {
-            final long stop = Math.min(stopArg, Long.highestOneBit(receiver));
+            final long stop = Math.min(stopArg, Long.SIZE - Long.numberOfLeadingZeros(receiver));
             if (start > stop) {
                 startLargerThanStopProfile.enter(node);
                 return BooleanObject.FALSE;
