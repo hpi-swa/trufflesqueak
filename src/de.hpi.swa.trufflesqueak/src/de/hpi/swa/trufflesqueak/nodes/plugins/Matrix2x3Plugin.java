@@ -203,7 +203,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
             final PointersObject cornerPoint = readPointNode.executePointers(srcRect, 1);
             final double cornerX = loadArgumentPointX(cornerPoint, readNode, errorProfile, node);
             final double cornerY = loadArgumentPointY(cornerPoint, readNode, errorProfile, node);
-            final double[] result2 = matrix2x3InvertPoint(m, originX, originY, errorProfile, node);
+            final double[] result2 = matrix2x3InvertPoint(m, cornerX, cornerY, errorProfile, node);
             minX = Math.min(minX, result2[0]);
             maxX = Math.max(maxX, result2[0]);
             minY = Math.min(minY, result2[1]);
