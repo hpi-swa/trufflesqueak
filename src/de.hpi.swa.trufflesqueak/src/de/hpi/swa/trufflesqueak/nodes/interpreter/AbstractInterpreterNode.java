@@ -25,6 +25,7 @@ import com.oracle.truffle.api.nodes.NodeVisitor;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 
+import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.AbstractStandardSendReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.CannotReturnToTarget;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
@@ -38,7 +39,10 @@ import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.context.GetOrCreateContextWithFrameNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0NodeFactory.Dispatch0NodeGen;
@@ -349,6 +353,19 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         CompilerDirectives.transferToInterpreter();
         FrameAccess.externalizePCAndSP(frame, pc, sp);
         throw new CannotReturnToTarget(returnValue, GetOrCreateContextWithFrameNode.executeUncached(frame));
+    }
+
+    protected final void checkForAndHandlePCModification(final VirtualFrame frame, final int pc, final int sp, final int index, final Object receiver, final int nextPC) {
+        if (index == CONTEXT.INSTRUCTION_POINTER && receiver instanceof ContextObject context) {
+            enter(pc, getProfile(pc), BRANCH1);
+            if (context.isActiveOnTruffleStack(frame)) {
+                CompilerDirectives.transferToInterpreter();
+                FrameAccess.externalizePCAndSP(frame, nextPC, sp);
+                final ContextObject activeContext = GetOrCreateContextWithFrameNode.executeUncached(frame);
+                AbstractPointersObjectWriteNode.executeUncached(getContext().getActiveProcessSlow(), PROCESS.SUSPENDED_CONTEXT, activeContext);
+                throw ProcessSwitch.SINGLETON;
+            }
+        }
     }
 
     /*

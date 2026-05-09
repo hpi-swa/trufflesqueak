@@ -8,8 +8,6 @@ package de.hpi.swa.trufflesqueak.model;
 
 import java.util.Arrays;
 
-import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameInstance;
 import org.graalvm.collections.UnmodifiableEconomicMap;
 
 import com.oracle.truffle.api.CallTarget;
@@ -374,20 +372,22 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         return truffleFrame;
     }
 
-    @TruffleBoundary
-    public boolean isActiveOnTruffleStack() {
-        // No Truffle frame means the receiver is not yet executing.
+    public boolean isActiveOnTruffleStack(final VirtualFrame frame) {
         if (!hasTruffleFrame()) {
-            return false;
+            return false; // No Truffle frame means the receiver is not yet executing.
         }
-        final Object result = Truffle.getRuntime().iterateFrames(frameInstance -> {
-            final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
-            if (FrameAccess.isTruffleSqueakFrame(current) && this == FrameAccess.getContext(current)) {
-                return Boolean.TRUE;
+        if (FrameAccess.getContext(frame) == this) {
+            return true; // Found it.
+        }
+        // Continue walking the sender chain.
+        AbstractSqueakObject currentContextOrNil = FrameAccess.getSenderContext(frame);
+        while (currentContextOrNil != NilObject.SINGLETON) {
+            if (currentContextOrNil == this) {
+                return true;
             }
-            return null;
-        });
-        return result != null;
+            currentContextOrNil = ((ContextObject) currentContextOrNil).getFrameSender();
+        }
+        return false;
     }
 
     public BlockClosureObject getClosure() {

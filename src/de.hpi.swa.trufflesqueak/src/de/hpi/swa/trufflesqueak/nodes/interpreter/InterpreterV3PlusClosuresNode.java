@@ -18,7 +18,6 @@ import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.CountingConditionProfile;
 
-import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.AbstractStandardSendReturn;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
@@ -26,19 +25,14 @@ import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
-import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
-import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
-import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.context.GetOrCreateContextWithFrameNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0NodeFactory.Dispatch0NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1NodeFactory.Dispatch1NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2NodeFactory.Dispatch2NodeGen;
@@ -999,31 +993,8 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
     @EarlyInline
     private void doStoreIntoReceiverVariable(final VirtualFrame frame, final int pc, final int nextPC, final int sp, final int index, final Object value) {
         final Object receiver = FrameAccess.getReceiver(frame);
-        final SqueakObjectAtPut0Node atPutNode = ACCESS.uncheckedCast(getData(pc), SqueakObjectAtPut0Node.class);
-
-        if (index == CONTEXT.INSTRUCTION_POINTER) {
-            final byte profile = getProfile(pc);
-            if (receiver instanceof ContextObject context) {
-                // In order to avoid a check for an altered PC after every message send, we
-                // force a flush of the Truffle execution stack; the updated PC will be used
-                // when the Context resumes execution.
-                enter(pc, profile, BRANCH1);
-                atPutNode.execute(this, receiver, index, value);
-
-                if (context.isActiveOnTruffleStack()) {
-                    CompilerDirectives.transferToInterpreter();
-                    FrameAccess.externalizePCAndSP(frame, nextPC, sp);
-                    final ContextObject activeContext = GetOrCreateContextWithFrameNode.executeUncached(frame);
-                    AbstractPointersObjectNodes.AbstractPointersObjectWriteNode.executeUncached(getContext().getActiveProcessSlow(), ObjectLayouts.PROCESS.SUSPENDED_CONTEXT, activeContext);
-                    throw ProcessSwitch.SINGLETON;
-                }
-            } else {
-                enter(pc, profile, BRANCH2);
-                atPutNode.execute(this, receiver, index, value);
-            }
-        } else {
-            atPutNode.execute(this, receiver, index, value);
-        }
+        ACCESS.uncheckedCast(getData(pc), SqueakObjectAtPut0Node.class).execute(this, receiver, index, value);
+        checkForAndHandlePCModification(frame, pc, sp, index, receiver, nextPC);
     }
 
     static int longJump(final int b, final int nextByte) {
