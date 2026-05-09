@@ -8,7 +8,6 @@ package de.hpi.swa.trufflesqueak.nodes;
 
 import java.util.logging.Level;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
@@ -31,7 +30,6 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.context.CreateCannotReturnContextNode;
-import de.hpi.swa.trufflesqueak.nodes.context.CreateCannotReturnContextNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.process.GetNextActiveContextNode;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.DebugUtils;
@@ -48,13 +46,14 @@ public final class ExecuteTopLevelContextNode extends RootNode {
 
     @Child private IndirectCallNode callNode = IndirectCallNode.create();
     @Child private GetNextActiveContextNode getNextActiveContextNode = GetNextActiveContextNode.create();
-    @Child private CreateCannotReturnContextNode createCannotReturnContextNode = CreateCannotReturnContextNodeGen.create();
+    @Child private CreateCannotReturnContextNode createCannotReturnContextNode;
 
     private ExecuteTopLevelContextNode(final SqueakImageContext image, final SqueakLanguage language, final ContextObject context, final boolean isImageResuming) {
         super(language, TOP_LEVEL_FRAME_DESCRIPTOR);
         this.image = image;
         initialContext = context;
         this.isImageResuming = isImageResuming;
+        createCannotReturnContextNode = new CreateCannotReturnContextNode(image);
     }
 
     public static ExecuteTopLevelContextNode create(final SqueakImageContext image, final SqueakLanguage language, final ContextObject context, final boolean isImageResuming) {
@@ -119,7 +118,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
 
     @TruffleBoundary
     private ContextObject sendCannotReturnOrReturnToTopLevel(final ContextObject returningContext, final Object returnValue) {
-        // Exit the interpreter loop if the target is the context that started the loop.
+        /* Exit the interpreter loop if the target is the context that started the loop. */
         if (returningContext != null && returningContext == initialContext) {
             throw returnToTopLevel(returningContext, returnValue);
         }
@@ -128,15 +127,16 @@ public final class ExecuteTopLevelContextNode extends RootNode {
 
     @TruffleBoundary
     private ContextObject returnTo(final ContextObject returningContext, final AbstractSqueakObject sender, final Object returnValue) {
-        // Normal returns end up here.
+        /* Normal returns end up here. */
         assert (sender instanceof ContextObject) || sender == NilObject.SINGLETON;
         if ((sender instanceof final ContextObject senderContext) && !senderContext.isDead()) {
             senderContext.push(returnValue);
             return senderContext;
         }
-        // The returningContext was terminated on the fast path, breaking the sender chain.
-        // If the target is dead, we must restore the link so the exception handler can walk the
-        // stack.
+        /*
+         * The returningContext was terminated on the fast path, breaking the sender chain. If the
+         * target is dead, we must restore the link so the exception handler can walk the stack.
+         */
         if (sender instanceof ContextObject senderContext && senderContext.isDead()) {
             returningContext.setSenderUnsafe(senderContext);
         }
@@ -145,8 +145,10 @@ public final class ExecuteTopLevelContextNode extends RootNode {
 
     @TruffleBoundary
     private static ContextObject commonNVReturn(final NonVirtualReturn nvr) {
-        // Normal returns with modified senders end up here. The return Context has already been
-        // validated.
+        /*
+         * Normal returns with modified senders end up here. The return Context has already been
+         * validated.
+         */
         final Object returnValue = nvr.getReturnValue();
         final ContextObject returnContext = nvr.getTargetContext();
         returnContext.push(returnValue);
@@ -155,11 +157,13 @@ public final class ExecuteTopLevelContextNode extends RootNode {
 
     @TruffleBoundary
     private static ContextObject commonNLReturn(final AbstractSqueakObject sender, final NonLocalReturn nlr) {
-        // Non-local returns with no intervening unwind-blocks end up here. The home Context has
-        // already been validated.
+        /*
+         * Non-local returns with no intervening unwind-blocks end up here. The home Context has
+         * already been validated.
+         */
         final ContextObject homeContext = nlr.getTargetContext();
         final Object returnValue = nlr.getReturnValue();
-        // Terminate the Contexts on sender chain.
+        /* Terminate the Contexts on sender chain. */
         ContextObject context = (ContextObject) sender;
         while (context != homeContext) {
             final ContextObject currentSender = (ContextObject) context.getSender();
