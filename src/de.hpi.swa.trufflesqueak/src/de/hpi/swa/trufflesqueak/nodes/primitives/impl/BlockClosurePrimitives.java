@@ -87,6 +87,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
     }
 
+    @ReportPolymorphism
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {201, 221})
     public abstract static class PrimClosureValue0Node extends AbstractClosurePrimitiveNode implements Primitive0WithFallback {
@@ -107,6 +108,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
     }
 
+    @ReportPolymorphism
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 202)
     protected abstract static class PrimClosureValue1Node extends AbstractClosurePrimitiveNode implements Primitive1WithFallback {
@@ -127,6 +129,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
     }
 
+    @ReportPolymorphism
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 203)
     protected abstract static class PrimClosureValue2Node extends AbstractClosurePrimitiveNode implements Primitive2WithFallback {
@@ -147,6 +150,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
     }
 
+    @ReportPolymorphism
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 204)
     protected abstract static class PrimClosureValue3Node extends AbstractClosurePrimitiveNode implements Primitive3WithFallback {
@@ -167,6 +171,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
     }
 
+    @ReportPolymorphism
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 205)
     protected abstract static class PrimClosureValue4Node extends AbstractClosurePrimitiveNode implements Primitive4WithFallback {
@@ -187,6 +192,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
     }
 
+    @ReportPolymorphism
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 205)
     protected abstract static class PrimClosureValue5Node extends AbstractClosurePrimitiveNode implements Primitive5WithFallback {
@@ -209,6 +215,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
     }
 
+    @ReportPolymorphism
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {206, 222})
     protected abstract static class PrimClosureValueNaryNode extends AbstractClosurePrimitiveNode implements Primitive1WithFallback {
@@ -239,6 +246,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
     }
 
+    @ReportPolymorphism
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {207, 209})
     public abstract static class PrimFullClosureValue0Node extends AbstractClosurePrimitiveNode implements Primitive0WithFallback {
@@ -259,6 +267,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
     }
 
+    @ReportPolymorphism
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {207, 209})
     public abstract static class PrimFullClosureValue1Node extends AbstractClosurePrimitiveNode implements Primitive1WithFallback {
@@ -279,6 +288,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
     }
 
+    @ReportPolymorphism
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {207, 209})
     public abstract static class PrimFullClosureValue2Node extends AbstractClosurePrimitiveNode implements Primitive2WithFallback {
@@ -299,6 +309,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
     }
 
+    @ReportPolymorphism
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {207, 209})
     public abstract static class PrimFullClosureValue3Node extends AbstractClosurePrimitiveNode implements Primitive3WithFallback {
@@ -319,6 +330,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
     }
 
+    @ReportPolymorphism
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {207, 209})
     public abstract static class PrimFullClosureValue4Node extends AbstractClosurePrimitiveNode implements Primitive4WithFallback {
@@ -339,6 +351,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
     }
 
+    @ReportPolymorphism
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {207, 209})
     public abstract static class PrimFullClosureValue5Node extends AbstractClosurePrimitiveNode implements Primitive5WithFallback {
@@ -361,6 +374,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
     }
 
+    @ReportPolymorphism
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 208)
     public abstract static class PrimFullClosureValueWithArgsNode extends AbstractClosurePrimitiveNode implements Primitive1WithFallback {
