@@ -48,7 +48,6 @@ import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.D
 import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsInLoopNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
-import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrumentableNode implements BytecodeOSRNode, InstrumentableNode {
@@ -302,7 +301,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     private Object handleBlockReturn(final VirtualFrame frame, final int currentPC, final int pc, final int sp, final Object result) {
         // Target is sender of closure's home context.
         final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
-        if (homeContext.canBeReturnedTo()) {
+        if (homeContext.canReturnToSender()) {
             final ContextObject firstMarkedContext = firstUnwindMarkedOrThrowNLR(FrameAccess.getSender(frame), homeContext, result);
             if (firstMarkedContext != null) {
                 FrameAccess.externalizePCAndSP(frame, pc, sp);

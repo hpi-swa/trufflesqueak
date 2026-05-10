@@ -476,8 +476,20 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         return FrameAccess.isDead(getTruffleFrame());
     }
 
-    public boolean canBeReturnedTo() {
-        return !isDead() && getFrameSender() != NilObject.SINGLETON;
+    /**
+     * Returns true if this Context is alive and its sender is a valid, live Context. Senders
+     * without a Truffle frame are executing JVM frames and are guaranteed to be alive. Senders with
+     * a Truffle frame must not be dead.
+     */
+    public boolean canReturnToSender() {
+        if (isDead()) {
+            return false;
+        }
+        final AbstractSqueakObject sender = getFrameSender();
+        if (sender instanceof ContextObject senderContext) {
+            return !senderContext.hasTruffleFrame() || !senderContext.isDead();
+        }
+        return false;
     }
 
     public void push(final Object value) {
