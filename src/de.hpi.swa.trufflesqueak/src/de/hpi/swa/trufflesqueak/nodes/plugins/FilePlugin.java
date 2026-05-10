@@ -705,7 +705,6 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         private static void writeToOutputStream(final OutputStream outputStream, final byte[] content, final int offset, final int length) {
             try {
                 outputStream.write(content, offset, length);
-                outputStream.flush();
             } catch (final IOException e) {
                 log("Failed to write to OutputStream", e);
                 throw PrimitiveFailed.GENERIC_ERROR;
