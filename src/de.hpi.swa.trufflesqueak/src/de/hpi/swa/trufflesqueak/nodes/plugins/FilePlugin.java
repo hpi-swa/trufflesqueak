@@ -490,9 +490,9 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         protected static final long doReadInts(@SuppressWarnings("unused") final Object receiver, final PointersObject fd, final NativeObject target, final long startIndex, final long count) {
             final ByteBuffer dst = allocate((int) count * Integer.BYTES);
             final long readBytes = readFrom(getChannelOrPrimFail(fd), dst);
+            final long actualReadBytes = Math.max(readBytes, 0L);
             final byte[] bytes = getBytes(dst);
-            assert readBytes % Integer.BYTES == 0 && readBytes == bytes.length;
-            final long readInts = readBytes / Integer.BYTES;
+            final long readInts = actualReadBytes / Integer.BYTES;
             // TODO: could use UnsafeUtils.copyMemory here?
             for (int index = 0; index < readInts; index++) {
                 target.setInt(startIndex - 1 + index, VarHandleUtils.getInt(bytes, index));
@@ -668,7 +668,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             final int[] ints = content.getIntStorage();
             final byte[] bytes = new byte[(int) count * Integer.BYTES];
             for (int i = 0; i < count; i++) {
-                VarHandleUtils.putIntReversed(bytes, i, ints[(int) (startIndex - 1 + i)]);
+                VarHandleUtils.putInt(bytes, i, ints[(int) (startIndex - 1 + i)]);
             }
             return fileWriteFromAt(fd, count, bytes, 1, 4);
         }
