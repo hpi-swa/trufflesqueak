@@ -666,12 +666,11 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         protected static final long doWriteInt(@SuppressWarnings("unused") final Object receiver, final PointersObject fd, final NativeObject content, final long startIndex, final long count) {
             // TODO: use ByteBuffer or UnsafeUtils here?
             final int[] ints = content.getIntStorage();
-            final int intsLength = ints.length;
-            final byte[] bytes = new byte[intsLength * Integer.BYTES];
-            for (int i = 0; i < intsLength; i++) {
-                VarHandleUtils.putIntReversed(bytes, i, ints[i]);
+            final byte[] bytes = new byte[(int) count * Integer.BYTES];
+            for (int i = 0; i < count; i++) {
+                VarHandleUtils.putIntReversed(bytes, i, ints[(int) (startIndex - 1 + i)]);
             }
-            return fileWriteFromAt(fd, count, bytes, startIndex, 4);
+            return fileWriteFromAt(fd, count, bytes, 1, 4);
         }
 
         @Specialization(guards = {"!isStdioFileDescriptor(fd)", "inBounds(startIndex, count, WORD_LENGTH)"})
