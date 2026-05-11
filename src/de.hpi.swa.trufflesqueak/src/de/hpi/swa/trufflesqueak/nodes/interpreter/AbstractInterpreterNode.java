@@ -358,12 +358,21 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     protected final void checkForAndHandlePCModification(final VirtualFrame frame, final int pc, final int sp, final int index, final Object receiver, final int nextPC) {
         if (index == CONTEXT.INSTRUCTION_POINTER && receiver instanceof ContextObject context) {
             enter(pc, getProfile(pc), BRANCH1);
-            if (context.isActiveOnTruffleStack()) {
-                CompilerDirectives.transferToInterpreter();
-                FrameAccess.externalizePCAndSP(frame, nextPC, sp);
-                final ContextObject activeContext = GetOrCreateContextWithFrameNode.executeUncached(frame);
-                AbstractPointersObjectWriteNode.executeUncached(getContext().getActiveProcessSlow(), PROCESS.SUSPENDED_CONTEXT, activeContext);
-                throw ProcessSwitch.SINGLETON;
+            if (context.isPotentiallyActiveOnTruffleStack()) {
+                // Fast-path optimization: Preemptively mark the Context as inactive.
+                // If the PC is modified multiple times while suspended, we avoid paying
+                // the expensive cost of iterateFrames() on subsequent modifications.
+                context.markAsInactiveOnTruffleStack();
+                if (context.isActiveOnTruffleStackSlow()) {
+                    // The context was actually active. Throwing ProcessSwitch will unwind the
+                    // Truffle stack and force all contexts to the heap. This renders our
+                    // preemptive "inactive" mark factually correct.
+                    CompilerDirectives.transferToInterpreter();
+                    FrameAccess.externalizePCAndSP(frame, nextPC, sp);
+                    final ContextObject activeContext = GetOrCreateContextWithFrameNode.executeUncached(frame);
+                    AbstractPointersObjectWriteNode.executeUncached(getContext().getActiveProcessSlow(), PROCESS.SUSPENDED_CONTEXT, activeContext);
+                    throw ProcessSwitch.SINGLETON;
+                }
             }
         }
     }

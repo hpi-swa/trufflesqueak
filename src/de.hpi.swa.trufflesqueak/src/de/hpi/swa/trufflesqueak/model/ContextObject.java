@@ -270,6 +270,35 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     }
 
     /**
+     * Returns true if the Context might be currently executing on the Truffle stack. This acts as a
+     * fast-path flag to avoid expensive {@link #isActiveOnTruffleStackSlow()} checks. Returns false
+     * if it is guaranteed to have been forced to the heap or suspended.
+     * <p>
+     * Note: We use inverted bit logic (0 = potentially active, 1 = inactive) to take advantage of
+     * default zero-initialization. This ensures newly created Contexts safely default to requiring
+     * a stack check.
+     */
+    public boolean isPotentiallyActiveOnTruffleStack() {
+        return !isBooleanDSet();
+    }
+
+    /**
+     * Caches the state indicating this Context is no longer active on the stack. Used to avoid
+     * repeated Truffle frame iterations when a suspended context is modified multiple times.
+     */
+    public void markAsInactiveOnTruffleStack() {
+        setBooleanDBit();
+    }
+
+    /**
+     * Indicates that this Context has resumed execution. Resets the flag so that future external
+     * modifications to this Context will trigger a proper stack check.
+     */
+    public void markAsPotentiallyActiveOnTruffleStack() {
+        clearBooleanDBit();
+    }
+
+    /**
      * Sets the sender of a ContextObject.
      */
     public void setSender(final AbstractSqueakObject value) {
@@ -374,7 +403,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         return truffleFrame;
     }
 
-    public boolean isActiveOnTruffleStack() {
+    public boolean isActiveOnTruffleStackSlow() {
         if (!hasTruffleFrame()) {
             return false; // No Truffle frame means the receiver is not yet executing.
         }
