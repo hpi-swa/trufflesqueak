@@ -15,7 +15,9 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
@@ -372,22 +374,18 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         return truffleFrame;
     }
 
-    public boolean isActiveOnTruffleStack(final VirtualFrame frame) {
+    public boolean isActiveOnTruffleStack() {
         if (!hasTruffleFrame()) {
             return false; // No Truffle frame means the receiver is not yet executing.
         }
-        if (FrameAccess.getContext(frame) == this) {
-            return true; // Found it.
-        }
-        // Continue walking the sender chain.
-        AbstractSqueakObject currentContextOrNil = FrameAccess.getSenderContext(frame);
-        while (currentContextOrNil != NilObject.SINGLETON) {
-            if (currentContextOrNil == this) {
+        final Object result = Truffle.getRuntime().iterateFrames(frameInstance -> {
+            final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
+            if (current != null && FrameAccess.isTruffleSqueakFrame(current) && this == FrameAccess.getContext(current)) {
                 return true;
             }
-            currentContextOrNil = ((ContextObject) currentContextOrNil).getFrameSender();
-        }
-        return false;
+            return null;
+        });
+        return result != null;
     }
 
     public BlockClosureObject getClosure() {

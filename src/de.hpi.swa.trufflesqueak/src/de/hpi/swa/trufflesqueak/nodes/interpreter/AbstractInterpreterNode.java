@@ -358,7 +358,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     protected final void checkForAndHandlePCModification(final VirtualFrame frame, final int pc, final int sp, final int index, final Object receiver, final int nextPC) {
         if (index == CONTEXT.INSTRUCTION_POINTER && receiver instanceof ContextObject context) {
             enter(pc, getProfile(pc), BRANCH1);
-            if (context.isActiveOnTruffleStack(frame)) {
+            if (context.isActiveOnTruffleStack()) {
                 CompilerDirectives.transferToInterpreter();
                 FrameAccess.externalizePCAndSP(frame, nextPC, sp);
                 final ContextObject activeContext = GetOrCreateContextWithFrameNode.executeUncached(frame);
