@@ -458,8 +458,8 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         return (bytecode & 7) + 1;
     }
 
-    protected final CheckForInterruptsInLoopNode createCheckForInterruptsInLoopNode(final int pc, final int numBytecodes, final int offset) {
-        return CheckForInterruptsInLoopNode.createForLoop(data, pc, numBytecodes, offset);
+    protected final CheckForInterruptsInLoopNode createCheckForInterruptsInLoopNode(final int targetPC, final int jumpOpcodePC) {
+        return CheckForInterruptsInLoopNode.createForLoop(data, targetPC, jumpOpcodePC);
     }
 
     /**

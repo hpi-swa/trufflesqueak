@@ -265,7 +265,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                 case BC.SHORT_UJUMP_0, BC.SHORT_UJUMP_1, BC.SHORT_UJUMP_2, BC.SHORT_UJUMP_3, BC.SHORT_UJUMP_4, BC.SHORT_UJUMP_5, BC.SHORT_UJUMP_6, BC.SHORT_UJUMP_7: {
                     final int jumpOffset = calculateShortOffset(b);
                     if (jumpOffset < 0) {
-                        setData(currentPC, insert(createCheckForInterruptsInLoopNode(pc, 1, jumpOffset)));
+                        setData(currentPC, insert(createCheckForInterruptsInLoopNode(pc + jumpOffset, currentPC)));
                     }
                     break;
                 }
@@ -340,7 +340,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                 case BC.EXT_UNCONDITIONAL_JUMP: {
                     final int jumpOffset = calculateLongExtendedOffset(getByte(bc, pc++), vstate.getExtB());
                     if (jumpOffset < 0) {
-                        setData(currentPC, insert(createCheckForInterruptsInLoopNode(currentPC, 2, jumpOffset)));
+                        setData(currentPC, insert(createCheckForInterruptsInLoopNode(pc + jumpOffset, currentPC)));
                     }
                     vstate.resetExtAB();
                     break;
