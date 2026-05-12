@@ -6,10 +6,13 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.interrupts;
 
-import java.util.ArrayDeque;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.locks.LockSupport;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -21,8 +24,25 @@ public final class CheckForInterruptsState {
 
     private static final int DEFAULT_INTERRUPT_CHECK_NANOS = 2_000_000;
 
+    /**
+     * Support for safely accessing the `shouldTrigger` flag across threads. We use a VarHandle with
+     * opaque access (rather than a standard `volatile` boolean) to guarantee memory visibility
+     * between the background interrupt thread and the main interpreter thread. This prevents the
+     * Graal compiler from improperly loop-hoisting the read during JIT compilation, while
+     * explicitly avoiding the performance penalty of full hardware memory barriers on weakly
+     * ordered architectures like ARM64.
+     */
+    private static final VarHandle SHOULD_TRIGGER;
+    static {
+        try {
+            SHOULD_TRIGGER = MethodHandles.lookup().findVarHandle(CheckForInterruptsState.class, "shouldTrigger", boolean.class);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw CompilerDirectives.shouldNotReachHere("Unable to find a VarHandle for shouldTrigger", e);
+        }
+    }
+
     private final SqueakImageContext image;
-    private final ArrayDeque<Integer> semaphoresToSignal = new ArrayDeque<>();
+    private final ConcurrentLinkedDeque<Integer> semaphoresToSignal = new ConcurrentLinkedDeque<>();
 
     /**
      * `interruptCheckNanos` is the interval between updates to 'shouldTrigger'. This controls the
@@ -41,7 +61,7 @@ public final class CheckForInterruptsState {
      * cannot be moved by the Graal compiler during compilation. Since atomicity is not needed for
      * the interrupt handler mechanism, we can use a standard boolean here for better compilation.
      */
-    private boolean shouldTrigger;
+    @SuppressWarnings("unused") private boolean shouldTrigger;
 
     private Thread thread;
 
@@ -71,7 +91,10 @@ public final class CheckForInterruptsState {
         public void run() {
             while (true) {
                 // Check for interrupts
-                shouldTrigger |= interruptPending || nextWakeUpTickTrigger() || hasPendingFinalizations || hasSemaphoresToSignal();
+                final boolean hasInterrupts = interruptPending || nextWakeUpTickTrigger() || hasPendingFinalizations || hasSemaphoresToSignal();
+                if (hasInterrupts) {
+                    SHOULD_TRIGGER.setOpaque(CheckForInterruptsState.this, true);
+                }
                 LockSupport.parkNanos(interruptCheckNanos);
                 // Handle thread interrupts
                 if (Thread.interrupted()) {
@@ -104,8 +127,10 @@ public final class CheckForInterruptsState {
         if (!isActive) {
             return true;
         }
-        if (shouldTrigger) {
-            shouldTrigger = false; // reset trigger
+        // Force an opaque read from memory
+        if ((boolean) SHOULD_TRIGGER.getOpaque(this)) {
+            // Force an opaque write to memory to reset it
+            SHOULD_TRIGGER.setOpaque(this, false);
             return false;
         } else {
             return true;
@@ -138,7 +163,7 @@ public final class CheckForInterruptsState {
 
     public void setInterruptPending() {
         interruptPending = true;
-        shouldTrigger = true;
+        SHOULD_TRIGGER.setOpaque(this, true);
     }
 
     /* Timer interrupt */
@@ -189,7 +214,7 @@ public final class CheckForInterruptsState {
 
     public void setPendingFinalizations() {
         hasPendingFinalizations = true;
-        shouldTrigger = true;
+        SHOULD_TRIGGER.setOpaque(this, true);
     }
 
     /* Semaphore interrupts */
@@ -214,7 +239,7 @@ public final class CheckForInterruptsState {
     @TruffleBoundary
     public void signalSemaphoreWithIndex(final int index) {
         semaphoresToSignal.addLast(index);
-        shouldTrigger = true;
+        SHOULD_TRIGGER.setOpaque(this, true);
     }
 
     /*
