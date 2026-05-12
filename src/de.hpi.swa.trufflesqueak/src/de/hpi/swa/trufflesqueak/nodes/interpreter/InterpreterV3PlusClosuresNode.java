@@ -223,7 +223,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                 case BC.SHORT_UJUMP_0, BC.SHORT_UJUMP_1, BC.SHORT_UJUMP_2, BC.SHORT_UJUMP_3, BC.SHORT_UJUMP_4, BC.SHORT_UJUMP_5, BC.SHORT_UJUMP_6, BC.SHORT_UJUMP_7: {
                     final int offset = calculateShortOffset(b);
                     if (offset < 0) {
-                        setData(currentPC, insert(createCheckForInterruptsInLoopNode(pc, 1, offset)));
+                        setData(currentPC, insert(createCheckForInterruptsInLoopNode(pc + offset, currentPC)));
                     }
                     break;
                 }
@@ -235,7 +235,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                 case BC.LONG_UJUMP_0, BC.LONG_UJUMP_1, BC.LONG_UJUMP_2, BC.LONG_UJUMP_3, BC.LONG_UJUMP_4, BC.LONG_UJUMP_5, BC.LONG_UJUMP_6, BC.LONG_UJUMP_7: {
                     final int offset = ((b & 7) - 4 << 8) + getUnsignedInt(bc, pc++);
                     if (offset < 0) {
-                        setData(currentPC, insert(createCheckForInterruptsInLoopNode(pc, 1, offset)));
+                        setData(currentPC, insert(createCheckForInterruptsInLoopNode(pc + offset, currentPC)));
                     }
                     break;
                 }
