@@ -796,13 +796,13 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     }
                     case BC.RETURN_NIL_FROM_BLOCK: {
                         state.reportLoopCountOnReturn(this);
-                        returnValue = handleNormalReturn(frame, pc, NilObject.SINGLETON);
+                        returnValue = handleNormalReturn(frame, pc, pc + 1, vstate.sp, NilObject.SINGLETON);
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
                     case BC.RETURN_TOP_FROM_BLOCK: {
                         state.reportLoopCountOnReturn(this);
-                        returnValue = handleNormalReturn(frame, pc, top(frame, vstate.sp));
+                        returnValue = handleNormalReturn(frame, pc, pc + 1, vstate.sp - 1, top(frame, vstate.sp));
                         pc = LOCAL_RETURN_PC;
                         break;
                     }
