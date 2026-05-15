@@ -1873,7 +1873,8 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.POP_INTO_RCVR_VAR_1, safepoint = false)
     private int handlePopIntoReceiverVariable1(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
-        return handlePopIntoReceiverVariable(frame, pc, vstate, 1);
+        // assert CONTEXT.INSTRUCTION_POINTER == 1;
+        return doStoreIntoReceiverVariable(frame, pc, vstate, 1, pop(frame, --vstate.sp), pc + 1);
     }
 
     @EarlyInline
@@ -1916,6 +1917,14 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handlePopIntoReceiverVariable(final VirtualFrame frame, final int pc, final VirtualState vstate, final int index) {
         ACCESS.uncheckedCast(getData(pc), SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), index, pop(frame, --vstate.sp));
         return pc + 1;
+    }
+
+    @EarlyInline
+    private int doStoreIntoReceiverVariable(final VirtualFrame frame, final int pc, final VirtualState vstate, final int index, final Object value, final int nextPC) {
+        final Object receiver = FrameAccess.getReceiver(frame);
+        ACCESS.uncheckedCast(getData(pc), SqueakObjectAtPut0Node.class).execute(this, receiver, index, value);
+        checkForAndHandlePCModification(frame, pc, vstate.sp, index, receiver, nextPC);
+        return nextPC;
     }
 
     @EarlyInline
@@ -1989,8 +1998,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @BytecodeInterpreterHandler(value = BC.EXT_STORE_AND_POP_RECEIVER_VARIABLE, safepoint = false)
     private int handleExtendedStoreAndPopReceiverVariable(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
         final int index = getByteExtendedWithExtA(pc, vstate, state);
-        ACCESS.uncheckedCast(getData(pc), SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), index, pop(frame, --vstate.sp));
-        return pc + 2;
+        return doStoreIntoReceiverVariable(frame, pc, vstate, index, pop(frame, --vstate.sp), pc + 2);
     }
 
     @EarlyInline
@@ -2013,8 +2021,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @BytecodeInterpreterHandler(value = BC.EXT_STORE_RECEIVER_VARIABLE, safepoint = false)
     private int handleExtendedStoreReceiverVariable(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
         final int index = getByteExtendedWithExtA(pc, vstate, state);
-        ACCESS.uncheckedCast(getData(pc), SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), index, top(frame, vstate.sp));
-        return pc + 2;
+        return doStoreIntoReceiverVariable(frame, pc, vstate, index, top(frame, vstate.sp), pc + 2);
     }
 
     @EarlyInline
@@ -2061,7 +2068,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
         final byte profile = getProfile(pc);
-        int nextPC = pc + 1;
+        final int nextPC = pc + 1;
         final Object result;
         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
             enter(pc, profile, BRANCH2);
@@ -2081,7 +2088,6 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             enter(pc, profile, BRANCH1);
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver, arg);
-            nextPC = FrameAccess.internalizePC(frame, nextPC);
         }
         push(frame, vstate.sp++, result);
         return nextPC;
@@ -2093,7 +2099,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
         final byte profile = getProfile(pc);
-        int nextPC = pc + 1;
+        final int nextPC = pc + 1;
         final Object result;
         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
             enter(pc, profile, BRANCH2);
@@ -2113,7 +2119,6 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             enter(pc, profile, BRANCH1);
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver, arg);
-            nextPC = FrameAccess.internalizePC(frame, nextPC);
         }
         push(frame, vstate.sp++, result);
         return nextPC;
@@ -2125,7 +2130,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
         final byte profile = getProfile(pc);
-        int nextPC = pc + 1;
+        final int nextPC = pc + 1;
         final Object result;
         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
             enter(pc, profile, BRANCH2);
@@ -2137,7 +2142,6 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             enter(pc, profile, BRANCH1);
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver, arg);
-            nextPC = FrameAccess.internalizePC(frame, nextPC);
         }
         push(frame, vstate.sp++, result);
         return nextPC;
@@ -2149,7 +2153,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
         final byte profile = getProfile(pc);
-        int nextPC = pc + 1;
+        final int nextPC = pc + 1;
         final Object result;
         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
             enter(pc, profile, BRANCH2);
@@ -2161,7 +2165,6 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             enter(pc, profile, BRANCH1);
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver, arg);
-            nextPC = FrameAccess.internalizePC(frame, nextPC);
         }
         push(frame, vstate.sp++, result);
         return nextPC;
@@ -2173,7 +2176,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
         final byte profile = getProfile(pc);
-        int nextPC = pc + 1;
+        final int nextPC = pc + 1;
         final Object result;
         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
             enter(pc, profile, BRANCH2);
@@ -2185,7 +2188,6 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             enter(pc, profile, BRANCH1);
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver, arg);
-            nextPC = FrameAccess.internalizePC(frame, nextPC);
         }
         push(frame, vstate.sp++, result);
         return nextPC;
@@ -2197,7 +2199,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
         final byte profile = getProfile(pc);
-        int nextPC = pc + 1;
+        final int nextPC = pc + 1;
         final Object result;
         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
             enter(pc, profile, BRANCH2);
@@ -2209,7 +2211,6 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             enter(pc, profile, BRANCH1);
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver, arg);
-            nextPC = FrameAccess.internalizePC(frame, nextPC);
         }
         push(frame, vstate.sp++, result);
         return nextPC;
@@ -2221,7 +2222,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
         final byte profile = getProfile(pc);
-        int nextPC = pc + 1;
+        final int nextPC = pc + 1;
         final Object result;
         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
             enter(pc, profile, BRANCH2);
@@ -2233,7 +2234,6 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             enter(pc, profile, BRANCH1);
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver, arg);
-            nextPC = FrameAccess.internalizePC(frame, nextPC);
         }
         push(frame, vstate.sp++, result);
         return nextPC;
@@ -2245,7 +2245,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
         final byte profile = getProfile(pc);
-        int nextPC = pc + 1;
+        final int nextPC = pc + 1;
         final Object result;
         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
             enter(pc, profile, BRANCH2);
@@ -2257,7 +2257,6 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             enter(pc, profile, BRANCH1);
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver, arg);
-            nextPC = FrameAccess.internalizePC(frame, nextPC);
         }
         push(frame, vstate.sp++, result);
         return nextPC;
@@ -2269,7 +2268,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
         final byte profile = getProfile(pc);
-        int nextPC = pc + 1;
+        final int nextPC = pc + 1;
         final Object result;
         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
             enter(pc, profile, BRANCH2);
@@ -2278,7 +2277,6 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             enter(pc, profile, BRANCH1);
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver, arg);
-            nextPC = FrameAccess.internalizePC(frame, nextPC);
         }
         push(frame, vstate.sp++, result);
         return nextPC;
@@ -2305,7 +2303,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
         final byte profile = getProfile(pc);
-        int nextPC = pc + 1;
+        final int nextPC = pc + 1;
         final Object result;
         if (receiver instanceof final Long lhs && arg instanceof final Long rhs && rhs != 0 && !isOverflowDivision(lhs, rhs)) {
             enter(pc, profile, BRANCH2);
@@ -2321,7 +2319,6 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             enter(pc, profile, BRANCH1);
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver, arg);
-            nextPC = FrameAccess.internalizePC(frame, nextPC);
         }
         push(frame, vstate.sp++, result);
         return nextPC;
@@ -2333,7 +2330,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
         final byte profile = getProfile(pc);
-        int nextPC = pc + 1;
+        final int nextPC = pc + 1;
         final Object result;
         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
             enter(pc, profile, BRANCH2);
@@ -2342,7 +2339,6 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             enter(pc, profile, BRANCH1);
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver, arg);
-            nextPC = FrameAccess.internalizePC(frame, nextPC);
         }
         push(frame, vstate.sp++, result);
         return nextPC;
@@ -2354,7 +2350,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
         final byte profile = getProfile(pc);
-        int nextPC = pc + 1;
+        final int nextPC = pc + 1;
         final Object result;
         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
             enter(pc, profile, BRANCH2);
@@ -2363,7 +2359,6 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             enter(pc, profile, BRANCH1);
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver, arg);
-            nextPC = FrameAccess.internalizePC(frame, nextPC);
         }
         push(frame, vstate.sp++, result);
         return nextPC;
@@ -2374,7 +2369,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     private int handlePrimitiveSize(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         final Object receiver = pop(frame, --vstate.sp);
         final byte profile = getProfile(pc);
-        int nextPC = pc + 1;
+        final int nextPC = pc + 1;
         final Object result;
         if (receiver instanceof final NativeObject nativeObject && getContext().isByteString(nativeObject)) {
             enter(pc, profile, BRANCH2);
@@ -2383,7 +2378,6 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             enter(pc, profile, BRANCH1);
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
             result = send(frame, pc, receiver);
-            nextPC = FrameAccess.internalizePC(frame, nextPC);
         }
         push(frame, vstate.sp++, result);
         return nextPC;
@@ -2423,11 +2417,10 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     BC.SEND_LIT_SEL0_8, BC.SEND_LIT_SEL0_9, BC.SEND_LIT_SEL0_A, BC.SEND_LIT_SEL0_B,
                     BC.SEND_LIT_SEL0_C, BC.SEND_LIT_SEL0_D, BC.SEND_LIT_SEL0_E, BC.SEND_LIT_SEL0_F}, safepoint = false)
     private int handleSend0(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
-        int nextPC = pc + 1;
+        final int nextPC = pc + 1;
         final Object receiver = pop(frame, --vstate.sp);
         FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
         push(frame, vstate.sp++, send(frame, pc, receiver));
-        nextPC = FrameAccess.internalizePC(frame, nextPC);
         return nextPC;
     }
 
@@ -2440,12 +2433,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     BC.SEND_LIT_SEL1_8, BC.SEND_LIT_SEL1_9, BC.SEND_LIT_SEL1_A, BC.SEND_LIT_SEL1_B,
                     BC.SEND_LIT_SEL1_C, BC.SEND_LIT_SEL1_D, BC.SEND_LIT_SEL1_E, BC.SEND_LIT_SEL1_F}, safepoint = false)
     private int handleSend1(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
-        int nextPC = pc + 1;
+        final int nextPC = pc + 1;
         final Object arg = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
         FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
         push(frame, vstate.sp++, send(frame, pc, receiver, arg));
-        nextPC = FrameAccess.internalizePC(frame, nextPC);
         return nextPC;
     }
 
@@ -2456,20 +2448,19 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     BC.SEND_LIT_SEL2_8, BC.SEND_LIT_SEL2_9, BC.SEND_LIT_SEL2_A, BC.SEND_LIT_SEL2_B,
                     BC.SEND_LIT_SEL2_C, BC.SEND_LIT_SEL2_D, BC.SEND_LIT_SEL2_E, BC.SEND_LIT_SEL2_F}, safepoint = false)
     private int handleSend2(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
-        int nextPC = pc + 1;
+        final int nextPC = pc + 1;
         final Object arg2 = pop(frame, --vstate.sp);
         final Object arg1 = pop(frame, --vstate.sp);
         final Object receiver = pop(frame, --vstate.sp);
         FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
         push(frame, vstate.sp++, send(frame, pc, receiver, arg1, arg2));
-        nextPC = FrameAccess.internalizePC(frame, nextPC);
         return nextPC;
     }
 
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.EXT_SEND, safepoint = false)
     private int handleExtendedSend(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
-        int nextPC = pc + 2;
+        final int nextPC = pc + 2;
         final int byte1 = getUnsignedInt(state.bytecode, pc + 1);
         final int numArgs = (byte1 & 7) + (vstate.getExtB() << 3);
         CompilerAsserts.partialEvaluationConstant(numArgs);
@@ -2478,7 +2469,6 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final Object receiver = pop(frame, --vstate.sp);
         FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
         push(frame, vstate.sp++, sendNary(frame, pc, receiver, arguments));
-        nextPC = FrameAccess.internalizePC(frame, nextPC);
         vstate.resetExtAB();
         return nextPC;
     }
@@ -2486,7 +2476,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     @BytecodeInterpreterHandler(value = BC.EXT_SEND_SUPER, safepoint = false)
     private int handleExtendedSuperSend(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
-        int nextPC = pc + 2;
+        final int nextPC = pc + 2;
         final boolean isDirected;
         final int extB = vstate.getExtB();
         final int extBValue;
@@ -2507,7 +2497,6 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
         CompilerAsserts.partialEvaluationConstant(isDirected);
         pushFollowed(frame, pc, vstate.sp++, sendSuper(frame, isDirected, pc, lookupClass, receiver, arguments));
-        nextPC = FrameAccess.internalizePC(frame, nextPC);
         vstate.resetExtAB();
         return nextPC;
     }

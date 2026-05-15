@@ -42,6 +42,12 @@ public final class ResumeContextRootNode extends AbstractRootNode {
          * the active context.
          */
         FrameAccess.setContext(frame, activeContext);
+        /*
+         * Reset the fast-path flag to indicate this Context has resumed execution. Future external
+         * modifications to this Context's instruction pointer will now trigger a proper stack
+         * check. See AbstractInterpreterNode#checkForAndHandlePCModification
+         */
+        activeContext.markAsPotentiallyActiveOnTruffleStack();
         activeContext.clearModifiedSender();
         final int pc = instructionPointerProfile.profile(activeContext.getInstructionPointerForBytecodeLoop());
         final int sp = stackPointerProfile.profile(activeContext.getStackPointer());

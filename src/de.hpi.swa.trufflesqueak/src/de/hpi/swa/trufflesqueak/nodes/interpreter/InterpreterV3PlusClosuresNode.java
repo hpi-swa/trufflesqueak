@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.nodes.interpreter;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.EarlyInline;
 import com.oracle.truffle.api.HostCompilerDirectives;
 import com.oracle.truffle.api.HostCompilerDirectives.BytecodeInterpreterSwitch;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -340,8 +341,12 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         push(frame, sp++, readLiteralVariable(currentPC, b & 0x1F));
                         break;
                     }
-                    case BC.POP_INTO_RCVR_VAR_0, BC.POP_INTO_RCVR_VAR_1, BC.POP_INTO_RCVR_VAR_2, BC.POP_INTO_RCVR_VAR_3, BC.POP_INTO_RCVR_VAR_4, BC.POP_INTO_RCVR_VAR_5, BC.POP_INTO_RCVR_VAR_6, BC.POP_INTO_RCVR_VAR_7: {
+                    case BC.POP_INTO_RCVR_VAR_0, BC.POP_INTO_RCVR_VAR_2, BC.POP_INTO_RCVR_VAR_3, BC.POP_INTO_RCVR_VAR_4, BC.POP_INTO_RCVR_VAR_5, BC.POP_INTO_RCVR_VAR_6, BC.POP_INTO_RCVR_VAR_7: {
                         ACCESS.uncheckedCast(getData(currentPC), SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), b & 7, pop(frame, --sp));
+                        break;
+                    }
+                    case BC.POP_INTO_RCVR_VAR_1: {
+                        doStoreIntoReceiverVariable(frame, currentPC, pc, sp, 1, pop(frame, --sp));
                         break;
                     }
                     case BC.POP_INTO_TEMP_VAR_0, BC.POP_INTO_TEMP_VAR_1, BC.POP_INTO_TEMP_VAR_2, BC.POP_INTO_TEMP_VAR_3, BC.POP_INTO_TEMP_VAR_4, BC.POP_INTO_TEMP_VAR_5, BC.POP_INTO_TEMP_VAR_6, BC.POP_INTO_TEMP_VAR_7: {
@@ -452,7 +457,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         CompilerAsserts.partialEvaluationConstant(variableType);
                         switch (variableType) {
                             case 0: {
-                                ACCESS.uncheckedCast(getData(currentPC), SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), variableIndex, stackTop);
+                                doStoreIntoReceiverVariable(frame, currentPC, pc, sp, variableIndex, stackTop);
                                 break;
                             }
                             case 1: {
@@ -477,7 +482,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         CompilerAsserts.partialEvaluationConstant(variableType);
                         switch (variableType) {
                             case 0: {
-                                ACCESS.uncheckedCast(getData(currentPC), SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), variableIndex, stackValue);
+                                doStoreIntoReceiverVariable(frame, currentPC, pc, sp, variableIndex, stackValue);
                                 break;
                             }
                             case 1: {
@@ -501,7 +506,6 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         final Object receiver = pop(frame, --sp);
                         FrameAccess.externalizePCAndSP(frame, pc, sp);
                         push(frame, sp++, sendNary(frame, currentPC, receiver, arguments));
-                        pc = FrameAccess.internalizePC(frame, pc);
                         break;
                     }
                     case BC.DOUBLE_EXTENDED_DO_ANYTHING: {
@@ -517,7 +521,6 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 final Object receiver = pop(frame, --sp);
                                 FrameAccess.externalizePCAndSP(frame, pc, sp);
                                 push(frame, sp++, sendNary(frame, currentPC, receiver, arguments));
-                                pc = FrameAccess.internalizePC(frame, pc);
                                 break;
                             }
                             case 1: {
@@ -527,7 +530,6 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 final Object receiver = AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(pop(frame, --sp));
                                 FrameAccess.externalizePCAndSP(frame, pc, sp);
                                 pushFollowed(frame, currentPC, sp++, sendSuper(frame, currentPC, receiver, arguments));
-                                pc = FrameAccess.internalizePC(frame, pc);
                                 break;
                             }
                             case 2: {
@@ -545,11 +547,11 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 break;
                             }
                             case 5: {
-                                ACCESS.uncheckedCast(getData(currentPC), SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), byte3, top(frame, sp));
+                                doStoreIntoReceiverVariable(frame, currentPC, pc, sp, byte3, top(frame, sp));
                                 break;
                             }
                             case 6: {
-                                ACCESS.uncheckedCast(getData(currentPC), SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), byte3, pop(frame, --sp));
+                                doStoreIntoReceiverVariable(frame, currentPC, pc, sp, byte3, pop(frame, --sp));
                                 break;
                             }
                             case 7: {
@@ -569,7 +571,6 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         final Object receiver = AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(pop(frame, --sp));
                         FrameAccess.externalizePCAndSP(frame, pc, sp);
                         pushFollowed(frame, currentPC, sp++, sendSuper(frame, currentPC, receiver, arguments));
-                        pc = FrameAccess.internalizePC(frame, pc);
                         break;
                     }
                     case BC.SECOND_EXTENDED_SEND: {
@@ -579,7 +580,6 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         final Object receiver = pop(frame, --sp);
                         FrameAccess.externalizePCAndSP(frame, pc, sp);
                         push(frame, sp++, sendNary(frame, currentPC, receiver, arguments));
-                        pc = FrameAccess.internalizePC(frame, pc);
                         break;
                     }
                     case BC.POP_STACK: {
@@ -743,7 +743,6 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                             enter(currentPC, profile, BRANCH1);
                             FrameAccess.externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
-                            pc = FrameAccess.internalizePC(frame, pc);
                         }
                         push(frame, sp++, result);
                         break;
@@ -771,7 +770,6 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                             enter(currentPC, profile, BRANCH1);
                             FrameAccess.externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
-                            pc = FrameAccess.internalizePC(frame, pc);
                         }
                         push(frame, sp++, result);
                         break;
@@ -791,7 +789,6 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                             enter(currentPC, profile, BRANCH1);
                             FrameAccess.externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
-                            pc = FrameAccess.internalizePC(frame, pc);
                         }
                         push(frame, sp++, result);
                         break;
@@ -811,7 +808,6 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                             enter(currentPC, profile, BRANCH1);
                             FrameAccess.externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
-                            pc = FrameAccess.internalizePC(frame, pc);
                         }
                         push(frame, sp++, result);
                         break;
@@ -831,7 +827,6 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                             enter(currentPC, profile, BRANCH1);
                             FrameAccess.externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
-                            pc = FrameAccess.internalizePC(frame, pc);
                         }
                         push(frame, sp++, result);
                         break;
@@ -851,7 +846,6 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                             enter(currentPC, profile, BRANCH1);
                             FrameAccess.externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
-                            pc = FrameAccess.internalizePC(frame, pc);
                         }
                         push(frame, sp++, result);
                         break;
@@ -871,7 +865,6 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                             enter(currentPC, profile, BRANCH1);
                             FrameAccess.externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
-                            pc = FrameAccess.internalizePC(frame, pc);
                         }
                         push(frame, sp++, result);
                         break;
@@ -891,7 +884,6 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                             enter(currentPC, profile, BRANCH1);
                             FrameAccess.externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
-                            pc = FrameAccess.internalizePC(frame, pc);
                         }
                         push(frame, sp++, result);
                         break;
@@ -908,7 +900,6 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                             enter(currentPC, profile, BRANCH1);
                             FrameAccess.externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
-                            pc = FrameAccess.internalizePC(frame, pc);
                         }
                         push(frame, sp++, result);
                         break;
@@ -925,7 +916,6 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                             enter(currentPC, profile, BRANCH1);
                             FrameAccess.externalizePCAndSP(frame, pc, sp);
                             result = send(frame, currentPC, receiver, arg);
-                            pc = FrameAccess.internalizePC(frame, pc);
                         }
                         push(frame, sp++, result);
                         break;
@@ -953,7 +943,6 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         final Object receiver = pop(frame, --sp);
                         FrameAccess.externalizePCAndSP(frame, pc, sp);
                         push(frame, sp++, send(frame, currentPC, receiver));
-                        pc = FrameAccess.internalizePC(frame, pc);
                         break;
                     }
                     case BC.BYTECODE_PRIM_MULTIPLY, BC.BYTECODE_PRIM_DIVIDE, BC.BYTECODE_PRIM_MOD, BC.BYTECODE_PRIM_MAKE_POINT, BC.BYTECODE_PRIM_BIT_SHIFT, //
@@ -964,7 +953,6 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         final Object receiver = pop(frame, --sp);
                         FrameAccess.externalizePCAndSP(frame, pc, sp);
                         push(frame, sp++, send(frame, currentPC, receiver, arg));
-                        pc = FrameAccess.internalizePC(frame, pc);
                         break;
                     }
                     case BC.BYTECODE_PRIM_AT_PUT, //
@@ -975,7 +963,6 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         final Object receiver = pop(frame, --sp);
                         FrameAccess.externalizePCAndSP(frame, pc, sp);
                         push(frame, sp++, send(frame, currentPC, receiver, arg1, arg2));
-                        pc = FrameAccess.internalizePC(frame, pc);
                         break;
                     }
                     default: {
@@ -1001,6 +988,13 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
         } catch (final AbstractStandardSendReturn r) {
             return handleReturnException(frame, currentPC, r);
         }
+    }
+
+    @EarlyInline
+    private void doStoreIntoReceiverVariable(final VirtualFrame frame, final int pc, final int nextPC, final int sp, final int index, final Object value) {
+        final Object receiver = FrameAccess.getReceiver(frame);
+        ACCESS.uncheckedCast(getData(pc), SqueakObjectAtPut0Node.class).execute(this, receiver, index, value);
+        checkForAndHandlePCModification(frame, pc, sp, index, receiver, nextPC);
     }
 
     static int longJump(final int b, final int nextByte) {
