@@ -55,6 +55,9 @@ public final class SqueakOptions {
     @Option(name = SqueakLanguageOptions.TESTING, category = OptionCategory.INTERNAL, stability = OptionStability.STABLE, help = SqueakLanguageOptions.TESTING_HELP, usageSyntax = "false|true")//
     public static final OptionKey<Boolean> Testing = new OptionKey<>(false);
 
+    @Option(name = SqueakLanguageOptions.WATCHDOG_TIMEOUT, category = OptionCategory.USER, stability = OptionStability.EXPERIMENTAL, help = SqueakLanguageOptions.WATCHDOG_TIMEOUT_HELP, usageSyntax = "number")//
+    public static final OptionKey<Integer> WatchdogTimeout = new OptionKey<>(0);
+
     private SqueakOptions() { // no instances
     }
 
@@ -63,7 +66,7 @@ public final class SqueakOptions {
     }
 
     public record SqueakContextOptions(String imagePath, String[] imageArguments, boolean printResourceSummary, boolean isHeadless, boolean disableInterruptHandler,
-                    int maxContextStackDepth, boolean disableStartup, boolean isTesting, boolean signalInputSemaphore) {
+                    int maxContextStackDepth, boolean disableStartup, boolean isTesting, boolean signalInputSemaphore, int watchdogTimeoutMinutes) {
         public static SqueakContextOptions create(final OptionValues options) {
             return new SqueakContextOptions(
                             options.get(ImagePath).isEmpty() ? null : options.get(ImagePath),
@@ -74,7 +77,8 @@ public final class SqueakOptions {
                             Math.max(1, options.get(ContextStackDepth)),
                             options.get(Startup),
                             options.get(Testing),
-                            options.get(SignalInputSemaphore));
+                            options.get(SignalInputSemaphore),
+                            options.get(WatchdogTimeout));
         }
     }
 }

@@ -31,7 +31,7 @@ import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_Quit;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_SetAppMetadataProperty;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_SetEventEnabled;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_SetHint;
-import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_WaitEvent;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_WaitEventTimeout;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
@@ -146,9 +146,13 @@ public final class PlatformEventLoop {
             final MemorySegment eventBuffer = SDL_Event.allocateArray(EVENT_FETCH_BATCH_SIZE, arena);
             final MemorySegment firstEvent = eventBuffer.asSlice(0, eventSize);
 
+            // Determine timeout: 16ms for CI, -1 (infinite) for GUI
+            final boolean isCI = Boolean.parseBoolean(System.getenv("CI"));
+            final int timeoutMS = isCI ? 16 : -1;
+
             while (isRunning) {
                 // Sleep until an event (or wakeUp() ping) arrives
-                if (SDL_WaitEvent(firstEvent)) {
+                if (SDL_WaitEventTimeout(firstEvent, timeoutMS)) {
                     eventHandler.accept(firstEvent);
                     // Peep additional events from the queue into our buffer
                     int eventsRead;

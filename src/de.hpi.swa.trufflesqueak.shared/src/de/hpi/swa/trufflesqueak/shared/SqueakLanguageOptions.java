@@ -43,6 +43,9 @@ public final class SqueakLanguageOptions {
     public static final String TESTING_HELP = "For internal testing purposes only";
     public static final String TRANSCRIPT_FORWARDING_FLAG = "--enable-transcript-forwarding";
     public static final String TRANSCRIPT_FORWARDING_HELP = "Forward stdio to Smalltalk transcript";
+    public static final String WATCHDOG_TIMEOUT = "watchdog-timeout";
+    public static final String WATCHDOG_TIMEOUT_FLAG = "--" + WATCHDOG_TIMEOUT;
+    public static final String WATCHDOG_TIMEOUT_HELP = "Timeout in minutes for the watchdog (0 = disabled)";
 
     private SqueakLanguageOptions() {
     }

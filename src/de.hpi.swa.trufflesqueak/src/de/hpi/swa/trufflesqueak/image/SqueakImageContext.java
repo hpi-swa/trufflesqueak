@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 
+import de.hpi.swa.trufflesqueak.util.DebugUtils;
 import org.graalvm.collections.UnmodifiableEconomicMap;
 
 import com.oracle.truffle.api.Assumption;
@@ -233,6 +234,11 @@ public final class SqueakImageContext {
         }
         assert homePath != null && homePath.exists() : "Home directory does not exist: " + homePath;
         initializeMethodCache();
+
+        final int timeoutMinutes = options.watchdogTimeoutMinutes();
+        if (timeoutMinutes > 0) {
+            DebugUtils.startWatchdog(this, timeoutMinutes);
+        }
     }
 
     public static SqueakImageContext get(final Node node) {
