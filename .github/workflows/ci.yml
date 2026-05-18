@@ -145,27 +145,43 @@ jobs:
       name: Run Cuis 7.3 tests on TruffleSqueak standalone
       run: |
         mx.trufflesqueak/utils.sh download-cuis-7-3-test-image
+        START_TIME=$SECONDS
         trufflesqueak ${{ env.VM_ARGS }} images/Cuis?.?-????.image -s src/image-tests/runCuisTests.st
+        ELAPSED_TIME=$(($SECONDS - $START_TIME))
+        FORMATTED_TIME=$(printf "%02d:%02d" $((ELAPSED_TIME / 60)) $((ELAPSED_TIME % 60)))
+        echo "::TEST_TIME_METRIC::${{ matrix.type }}::${{ matrix.os }}::CUIS_73::${FORMATTED_TIME}::"
       timeout-minutes: 10
       if: ${{ matrix.os == 'macos-14' }}
     - &run_cuis75_tests
       name: Run Cuis 7.5 tests on TruffleSqueak standalone
       run: |
         mx.trufflesqueak/utils.sh download-cuis-7-5-test-image
+        START_TIME=$SECONDS
         trufflesqueak ${{ env.VM_ARGS }} images/Cuis?.?-????.image -s src/image-tests/runCuisTests.st
+        ELAPSED_TIME=$(($SECONDS - $START_TIME))
+        FORMATTED_TIME=$(printf "%02d:%02d" $((ELAPSED_TIME / 60)) $((ELAPSED_TIME % 60)))
+        echo "::TEST_TIME_METRIC::${{ matrix.type }}::${{ matrix.os }}::CUIS_75::${FORMATTED_TIME}::"
       timeout-minutes: 10
       if: ${{ matrix.os == 'ubuntu-22.04' }}
     - &run_squeak_tests_windows
       name: Run Squeak/Smalltalk tests on TruffleSqueak standalone on Windows
       run: |
+        $sw = [System.Diagnostics.Stopwatch]::StartNew()
         trufflesqueak ${{ env.VM_ARGS }} images\test-64bit.image ..\src\image-tests\runSqueakTests.st
+        $sw.Stop()
+        $formatted = "{0:D2}:{1:D2}" -f $sw.Elapsed.Minutes, $sw.Elapsed.Seconds
+        Write-Host "::TEST_TIME_METRIC::${{ matrix.type }}::${{ matrix.os }}::SQUEAK::${formatted}::"
       timeout-minutes: 30
       if: ${{ matrix.os == 'windows-2022' }}
     - &run_squeak_tests_unix
       name: Run Squeak/Smalltalk tests on TruffleSqueak standalone
       shell: bash
       run: |
+        START_TIME=$SECONDS
         trufflesqueak ${{ env.VM_ARGS }} images/test-64bit.image $(pwd)/src/image-tests/runSqueakTests.st
+        ELAPSED_TIME=$(($SECONDS - $START_TIME))
+        FORMATTED_TIME=$(printf "%02d:%02d" $((ELAPSED_TIME / 60)) $((ELAPSED_TIME % 60)))
+        echo "::TEST_TIME_METRIC::${{ matrix.type }}::${{ matrix.os }}::SQUEAK::${FORMATTED_TIME}::"
       timeout-minutes: 30
       if: ${{ matrix.os != 'windows-2022' }}
     - &upload_test_image
@@ -380,12 +396,23 @@ jobs:
         ${{ env.EXEC }} trufflesqueak ${{ env.COMMON_VM_ARGS }} ${{ matrix.vm-args }} -- --evaluate "AWFYHarness run: #('Towers' ${{ matrix.iterations }} 1500)" 2>&1 | tee Towers.log
     - name: Analyze benchmark results
       run: |
-        jq -n --arg body "$(python mx.trufflesqueak/analyze_benchmarks.py ${{ matrix.kind }})" '{ body: $body }' |\
+        BODY=$(python mx.trufflesqueak/analyze_benchmarks.py ${{ matrix.kind }})
+        jq -n --arg body "$BODY" '{ body: $body }' |\
         curl -sL -X POST -d @- \
           -H "Content-Type: application/json" \
           -H "Accept: application/vnd.github.v3+json" \
           -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
           "https://api.github.com/repos/${{ github.repository }}/commits/${{ github.sha }}/comments"
+        # Post to PR (if running in a PR context)
+        if [ "${{ github.event_name }}" == "pull_request" ]; then
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          jq -n --arg body "$BODY" '{ body: $body }' |\
+          curl -sL -X POST -d @- \
+            -H "Content-Type: application/json" \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/issues/${PR_NUMBER}/comments"
+        fi
     - name: Upload Graal compiler dumps
       uses: *upload_artifact_action
       with:
@@ -394,4 +421,4 @@ jobs:
         if-no-files-found: ignore
         retention-days: 5
       if: ${{ matrix.kind == 'peak' }}
-  
+
