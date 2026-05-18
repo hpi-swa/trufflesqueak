@@ -125,11 +125,16 @@ public final class CheckForInterruptsState {
             return true;
         }
         if ((boolean) SHOULD_TRIGGER.getOpaque(this)) {
-            SHOULD_TRIGGER.setOpaque(this, false);
+            clearShouldTrigger();
             return false;
         } else {
             return true;
         }
+    }
+
+    @TruffleBoundary
+    private void clearShouldTrigger() {
+        SHOULD_TRIGGER.setOpaque(this, false);
     }
 
     /* Enable / disable interrupts */
