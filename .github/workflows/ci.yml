@@ -191,6 +191,7 @@ jobs:
         name: test-times-${{ matrix.type }}-${{ matrix.os }}
         path: test-times.env
         retention-days: 1
+        if-no-files-found: ignore
       if: ${{ always() }}
     - &upload_test_image
       name: Upload test image on failure
@@ -438,6 +439,7 @@ jobs:
       shell: bash
       run: |
         echo "### ⏱️ Test Durations Summary" >> $GITHUB_STEP_SUMMARY
+        FOOTNOTE_REQUIRED=false
         
         # Helper function to extract time safely based on type and os
         get_time() {
@@ -479,10 +481,10 @@ jobs:
           h_mac="macOS 14"
           h_win="Windows 2022"
         
-          if [ "$(has_warnings "$type" "ubuntu-22.04")" == "true" ]; then h_u22="${h_u22} †"; fi
-          if [ "$(has_warnings "$type" "ubuntu-22.04-arm")" == "true" ]; then h_arm="${h_arm} †"; fi
-          if [ "$(has_warnings "$type" "macos-14")" == "true" ]; then h_mac="${h_mac} †"; fi
-          if [ "$(has_warnings "$type" "windows-2022")" == "true" ]; then h_win="${h_win} †"; fi
+          if [ "$(has_warnings "$type" "ubuntu-22.04")" == "true" ]; then h_u22="${h_u22} †"; FOOTNOTE_REQUIRED=true; fi
+          if [ "$(has_warnings "$type" "ubuntu-22.04-arm")" == "true" ]; then h_arm="${h_arm} †"; FOOTNOTE_REQUIRED=true; fi
+          if [ "$(has_warnings "$type" "macos-14")" == "true" ]; then h_mac="${h_mac} †"; FOOTNOTE_REQUIRED=true; fi
+          if [ "$(has_warnings "$type" "windows-2022")" == "true" ]; then h_win="${h_win} †"; FOOTNOTE_REQUIRED=true; fi
         
           echo "| Test Suite | ${h_u22} | ${h_arm} | ${h_mac} | ${h_win} |" >> $GITHUB_STEP_SUMMARY
           echo "| :--- | :---: | :---: | :---: | :---: |" >> $GITHUB_STEP_SUMMARY
@@ -508,7 +510,9 @@ jobs:
         done
         
         # Add a unified footnote explaining the column symbol
-        echo "*† Indicates that GraalVM compilation warnings or failure diagnostics were generated on this platform environment during the run.*" >> $GITHUB_STEP_SUMMARY
+        if [ "$FOOTNOTE_REQUIRED" = true ]; then
+          echo "*† Indicates that GraalVM compilation warnings or failure diagnostics were generated on this platform environment during the run.*" >> $GITHUB_STEP_SUMMARY
+        fi
     - name: Cleanup temporary artifacts
       uses: geekyeggo/delete-artifact@176a747ab7e287e3ff4787bf8a148716375ca118
       with:
