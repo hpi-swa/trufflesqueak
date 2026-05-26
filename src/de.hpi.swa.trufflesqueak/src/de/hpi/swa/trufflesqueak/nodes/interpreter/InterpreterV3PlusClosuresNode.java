@@ -38,6 +38,8 @@ import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1NodeFactory.Disp
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2NodeFactory.Dispatch2NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchNaryNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchSuperNaryNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchValue0NodeGen;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchValue1NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsNode.CheckForInterruptsInLoopNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimBitAndNode;
@@ -245,7 +247,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     pc++;
                     break;
                 }
-                case BC.BYTECODE_PRIM_SIZE, BC.BYTECODE_PRIM_NEXT, BC.BYTECODE_PRIM_AT_END, BC.BYTECODE_PRIM_VALUE, BC.BYTECODE_PRIM_NEW, BC.BYTECODE_PRIM_POINT_X, BC.BYTECODE_PRIM_POINT_Y: {
+                case BC.BYTECODE_PRIM_SIZE, BC.BYTECODE_PRIM_NEXT, BC.BYTECODE_PRIM_AT_END, BC.BYTECODE_PRIM_NEW, BC.BYTECODE_PRIM_POINT_X, BC.BYTECODE_PRIM_POINT_Y: {
                     setData(currentPC, insert(Dispatch0NodeGen.create(image.getSpecialSelector(b - BC.BYTECODE_PRIM_ADD))));
                     break;
                 }
@@ -255,12 +257,20 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                 }
                 case BC.BYTECODE_PRIM_ADD, BC.BYTECODE_PRIM_SUBTRACT, BC.BYTECODE_PRIM_LESS_THAN, BC.BYTECODE_PRIM_GREATER_THAN, BC.BYTECODE_PRIM_LESS_OR_EQUAL, BC.BYTECODE_PRIM_GREATER_OR_EQUAL, //
                     BC.BYTECODE_PRIM_EQUAL, BC.BYTECODE_PRIM_NOT_EQUAL, BC.BYTECODE_PRIM_MULTIPLY, BC.BYTECODE_PRIM_DIVIDE, BC.BYTECODE_PRIM_MOD, BC.BYTECODE_PRIM_MAKE_POINT, BC.BYTECODE_PRIM_BIT_SHIFT, BC.BYTECODE_PRIM_DIV, //
-                    BC.BYTECODE_PRIM_BIT_AND, BC.BYTECODE_PRIM_BIT_OR, BC.BYTECODE_PRIM_AT, BC.BYTECODE_PRIM_NEXT_PUT, BC.BYTECODE_PRIM_VALUE_WITH_ARG, BC.BYTECODE_PRIM_DO, BC.BYTECODE_PRIM_NEW_WITH_ARG: {
+                    BC.BYTECODE_PRIM_BIT_AND, BC.BYTECODE_PRIM_BIT_OR, BC.BYTECODE_PRIM_AT, BC.BYTECODE_PRIM_NEXT_PUT, BC.BYTECODE_PRIM_DO, BC.BYTECODE_PRIM_NEW_WITH_ARG: {
                     setData(currentPC, insert(Dispatch1NodeGen.create(image.getSpecialSelector(b - BC.BYTECODE_PRIM_ADD))));
                     break;
                 }
                 case BC.BYTECODE_PRIM_IDENTICAL, BC.BYTECODE_PRIM_NOT_IDENTICAL: {
                     setData(currentPC, insert(SqueakObjectIdentityNodeGen.create()));
+                    break;
+                }
+                case BC.BYTECODE_PRIM_VALUE: {
+                    setData(currentPC, insert(DispatchValue0NodeGen.create(image.getSpecialSelector(b - BC.BYTECODE_PRIM_ADD))));
+                    break;
+                }
+                case BC.BYTECODE_PRIM_VALUE_WITH_ARG: {
+                    setData(currentPC, insert(DispatchValue1NodeGen.create(image.getSpecialSelector(b - BC.BYTECODE_PRIM_ADD))));
                     break;
                 }
                 case BC.BYTECODE_PRIM_AT_PUT: {
@@ -937,7 +947,13 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         push(frame, sp++, !ACCESS.uncheckedCast(getData(currentPC), SqueakObjectIdentityNodeGen.class).execute(this, receiver, arg));
                         break;
                     }
-                    case BC.BYTECODE_PRIM_SIZE, BC.BYTECODE_PRIM_NEXT, BC.BYTECODE_PRIM_AT_END, BC.BYTECODE_PRIM_VALUE, BC.BYTECODE_PRIM_NEW, BC.BYTECODE_PRIM_POINT_X, BC.BYTECODE_PRIM_POINT_Y, //
+                    case BC.BYTECODE_PRIM_VALUE: {
+                        final Object receiver = pop(frame, --sp);
+                        FrameAccess.externalizePCAndSP(frame, pc, sp);
+                        push(frame, sp++, sendValue(frame, currentPC, receiver));
+                        break;
+                    }
+                    case BC.BYTECODE_PRIM_SIZE, BC.BYTECODE_PRIM_NEXT, BC.BYTECODE_PRIM_AT_END, BC.BYTECODE_PRIM_NEW, BC.BYTECODE_PRIM_POINT_X, BC.BYTECODE_PRIM_POINT_Y, //
                         BC.SEND_LIT_SEL0_0, BC.SEND_LIT_SEL0_1, BC.SEND_LIT_SEL0_2, BC.SEND_LIT_SEL0_3, BC.SEND_LIT_SEL0_4, BC.SEND_LIT_SEL0_5, BC.SEND_LIT_SEL0_6, BC.SEND_LIT_SEL0_7, //
                         BC.SEND_LIT_SEL0_8, BC.SEND_LIT_SEL0_9, BC.SEND_LIT_SEL0_A, BC.SEND_LIT_SEL0_B, BC.SEND_LIT_SEL0_C, BC.SEND_LIT_SEL0_D, BC.SEND_LIT_SEL0_E, BC.SEND_LIT_SEL0_F: {
                         final Object receiver = pop(frame, --sp);
@@ -946,13 +962,20 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         break;
                     }
                     case BC.BYTECODE_PRIM_MULTIPLY, BC.BYTECODE_PRIM_DIVIDE, BC.BYTECODE_PRIM_MOD, BC.BYTECODE_PRIM_MAKE_POINT, BC.BYTECODE_PRIM_BIT_SHIFT, //
-                        BC.BYTECODE_PRIM_DIV, BC.BYTECODE_PRIM_AT, BC.BYTECODE_PRIM_NEXT_PUT, BC.BYTECODE_PRIM_VALUE_WITH_ARG, BC.BYTECODE_PRIM_DO, BC.BYTECODE_PRIM_NEW_WITH_ARG, //
+                        BC.BYTECODE_PRIM_DIV, BC.BYTECODE_PRIM_AT, BC.BYTECODE_PRIM_NEXT_PUT, BC.BYTECODE_PRIM_DO, BC.BYTECODE_PRIM_NEW_WITH_ARG, //
                         BC.SEND_LIT_SEL1_0, BC.SEND_LIT_SEL1_1, BC.SEND_LIT_SEL1_2, BC.SEND_LIT_SEL1_3, BC.SEND_LIT_SEL1_4, BC.SEND_LIT_SEL1_5, BC.SEND_LIT_SEL1_6, BC.SEND_LIT_SEL1_7, //
                         BC.SEND_LIT_SEL1_8, BC.SEND_LIT_SEL1_9, BC.SEND_LIT_SEL1_A, BC.SEND_LIT_SEL1_B, BC.SEND_LIT_SEL1_C, BC.SEND_LIT_SEL1_D, BC.SEND_LIT_SEL1_E, BC.SEND_LIT_SEL1_F: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = pop(frame, --sp);
                         FrameAccess.externalizePCAndSP(frame, pc, sp);
                         push(frame, sp++, send(frame, currentPC, receiver, arg));
+                        break;
+                    }
+                    case BC.BYTECODE_PRIM_VALUE_WITH_ARG: {
+                        final Object arg = pop(frame, --sp);
+                        final Object receiver = pop(frame, --sp);
+                        FrameAccess.externalizePCAndSP(frame, pc, sp);
+                        push(frame, sp++, sendValueWithArg(frame, currentPC, receiver, arg));
                         break;
                     }
                     case BC.BYTECODE_PRIM_AT_PUT, //
