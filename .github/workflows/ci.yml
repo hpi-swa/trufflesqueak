@@ -149,7 +149,7 @@ jobs:
         trufflesqueak ${{ env.VM_ARGS }} images/Cuis?.?-????.image -s src/image-tests/runCuisTests.st
         ELAPSED_TIME=$(($SECONDS - $START_TIME))
         FORMATTED_TIME=$(printf "%02d:%02d" $((ELAPSED_TIME / 60)) $((ELAPSED_TIME % 60)))
-        echo "CUIS_73=$FORMATTED_TIME" >> test-times.env
+        echo "::TEST_TIME_METRIC::${{ matrix.type }}::${{ matrix.os }}::CUIS_73::${FORMATTED_TIME}::"
       timeout-minutes: 10
       if: ${{ matrix.os == 'macos-14' }}
     - &run_cuis75_tests
@@ -160,7 +160,7 @@ jobs:
         trufflesqueak ${{ env.VM_ARGS }} images/Cuis?.?-????.image -s src/image-tests/runCuisTests.st
         ELAPSED_TIME=$(($SECONDS - $START_TIME))
         FORMATTED_TIME=$(printf "%02d:%02d" $((ELAPSED_TIME / 60)) $((ELAPSED_TIME % 60)))
-        echo "CUIS_75=$FORMATTED_TIME" >> test-times.env
+        echo "::TEST_TIME_METRIC::${{ matrix.type }}::${{ matrix.os }}::CUIS_75::${FORMATTED_TIME}::"
       timeout-minutes: 10
       if: ${{ matrix.os == 'ubuntu-22.04' }}
     - &run_squeak_tests_windows
@@ -170,7 +170,7 @@ jobs:
         trufflesqueak ${{ env.VM_ARGS }} images\test-64bit.image ..\src\image-tests\runSqueakTests.st
         $sw.Stop()
         $formatted = "{0:D2}:{1:D2}" -f $sw.Elapsed.Minutes, $sw.Elapsed.Seconds
-        "SQUEAK=$formatted" | Out-File -FilePath test-times.env -Append -Encoding utf8
+        Write-Host "::TEST_TIME_METRIC::${{ matrix.type }}::${{ matrix.os }}::SQUEAK::${formatted}::"
       timeout-minutes: 30
       if: ${{ matrix.os == 'windows-2022' }}
     - &run_squeak_tests_unix
@@ -181,18 +181,9 @@ jobs:
         trufflesqueak ${{ env.VM_ARGS }} images/test-64bit.image $(pwd)/src/image-tests/runSqueakTests.st
         ELAPSED_TIME=$(($SECONDS - $START_TIME))
         FORMATTED_TIME=$(printf "%02d:%02d" $((ELAPSED_TIME / 60)) $((ELAPSED_TIME % 60)))
-        echo "SQUEAK=$FORMATTED_TIME" >> test-times.env
+        echo "::TEST_TIME_METRIC::${{ matrix.type }}::${{ matrix.os }}::SQUEAK::${FORMATTED_TIME}::"
       timeout-minutes: 30
       if: ${{ matrix.os != 'windows-2022' }}
-    - &upload_test_times
-      name: Upload Test Times
-      uses: actions/upload-artifact@v7
-      with:
-        name: test-times-${{ matrix.type }}-${{ matrix.os }}
-        path: test-times.env
-        retention-days: 1
-        if-no-files-found: ignore
-      if: ${{ always() }}
     - &upload_test_image
       name: Upload test image on failure
       uses: *upload_artifact_action
@@ -323,7 +314,6 @@ jobs:
     - *run_cuis75_tests
     - *run_squeak_tests_windows
     - *run_squeak_tests_unix
-    - *upload_test_times
     - *upload_test_image
     - *upload_graal_dumps
 
@@ -424,98 +414,4 @@ jobs:
         if-no-files-found: ignore
         retention-days: 5
       if: ${{ matrix.kind == 'peak' }}
-
-  test-summary:
-    name: Generate Test Summary
-    needs: build-native-standalone # Wait for the matrix jobs to finish
-    runs-on: ubuntu-22.04
-    if: always()
-    steps:
-    - name: Download all test times
-      uses: actions/download-artifact@v7
-      with:
-        path: all-times
-    - name: Build Unified Markdown Table
-      shell: bash
-      run: |
-        echo "### ⏱️ Test Durations Summary" >> $GITHUB_STEP_SUMMARY
-        FOOTNOTE_REQUIRED=false
-        
-        # Helper function to extract time safely based on type and os
-        get_time() {
-          local type=$1
-          local os=$2
-          local test_type=$3
-          local file="all-times/test-times-${type}-${os}/test-times.env"
-          if [[ -f "$file" ]]; then
-            val=$(grep "^${test_type}=" "$file" | cut -d'=' -f2)
-            val="${val//$'\r'/}"
-            echo "${val:-—}"
-          else
-            echo "—"
-          fi
-        }
-        
-        # Helper function to check if GraalVM dumps/warnings occurred for a specific run
-        has_warnings() {
-          local type=$1
-          local os=$2
-          if [ -d "all-times/graal_dumps-${type}-${os}" ] && [ "$(ls -A all-times/graal_dumps-${type}-${os} 2>/dev/null)" ]; then
-            echo "true"
-          else
-            echo "false"
-          fi
-        }
-        
-        # Loop through both JVM and Native (AOT) types
-        for type in jvm native; do
-          if [ "$type" == "jvm" ]; then
-            echo "#### JVM Standalone" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "#### Native Standalone (AOT)" >> $GITHUB_STEP_SUMMARY
-          fi
-        
-          # Dynamically determine headers with daggers if warnings occurred anywhere in that OS platform run
-          h_u22="Ubuntu 22.04"
-          h_arm="Ubuntu ARM"
-          h_mac="macOS 14"
-          h_win="Windows 2022"
-        
-          if [ "$(has_warnings "$type" "ubuntu-22.04")" == "true" ]; then h_u22="${h_u22} †"; FOOTNOTE_REQUIRED=true; fi
-          if [ "$(has_warnings "$type" "ubuntu-22.04-arm")" == "true" ]; then h_arm="${h_arm} †"; FOOTNOTE_REQUIRED=true; fi
-          if [ "$(has_warnings "$type" "macos-14")" == "true" ]; then h_mac="${h_mac} †"; FOOTNOTE_REQUIRED=true; fi
-          if [ "$(has_warnings "$type" "windows-2022")" == "true" ]; then h_win="${h_win} †"; FOOTNOTE_REQUIRED=true; fi
-        
-          echo "| Test Suite | ${h_u22} | ${h_arm} | ${h_mac} | ${h_win} |" >> $GITHUB_STEP_SUMMARY
-          echo "| :--- | :---: | :---: | :---: | :---: |" >> $GITHUB_STEP_SUMMARY
-        
-          # Iterate through tests and build the rows
-          for test in SQUEAK CUIS_73 CUIS_75; do
-            case $test in
-              SQUEAK) name="**Squeak / Smalltalk**" ;;
-              CUIS_73) name="**Cuis 7.3**" ;;
-              CUIS_75) name="**Cuis 7.5**" ;;
-            esac
-        
-            # Extract clean durations
-            u22=$(get_time "$type" "ubuntu-22.04" "$test")
-            u22arm=$(get_time "$type" "ubuntu-22.04-arm" "$test")
-            mac=$(get_time "$type" "macos-14" "$test")
-            win=$(get_time "$type" "windows-2022" "$test")
-        
-            echo "| ${name} | $u22 | $u22arm | $mac | $win |" >> $GITHUB_STEP_SUMMARY
-          done
-        
-          echo "" >> $GITHUB_STEP_SUMMARY
-        done
-        
-        # Add a unified footnote explaining the column symbol
-        if [ "$FOOTNOTE_REQUIRED" = true ]; then
-          echo "*† Indicates that GraalVM compilation warnings or failure diagnostics were generated on this platform environment during the run.*" >> $GITHUB_STEP_SUMMARY
-        fi
-    - name: Cleanup temporary artifacts
-      uses: geekyeggo/delete-artifact@176a747ab7e287e3ff4787bf8a148716375ca118
-      with:
-        name: test-times-*
-        failOnError: false
 
