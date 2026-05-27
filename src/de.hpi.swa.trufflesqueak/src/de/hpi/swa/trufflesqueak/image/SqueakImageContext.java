@@ -235,10 +235,7 @@ public final class SqueakImageContext {
         assert homePath != null && homePath.exists() : "Home directory does not exist: " + homePath;
         initializeMethodCache();
 
-        final int timeoutMinutes = options.watchdogTimeoutMinutes();
-        if (timeoutMinutes > 0) {
-            DebugUtils.startWatchdog(this, timeoutMinutes);
-        }
+        DebugUtils.registerContext(this);
     }
 
     public static SqueakImageContext get(final Node node) {

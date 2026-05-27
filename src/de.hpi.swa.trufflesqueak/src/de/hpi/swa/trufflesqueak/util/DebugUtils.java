@@ -11,8 +11,11 @@ import java.lang.management.LockInfo;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MonitorInfo;
 import java.lang.management.ThreadInfo;
-import java.lang.management.ThreadMXBean;
+import java.lang.ref.WeakReference;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.Truffle;
@@ -31,13 +34,20 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SEMAPHORE;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
+import de.hpi.swa.trufflesqueak.shared.WatchdogBridge;
 
 /**
  * Helper functions for debugging purposes.
  */
 public final class DebugUtils {
     public static final boolean UNDER_DEBUG = isDebugging(ManagementFactory.getRuntimeMXBean().getInputArguments());
-    private static final String WATCHDOG_THREAD_NAME = "TruffleSqueakCheckForInterrupts";
+
+    private static final Set<WeakReference<SqueakImageContext>> CONTEXTS = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
+    public static void registerContext(final SqueakImageContext image) {
+        CONTEXTS.add(new WeakReference<>(image));
+        WatchdogBridge.setAction(DebugUtils::dumpState);
+    }
 
     private static boolean isDebugging(final List<String> arguments) {
         for (final String argument : arguments) {
@@ -51,8 +61,35 @@ public final class DebugUtils {
     }
 
     public static void dumpState() {
-        final SqueakImageContext image = SqueakImageContext.getSlow();
-        dumpState(image);
+        CompilerAsserts.neverPartOfCompilation("For debugging purposes only");
+        MiscUtils.systemGC();
+        final StringBuilder sb = new StringBuilder("Thread dump");
+        dumpThreads(sb);
+        println(sb.toString());
+
+        int contextIndex = 1;
+        for (final WeakReference<SqueakImageContext> ref : CONTEXTS) {
+            final SqueakImageContext image = ref.get();
+            if (image != null) {
+                // Temporarily bind the Truffle context to the watchdog thread
+                Object prevTruffleContext = null;
+                try {
+                    prevTruffleContext = image.env.getContext().enter(null);
+                } catch (final Throwable t) {
+                    println("-> Warning: Could not bind Truffle Context.");
+                }
+
+                try {
+                    println("\n== Squeak Context State (" + contextIndex++ + "/" + CONTEXTS.size() + ") =======================");
+                    println(currentState(image));
+                } finally {
+                    // Always cleanly leave the context
+                    if (prevTruffleContext != null) {
+                        image.env.getContext().leave(null, prevTruffleContext);
+                    }
+                }
+            }
+        }
     }
 
     public static void dumpState(final SqueakImageContext image) {
@@ -253,77 +290,6 @@ public final class DebugUtils {
                 current = (ContextObject) sender;
             }
         }
-    }
-
-    /* Watchdog */
-
-    public static void startWatchdog(final SqueakImageContext image, final int timeoutMinutes) {
-        final Thread watchdog = new Thread(() -> {
-            try {
-                final long sleepMillis = timeoutMinutes * 60L * 1000L;
-                Thread.sleep(sleepMillis);
-
-                println("\n\n==========================================================");
-                println("[!!!] WATCHDOG TIMEOUT TRIGGERED: " + timeoutMinutes + " MINUTES REACHED [!!!]");
-                println("==========================================================\n");
-
-                try {
-                    println("Attempting state dump (JVM + Squeak)...");
-
-                    Object prevTruffleContext = null;
-                    try {
-                        prevTruffleContext = image.env.getContext().enter(null);
-                    } catch (Throwable t) {
-                        println("-> Warning: Could not bind Truffle Context.");
-                    }
-
-                    try {
-                        // This handles both the JVM thread dump AND the Squeak process dump
-                        DebugUtils.dumpState(image);
-                    } finally {
-                        if (prevTruffleContext != null) {
-                            image.env.getContext().leave(null, prevTruffleContext);
-                        }
-                    }
-
-                } catch (Throwable t) {
-                    println("-> Primary state dump failed: " + t.toString());
-                    t.printStackTrace();
-
-                    println("\n=======================================================");
-                    println("FALLBACK: FORCING RAW JVM THREAD DUMP...");
-                    println("=======================================================\n");
-
-                    // Fallback: Only dump raw JVM threads if DebugUtils crashed
-                    final ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
-                    final ThreadInfo[] threadInfos = threadMXBean.dumpAllThreads(true, true);
-
-                    for (ThreadInfo info : threadInfos) {
-                        print(info.toString());
-                    }
-                }
-
-                println("\n=======================================================");
-                println("END OF DUMP. KILLING PROCESS.");
-                println("=======================================================\n");
-
-                // Hard exit to fail the CI step immediately
-                System.exit(1);
-
-            } catch (InterruptedException e) {
-                // The VM is shutting down cleanly before the timeout, let the watchdog die
-            }
-        }, WATCHDOG_THREAD_NAME);
-
-        // Daemon ensures it won't keep the JVM alive if tests finish early
-        watchdog.setDaemon(true);
-        watchdog.start();
-    }
-
-    private static void print(final String message) {
-        // Checkstyle: stop
-        System.out.print(message);
-        // Checkstyle: resume
     }
 
     private static void println(final Object object) {

@@ -94,7 +94,7 @@ public final class PlatformEventLoop {
         }
     }
 
-    public static void run() {
+    public static void run(final int sdlPollTimeoutMilliseconds) {
         try {
             startLatch.await();
         } catch (InterruptedException e) {
@@ -146,9 +146,7 @@ public final class PlatformEventLoop {
             final MemorySegment eventBuffer = SDL_Event.allocateArray(EVENT_FETCH_BATCH_SIZE, arena);
             final MemorySegment firstEvent = eventBuffer.asSlice(0, eventSize);
 
-            // Determine timeout: 16ms for CI, -1 (infinite) for GUI
-            final boolean isCI = Boolean.parseBoolean(System.getenv("CI"));
-            final int timeoutMS = isCI ? 16 : -1;
+            final int timeoutMS = sdlPollTimeoutMilliseconds > 0 ? sdlPollTimeoutMilliseconds : -1;
 
             while (isRunning) {
                 // Sleep until an event (or wakeUp() ping) arrives

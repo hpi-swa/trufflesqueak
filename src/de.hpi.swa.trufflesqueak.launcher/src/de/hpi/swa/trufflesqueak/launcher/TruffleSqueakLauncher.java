@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.IntConsumer;
 
 import org.graalvm.launcher.AbstractLanguageLauncher;
 import org.graalvm.maven.downloader.Main;
@@ -30,13 +31,12 @@ import de.hpi.swa.trufflesqueak.shared.PlatformEventLoop;
 import de.hpi.swa.trufflesqueak.shared.SqueakImageLocator;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageOptions;
+import de.hpi.swa.trufflesqueak.shared.WatchdogBridge;
 
 public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
     private static final String ENGINE_MODE_OPTION = "engine.Mode";
     private static final String ENGINE_MODE_LATENCY = "latency";
     private static final String ENGINE_DYNAMIC_COMPILATION_THRESHOLDS_OPTION = "engine.DynamicCompilationThresholds";
-
-    private static final String[] EMPTY_STRING_ARRAY = new String[0];
 
     private boolean headless;
     private boolean printImagePath;
@@ -47,6 +47,8 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
     private boolean enableTranscriptForwarding;
     private boolean addEnableEngineModeLatency = true;
     private boolean addDisableDynamicCompilationThresholds = true;
+    private int sdlPollTimeoutMilliseconds;
+    private int watchdogTimeoutMinutes;
 
     public static void main(final String[] arguments) throws RuntimeException {
         new TruffleSqueakLauncher().launch(arguments);
@@ -84,6 +86,10 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
                 quiet = true;
             } else if (SqueakLanguageOptions.TRANSCRIPT_FORWARDING_FLAG.equals(arg)) {
                 enableTranscriptForwarding = true;
+            } else if (arg.startsWith(SqueakLanguageOptions.WATCHDOG_TIMEOUT_FLAG)) {
+                i = handleIntOption(arguments, i, arg, SqueakLanguageOptions.WATCHDOG_TIMEOUT_FLAG, val -> watchdogTimeoutMinutes = val, unrecognized);
+            } else if (arg.startsWith(SqueakLanguageOptions.SDL_POLL_TIMEOUT_FLAG)) {
+                i = handleIntOption(arguments, i, arg, SqueakLanguageOptions.SDL_POLL_TIMEOUT_FLAG, val -> sdlPollTimeoutMilliseconds = val, unrecognized);
             } else {
                 // Check for options explicitly set by user
                 if (arg.contains(ENGINE_MODE_OPTION)) {
@@ -97,8 +103,44 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
         return unrecognized;
     }
 
+    /**
+     * Handles parsing a non-negative integer option, routing it to 'unrecognized' if it is a false prefix match.
+     * @return the updated argument index 'i'
+     */
+    private int handleIntOption(final List<String> arguments, final int i, final String arg, final String flagName, final IntConsumer setter, final List<String> unrecognized) {
+        int index = i;
+        final String targetValue;
+
+        if (arg.equals(flagName)) {
+            if (index + 1 < arguments.size()) {
+                targetValue = arguments.get(++index);
+            } else {
+                throw abort("Missing value for option " + arg);
+            }
+        } else if (arg.startsWith(flagName + "=")) {
+            targetValue = arg.substring(flagName.length() + 1);
+        } else {
+            // Fallback for malformed options starting with the same prefix.
+            // Add to unrecognized and return the unmodified index.
+            unrecognized.add(arg);
+            return index;
+        }
+
+        try {
+            final int parsedValue = Integer.parseInt(targetValue);
+            if (parsedValue < 0) {
+                throw abort(String.format("Value '%d' for option '%s' cannot be negative", parsedValue, arg));
+            }
+            setter.accept(parsedValue);
+        } catch (final NumberFormatException e) {
+            throw abort(String.format("Invalid integer value '%s' for option '%s'", targetValue, arg));
+        }
+
+        return index;
+    }
+
     private static String[] getRemainingArguments(final List<String> arguments, final int index) {
-        return arguments.subList(index + 1, arguments.size()).toArray(new String[0]);
+        return arguments.subList(index + 1, arguments.size()).toArray(String[]::new);
     }
 
     @Override
@@ -122,14 +164,17 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
         contextBuilder.arguments(getLanguageId(), imageArguments);
         final String runtimeName = getRuntimeName();
         final boolean hasGraalCompiler = runtimeName.contains("Graal");
-        addEnableEngineModeLatency = addEnableEngineModeLatency && hasGraalCompiler;
-        if (addEnableEngineModeLatency) {
+
+        final boolean enableEngineModeLatency = addEnableEngineModeLatency && hasGraalCompiler;
+        if (enableEngineModeLatency) {
             contextBuilder.option(ENGINE_MODE_OPTION, ENGINE_MODE_LATENCY);
         }
-        addDisableDynamicCompilationThresholds = addDisableDynamicCompilationThresholds && hasGraalCompiler;
-        if (addDisableDynamicCompilationThresholds) {
+
+        final boolean disableDynamicCompilationThresholds = addDisableDynamicCompilationThresholds && hasGraalCompiler;
+        if (disableDynamicCompilationThresholds) {
             contextBuilder.option(ENGINE_DYNAMIC_COMPILATION_THRESHOLDS_OPTION, Boolean.toString(false));
         }
+
         contextBuilder.allowAllAccess(true);
         final SqueakTranscriptForwarder out;
         final SqueakTranscriptForwarder err;
@@ -143,8 +188,11 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
             err = null;
         }
         try (Context context = contextBuilder.build()) {
+            if (watchdogTimeoutMinutes > 0) {
+                startWatchdog(watchdogTimeoutMinutes);
+            }
             if (!quiet) {
-                final String engineModeSuffix = addEnableEngineModeLatency ? " (" + ENGINE_MODE_LATENCY + " mode)" : "";
+                final String engineModeSuffix = enableEngineModeLatency ? " (" + ENGINE_MODE_LATENCY + " mode)" : "";
                 println(String.format("[trufflesqueak] Running %s on %s%s...", new File(imagePath).getName(), runtimeName, engineModeSuffix));
             }
             if (sourceCode != null) {
@@ -201,7 +249,7 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
             }
         }, "TruffleSqueakVM-Thread");
         vmThread.start();
-        PlatformEventLoop.run();
+        PlatformEventLoop.run(sdlPollTimeoutMilliseconds);
         System.exit(vmExitCode[0]);
     }
 
@@ -224,11 +272,13 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
         launcherOption(SqueakLanguageOptions.HEADLESS_FLAG, SqueakLanguageOptions.HEADLESS_HELP);
         launcherOption(SqueakLanguageOptions.PRINT_IMAGE_PATH_FLAG, SqueakLanguageOptions.PRINT_IMAGE_PATH_HELP);
         launcherOption(SqueakLanguageOptions.QUIET_FLAG, SqueakLanguageOptions.QUIET_HELP);
+        launcherOption(SqueakLanguageOptions.SDL_POLL_TIMEOUT_FLAG + " <milliseconds>", SqueakLanguageOptions.SDL_POLL_TIMEOUT_HELP);
+        launcherOption(SqueakLanguageOptions.WATCHDOG_TIMEOUT_FLAG + " <minutes>", SqueakLanguageOptions.WATCHDOG_TIMEOUT_HELP);
     }
 
     @Override
     protected void collectArguments(final Set<String> options) {
-        options.addAll(List.of(SqueakLanguageOptions.CODE_FLAG, SqueakLanguageOptions.CODE_FLAG_SHORT, SqueakLanguageOptions.HEADLESS_FLAG,
+        options.addAll(List.of(SqueakLanguageOptions.WATCHDOG_TIMEOUT_FLAG, SqueakLanguageOptions.CODE_FLAG, SqueakLanguageOptions.CODE_FLAG_SHORT, SqueakLanguageOptions.HEADLESS_FLAG,
                         SqueakLanguageOptions.QUIET_FLAG, SqueakLanguageOptions.PRINT_IMAGE_PATH_FLAG, SqueakLanguageOptions.RESOURCE_SUMMARY_FLAG, SqueakLanguageOptions.TRANSCRIPT_FORWARDING_FLAG));
     }
 
@@ -266,7 +316,7 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
         }
         args.addAll(arguments);
         try {
-            Main.main(args.toArray(EMPTY_STRING_ARRAY));
+            Main.main(args.toArray(String[]::new));
         } catch (Exception e) {
             throw new Error(e);
         }
@@ -279,5 +329,46 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
             throw new UnsupportedOperationException("Expected system property '" + property + "' to be set");
         }
         return value;
+    }
+
+    /* Watchdog support */
+
+    private void startWatchdog(final int timeoutMinutes) {
+        final Thread watchdog = new Thread(() -> {
+            try {
+                final long sleepMillis = timeoutMinutes * 60L * 1000L;
+                Thread.sleep(sleepMillis);
+
+                println("\n\n==========================================================");
+                println("[!!!] WATCHDOG TIMEOUT TRIGGERED: " + timeoutMinutes + " MINUTES REACHED [!!!]");
+                println("==========================================================\n");
+
+                try {
+                    println("Attempting state dump (JVM + Squeak)...");
+                    WatchdogBridge.triggerAction();
+                } catch (final Throwable t) {
+                    println("-> Primary state dump failed: " + t.getMessage());
+                    println("\n=======================================================");
+                    println("FALLBACK: FORCING RAW JVM THREAD DUMP...");
+                    println("=======================================================\n");
+
+                    final java.lang.management.ThreadMXBean threadMXBean = java.lang.management.ManagementFactory.getThreadMXBean();
+                    for (final java.lang.management.ThreadInfo info : threadMXBean.dumpAllThreads(true, true)) {
+                        println(info.toString());
+                    }
+                }
+
+                println("\n=======================================================");
+                println("END OF DUMP. KILLING PROCESS.");
+                println("=======================================================\n");
+                System.exit(1);
+
+            } catch (final InterruptedException e) {
+                // The VM is shutting down cleanly before the timeout, let the watchdog die
+            }
+        }, "TruffleSqueakWatchdog");
+
+        watchdog.setDaemon(true);
+        watchdog.start();
     }
 }
