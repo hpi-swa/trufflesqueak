@@ -78,7 +78,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         protected final Object[] createFrameArguments(final VirtualFrame frame, final BlockClosureObject closure, final Object arg1, final Object arg2, final Object arg3, final Object arg4,
-                                                      final Object arg5) {
+                        final Object arg5) {
             final Object[] frameArguments = FrameAccess.newClosureArgumentsTemplate(closure, getOrCreateContextWithoutFrameNode.execute(frame), 5);
             frameArguments[FrameAccess.getArgumentStartIndex() + 0] = arg1;
             frameArguments[FrameAccess.getArgumentStartIndex() + 1] = arg2;
@@ -113,11 +113,13 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {201, 221})
-    public abstract static class PrimClosureValue0Node extends AbstractPrimClosureValue0Node {}
+    public abstract static class PrimClosureValue0Node extends AbstractPrimClosureValue0Node {
+    }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {207, 209})
-    public abstract static class PrimFullClosureValue0Node extends AbstractPrimClosureValue0Node {}
+    public abstract static class PrimFullClosureValue0Node extends AbstractPrimClosureValue0Node {
+    }
 
     // --- Arity 1 ---
 
@@ -143,11 +145,13 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 202)
-    public abstract static class PrimClosureValue1Node extends AbstractPrimClosureValue1Node {}
+    public abstract static class PrimClosureValue1Node extends AbstractPrimClosureValue1Node {
+    }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {207, 209})
-    public abstract static class PrimFullClosureValue1Node extends AbstractPrimClosureValue1Node {}
+    public abstract static class PrimFullClosureValue1Node extends AbstractPrimClosureValue1Node {
+    }
 
     // --- Arity 2 ---
 
@@ -173,11 +177,13 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 203)
-    public abstract static class PrimClosureValue2Node extends AbstractPrimClosureValue2Node {}
+    public abstract static class PrimClosureValue2Node extends AbstractPrimClosureValue2Node {
+    }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {207, 209})
-    public abstract static class PrimFullClosureValue2Node extends AbstractPrimClosureValue2Node {}
+    public abstract static class PrimFullClosureValue2Node extends AbstractPrimClosureValue2Node {
+    }
 
     // --- Arity 3 ---
 
@@ -201,11 +207,13 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 204)
-    public abstract static class PrimClosureValue3Node extends AbstractPrimClosureValue3Node {}
+    public abstract static class PrimClosureValue3Node extends AbstractPrimClosureValue3Node {
+    }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {207, 209})
-    public abstract static class PrimFullClosureValue3Node extends AbstractPrimClosureValue3Node {}
+    public abstract static class PrimFullClosureValue3Node extends AbstractPrimClosureValue3Node {
+    }
 
     // --- Arity 4 ---
 
@@ -229,11 +237,13 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 205)
-    public abstract static class PrimClosureValue4Node extends AbstractPrimClosureValue4Node {}
+    public abstract static class PrimClosureValue4Node extends AbstractPrimClosureValue4Node {
+    }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {207, 209})
-    public abstract static class PrimFullClosureValue4Node extends AbstractPrimClosureValue4Node {}
+    public abstract static class PrimFullClosureValue4Node extends AbstractPrimClosureValue4Node {
+    }
 
     // --- Arity 5 ---
 
@@ -259,7 +269,8 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {207, 209})
-    public abstract static class PrimFullClosureValue5Node extends AbstractPrimClosureValue5Node {}
+    public abstract static class PrimFullClosureValue5Node extends AbstractPrimClosureValue5Node {
+    }
 
     // --- N-ary (With Args) ---
 
@@ -293,11 +304,13 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {206, 222})
-    public abstract static class PrimClosureValueNaryNode extends AbstractPrimClosureValueWithArgsNode {}
+    public abstract static class PrimClosureValueNaryNode extends AbstractPrimClosureValueWithArgsNode {
+    }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 208)
-    public abstract static class PrimFullClosureValueWithArgsNode extends AbstractPrimClosureValueWithArgsNode {}
+    public abstract static class PrimFullClosureValueWithArgsNode extends AbstractPrimClosureValueWithArgsNode {
+    }
 
     @Override
     public List<NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
