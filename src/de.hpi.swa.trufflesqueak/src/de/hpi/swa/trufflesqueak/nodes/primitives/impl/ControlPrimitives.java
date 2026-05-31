@@ -135,7 +135,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final Object perform0Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector,
                         @Cached("selector") final NativeObject cachedSelector,
                         @Cached("create(receiver)") final LookupClassGuard guard,
-                        @Cached("create(selector, guard, true)") final DispatchDirect0Node dispatchDirectNode) {
+                        @Cached("create(cachedSelector, guard, true)") final DispatchDirect0Node dispatchDirectNode) {
             return dispatchDirectNode.execute(frame, receiver);
         }
 
@@ -156,7 +156,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final Object perform1Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object arg1,
                         @Cached("selector") final NativeObject cachedSelector,
                         @Cached("create(receiver)") final LookupClassGuard guard,
-                        @Cached("create(selector, guard, true)") final DispatchDirect1Node dispatchDirectNode) {
+                        @Cached("create(cachedSelector, guard, true)") final DispatchDirect1Node dispatchDirectNode) {
             return dispatchDirectNode.execute(frame, receiver, arg1);
         }
 
@@ -177,7 +177,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final Object perform2Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object arg1, final Object arg2,
                         @Cached("selector") final NativeObject cachedSelector,
                         @Cached("create(receiver)") final LookupClassGuard guard,
-                        @Cached("create(selector, guard, true)") final DispatchDirect2Node dispatchDirectNode) {
+                        @Cached("create(cachedSelector, guard, true)") final DispatchDirect2Node dispatchDirectNode) {
             return dispatchDirectNode.execute(frame, receiver, arg1, arg2);
         }
 
@@ -198,7 +198,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final Object perform3Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object arg1, final Object arg2, final Object arg3,
                         @Cached("selector") final NativeObject cachedSelector,
                         @Cached("create(receiver)") final LookupClassGuard guard,
-                        @Cached("create(selector, guard, true)") final DispatchDirect3Node dispatchDirectNode) {
+                        @Cached("create(cachedSelector, guard, true)") final DispatchDirect3Node dispatchDirectNode) {
             return dispatchDirectNode.execute(frame, receiver, arg1, arg2, arg3);
         }
 
@@ -220,7 +220,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         final Object arg4,
                         @Cached("selector") final NativeObject cachedSelector,
                         @Cached("create(receiver)") final LookupClassGuard guard,
-                        @Cached("create(selector, guard, true)") final DispatchDirect4Node dispatchDirectNode) {
+                        @Cached("create(cachedSelector, guard, true)") final DispatchDirect4Node dispatchDirectNode) {
             return dispatchDirectNode.execute(frame, receiver, arg1, arg2, arg3, arg4);
         }
 
@@ -243,7 +243,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         final Object arg4, final Object arg5,
                         @Cached("selector") final NativeObject cachedSelector,
                         @Cached("create(receiver)") final LookupClassGuard guard,
-                        @Cached("create(selector, guard, true)") final DispatchDirect5Node dispatchDirectNode) {
+                        @Cached("create(cachedSelector, guard, true)") final DispatchDirect5Node dispatchDirectNode) {
             return dispatchDirectNode.execute(frame, receiver, arg1, arg2, arg3, arg4, arg5);
         }
 
@@ -276,7 +276,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind final Node node,
                         @Cached("selector") final NativeObject cachedSelector,
                         @Cached("create(receiver)") final LookupClassGuard guard,
-                        @Cached("create(selector, guard)") final DispatchDirectNaryNode dispatchDirectNode,
+                        @Cached("create(cachedSelector, guard)") final DispatchDirectNaryNode dispatchDirectNode,
                         @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode) {
             final Object[] arguments = getObjectArrayNode.execute(node, argumentsArray);
             return dispatchDirectNode.executeWithCheckedArguments(frame, receiver, arguments);

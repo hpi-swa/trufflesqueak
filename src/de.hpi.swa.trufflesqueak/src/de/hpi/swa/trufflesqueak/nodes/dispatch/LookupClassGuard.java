@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -31,6 +32,7 @@ public abstract class LookupClassGuard {
 
     protected abstract ClassObject getSqueakClassInternal(Node node);
 
+    @NeverDefault
     public static LookupClassGuard create(final Object receiver) {
         if (receiver == NilObject.SINGLETON) {
             return NilGuard.SINGLETON;
