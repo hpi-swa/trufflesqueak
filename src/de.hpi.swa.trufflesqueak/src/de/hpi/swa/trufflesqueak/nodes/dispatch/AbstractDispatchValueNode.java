@@ -6,7 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
-import com.oracle.truffle.api.dsl.Cached;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.context.GetOrCreateContextWithoutFrameNode;
 
