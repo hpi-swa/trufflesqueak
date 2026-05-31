@@ -29,14 +29,13 @@ public abstract class DispatchValue1Node extends AbstractDispatchValueNode {
 
     public abstract Object execute(VirtualFrame frame, Object receiver, Object arg1);
 
-    // --- Classic Blocks ---
+    // --- Block Receivers ---
 
     @Specialization(guards = {
                     "closure.getCompiledBlock() == cachedBlock",
-                    "cachedBlock.getNumArgs() == 1",
-                    "!closure.isAFullBlockClosure()"
+                    "cachedBlock.getNumArgs() == 1"
     }, limit = "INLINE_BLOCK_CACHE_LIMIT", assumptions = "cachedBlock.getCallTargetStable()")
-    protected final Object doClassicBlock(final VirtualFrame frame, final BlockClosureObject closure, final Object arg1,
+    protected final Object doBlock(final VirtualFrame frame, final BlockClosureObject closure, final Object arg1,
                     @SuppressWarnings("unused") @Cached("closure.getCompiledBlock()") final CompiledCodeObject cachedBlock,
                     @Cached("closure.getNumCopied()") final int cachedNumCopied,
                     @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
@@ -46,34 +45,9 @@ public abstract class DispatchValue1Node extends AbstractDispatchValueNode {
     }
 
     @ReportPolymorphism.Megamorphic
-    @Specialization(guards = {"closure.getNumArgs() == 1", "!closure.isAFullBlockClosure()"}, replaces = "doClassicBlock")
-    protected final Object doClassicBlockMegamorphic(final VirtualFrame frame, final BlockClosureObject closure, final Object arg1,
-                    @Shared("indirectCall") @Cached final IndirectCallNode indirectCallNode) {
-
-        final CompiledCodeObject block = closure.getCompiledBlock();
-        final Object[] args = FrameAccess.newClosureArgumentsTemplate(closure, getOrCreateContextNode.execute(frame), 1);
-        args[FrameAccess.getArgumentStartIndex()] = arg1;
-
-        return indirectCallNode.call(block.getCallTarget(), args);
-    }
-
-    // --- Full Blocks (Modern Squeak) ---
-
-    @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == 1",
-                    "closure.isAFullBlockClosure()"}, limit = "INLINE_BLOCK_CACHE_LIMIT", assumptions = "cachedBlock.getCallTargetStable()")
-    protected final Object doFullBlock(final VirtualFrame frame, final BlockClosureObject closure, final Object arg1,
-                    @SuppressWarnings("unused") @Cached("closure.getCompiledBlock()") final CompiledCodeObject cachedBlock,
-                    @Cached("closure.getNumCopied()") final int cachedNumCopied,
-                    @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
-
-        final Object[] args = FrameAccess.newClosureArgumentsUnrolled1(closure, getOrCreateContextNode.execute(frame), cachedNumCopied, arg1);
-        return directCallNode.call(args);
-    }
-
-    @ReportPolymorphism.Megamorphic
-    @Specialization(guards = {"closure.getNumArgs() == 1", "closure.isAFullBlockClosure()"}, replaces = "doFullBlock")
-    protected final Object doFullBlockMegamorphic(final VirtualFrame frame, final BlockClosureObject closure, final Object arg1,
-                    @Shared("indirectCall") @Cached final IndirectCallNode indirectCallNode) {
+    @Specialization(guards = {"closure.getNumArgs() == 1"}, replaces = "doBlock")
+    protected final Object doBlockMegamorphic(final VirtualFrame frame, final BlockClosureObject closure, final Object arg1,
+                    @Cached final IndirectCallNode indirectCallNode) {
 
         final CompiledCodeObject block = closure.getCompiledBlock();
         final Object[] args = FrameAccess.newClosureArgumentsTemplate(closure, getOrCreateContextNode.execute(frame), 1);
