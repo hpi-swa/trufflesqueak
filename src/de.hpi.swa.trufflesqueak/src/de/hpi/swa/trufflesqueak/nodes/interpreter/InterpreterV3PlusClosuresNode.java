@@ -38,8 +38,8 @@ import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1NodeFactory.Disp
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2NodeFactory.Dispatch2NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchNaryNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchSuperNaryNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchValue0NodeGen;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchValue1NodeGen;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchValueNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchValueWithArgNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsNode.CheckForInterruptsInLoopNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimBitAndNode;
@@ -266,11 +266,11 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     break;
                 }
                 case BC.BYTECODE_PRIM_VALUE: {
-                    setData(currentPC, insert(DispatchValue0NodeGen.create(image.getSpecialSelector(b - BC.BYTECODE_PRIM_ADD))));
+                    setData(currentPC, insert(DispatchValueNodeGen.create()));
                     break;
                 }
                 case BC.BYTECODE_PRIM_VALUE_WITH_ARG: {
-                    setData(currentPC, insert(DispatchValue1NodeGen.create(image.getSpecialSelector(b - BC.BYTECODE_PRIM_ADD))));
+                    setData(currentPC, insert(DispatchValueWithArgNodeGen.create()));
                     break;
                 }
                 case BC.BYTECODE_PRIM_AT_PUT: {

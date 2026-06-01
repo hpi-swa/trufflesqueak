@@ -274,6 +274,11 @@ public final class ObjectLayouts {
         public static final int LOWCODE_NATIVE_CONTEXT_CLASS = 61;
     }
 
+    public static final class SPECIAL_SELECTOR {
+        public static final int VALUE = 25;
+        public static final int VALUE_WITH_ARG = 26;
+    }
+
     private ObjectLayouts() {
     }
 }

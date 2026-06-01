@@ -6,7 +6,9 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -14,16 +16,18 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 
+import com.oracle.truffle.api.nodes.Node;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
+import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
+import de.hpi.swa.trufflesqueak.nodes.context.GetOrCreateContextWithoutFrameNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 @GenerateInline(false)
-public abstract class DispatchValue1Node extends AbstractDispatchValueNode {
+public abstract class DispatchValueWithArgNode extends AbstractNode {
 
-    protected DispatchValue1Node(final NativeObject selector) {
-        super(selector);
+    protected DispatchValueWithArgNode() {
     }
 
     public abstract Object execute(VirtualFrame frame, Object receiver, Object arg1);
@@ -34,36 +38,45 @@ public abstract class DispatchValue1Node extends AbstractDispatchValueNode {
                     "closure.getCompiledBlock() == cachedBlock",
                     "cachedBlock.getNumArgs() == 1"
     }, limit = "INLINE_BLOCK_CACHE_LIMIT", assumptions = "cachedBlock.getCallTargetStable()")
-    protected final Object doBlock(final VirtualFrame frame, final BlockClosureObject closure, final Object arg1,
+    protected static final Object doBlock(final VirtualFrame frame, final BlockClosureObject closure, final Object arg1,
+                    @Bind final Node node,
+                    @Cached(inline = true) @Shared("contextNode") final GetOrCreateContextWithoutFrameNode getOrCreateContextNode,
                     @SuppressWarnings("unused") @Cached("closure.getCompiledBlock()") final CompiledCodeObject cachedBlock,
                     @Cached("closure.getNumCopied()") final int cachedNumCopied,
                     @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
 
-        final Object[] args = FrameAccess.newClosureArgumentsUnrolled1(closure, getOrCreateContextNode.execute(frame), cachedNumCopied, arg1);
+        final Object[] args = FrameAccess.newClosureArgumentsUnrolled1(closure, getOrCreateContextNode.execute(frame, node), cachedNumCopied, arg1);
         return directCallNode.call(args);
     }
 
     @ReportPolymorphism.Megamorphic
     @Specialization(guards = {"closure.getNumArgs() == 1"}, replaces = "doBlock")
-    protected final Object doBlockMegamorphic(final VirtualFrame frame, final BlockClosureObject closure, final Object arg1,
+    protected static final Object doBlockMegamorphic(final VirtualFrame frame, final BlockClosureObject closure, final Object arg1,
+                    @Bind final Node node,
+                    @Cached(inline = true) @Shared("contextNode") final GetOrCreateContextWithoutFrameNode getOrCreateContextNode,
                     @Cached final IndirectCallNode indirectCallNode) {
 
         final CompiledCodeObject block = closure.getCompiledBlock();
-        final Object[] args = FrameAccess.newClosureArgumentsTemplate(closure, getOrCreateContextNode.execute(frame), 1);
+        final Object[] args = FrameAccess.newClosureArgumentsTemplate(closure, getOrCreateContextNode.execute(frame, node), 1);
         args[FrameAccess.getArgumentStartIndex()] = arg1;
 
         return indirectCallNode.call(block.getCallTarget(), args);
-    }
-
-    protected static boolean is1ArgBlock(final Object receiver) {
-        return receiver instanceof BlockClosureObject closure && closure.getNumArgs() == 1;
     }
 
     // --- Non-Block Receivers (Associations, MessageSends, etc.) ---
 
     @Specialization(guards = "!is1ArgBlock(receiver)")
     protected static final Object doGeneric(final VirtualFrame frame, final Object receiver, final Object arg1,
-                    @Cached("create(selector)") final DispatchSelector1Node.Dispatch1Node genericDispatchNode) {
+                    @Bind final Node node,
+                    @Cached("create(getSelector(node))") final DispatchSelector1Node.Dispatch1Node genericDispatchNode) {
         return genericDispatchNode.execute(frame, receiver, arg1);
+    }
+
+    protected static boolean is1ArgBlock(final Object receiver) {
+        return receiver instanceof BlockClosureObject closure && closure.getNumArgs() == 1;
+    }
+
+    protected static final NativeObject getSelector(final Node node) {
+        return getContext(node).getValueWithArgSelector();
     }
 }

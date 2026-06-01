@@ -49,8 +49,8 @@ import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0NodeFactory.Disp
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1NodeFactory.Dispatch1NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2NodeFactory.Dispatch2NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchNaryNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchValue0NodeGen;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchValue1NodeGen;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchValueNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchValueWithArgNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsNode.CheckForInterruptsInLoopNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -179,7 +179,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
 
     private Object dispatchValue(final VirtualFrame frame, final int currentPC, final Object receiver) {
         try {
-            return ACCESS.uncheckedCast(getData(currentPC), DispatchValue0NodeGen.class).execute(frame, receiver);
+            return ACCESS.uncheckedCast(getData(currentPC), DispatchValueNodeGen.class).execute(frame, receiver);
         } catch (final AbstractStandardSendReturn r) {
             return handleReturnException(frame, currentPC, r);
         }
@@ -191,7 +191,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
 
     private Object dispatchValueWithArg(final VirtualFrame frame, final int currentPC, final Object receiver, final Object arg) {
         try {
-            return ACCESS.uncheckedCast(getData(currentPC), DispatchValue1NodeGen.class).execute(frame, receiver, arg);
+            return ACCESS.uncheckedCast(getData(currentPC), DispatchValueWithArgNodeGen.class).execute(frame, receiver, arg);
         } catch (final AbstractStandardSendReturn r) {
             return handleReturnException(frame, currentPC, r);
         }
