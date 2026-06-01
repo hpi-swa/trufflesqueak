@@ -45,7 +45,8 @@ public abstract class DispatchValueWithArgNode extends AbstractNode {
                     @Cached("closure.getNumCopied()") final int cachedNumCopied,
                     @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
 
-        final Object[] args = FrameAccess.newClosureArgumentsUnrolled1(closure, getOrCreateContextNode.execute(frame, node), cachedNumCopied, arg1);
+        final Object[] args = FrameAccess.newClosureArgumentsTemplateUnrolled(closure, getOrCreateContextNode.execute(frame, node), 1, cachedNumCopied);
+        args[FrameAccess.getArgumentStartIndex()] = arg1;
         return directCallNode.call(args);
     }
 
@@ -67,7 +68,7 @@ public abstract class DispatchValueWithArgNode extends AbstractNode {
 
     @Specialization(guards = "!is1ArgBlock(receiver)")
     protected static final Object doGeneric(final VirtualFrame frame, final Object receiver, final Object arg1,
-                    @Bind final Node node,
+                    @SuppressWarnings("unused") @Bind final Node node,
                     @Cached("create(getSelector(node))") final DispatchSelector1Node.Dispatch1Node genericDispatchNode) {
         return genericDispatchNode.execute(frame, receiver, arg1);
     }

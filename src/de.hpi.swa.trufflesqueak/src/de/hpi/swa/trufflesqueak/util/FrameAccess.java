@@ -500,6 +500,25 @@ public final class FrameAccess {
     }
 
     @ExplodeLoop
+    public static Object[] newClosureArgumentsTemplateUnrolled(final BlockClosureObject closure, final ContextObject sender, final int numArgs, final int numCopied) {
+        CompilerAsserts.partialEvaluationConstant(numCopied);
+
+        final Object[] arguments = new Object[ArgumentIndices.ARGUMENTS_START + numArgs + numCopied];
+
+        arguments[ArgumentIndices.SENDER] = sender;
+        arguments[ArgumentIndices.CLOSURE_OR_NULL] = closure;
+        arguments[ArgumentIndices.RECEIVER] = closure.getReceiver();
+
+        final Object[] copied = closure.getCopiedValues();
+        for (int i = 0; i < numCopied; i++) {
+            // Shift the copied values past the explicitly passed arguments
+            arguments[ArgumentIndices.ARGUMENTS_START + numArgs + i] = copied[i];
+        }
+
+        return arguments;
+    }
+
+    @ExplodeLoop
     public static Object[] newClosureArgumentsUnrolled0(final BlockClosureObject closure, final ContextObject sender, final int numCopied) {
         CompilerAsserts.partialEvaluationConstant(numCopied);
 
