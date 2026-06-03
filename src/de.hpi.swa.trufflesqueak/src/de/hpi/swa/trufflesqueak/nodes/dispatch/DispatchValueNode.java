@@ -9,6 +9,7 @@ package de.hpi.swa.trufflesqueak.nodes.dispatch;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -63,15 +64,11 @@ public abstract class DispatchValueNode extends AbstractNode {
 
     // --- Non-Block Receivers (Associations, MessageSends, etc.) ---
 
-    @Specialization(guards = "!is0ArgBlock(receiver)")
+    @Fallback
     protected static final Object doGeneric(final VirtualFrame frame, final Object receiver,
                     @SuppressWarnings("unused") @Bind final Node node,
                     @Cached("create(getSelector(node))") final DispatchSelector0Node.Dispatch0Node genericDispatchNode) {
         return genericDispatchNode.execute(frame, receiver);
-    }
-
-    protected static boolean is0ArgBlock(final Object receiver) {
-        return receiver instanceof BlockClosureObject closure && closure.getNumArgs() == 0;
     }
 
     protected static final NativeObject getSelector(final Node node) {

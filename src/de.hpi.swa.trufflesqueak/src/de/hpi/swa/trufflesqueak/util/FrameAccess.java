@@ -510,68 +510,10 @@ public final class FrameAccess {
         arguments[ArgumentIndices.RECEIVER] = closure.getReceiver();
 
         final Object[] copied = closure.getCopiedValues();
+        assert copied.length == numCopied;
         for (int i = 0; i < numCopied; i++) {
             // Shift the copied values past the explicitly passed arguments
             arguments[ArgumentIndices.ARGUMENTS_START + numArgs + i] = copied[i];
-        }
-
-        return arguments;
-    }
-
-    @ExplodeLoop
-    public static Object[] newClosureArgumentsUnrolled0(final BlockClosureObject closure, final ContextObject sender, final int numCopied) {
-        CompilerAsserts.partialEvaluationConstant(numCopied);
-
-        final Object[] arguments = new Object[ArgumentIndices.ARGUMENTS_START + numCopied];
-
-        arguments[ArgumentIndices.SENDER] = sender;
-        arguments[ArgumentIndices.CLOSURE_OR_NULL] = closure;
-        arguments[ArgumentIndices.RECEIVER] = closure.getReceiver();
-
-        final Object[] copied = closure.getCopiedValues();
-        for (int i = 0; i < numCopied; i++) {
-            arguments[ArgumentIndices.ARGUMENTS_START + i] = copied[i];
-        }
-
-        return arguments;
-    }
-
-    @ExplodeLoop
-    public static Object[] newClosureArgumentsUnrolled1(final BlockClosureObject closure, final ContextObject sender, final int numCopied, final Object arg1) {
-        CompilerAsserts.partialEvaluationConstant(numCopied);
-
-        final Object[] arguments = new Object[ArgumentIndices.ARGUMENTS_START + 1 + numCopied];
-
-        arguments[ArgumentIndices.SENDER] = sender;
-        arguments[ArgumentIndices.CLOSURE_OR_NULL] = closure;
-        arguments[ArgumentIndices.RECEIVER] = closure.getReceiver();
-
-        arguments[ArgumentIndices.ARGUMENTS_START] = arg1;
-
-        final Object[] copied = closure.getCopiedValues();
-        for (int i = 0; i < numCopied; i++) {
-            arguments[ArgumentIndices.ARGUMENTS_START + 1 + i] = copied[i];
-        }
-
-        return arguments;
-    }
-
-    @ExplodeLoop
-    public static Object[] newClosureArgumentsUnrolled2(final BlockClosureObject closure, final ContextObject sender, final int numCopied, final Object arg1, final Object arg2) {
-        CompilerAsserts.partialEvaluationConstant(numCopied);
-
-        final Object[] arguments = new Object[ArgumentIndices.ARGUMENTS_START + 2 + numCopied];
-
-        arguments[ArgumentIndices.SENDER] = sender;
-        arguments[ArgumentIndices.CLOSURE_OR_NULL] = closure;
-        arguments[ArgumentIndices.RECEIVER] = closure.getReceiver();
-
-        arguments[ArgumentIndices.ARGUMENTS_START] = arg1;
-        arguments[ArgumentIndices.ARGUMENTS_START + 1] = arg2;
-
-        final Object[] copied = closure.getCopiedValues();
-        for (int i = 0; i < numCopied; i++) {
-            arguments[ArgumentIndices.ARGUMENTS_START + 2 + i] = copied[i];
         }
 
         return arguments;
