@@ -519,6 +519,36 @@ public final class FrameAccess {
         return arguments;
     }
 
+    public static void fillClosureTemplateWith(final Object[] template, final Object arg1) {
+        template[getArgumentStartIndex() + 0] = arg1;
+    }
+
+    public static void fillClosureTemplateWith(final Object[] template, final Object arg1, final Object arg2) {
+        template[getArgumentStartIndex() + 0] = arg1;
+        template[getArgumentStartIndex() + 1] = arg2;
+    }
+
+    public static void fillClosureTemplateWith(final Object[] template, final Object arg1, final Object arg2, final Object arg3) {
+        template[getArgumentStartIndex() + 0] = arg1;
+        template[getArgumentStartIndex() + 1] = arg2;
+        template[getArgumentStartIndex() + 2] = arg3;
+    }
+
+    public static void fillClosureTemplateWith(final Object[] template, final Object arg1, final Object arg2, final Object arg3, final Object arg4) {
+        template[getArgumentStartIndex() + 0] = arg1;
+        template[getArgumentStartIndex() + 1] = arg2;
+        template[getArgumentStartIndex() + 2] = arg3;
+        template[getArgumentStartIndex() + 3] = arg4;
+    }
+
+    public static void fillClosureTemplateWith(final Object[] template, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5) {
+        template[getArgumentStartIndex() + 0] = arg1;
+        template[getArgumentStartIndex() + 1] = arg2;
+        template[getArgumentStartIndex() + 2] = arg3;
+        template[getArgumentStartIndex() + 3] = arg4;
+        template[getArgumentStartIndex() + 4] = arg5;
+    }
+
     public static int expectedArgumentSize(final int numArgsAndCopied) {
         return ArgumentIndices.ARGUMENTS_START + numArgsAndCopied;
     }
