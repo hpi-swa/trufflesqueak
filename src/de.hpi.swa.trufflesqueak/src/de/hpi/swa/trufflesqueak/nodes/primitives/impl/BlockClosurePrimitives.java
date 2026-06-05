@@ -198,7 +198,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
             final Object[] closureArgsTemplate = FrameAccess.newClosureArgumentsTemplateUnrolled(closure, contextNode.execute(frame, node), 4, cachedNumCopied);
             fillClosureTemplateWith(closureArgsTemplate, arg1, arg2, arg3, arg4);
-        return directCallNode.call(closureArgsTemplate);
+            return directCallNode.call(closureArgsTemplate);
         }
 
         @ReportPolymorphism.Megamorphic
