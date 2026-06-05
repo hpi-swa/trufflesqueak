@@ -274,6 +274,41 @@ public final class ObjectLayouts {
         public static final int LOWCODE_NATIVE_CONTEXT_CLASS = 61;
     }
 
+    public static final class SPECIAL_SELECTOR {
+        public static final int ADD = 0;
+        public static final int SUBTRACT = 1;
+        public static final int LESS_THAN = 2;
+        public static final int GREATER_THAN = 3;
+        public static final int LESS_OR_EQUAL = 4;
+        public static final int GREATER_OR_EQUAL = 5;
+        public static final int EQUAL = 6;
+        public static final int NOT_EQUAL = 7;
+        public static final int MULTIPLY = 8;
+        public static final int DIVIDE = 9;
+        public static final int MOD = 10;
+        public static final int MAKE_POINT = 11;
+        public static final int BIT_SHIFT = 12;
+        public static final int DIV = 13;
+        public static final int BIT_AND = 14;
+        public static final int BIT_OR = 15;
+        public static final int AT = 16;
+        public static final int AT_PUT = 17;
+        public static final int SIZE = 18;
+        public static final int NEXT = 19;
+        public static final int NEXT_PUT = 20;
+        public static final int AT_END = 21;
+        public static final int IDENTICAL = 22;
+        public static final int CLASS = 23;
+        public static final int NOT_IDENTICAL = 24;
+        public static final int VALUE = 25;
+        public static final int VALUE_WITH_ARG = 26;
+        public static final int DO = 27;
+        public static final int NEW = 28;
+        public static final int NEW_WITH_ARG = 29;
+        public static final int POINT_X = 30;
+        public static final int POINT_Y = 31;
+    }
+
     private ObjectLayouts() {
     }
 }

@@ -22,6 +22,7 @@ import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -495,6 +496,26 @@ public final class FrameAccess {
         arguments[ArgumentIndices.RECEIVER] = closure.getReceiver();
         assert arguments[ArgumentIndices.RECEIVER] != null;
         ArrayUtils.arraycopy(copied, 0, arguments, ArgumentIndices.ARGUMENTS_START + numArgs, numCopied);
+        return arguments;
+    }
+
+    @ExplodeLoop
+    public static Object[] newClosureArgumentsTemplateUnrolled(final BlockClosureObject closure, final ContextObject sender, final int numArgs, final int numCopied) {
+        CompilerAsserts.partialEvaluationConstant(numCopied);
+
+        final Object[] arguments = new Object[ArgumentIndices.ARGUMENTS_START + numArgs + numCopied];
+
+        arguments[ArgumentIndices.SENDER] = sender;
+        arguments[ArgumentIndices.CLOSURE_OR_NULL] = closure;
+        arguments[ArgumentIndices.RECEIVER] = closure.getReceiver();
+
+        final Object[] copied = closure.getCopiedValues();
+        assert copied.length == numCopied;
+        for (int i = 0; i < numCopied; i++) {
+            // Shift the copied values past the explicitly passed arguments
+            arguments[ArgumentIndices.ARGUMENTS_START + numArgs + i] = copied[i];
+        }
+
         return arguments;
     }
 
