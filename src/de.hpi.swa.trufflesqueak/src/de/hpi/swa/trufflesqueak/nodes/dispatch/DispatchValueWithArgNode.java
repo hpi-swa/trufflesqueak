@@ -68,7 +68,7 @@ public abstract class DispatchValueWithArgNode extends AbstractNode {
     // --- Non-Block Receivers (Associations, MessageSends, etc.) ---
 
     @Fallback
-    protected static final Object doGeneric(final VirtualFrame frame, final Object receiver, final Object arg1,
+    protected static final Object doSend(final VirtualFrame frame, final Object receiver, final Object arg1,
                     @SuppressWarnings("unused") @Bind final Node node,
                     @Cached("create(getSelector(node))") final DispatchSelector1Node.Dispatch1Node genericDispatchNode) {
         return genericDispatchNode.execute(frame, receiver, arg1);

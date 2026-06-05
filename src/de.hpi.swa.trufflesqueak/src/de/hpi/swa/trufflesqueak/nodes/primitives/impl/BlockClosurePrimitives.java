@@ -41,36 +41,6 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder {
 
     public abstract static class AbstractClosurePrimitiveNode extends AbstractPrimitiveWithFrameNode {
-
-        protected static void fillClosureTemplateWith(final Object[] template, final Object arg1) {
-            template[FrameAccess.getArgumentStartIndex() + 0] = arg1;
-        }
-
-        protected static void fillClosureTemplateWith(final Object[] template, final Object arg1, final Object arg2) {
-            template[FrameAccess.getArgumentStartIndex() + 0] = arg1;
-            template[FrameAccess.getArgumentStartIndex() + 1] = arg2;
-        }
-
-        protected static void fillClosureTemplateWith(final Object[] template, final Object arg1, final Object arg2, final Object arg3) {
-            template[FrameAccess.getArgumentStartIndex() + 0] = arg1;
-            template[FrameAccess.getArgumentStartIndex() + 1] = arg2;
-            template[FrameAccess.getArgumentStartIndex() + 2] = arg3;
-        }
-
-        protected static void fillClosureTemplateWith(final Object[] template, final Object arg1, final Object arg2, final Object arg3, final Object arg4) {
-            template[FrameAccess.getArgumentStartIndex() + 0] = arg1;
-            template[FrameAccess.getArgumentStartIndex() + 1] = arg2;
-            template[FrameAccess.getArgumentStartIndex() + 2] = arg3;
-            template[FrameAccess.getArgumentStartIndex() + 3] = arg4;
-        }
-
-        protected static void fillClosureTemplateWith(final Object[] template, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5) {
-            template[FrameAccess.getArgumentStartIndex() + 0] = arg1;
-            template[FrameAccess.getArgumentStartIndex() + 1] = arg2;
-            template[FrameAccess.getArgumentStartIndex() + 2] = arg3;
-            template[FrameAccess.getArgumentStartIndex() + 3] = arg4;
-            template[FrameAccess.getArgumentStartIndex() + 4] = arg5;
-        }
     }
 
     @GenerateNodeFactory
@@ -84,8 +54,8 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         @SuppressWarnings("unused") @Cached("closure.getCompiledBlock()") final CompiledCodeObject cachedBlock,
                         @Cached("closure.getNumCopied()") final int cachedNumCopied,
                         @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
-            final Object[] closureArgsTemplate = FrameAccess.newClosureArgumentsTemplateUnrolled(closure, contextNode.execute(frame, node), 0, cachedNumCopied);
-            return directCallNode.call(closureArgsTemplate);
+            final Object[] closureArgs = FrameAccess.newClosureArgumentsTemplateUnrolled(closure, contextNode.execute(frame, node), 0, cachedNumCopied);
+            return directCallNode.call(closureArgs);
         }
 
         @ReportPolymorphism.Megamorphic
@@ -94,8 +64,8 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         @Bind final Node node,
                         @Cached(inline = true) @Shared("contextNode") final GetOrCreateContextWithoutFrameNode contextNode,
                         @Cached final IndirectCallNode indirectCallNode) {
-            final Object[] closureArgsTemplate = FrameAccess.newClosureArgumentsTemplate(closure, contextNode.execute(frame, node), 0);
-            return indirectCallNode.call(closure.getCompiledBlock().getCallTarget(), closureArgsTemplate);
+            final Object[] closureArgs = FrameAccess.newClosureArgumentsTemplate(closure, contextNode.execute(frame, node), 0);
+            return indirectCallNode.call(closure.getCompiledBlock().getCallTarget(), closureArgs);
         }
     }
 
@@ -110,9 +80,9 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         @SuppressWarnings("unused") @Cached("closure.getCompiledBlock()") final CompiledCodeObject cachedBlock,
                         @Cached("closure.getNumCopied()") final int cachedNumCopied,
                         @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
-            final Object[] closureArgsTemplate = FrameAccess.newClosureArgumentsTemplateUnrolled(closure, contextNode.execute(frame, node), 1, cachedNumCopied);
-            fillClosureTemplateWith(closureArgsTemplate, arg1);
-            return directCallNode.call(closureArgsTemplate);
+            final Object[] closureArgs = FrameAccess.newClosureArgumentsTemplateUnrolled(closure, contextNode.execute(frame, node), 1, cachedNumCopied);
+            FrameAccess.fillClosureTemplateWith(closureArgs, arg1);
+            return directCallNode.call(closureArgs);
         }
 
         @ReportPolymorphism.Megamorphic
@@ -121,9 +91,9 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         @Bind final Node node,
                         @Cached(inline = true) @Shared("contextNode") final GetOrCreateContextWithoutFrameNode contextNode,
                         @Cached final IndirectCallNode indirectCallNode) {
-            final Object[] closureArgsTemplate = FrameAccess.newClosureArgumentsTemplate(closure, contextNode.execute(frame, node), 1);
-            fillClosureTemplateWith(closureArgsTemplate, arg1);
-            return indirectCallNode.call(closure.getCompiledBlock().getCallTarget(), closureArgsTemplate);
+            final Object[] closureArgs = FrameAccess.newClosureArgumentsTemplate(closure, contextNode.execute(frame, node), 1);
+            FrameAccess.fillClosureTemplateWith(closureArgs, arg1);
+            return indirectCallNode.call(closure.getCompiledBlock().getCallTarget(), closureArgs);
         }
     }
 
@@ -138,9 +108,9 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         @SuppressWarnings("unused") @Cached("closure.getCompiledBlock()") final CompiledCodeObject cachedBlock,
                         @Cached("closure.getNumCopied()") final int cachedNumCopied,
                         @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
-            final Object[] closureArgsTemplate = FrameAccess.newClosureArgumentsTemplateUnrolled(closure, contextNode.execute(frame, node), 2, cachedNumCopied);
-            fillClosureTemplateWith(closureArgsTemplate, arg1, arg2);
-            return directCallNode.call(closureArgsTemplate);
+            final Object[] closureArgs = FrameAccess.newClosureArgumentsTemplateUnrolled(closure, contextNode.execute(frame, node), 2, cachedNumCopied);
+            FrameAccess.fillClosureTemplateWith(closureArgs, arg1, arg2);
+            return directCallNode.call(closureArgs);
         }
 
         @ReportPolymorphism.Megamorphic
@@ -149,9 +119,9 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         @Bind final Node node,
                         @Cached(inline = true) @Shared("contextNode") final GetOrCreateContextWithoutFrameNode contextNode,
                         @Cached final IndirectCallNode indirectCallNode) {
-            final Object[] closureArgsTemplate = FrameAccess.newClosureArgumentsTemplate(closure, contextNode.execute(frame, node), 2);
-            fillClosureTemplateWith(closureArgsTemplate, arg1, arg2);
-            return indirectCallNode.call(closure.getCompiledBlock().getCallTarget(), closureArgsTemplate);
+            final Object[] closureArgs = FrameAccess.newClosureArgumentsTemplate(closure, contextNode.execute(frame, node), 2);
+            FrameAccess.fillClosureTemplateWith(closureArgs, arg1, arg2);
+            return indirectCallNode.call(closure.getCompiledBlock().getCallTarget(), closureArgs);
         }
     }
 
@@ -168,9 +138,9 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         @SuppressWarnings("unused") @Cached("closure.getCompiledBlock()") final CompiledCodeObject cachedBlock,
                         @Cached("closure.getNumCopied()") final int cachedNumCopied,
                         @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
-            final Object[] closureArgsTemplate = FrameAccess.newClosureArgumentsTemplateUnrolled(closure, contextNode.execute(frame, node), 3, cachedNumCopied);
-            fillClosureTemplateWith(closureArgsTemplate, arg1, arg2, arg3);
-            return directCallNode.call(closureArgsTemplate);
+            final Object[] closureArgs = FrameAccess.newClosureArgumentsTemplateUnrolled(closure, contextNode.execute(frame, node), 3, cachedNumCopied);
+            FrameAccess.fillClosureTemplateWith(closureArgs, arg1, arg2, arg3);
+            return directCallNode.call(closureArgs);
         }
 
         @ReportPolymorphism.Megamorphic
@@ -179,9 +149,9 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         @Bind final Node node,
                         @Cached(inline = true) @Shared("contextNode") final GetOrCreateContextWithoutFrameNode contextNode,
                         @Cached final IndirectCallNode indirectCallNode) {
-            final Object[] closureArgsTemplate = FrameAccess.newClosureArgumentsTemplate(closure, contextNode.execute(frame, node), 3);
-            fillClosureTemplateWith(closureArgsTemplate, arg1, arg2, arg3);
-            return indirectCallNode.call(closure.getCompiledBlock().getCallTarget(), closureArgsTemplate);
+            final Object[] closureArgs = FrameAccess.newClosureArgumentsTemplate(closure, contextNode.execute(frame, node), 3);
+            FrameAccess.fillClosureTemplateWith(closureArgs, arg1, arg2, arg3);
+            return indirectCallNode.call(closure.getCompiledBlock().getCallTarget(), closureArgs);
         }
     }
 
@@ -196,9 +166,9 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         @SuppressWarnings("unused") @Cached("closure.getCompiledBlock()") final CompiledCodeObject cachedBlock,
                         @Cached("closure.getNumCopied()") final int cachedNumCopied,
                         @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
-            final Object[] closureArgsTemplate = FrameAccess.newClosureArgumentsTemplateUnrolled(closure, contextNode.execute(frame, node), 4, cachedNumCopied);
-            fillClosureTemplateWith(closureArgsTemplate, arg1, arg2, arg3, arg4);
-            return directCallNode.call(closureArgsTemplate);
+            final Object[] closureArgs = FrameAccess.newClosureArgumentsTemplateUnrolled(closure, contextNode.execute(frame, node), 4, cachedNumCopied);
+            FrameAccess.fillClosureTemplateWith(closureArgs, arg1, arg2, arg3, arg4);
+            return directCallNode.call(closureArgs);
         }
 
         @ReportPolymorphism.Megamorphic
@@ -207,9 +177,9 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         @Bind final Node node,
                         @Cached(inline = true) @Shared("contextNode") final GetOrCreateContextWithoutFrameNode contextNode,
                         @Cached final IndirectCallNode indirectCallNode) {
-            final Object[] closureArgsTemplate = FrameAccess.newClosureArgumentsTemplate(closure, contextNode.execute(frame, node), 4);
-            fillClosureTemplateWith(closureArgsTemplate, arg1, arg2, arg3, arg4);
-            return indirectCallNode.call(closure.getCompiledBlock().getCallTarget(), closureArgsTemplate);
+            final Object[] closureArgs = FrameAccess.newClosureArgumentsTemplate(closure, contextNode.execute(frame, node), 4);
+            FrameAccess.fillClosureTemplateWith(closureArgs, arg1, arg2, arg3, arg4);
+            return indirectCallNode.call(closure.getCompiledBlock().getCallTarget(), closureArgs);
         }
     }
 
@@ -225,9 +195,9 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         @SuppressWarnings("unused") @Cached("closure.getCompiledBlock()") final CompiledCodeObject cachedBlock,
                         @Cached("closure.getNumCopied()") final int cachedNumCopied,
                         @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
-            final Object[] closureArgsTemplate = FrameAccess.newClosureArgumentsTemplateUnrolled(closure, contextNode.execute(frame, node), 5, cachedNumCopied);
-            fillClosureTemplateWith(closureArgsTemplate, arg1, arg2, arg3, arg4, arg5);
-            return directCallNode.call(closureArgsTemplate);
+            final Object[] closureArgs = FrameAccess.newClosureArgumentsTemplateUnrolled(closure, contextNode.execute(frame, node), 5, cachedNumCopied);
+            FrameAccess.fillClosureTemplateWith(closureArgs, arg1, arg2, arg3, arg4, arg5);
+            return directCallNode.call(closureArgs);
         }
 
         @ReportPolymorphism.Megamorphic
@@ -237,9 +207,9 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         @Bind final Node node,
                         @Cached(inline = true) @Shared("contextNode") final GetOrCreateContextWithoutFrameNode contextNode,
                         @Cached final IndirectCallNode indirectCallNode) {
-            final Object[] closureArgsTemplate = FrameAccess.newClosureArgumentsTemplate(closure, contextNode.execute(frame, node), 5);
-            fillClosureTemplateWith(closureArgsTemplate, arg1, arg2, arg3, arg4, arg5);
-            return indirectCallNode.call(closure.getCompiledBlock().getCallTarget(), closureArgsTemplate);
+            final Object[] closureArgs = FrameAccess.newClosureArgumentsTemplate(closure, contextNode.execute(frame, node), 5);
+            FrameAccess.fillClosureTemplateWith(closureArgs, arg1, arg2, arg3, arg4, arg5);
+            return indirectCallNode.call(closure.getCompiledBlock().getCallTarget(), closureArgs);
         }
     }
 
@@ -259,9 +229,9 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         @Cached("closure.getNumCopied()") final int cachedNumCopied,
                         @Shared("copyIntoNode") @Cached("createForFrameArguments()") final ArrayObjectCopyIntoObjectArrayNode copyIntoNode,
                         @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
-            final Object[] closureArgsTemplate = FrameAccess.newClosureArgumentsTemplateUnrolled(closure, contextNode.execute(frame, node), cachedNumArgs, cachedNumCopied);
-            copyIntoNode.execute(closureArgsTemplate, argArray);
-            return directCallNode.call(closureArgsTemplate);
+            final Object[] closureArgs = FrameAccess.newClosureArgumentsTemplateUnrolled(closure, contextNode.execute(frame, node), cachedNumArgs, cachedNumCopied);
+            copyIntoNode.execute(closureArgs, argArray);
+            return directCallNode.call(closureArgs);
         }
 
         @ReportPolymorphism.Megamorphic
@@ -273,9 +243,9 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         @Shared("copyIntoNode") @Cached("createForFrameArguments()") final ArrayObjectCopyIntoObjectArrayNode copyIntoNode,
                         @Cached final IndirectCallNode indirectCallNode) {
             final CompiledCodeObject block = closure.getCompiledBlock();
-            final Object[] closureArgsTemplate = FrameAccess.newClosureArgumentsTemplate(closure, contextNode.execute(frame, node), closure.getNumArgs());
-            copyIntoNode.execute(closureArgsTemplate, argArray);
-            return indirectCallNode.call(block.getCallTarget(), closureArgsTemplate);
+            final Object[] closureArgs = FrameAccess.newClosureArgumentsTemplate(closure, contextNode.execute(frame, node), closure.getNumArgs());
+            copyIntoNode.execute(closureArgs, argArray);
+            return indirectCallNode.call(block.getCallTarget(), closureArgs);
         }
     }
 
