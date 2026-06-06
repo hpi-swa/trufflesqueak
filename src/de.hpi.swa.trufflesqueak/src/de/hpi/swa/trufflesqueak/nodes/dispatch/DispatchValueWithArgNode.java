@@ -46,9 +46,9 @@ public abstract class DispatchValueWithArgNode extends AbstractNode {
                     @Cached("closure.getNumCopied()") final int cachedNumCopied,
                     @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
 
-        final Object[] args = FrameAccess.newClosureArgumentsTemplateUnrolled(closure, getOrCreateContextNode.execute(frame, node), 1, cachedNumCopied);
-        args[FrameAccess.getArgumentStartIndex()] = arg1;
-        return directCallNode.call(args);
+        final Object[] closureArgs = FrameAccess.newClosureArgumentsTemplateUnrolled(closure, getOrCreateContextNode.execute(frame, node), 1, cachedNumCopied);
+        FrameAccess.fillClosureTemplateWith(closureArgs, arg1);
+        return directCallNode.call(closureArgs);
     }
 
     @ReportPolymorphism.Megamorphic
@@ -59,10 +59,9 @@ public abstract class DispatchValueWithArgNode extends AbstractNode {
                     @Cached final IndirectCallNode indirectCallNode) {
 
         final CompiledCodeObject block = closure.getCompiledBlock();
-        final Object[] args = FrameAccess.newClosureArgumentsTemplate(closure, getOrCreateContextNode.execute(frame, node), 1);
-        args[FrameAccess.getArgumentStartIndex()] = arg1;
-
-        return indirectCallNode.call(block.getCallTarget(), args);
+        final Object[] closureArgs = FrameAccess.newClosureArgumentsTemplate(closure, getOrCreateContextNode.execute(frame, node), 1);
+        FrameAccess.fillClosureTemplateWith(closureArgs, arg1);
+        return indirectCallNode.call(block.getCallTarget(), closureArgs);
     }
 
     // --- Non-Block Receivers (Associations, MessageSends, etc.) ---
