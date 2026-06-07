@@ -2086,7 +2086,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 env.addToHostClassPath(env.getPublicTruffleFile(path));
                 return receiver;
-            } catch (final SecurityException e) {
+            } catch (final RuntimeException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
             }
         }
