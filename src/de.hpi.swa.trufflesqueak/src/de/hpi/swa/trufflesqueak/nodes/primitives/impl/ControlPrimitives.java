@@ -271,14 +271,15 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 84)
     protected abstract static class PrimPerformWithArguments2Node extends AbstractPrimitiveWithFrameNode implements Primitive2 {
         @SuppressWarnings("unused")
-        @Specialization(guards = {"selector == cachedSelector", "guard.check(receiver)"}, assumptions = "dispatchDirectNode.getAssumptions()", limit = "PERFORM_SELECTOR_CACHE_LIMIT")
+        @Specialization(guards = {"selector == cachedSelector", "guard.check(receiver)", "arity == cachedArity"}, assumptions = "dispatchDirectNode.getAssumptions()", limit = "PERFORM_SELECTOR_CACHE_LIMIT")
         protected static final Object performCached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final ArrayObject argumentsArray,
                         @Bind final Node node,
                         @Cached("selector") final NativeObject cachedSelector,
                         @Cached("create(receiver)") final LookupClassGuard guard,
                         @Cached final ArrayObjectSizeNode sizeNode,
                         @Bind("sizeNode.execute(node, argumentsArray)") final int arity,
-                        @Cached("create(cachedSelector, guard, arity)") final DispatchDirectNaryNode dispatchDirectNode,
+                        @Cached("arity") final int cachedArity,
+                        @Cached("create(cachedSelector, guard, cachedArity)") final DispatchDirectNaryNode dispatchDirectNode,
                         @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode) {
             final Object[] arguments = getObjectArrayNode.execute(node, argumentsArray);
             return dispatchDirectNode.executeWithCheckedArguments(frame, receiver, arguments);
@@ -509,11 +510,12 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected abstract Object execute(VirtualFrame frame, ClassObject lookupClass, Object receiver, Object[] arguments);
 
-        @Specialization(guards = "lookupClass == cachedLookupClass", assumptions = {"cachedLookupClass.getClassHierarchyAndMethodDictStable()",
+        @Specialization(guards = {"lookupClass == cachedLookupClass", "arguments.length == cachedArity"}, assumptions = {"cachedLookupClass.getClassHierarchyAndMethodDictStable()",
                         "dispatchDirectNode.getAssumptions()"}, limit = "3")
         protected static final Object doCached(final VirtualFrame frame, @SuppressWarnings("unused") final ClassObject lookupClass, final Object receiver, final Object[] arguments,
                         @SuppressWarnings("unused") @Cached("lookupClass") final ClassObject cachedLookupClass,
-                        @Cached("create(selector, cachedLookupClass)") final DispatchDirectNaryNode dispatchDirectNode) {
+                        @SuppressWarnings("unused") @Cached("arguments.length") final int cachedArity,
+                        @Cached("create(selector, cachedLookupClass, cachedArity)") final DispatchDirectNaryNode dispatchDirectNode) {
             return dispatchDirectNode.executeWithCheckedArguments(frame, receiver, arguments);
         }
     }
