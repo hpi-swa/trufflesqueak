@@ -252,6 +252,7 @@ public final class CheckForInterruptsState {
         hasPendingFinalizations = false;
         clearWeakPointersQueue();
         semaphoresToSignal.clear();
+        clearShouldTrigger();
     }
 
     public void reset() {
