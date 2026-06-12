@@ -17,7 +17,6 @@ public final class MethodCacheEntry {
     private NativeObject selector;
     private Object result;
     private ClassObject.DispatchFailureResult dispatchFailure;
-    private int dispatchFailureArity = -1;
 
     public ClassObject getClassObject() {
         return classObject;
@@ -32,9 +31,8 @@ public final class MethodCacheEntry {
     }
 
     public ClassObject.DispatchFailureResult getOrCreateDispatchFailureResult(final int arity) {
-        if (dispatchFailure == null || dispatchFailureArity != arity) {
+        if (dispatchFailure == null || dispatchFailure.arity() != arity) {
             dispatchFailure = createDispatchFailureResult(arity);
-            dispatchFailureArity = arity;
         }
         return dispatchFailure;
     }
@@ -47,14 +45,12 @@ public final class MethodCacheEntry {
     public void setResult(final Object object) {
         result = object;
         dispatchFailure = null;
-        dispatchFailureArity = -1;
     }
 
     public void freeAndRelease() {
         selector = null; /* Mark it free. */
         result = null; /* Release the method. */
         dispatchFailure = null;
-        dispatchFailureArity = -1;
     }
 
     public MethodCacheEntry reuseFor(final ClassObject lookupClass, final NativeObject lookupSelector) {
@@ -62,7 +58,6 @@ public final class MethodCacheEntry {
         selector = lookupSelector;
         result = null;
         dispatchFailure = null;
-        dispatchFailureArity = -1;
         return this;
     }
 

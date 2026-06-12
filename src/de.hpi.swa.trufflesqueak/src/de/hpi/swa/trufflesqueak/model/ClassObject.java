@@ -48,7 +48,8 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
                     CompiledCodeObject fallbackMethod,
                     int fallbackDepth,
                     FallbackConvention convention,
-                    NativeObject fallbackSelector) {
+                    NativeObject fallbackSelector,
+                    int arity) {
     }
 
     @CompilationFinal private CyclicAssumption classHierarchyAndMethodDictStable;
@@ -504,7 +505,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
                 final CompiledCodeObject shortcutMethod = lookupMethodInMethodDictSlow(shortcutSelector);
                 if (shortcutMethod != null) {
                     if (shortcutMethod.getNumArgs() == arity + 1) {
-                        return new DispatchFailureResult(shortcutMethod, 1, FallbackConvention.SHORTCUT_DNU, shortcutSelector);
+                        return new DispatchFailureResult(shortcutMethod, 1, FallbackConvention.SHORTCUT_DNU, shortcutSelector, arity);
                     } else {
                         LogUtils.DEBUG.warning(() -> "Ignoring misconfigured DNU shortcut " + shortcutSelector.asStringUnsafe() +
                                         ": expected " + (arity + 1) + " arguments, but got " + shortcutMethod.getNumArgs());
@@ -515,7 +516,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
             // Fall back to standard #doesNotUnderstand:
             final CompiledCodeObject dnuMethod = lookupMethodInMethodDictSlow(image.doesNotUnderstand);
             if (dnuMethod != null) {
-                return new DispatchFailureResult(dnuMethod, 1, FallbackConvention.STANDARD_DNU, image.doesNotUnderstand);
+                return new DispatchFailureResult(dnuMethod, 1, FallbackConvention.STANDARD_DNU, image.doesNotUnderstand, arity);
             } else {
                 throw SqueakException.create("Fatal dispatch error: #doesNotUnderstand: not found in", this);
             }
@@ -533,7 +534,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
             } else {
                 final Object result = lookupMethodInDictionary(searchClass.getResolvedMethodDict(), selector, messageSelectorHash);
                 if (result instanceof CompiledCodeObject ciMethod) {
-                    return new DispatchFailureResult(ciMethod, depth, FallbackConvention.CANNOT_INTERPRET, selector);
+                    return new DispatchFailureResult(ciMethod, depth, FallbackConvention.CANNOT_INTERPRET, selector, arity);
                 }
             }
             searchClass = searchClass.getSuperclassOrNull();
