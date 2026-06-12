@@ -271,7 +271,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 84)
     protected abstract static class PrimPerformWithArguments2Node extends AbstractPrimitiveWithFrameNode implements Primitive2 {
         @SuppressWarnings("unused")
-        @Specialization(guards = {"selector == cachedSelector", "guard.check(receiver)", "arity == cachedArity"}, assumptions = "dispatchDirectNode.getAssumptions()", limit = "PERFORM_SELECTOR_CACHE_LIMIT")
+        @Specialization(guards = {"selector == cachedSelector", "guard.check(receiver)",
+                        "arity == cachedArity"}, assumptions = "dispatchDirectNode.getAssumptions()", limit = "PERFORM_SELECTOR_CACHE_LIMIT")
         protected static final Object performCached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final ArrayObject argumentsArray,
                         @Bind final Node node,
                         @Cached("selector") final NativeObject cachedSelector,
