@@ -31,6 +31,8 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Abst
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
+// This is a trivial change.
+
 /*
  * Represents all subclasses of ClassDescription (Class, Metaclass, TraitBehavior, ...).
  */
