@@ -16,6 +16,7 @@ on:
 
 permissions:
   contents: write # Needed to post commit comments
+  pull-requests: write # Needed to post PR comments
 
 jobs:
   post-summary:
@@ -124,3 +125,23 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             repos/${{ github.repository }}/commits/${{ env.COMMIT_SHA }}/comments \
             -f body="$(cat summary.md)"
+
+          # Check for associated Pull Request and post there as well
+          # ONLY if the parent run was NOT a standard 'push' (to avoid duplicates)
+          PARENT_EVENT="${{ github.event.workflow_run.event }}"
+          
+          if [ "$PARENT_EVENT" != "push" ]; then
+            PR_NUMBER=$(gh api repos/${{ github.repository }}/commits/${{ env.COMMIT_SHA }}/pulls -q '.[0].number' 2>/dev/null || echo "")
+          
+            if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
+              echo "Posting summary to PR #${PR_NUMBER}..."
+              gh api \
+                --method POST \
+                -H "Accept: application/vnd.github+json" \
+                repos/${{ github.repository }}/issues/${PR_NUMBER}/comments \
+                -f body="$(cat summary.md)"
+            fi
+          else
+            echo "Parent run was a 'push' event. Skipping PR comment to prevent duplicates."
+          fi
+
