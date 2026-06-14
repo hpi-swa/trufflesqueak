@@ -62,7 +62,6 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.POINT;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
-import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_SELECTOR;
 import de.hpi.swa.trufflesqueak.model.layout.SlotLocation;
 import de.hpi.swa.trufflesqueak.nodes.DoItRootNode;
 import de.hpi.swa.trufflesqueak.nodes.ExecuteTopLevelContextNode;
@@ -885,14 +884,6 @@ public final class SqueakImageContext {
 
     public int getSpecialSelectorNumArgs(final int index) {
         return MiscUtils.toIntExact((long) getSpecialSelectors().getObjectStorage()[index * 2 + 1]);
-    }
-
-    public NativeObject getValueSelector() {
-        return getSpecialSelector(SPECIAL_SELECTOR.VALUE);
-    }
-
-    public NativeObject getValueWithArgSelector() {
-        return getSpecialSelector(SPECIAL_SELECTOR.VALUE_WITH_ARG);
     }
 
     public void setSemaphore(final int index, final AbstractSqueakObject semaphore) {

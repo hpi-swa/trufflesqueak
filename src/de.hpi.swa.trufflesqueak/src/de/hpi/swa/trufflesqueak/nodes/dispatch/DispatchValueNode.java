@@ -18,9 +18,11 @@ import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 
 import com.oracle.truffle.api.nodes.Node;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_SELECTOR;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.context.GetOrCreateContextWithoutFrameNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -66,12 +68,11 @@ public abstract class DispatchValueNode extends AbstractNode {
 
     @Fallback
     protected static final Object doSend(final VirtualFrame frame, final Object receiver,
-                    @SuppressWarnings("unused") @Bind final Node node,
-                    @Cached("create(getSelector(node))") final DispatchSelector0Node.Dispatch0Node genericDispatchNode) {
+                    @Cached("create(getValueSelector())") final DispatchSelector0Node.Dispatch0Node genericDispatchNode) {
         return genericDispatchNode.execute(frame, receiver);
     }
 
-    protected static final NativeObject getSelector(final Node node) {
-        return getContext(node).getValueSelector();
+    protected static final NativeObject getValueSelector() {
+        return SqueakImageContext.getSlow().getSpecialSelector(SPECIAL_SELECTOR.VALUE);
     }
 }
