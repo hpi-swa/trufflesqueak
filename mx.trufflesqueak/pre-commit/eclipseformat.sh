@@ -6,4 +6,4 @@
 # Licensed under the MIT License.
 #
 
-mx eclipseformat --no-backup --primary --filelist <(echo "${@}" | tr ' ' '\n')
+mx eclipseformat --eclipse-exe builtin --no-backup --primary --filelist <(echo "${@}" | tr ' ' '\n')
