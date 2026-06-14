@@ -138,7 +138,6 @@
         SocketTest -> #(#testSocketReuse #testTCPSocketReuse #testUDP).
         StackInterpreterTests -> #(#testImmediateFloats #testPointerTaggingDetagging). "broken"
         SystemChangeFileTest -> #(#testClassRenamed). "flaky and can hang the system"
-        TruffleSqueakTest -> #(#testTestMapConsistency).
     } collect: [:assoc | | testCase |
         testCase := assoc key.
         assoc value do: [:sel | ignoredTests add: (testCase selector: sel) ]].
@@ -148,10 +147,6 @@
             FFIPluginConstructedTests -> FFIPluginConstructedTests allTestSelectors.
             FFIPluginLibraryTests -> FFIPluginLibraryTests allTestSelectors.
             FFIPluginTests -> FFIPluginTests allTestSelectors.
-            InteropTest -> InteropTest allTestSelectors.
-            JavaTest -> JavaTest allTestSelectors.
-            PolyglotTest -> #(#testInstallLanguage).
-            TruffleSqueakTest -> #(#testLayoutStatistics #testCallTarget).
         } collect: [:assoc | | testCase |
             testCase := assoc key.
             assoc value do: [:sel | ignoredTests add: (testCase selector: sel) ]].

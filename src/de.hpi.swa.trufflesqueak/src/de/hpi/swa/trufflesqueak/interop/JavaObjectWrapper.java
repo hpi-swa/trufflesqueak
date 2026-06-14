@@ -12,10 +12,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.TreeSet;
 import java.util.WeakHashMap;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -41,26 +39,11 @@ import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
-import com.oracle.truffle.api.nodes.LanguageInfo;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.source.SourceSection;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.model.ArrayObject;
-import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
-import de.hpi.swa.trufflesqueak.model.CharacterObject;
-import de.hpi.swa.trufflesqueak.model.ClassObject;
-import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.ContextObject;
-import de.hpi.swa.trufflesqueak.model.EmptyObject;
-import de.hpi.swa.trufflesqueak.model.FloatObject;
-import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
-import de.hpi.swa.trufflesqueak.model.PointersObject;
-import de.hpi.swa.trufflesqueak.model.VariablePointersObject;
-import de.hpi.swa.trufflesqueak.model.WeakVariablePointersObject;
-import de.hpi.swa.trufflesqueak.model.layout.ObjectLayout;
 import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
@@ -180,43 +163,15 @@ public final class JavaObjectWrapper implements TruffleObject {
         }
     };
 
-    static {
-        /*
-         * Pre-initialize CLASSES_TO_MEMBERS, CLASSES_TO_METHODS, and CLASSES_TO_FIELDS for certain
-         * classes to provide access when TruffleSqueak is compiled with native-image.
-         */
-        if (TruffleOptions.AOT) {
-            for (final Class<?> cls : new Class<?>[]{
-                            // General types
-                            boolean.class, byte.class, char.class, short.class, int.class, long.class, float.class, double.class,
-                            Boolean.class, Byte.class, Character.class, Short.class, Integer.class, Long.class, Float.class, Double.class,
-                            Class.class, Object.class, String.class,
-                            // Common data structures
-                            ArrayList.class, HashMap.class, HashSet.class, TreeSet.class,
-                            // Truffle types exposed by PolyglotPlugin
-                            LanguageInfo.class, SourceSection.class,
-                            // Non-abstract classes of TruffleSqueak model
-                            ArrayObject.class, BlockClosureObject.class, BooleanObject.class, CharacterObject.class, ClassObject.class, CompiledCodeObject.class, ContextObject.class,
-                            EmptyObject.class, FloatObject.class, NativeObject.class, NilObject.class, PointersObject.class, VariablePointersObject.class,
-                            WeakVariablePointersObject.class,
-                            // TruffleSqueak's object layout
-                            ObjectLayout.class,
-                            // Java types used by interop
-                            java.time.Duration.class, java.time.LocalDate.class, java.time.LocalTime.class, java.time.Instant.class, java.time.ZoneId.class, java.time.format.TextStyle.class,
-                            java.util.Locale.class,
-
-            }) {
-                CLASSES_TO_MEMBERS.get(cls);
-                CLASSES_TO_MEMBERS.get(Array.newInstance(cls, 0).getClass()); // Add array classes
-            }
-        }
-    }
-
     @CompilationFinal private static String hostLanguageId;
     private final Object wrappedObject;
 
     private JavaObjectWrapper(final Object object) {
         wrappedObject = object;
+    }
+
+    public static void populateAOT(final Class<?> type) {
+        CLASSES_TO_MEMBERS.get(type);
     }
 
     @TruffleBoundary
