@@ -324,7 +324,7 @@ jobs:
     timeout-minutes: 30
     runs-on: ${{ matrix.os }}
     steps:
-    - *checkout_repo
+    - *checkout_repo # for analyze_benchmarks.py
     - name: Download TruffleSqueak (${{ matrix.type }}-${{ matrix.os }})
       uses: *download_artifact_action
       with:
@@ -380,12 +380,16 @@ jobs:
         ${{ env.EXEC }} trufflesqueak ${{ env.COMMON_VM_ARGS }} ${{ matrix.vm-args }} -- --evaluate "AWFYHarness run: #('Towers' ${{ matrix.iterations }} 1500)" 2>&1 | tee Towers.log
     - name: Analyze benchmark results
       run: |
-        jq -n --arg body "$(python mx.trufflesqueak/analyze_benchmarks.py ${{ matrix.kind }})" '{ body: $body }' |\
-        curl -sL -X POST -d @- \
-          -H "Content-Type: application/json" \
-          -H "Accept: application/vnd.github.v3+json" \
-          -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-          "https://api.github.com/repos/${{ github.repository }}/commits/${{ github.sha }}/comments"
+        body="$(python mx.trufflesqueak/analyze_benchmarks.py ${{ matrix.kind }})"
+        echo "$body" >> $GITHUB_STEP_SUMMARY
+        if [[ "${{ github.event_name }}" == "push" ]]; then
+          jq -cn --arg body "$body" '{ body: $body }' > comment.json
+          curl --fail-with-body -sSL -X POST --data-binary @comment.json \
+            -H "Content-Type: application/json" \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/commits/${{ github.sha }}/comments"
+        fi
     - name: Upload Graal compiler dumps
       uses: *upload_artifact_action
       with:
