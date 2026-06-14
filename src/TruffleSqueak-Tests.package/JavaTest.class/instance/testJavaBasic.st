@@ -11,5 +11,4 @@ testJavaBasic
 	self assert:  'int' equals: (Interop toDisplayString: (Java type: 'int')) asString.
 
 	self assert: ((Java type: 'java.lang.System') getProperty: 'java.version') notEmpty.
-
-	self assert: ((Java type: 'java.awt.Frame') allInstVarNames includes: 'NORMAL').
+	

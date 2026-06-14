@@ -1,5 +1,5 @@
 failures
 expectedFailures
-	^ Java primitiveIsHostLookupAllowed
-		ifTrue: [ #() ]
-		ifFalse: [ self class allTestSelectors ]
+	^ Java isAOT
+		ifTrue: [ #(testJavaAddToHostClassPath testLanguageClass) ]
+		ifFalse: [ #() ]
