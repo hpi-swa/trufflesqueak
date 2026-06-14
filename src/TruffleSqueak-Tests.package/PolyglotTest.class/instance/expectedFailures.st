@@ -1,5 +1,5 @@
 failures
 expectedFailures
-	^ Java isAOT
+	^ (Java primitiveIsHostLookupAllowed not or: [Java isAOT])
 		ifTrue: [ #(testInstallLanguage) ]
 		ifFalse: [ #() ]
