@@ -10,6 +10,7 @@ import java.util.Arrays;
 
 import org.graalvm.collections.UnmodifiableEconomicMap;
 
+import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -18,6 +19,7 @@ public final class ArrayUtils {
     @CompilationFinal(dimensions = 1) public static final Object[] EMPTY_ARRAY = new Object[0];
     @CompilationFinal(dimensions = 1) public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
     @CompilationFinal(dimensions = 1) public static final String[] EMPTY_STRINGS_ARRAY = new String[0];
+    @CompilationFinal(dimensions = 1) public static final Assumption[] EMPTY_ASSUMPTIONS = new Assumption[0];
 
     private ArrayUtils() {
     }

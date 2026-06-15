@@ -6,14 +6,10 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import static de.hpi.swa.trufflesqueak.nodes.dispatch.AbstractDisNode.DISPATCH_CACHE_SIZE;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateInline;
@@ -35,7 +31,11 @@ import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.LookupMethodNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.GetOrCreateContextWithoutFrameNode;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.Dis2NodeFactory.GenericGuardNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.AbstractDisNode.AbstractGuardNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.AbstractDisNode.GuardChainNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.AbstractDisNode.LookupKind;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.AbstractDisNode.LookupResult;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.AbstractDisNodeFactory.GenericGuardNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.Dis2NodeFactory.IndirectDis2NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2Node.DispatchDirectPrimitiveFallback2Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2Node.DispatchIndirect2Node.CreateFrameArgumentsForIndirectCall2Node;
@@ -47,8 +47,6 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class Dis2Node extends AbstractDispatchNode {
-    private static final int LOOKUP_CACHE_SIZE = 8;
-    private static final int DISPATCH_CACHE_SIZE = 4;
 
     @Child private AbstractDis2Node dispatchNode = new DirectDis2Node();
 
@@ -74,18 +72,17 @@ public final class Dis2Node extends AbstractDispatchNode {
 
     static class DirectDisData2Node extends AbstractNode {
         private final CompiledCodeObject method;
-
-        @CompilationFinal(dimensions = 1) Assumption[] assumptions;
+        private final Assumption assumption;
 
         @Child AbstractGuardNode guardChainNode;
         @Child Dispatch2Node dispatchDirectNode;
         @Child DirectDisData2Node next;
 
         DirectDisData2Node(final Object receiver, final LookupResult result) {
-            guardChainNode = new GuardChainNode(receiver);
-            this.method = result.method();
-            this.dispatchDirectNode = Dispatch2Node.create(result);
-            this.assumptions = DispatchUtils.createAssumptions(result.receiverClass, method);
+            guardChainNode = new GuardChainNode(receiver, result);
+            method = result.method();
+            assumption = method.getCallTargetStable();
+            dispatchDirectNode = Dispatch2Node.create(result);
         }
     }
 
@@ -189,7 +186,7 @@ public final class Dis2Node extends AbstractDispatchNode {
         Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2) {
             DirectDisData2Node current = head;
             while (current != null) {
-                if (!Assumption.isValidAssumption(current.assumptions)) {
+                if (!Assumption.isValidAssumption(current.assumption)) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     remove(current);
                     return executeAndSpecialize(frame, receiver, arg1, arg2);
@@ -212,12 +209,8 @@ public final class Dis2Node extends AbstractDispatchNode {
             int count = 0;
             while (current != null) {
                 if (current.method == result.method()) {
-                    if (current.guardChainNode.append(receiver)) {
-                        final Set<Assumption> assumptions = new HashSet<>(Arrays.asList(current.assumptions));
-                        Collections.addAll(assumptions, DispatchUtils.createAssumptions(result.receiverClass, result.lookupResult));
-                        current.assumptions = assumptions.toArray(new Assumption[0]);
-                    } else {
-                        current.guardChainNode = current.insert(GenericGuardNodeGen.create(selector, current.method));
+                    if (!current.guardChainNode.append(receiver, result)) {
+                        current.guardChainNode = current.insert(GenericGuardNodeGen.create(selector, current.method, 2));
                     }
                     return current.dispatchDirectNode.execute(frame, receiver, arg1, arg2);
                 }
@@ -265,86 +258,15 @@ public final class Dis2Node extends AbstractDispatchNode {
             while (current != null) {
                 if (current == target) {
                     if (previous == null) {
-                        head = null;
+                        head = current.next;
                     } else {
-                        previous.next = target.next;
+                        previous.next = current.next;
                     }
                     return;
                 }
                 previous = current;
                 current = current.next;
             }
-        }
-    }
-
-    abstract static class AbstractGuardNode extends AbstractNode {
-        abstract boolean execute(Object receiver);
-
-        abstract boolean append(Object receiver);
-    }
-
-    static class GuardChainNode extends AbstractGuardNode {
-        final LookupClassGuard guard;
-        @Child private GuardChainNode next;
-
-        GuardChainNode(final Object receiver) {
-            this.guard = LookupClassGuard.create(receiver);
-        }
-
-        @Override
-        @ExplodeLoop
-        boolean execute(final Object receiver) {
-            GuardChainNode current = this;
-            while (current != null) {
-                if (current.guard.check(receiver)) {
-                    return true;
-                }
-                current = current.next;
-            }
-            return false;
-        }
-
-        @Override
-        boolean append(final Object receiver) {
-            GuardChainNode current = this;
-            int count = 0;
-            while (current.next != null) {
-                current = current.next;
-                count++;
-            }
-            if (count < LOOKUP_CACHE_SIZE) {
-                current.next = insert(new GuardChainNode(receiver));
-                return true;
-            } else {
-                return false;
-            }
-        }
-    }
-
-    abstract static class GenericGuardNode extends AbstractGuardNode {
-        final NativeObject selector;
-        final CompiledCodeObject method;
-
-        GenericGuardNode(final NativeObject selector, final CompiledCodeObject method) {
-            this.selector = selector;
-            this.method = method;
-        }
-
-        @Specialization
-        boolean doGeneric(final Object receiver,
-                        @Bind final Node node,
-                        @Bind final SqueakImageContext image,
-                        @Cached(inline = true) final SqueakObjectClassNode classNode,
-                        @Cached final ResolveMethodNode methodNode) {
-            final ClassObject receiverClass = classNode.executeLookup(node, receiver);
-            final Object lookupResult = image.lookup(receiverClass, selector);
-            final CompiledCodeObject targetMethod = methodNode.execute(node, image, 2, false, selector, receiverClass, lookupResult);
-            return method == targetMethod;
-        }
-
-        @Override
-        boolean append(final Object receiver) {
-            return true; /* Always successful */
         }
     }
 
@@ -372,14 +294,5 @@ public final class Dis2Node extends AbstractDispatchNode {
                 return callNode.call(method.getCallTarget(), argumentsNode.execute(node, senderNode.execute(frame, node), receiver, arg1, arg2, receiverClass, lookupResult, selector));
             }
         }
-    }
-
-    record LookupResult(NativeObject selector, ClassObject receiverClass, Object lookupResult, CompiledCodeObject method, LookupKind kind, Object targetObject) {
-    }
-
-    enum LookupKind {
-        STANDARD_METHOD,
-        DOES_NOT_UNDERSTAND,
-        OBJECT_AS_METHOD,
     }
 }
