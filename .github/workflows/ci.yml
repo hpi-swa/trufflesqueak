@@ -65,6 +65,26 @@ jobs:
       matrix:
         os: [ubuntu-22.04, ubuntu-22.04-arm, windows-2022, macos-14]
         type: [jvm]
+    outputs:
+      # Squeak timings
+      squeak_ubuntu_22_04: ${{ steps.timer_squeak.outputs.squeak_ubuntu_22_04 }}
+      squeak_ubuntu_22_04_arm: ${{ steps.timer_squeak.outputs.squeak_ubuntu_22_04_arm }}
+      squeak_macos_14: ${{ steps.timer_squeak.outputs.squeak_macos_14 }}
+      squeak_windows_2022: ${{ steps.timer_squeak_windows.outputs.squeak_windows_2022 }}
+
+      # Cuis 7.3 timings
+      cuis73_ubuntu_22_04: ${{ steps.timer_cuis73.outputs.cuis73_ubuntu_22_04 }}
+      cuis73_ubuntu_22_04_arm: ${{ steps.timer_cuis73.outputs.cuis73_ubuntu_22_04_arm }}
+      cuis73_macos_14: ${{ steps.timer_cuis73.outputs.cuis73_macos_14 }}
+      # NOTE: If a dedicated Windows step is added for Cuis 7.3, update the step ID below
+      cuis73_windows_2022: ${{ steps.timer_cuis73.outputs.cuis73_windows_2022 }}
+
+      # Cuis 7.5 timings
+      cuis75_ubuntu_22_04: ${{ steps.timer_cuis75.outputs.cuis75_ubuntu_22_04 }}
+      cuis75_ubuntu_22_04_arm: ${{ steps.timer_cuis75.outputs.cuis75_ubuntu_22_04_arm }}
+      cuis75_macos_14: ${{ steps.timer_cuis75.outputs.cuis75_macos_14 }}
+      # NOTE: If a dedicated Windows step is added for Cuis 7.5, update the step ID below
+      cuis75_windows_2022: ${{ steps.timer_cuis75.outputs.cuis75_windows_2022 }}
     env:
       VM_ARGS: "--vm.ea --vm.Xmx6G --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --compiler.DeoptCycleDetectionThreshold=-1 --engine.CompilationFailureAction=Diagnose --engine.CompilationStatistics"
     name: build ${{ matrix.type }} ${{ matrix.os }}
@@ -143,45 +163,53 @@ jobs:
       if: ${{ runner.os == 'Linux' }}
     - &run_cuis73_tests
       name: Run Cuis 7.3 tests on TruffleSqueak standalone
+      id: timer_cuis73
       run: |
         mx.trufflesqueak/utils.sh download-cuis-7-3-test-image
         START_TIME=$SECONDS
         trufflesqueak ${{ env.VM_ARGS }} images/Cuis?.?-????.image -s src/image-tests/runCuisTests.st
         ELAPSED_TIME=$(($SECONDS - $START_TIME))
         FORMATTED_TIME=$(printf "%02d:%02d" $((ELAPSED_TIME / 60)) $((ELAPSED_TIME % 60)))
-        echo "::TEST_TIME_METRIC::${{ matrix.type }}::${{ matrix.os }}::CUIS_73::${FORMATTED_TIME}::"
+        SAFE_OS=$(echo "${{ matrix.os }}" | tr '-' '_' | tr '.' '_')
+        echo "cuis73_${SAFE_OS}=${FORMATTED_TIME}" >> "$GITHUB_OUTPUT"
       timeout-minutes: 10
       if: ${{ matrix.os == 'macos-14' }}
     - &run_cuis75_tests
       name: Run Cuis 7.5 tests on TruffleSqueak standalone
+      id: timer_cuis75
       run: |
         mx.trufflesqueak/utils.sh download-cuis-7-5-test-image
         START_TIME=$SECONDS
         trufflesqueak ${{ env.VM_ARGS }} images/Cuis?.?-????.image -s src/image-tests/runCuisTests.st
         ELAPSED_TIME=$(($SECONDS - $START_TIME))
         FORMATTED_TIME=$(printf "%02d:%02d" $((ELAPSED_TIME / 60)) $((ELAPSED_TIME % 60)))
-        echo "::TEST_TIME_METRIC::${{ matrix.type }}::${{ matrix.os }}::CUIS_75::${FORMATTED_TIME}::"
+        SAFE_OS=$(echo "${{ matrix.os }}" | tr '-' '_' | tr '.' '_')
+        echo "cuis75_${SAFE_OS}=${FORMATTED_TIME}" >> "$GITHUB_OUTPUT"
       timeout-minutes: 10
       if: ${{ matrix.os == 'ubuntu-22.04' }}
     - &run_squeak_tests_windows
       name: Run Squeak/Smalltalk tests on TruffleSqueak standalone on Windows
+      id: timer_squeak_windows
       run: |
         $sw = [System.Diagnostics.Stopwatch]::StartNew()
         trufflesqueak ${{ env.VM_ARGS }} images\test-64bit.image ..\src\image-tests\runSqueakTests.st
         $sw.Stop()
         $formatted = "{0:D2}:{1:D2}" -f $sw.Elapsed.Minutes, $sw.Elapsed.Seconds
-        Write-Host "::TEST_TIME_METRIC::${{ matrix.type }}::${{ matrix.os }}::SQUEAK::${formatted}::"
+        $safeOs = "${{ matrix.os }}".Replace('-', '_').Replace('.', '_')
+        Add-Content -Path $env:GITHUB_OUTPUT -Value "squeak_${safeOs}=${formatted}"
       timeout-minutes: 30
       if: ${{ matrix.os == 'windows-2022' }}
     - &run_squeak_tests_unix
       name: Run Squeak/Smalltalk tests on TruffleSqueak standalone
+      id: timer_squeak
       shell: bash
       run: |
         START_TIME=$SECONDS
         trufflesqueak ${{ env.VM_ARGS }} images/test-64bit.image $(pwd)/src/image-tests/runSqueakTests.st
         ELAPSED_TIME=$(($SECONDS - $START_TIME))
         FORMATTED_TIME=$(printf "%02d:%02d" $((ELAPSED_TIME / 60)) $((ELAPSED_TIME % 60)))
-        echo "::TEST_TIME_METRIC::${{ matrix.type }}::${{ matrix.os }}::SQUEAK::${FORMATTED_TIME}::"
+        SAFE_OS=$(echo "${{ matrix.os }}" | tr '-' '_' | tr '.' '_')
+        echo "squeak_${SAFE_OS}=${FORMATTED_TIME}" >> "$GITHUB_OUTPUT"
       timeout-minutes: 30
       if: ${{ matrix.os != 'windows-2022' }}
     - &upload_test_image
@@ -252,6 +280,26 @@ jobs:
       matrix:
         os: [ubuntu-22.04, ubuntu-22.04-arm, windows-2022, macos-14]
         type: [native]
+    outputs:
+      # Squeak timings
+      squeak_ubuntu_22_04: ${{ steps.timer_squeak.outputs.squeak_ubuntu_22_04 }}
+      squeak_ubuntu_22_04_arm: ${{ steps.timer_squeak.outputs.squeak_ubuntu_22_04_arm }}
+      squeak_macos_14: ${{ steps.timer_squeak.outputs.squeak_macos_14 }}
+      squeak_windows_2022: ${{ steps.timer_squeak_windows.outputs.squeak_windows_2022 }}
+
+      # Cuis 7.3 timings
+      cuis73_ubuntu_22_04: ${{ steps.timer_cuis73.outputs.cuis73_ubuntu_22_04 }}
+      cuis73_ubuntu_22_04_arm: ${{ steps.timer_cuis73.outputs.cuis73_ubuntu_22_04_arm }}
+      cuis73_macos_14: ${{ steps.timer_cuis73.outputs.cuis73_macos_14 }}
+      # NOTE: If a dedicated Windows step is added for Cuis 7.3, update the step ID below
+      cuis73_windows_2022: ${{ steps.timer_cuis73.outputs.cuis73_windows_2022 }}
+
+      # Cuis 7.5 timings
+      cuis75_ubuntu_22_04: ${{ steps.timer_cuis75.outputs.cuis75_ubuntu_22_04 }}
+      cuis75_ubuntu_22_04_arm: ${{ steps.timer_cuis75.outputs.cuis75_ubuntu_22_04_arm }}
+      cuis75_macos_14: ${{ steps.timer_cuis75.outputs.cuis75_macos_14 }}
+      # NOTE: If a dedicated Windows step is added for Cuis 7.5, update the step ID below
+      cuis75_windows_2022: ${{ steps.timer_cuis75.outputs.cuis75_windows_2022 }}
     env:
       VM_ARGS: "--vm.Xmx6G --headless --experimental-options --compiler.DeoptCycleDetectionThreshold=-1 --engine.CompilationFailureAction=Diagnose"
     name: build ${{ matrix.type }} ${{ matrix.os }}
@@ -414,4 +462,122 @@ jobs:
         if-no-files-found: ignore
         retention-days: 5
       if: ${{ matrix.kind == 'peak' }}
+  test-summary:
+    name: Generate Test Summary
+    needs: [ build-jvm-standalone, build-native-standalone ]
+    if: always()
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write # Needed to post to the commit
+    steps:
+      - name: Download GraalVM Compiler Dumps (if any)
+        uses: actions/download-artifact@v4
+        with:
+          pattern: graal_dumps-*
+          path: all-times
+        continue-on-error: true
+
+      - name: Build Table and Post to Commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Pass JVM timings
+          JVM_SQUEAK_U22: ${{ needs.build-jvm-standalone.outputs.squeak_ubuntu_22_04 }}
+          JVM_SQUEAK_ARM: ${{ needs.build-jvm-standalone.outputs.squeak_ubuntu_22_04_arm }}
+          JVM_SQUEAK_MAC: ${{ needs.build-jvm-standalone.outputs.squeak_macos_14 }}
+          JVM_SQUEAK_WIN: ${{ needs.build-jvm-standalone.outputs.squeak_windows_2022 }}
+          JVM_C73_U22: ${{ needs.build-jvm-standalone.outputs.cuis73_ubuntu_22_04 }}
+          JVM_C73_ARM: ${{ needs.build-jvm-standalone.outputs.cuis73_ubuntu_22_04_arm }}
+          JVM_C73_MAC: ${{ needs.build-jvm-standalone.outputs.cuis73_macos_14 }}
+          JVM_C73_WIN: ${{ needs.build-jvm-standalone.outputs.cuis73_windows_2022 }}
+          JVM_C75_U22: ${{ needs.build-jvm-standalone.outputs.cuis75_ubuntu_22_04 }}
+          JVM_C75_ARM: ${{ needs.build-jvm-standalone.outputs.cuis75_ubuntu_22_04_arm }}
+          JVM_C75_MAC: ${{ needs.build-jvm-standalone.outputs.cuis75_macos_14 }}
+          JVM_C75_WIN: ${{ needs.build-jvm-standalone.outputs.cuis75_windows_2022 }}
+
+          # Pass Native timings
+          NAT_SQUEAK_U22: ${{ needs.build-native-standalone.outputs.squeak_ubuntu_22_04 }}
+          NAT_SQUEAK_ARM: ${{ needs.build-native-standalone.outputs.squeak_ubuntu_22_04_arm }}
+          NAT_SQUEAK_MAC: ${{ needs.build-native-standalone.outputs.squeak_macos_14 }}
+          NAT_SQUEAK_WIN: ${{ needs.build-native-standalone.outputs.squeak_windows_2022 }}
+          NAT_C73_U22: ${{ needs.build-native-standalone.outputs.cuis73_ubuntu_22_04 }}
+          NAT_C73_ARM: ${{ needs.build-native-standalone.outputs.cuis73_ubuntu_22_04_arm }}
+          NAT_C73_MAC: ${{ needs.build-native-standalone.outputs.cuis73_macos_14 }}
+          NAT_C73_WIN: ${{ needs.build-native-standalone.outputs.cuis73_windows_2022 }}
+          NAT_C75_U22: ${{ needs.build-native-standalone.outputs.cuis75_ubuntu_22_04 }}
+          NAT_C75_ARM: ${{ needs.build-native-standalone.outputs.cuis75_ubuntu_22_04_arm }}
+          NAT_C75_MAC: ${{ needs.build-native-standalone.outputs.cuis75_macos_14 }}
+          NAT_C75_WIN: ${{ needs.build-native-standalone.outputs.cuis75_windows_2022 }}
+        shell: bash
+        run: |
+          echo "### ⏱️ Test Durations Summary" > summary.md
+          FOOTNOTE_REQUIRED=false
+          
+          has_warnings() {
+            local type=$1
+            local os=$2
+            if [ -d "all-times/graal_dumps-${type}-${os}" ] && [ "$(ls -A all-times/graal_dumps-${type}-${os} 2>/dev/null)" ]; then
+              echo "true"
+            else
+              echo "false"
+            fi
+          }
+          
+          # Function to neatly format empty variables as an em-dash
+          val() {
+            if [ -z "$1" ]; then echo "—"; else echo "$1"; fi
+          }
+          
+          for type in jvm native; do
+            if [ "$type" == "jvm" ]; then
+              echo "#### JVM Standalone" >> summary.md
+              prefix="JVM"
+            else
+              echo "#### Native Standalone (AOT)" >> summary.md
+              prefix="NAT"
+            fi
+          
+            h_u22="Ubuntu 22.04"
+            h_arm="Ubuntu ARM"
+            h_mac="macOS 14"
+            h_win="Windows 2022"
+          
+            if [ "$(has_warnings "$type" "ubuntu-22.04")" == "true" ]; then h_u22="${h_u22} †"; FOOTNOTE_REQUIRED=true; fi
+            if [ "$(has_warnings "$type" "ubuntu-22.04-arm")" == "true" ]; then h_arm="${h_arm} †"; FOOTNOTE_REQUIRED=true; fi
+            if [ "$(has_warnings "$type" "macos-14")" == "true" ]; then h_mac="${h_mac} †"; FOOTNOTE_REQUIRED=true; fi
+            if [ "$(has_warnings "$type" "windows-2022")" == "true" ]; then h_win="${h_win} †"; FOOTNOTE_REQUIRED=true; fi
+          
+            echo "| Test Suite | ${h_u22} | ${h_arm} | ${h_mac} | ${h_win} |" >> summary.md
+            echo "| :--- | :---: | :---: | :---: | :---: |" >> summary.md
+          
+            for test in SQUEAK C73 C75; do
+              case $test in
+                SQUEAK) name="**Squeak / Smalltalk**" ;;
+                C73) name="**Cuis 7.3**" ;;
+                C75) name="**Cuis 7.5**" ;;
+              esac
+          
+              # Dynamically fetch the env variable using Bash indirect expansion
+              v_u22="${prefix}_${test}_U22"
+              v_arm="${prefix}_${test}_ARM"
+              v_mac="${prefix}_${test}_MAC"
+              v_win="${prefix}_${test}_WIN"
+          
+              echo "| ${name} | $(val "${!v_u22}") | $(val "${!v_arm}") | $(val "${!v_mac}") | $(val "${!v_win}") |" >> summary.md
+            done
+            echo "" >> summary.md
+          done
+          
+          if [ "$FOOTNOTE_REQUIRED" = true ]; then
+            echo "*† Indicates that GraalVM compilation warnings or failure diagnostics were generated on this platform environment during the run.*" >> summary.md
+          fi
+          
+          # Echo to step summary for logging visibility
+          cat summary.md >> $GITHUB_STEP_SUMMARY
+          
+          echo "Posting summary directly to commit ${{ github.sha }}..."
+          gh api \
+            --method POST \
+            -H "Accept: application/vnd.github+json" \
+            repos/${{ github.repository }}/commits/${{ github.sha }}/comments \
+            -f body="$(cat summary.md)" || echo "Failed to post comment. This is expected if running from a fork PR."
 
