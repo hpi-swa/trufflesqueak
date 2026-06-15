@@ -33,9 +33,9 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0NodeFactory.Dispatch0NodeGen;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1NodeFactory.Dispatch1NodeGen;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2NodeFactory.Dispatch2NodeGen;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.Dis0Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.Dis1Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.Dis2Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchNaryNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchSuperNaryNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchValueNodeGen;
@@ -248,7 +248,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     break;
                 }
                 case BC.BYTECODE_PRIM_SIZE, BC.BYTECODE_PRIM_NEXT, BC.BYTECODE_PRIM_AT_END, BC.BYTECODE_PRIM_NEW, BC.BYTECODE_PRIM_POINT_X, BC.BYTECODE_PRIM_POINT_Y: {
-                    setData(currentPC, insert(Dispatch0NodeGen.create(image.getSpecialSelector(b - BC.BYTECODE_PRIM_ADD))));
+                    setData(currentPC, insert(Dis0Node.create(image.getSpecialSelector(b - BC.BYTECODE_PRIM_ADD))));
                     break;
                 }
                 case BC.BYTECODE_PRIM_CLASS: {
@@ -258,7 +258,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                 case BC.BYTECODE_PRIM_ADD, BC.BYTECODE_PRIM_SUBTRACT, BC.BYTECODE_PRIM_LESS_THAN, BC.BYTECODE_PRIM_GREATER_THAN, BC.BYTECODE_PRIM_LESS_OR_EQUAL, BC.BYTECODE_PRIM_GREATER_OR_EQUAL, //
                     BC.BYTECODE_PRIM_EQUAL, BC.BYTECODE_PRIM_NOT_EQUAL, BC.BYTECODE_PRIM_MULTIPLY, BC.BYTECODE_PRIM_DIVIDE, BC.BYTECODE_PRIM_MOD, BC.BYTECODE_PRIM_MAKE_POINT, BC.BYTECODE_PRIM_BIT_SHIFT, BC.BYTECODE_PRIM_DIV, //
                     BC.BYTECODE_PRIM_BIT_AND, BC.BYTECODE_PRIM_BIT_OR, BC.BYTECODE_PRIM_AT, BC.BYTECODE_PRIM_NEXT_PUT, BC.BYTECODE_PRIM_DO, BC.BYTECODE_PRIM_NEW_WITH_ARG: {
-                    setData(currentPC, insert(Dispatch1NodeGen.create(image.getSpecialSelector(b - BC.BYTECODE_PRIM_ADD))));
+                    setData(currentPC, insert(Dis1Node.create(image.getSpecialSelector(b - BC.BYTECODE_PRIM_ADD))));
                     break;
                 }
                 case BC.BYTECODE_PRIM_IDENTICAL, BC.BYTECODE_PRIM_NOT_IDENTICAL: {
@@ -274,25 +274,25 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     break;
                 }
                 case BC.BYTECODE_PRIM_AT_PUT: {
-                    setData(currentPC, insert(Dispatch2NodeGen.create(image.getSpecialSelector(b - BC.BYTECODE_PRIM_ADD))));
+                    setData(currentPC, insert(Dis2Node.create(image.getSpecialSelector(b - BC.BYTECODE_PRIM_ADD))));
                     break;
                 }
                 case BC.SEND_LIT_SEL0_0, BC.SEND_LIT_SEL0_1, BC.SEND_LIT_SEL0_2, BC.SEND_LIT_SEL0_3, BC.SEND_LIT_SEL0_4, BC.SEND_LIT_SEL0_5, BC.SEND_LIT_SEL0_6, BC.SEND_LIT_SEL0_7, //
                     BC.SEND_LIT_SEL0_8, BC.SEND_LIT_SEL0_9, BC.SEND_LIT_SEL0_A, BC.SEND_LIT_SEL0_B, BC.SEND_LIT_SEL0_C, BC.SEND_LIT_SEL0_D, BC.SEND_LIT_SEL0_E, BC.SEND_LIT_SEL0_F: {
                     final NativeObject selector = (NativeObject) code.getAndResolveLiteral(b & 0xF);
-                    setData(currentPC, insert(Dispatch0NodeGen.create(selector)));
+                    setData(currentPC, insert(Dis0Node.create(selector)));
                     break;
                 }
                 case BC.SEND_LIT_SEL1_0, BC.SEND_LIT_SEL1_1, BC.SEND_LIT_SEL1_2, BC.SEND_LIT_SEL1_3, BC.SEND_LIT_SEL1_4, BC.SEND_LIT_SEL1_5, BC.SEND_LIT_SEL1_6, BC.SEND_LIT_SEL1_7, //
                     BC.SEND_LIT_SEL1_8, BC.SEND_LIT_SEL1_9, BC.SEND_LIT_SEL1_A, BC.SEND_LIT_SEL1_B, BC.SEND_LIT_SEL1_C, BC.SEND_LIT_SEL1_D, BC.SEND_LIT_SEL1_E, BC.SEND_LIT_SEL1_F: {
                     final NativeObject selector = (NativeObject) code.getAndResolveLiteral(b & 0xF);
-                    setData(currentPC, insert(Dispatch1NodeGen.create(selector)));
+                    setData(currentPC, insert(Dis1Node.create(selector)));
                     break;
                 }
                 case BC.SEND_LIT_SEL2_0, BC.SEND_LIT_SEL2_1, BC.SEND_LIT_SEL2_2, BC.SEND_LIT_SEL2_3, BC.SEND_LIT_SEL2_4, BC.SEND_LIT_SEL2_5, BC.SEND_LIT_SEL2_6, BC.SEND_LIT_SEL2_7, //
                     BC.SEND_LIT_SEL2_8, BC.SEND_LIT_SEL2_9, BC.SEND_LIT_SEL2_A, BC.SEND_LIT_SEL2_B, BC.SEND_LIT_SEL2_C, BC.SEND_LIT_SEL2_D, BC.SEND_LIT_SEL2_E, BC.SEND_LIT_SEL2_F: {
                     final NativeObject selector = (NativeObject) code.getAndResolveLiteral(b & 0xF);
-                    setData(currentPC, insert(Dispatch2NodeGen.create(selector)));
+                    setData(currentPC, insert(Dis2Node.create(selector)));
                     break;
                 }
                 default: {

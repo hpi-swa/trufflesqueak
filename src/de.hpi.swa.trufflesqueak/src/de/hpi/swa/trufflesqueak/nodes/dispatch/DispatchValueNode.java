@@ -47,7 +47,6 @@ public abstract class DispatchValueNode extends AbstractNode {
                     @SuppressWarnings("unused") @Cached("closure.getCompiledBlock()") final CompiledCodeObject cachedBlock,
                     @Cached("closure.getNumCopied()") final int cachedNumCopied,
                     @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
-
         final Object[] args = FrameAccess.newClosureArgumentsTemplateUnrolled(closure, getOrCreateContextNode.execute(frame, node), 0, cachedNumCopied);
         return directCallNode.call(args);
     }
@@ -58,7 +57,6 @@ public abstract class DispatchValueNode extends AbstractNode {
                     @Bind final Node node,
                     @Cached(inline = true) @Shared("contextNode") final GetOrCreateContextWithoutFrameNode getOrCreateContextNode,
                     @Cached final IndirectCallNode indirectCallNode) {
-
         final CompiledCodeObject block = closure.getCompiledBlock();
         final Object[] args = FrameAccess.newClosureArgumentsTemplate(closure, getOrCreateContextNode.execute(frame, node), 0);
         return indirectCallNode.call(block.getCallTarget(), args);
@@ -68,7 +66,7 @@ public abstract class DispatchValueNode extends AbstractNode {
 
     @Fallback
     protected static final Object doSend(final VirtualFrame frame, final Object receiver,
-                    @Cached("create(getValueSelector())") final DispatchSelector0Node.Dispatch0Node genericDispatchNode) {
+                    @Cached("create(getValueSelector())") final Dis0Node genericDispatchNode) {
         return genericDispatchNode.execute(frame, receiver);
     }
 
