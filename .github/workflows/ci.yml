@@ -467,8 +467,6 @@ jobs:
     needs: [ build-jvm-standalone, build-native-standalone ]
     if: always()
     runs-on: ubuntu-22.04
-    permissions:
-      contents: write # Needed to post to the commit
     steps:
       - name: Download GraalVM Compiler Dumps (if any)
         uses: actions/download-artifact@v4
@@ -477,9 +475,8 @@ jobs:
           path: all-times
         continue-on-error: true
 
-      - name: Build Table and Post to Commit
+      - name: Build table and post to commit
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Pass JVM timings
           JVM_SQUEAK_U22: ${{ needs.build-jvm-standalone.outputs.squeak_ubuntu_22_04 }}
           JVM_SQUEAK_ARM: ${{ needs.build-jvm-standalone.outputs.squeak_ubuntu_22_04_arm }}
@@ -574,10 +571,15 @@ jobs:
           # Echo to step summary for logging visibility
           cat summary.md >> $GITHUB_STEP_SUMMARY
           
-          echo "Posting summary directly to commit ${{ github.sha }}..."
-          gh api \
-            --method POST \
-            -H "Accept: application/vnd.github+json" \
-            repos/${{ github.repository }}/commits/${{ github.sha }}/comments \
-            -f body="$(cat summary.md)" || echo "Failed to post comment. This is expected if running from a fork PR."
-
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            echo "Posting summary directly to commit ${{ github.sha }}..."
+            summary_body="$(cat summary.md)"
+            jq -cn --arg body "$summary_body" '{ body: $body }' > comment.json
+          
+            curl --fail-with-body -sSL -X POST --data-binary @comment.json \
+              -H "Content-Type: application/json" \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              "https://api.github.com/repos/${{ github.repository }}/commits/${{ github.sha }}/comments"
+          fi
+          
