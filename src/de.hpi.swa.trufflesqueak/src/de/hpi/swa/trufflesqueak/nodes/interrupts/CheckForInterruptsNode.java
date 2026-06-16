@@ -85,19 +85,10 @@ public abstract class CheckForInterruptsNode extends AbstractNode {
         private CheckForInterruptsInLoopNode() {
         }
 
-        public static CheckForInterruptsInLoopNode createForLoop(final Object[] data, final int targetPC, final int jumpOpcodePC) {
+        public static CheckForInterruptsInLoopNode createForLoop() {
             CompilerAsserts.neverPartOfCompilation();
             if (SqueakImageContext.getSlow().interruptHandlerDisabled()) {
                 return null;
-            }
-            for (int i = targetPC; i < jumpOpcodePC; i++) {
-                /*
-                 * FIXME?: Search for call nodes but reject the ones from closure primitives as they
-                 * do not check for interrupts.
-                 */
-                if (data[i] instanceof AbstractDispatchNode) {
-                    return null;
-                }
             }
             return SINGLETON;
         }
