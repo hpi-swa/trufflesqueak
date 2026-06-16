@@ -485,7 +485,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         return (bytecode & 7) + 1;
     }
 
-    protected abstract boolean isFastPathedMessageSend(final int bytecode);
+    protected abstract boolean isFastPathedMessageSend(int bytecode);
 
     protected final CheckForInterruptsInLoopNode createCheckForInterruptsInLoopNode(final int targetPC, final int jumpOpcodePC) {
         // No need to check for interrupts if there is a message dispatch within the loop.
