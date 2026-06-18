@@ -18,11 +18,12 @@ public final class SqueakLanguageConfig {
     private static final String IMAGE_VERSION = "25.0.1"; // on release: `VERSION;`
 
     public static final String[][] SUPPORTED_IMAGES = {
-                    {"TruffleSqueak image (" + IMAGE_VERSION + ") (recommended)",
+                    {"trufflesqueak", "TruffleSqueak image (" + IMAGE_VERSION + ") (recommended)",
                                     "https://github.com/hpi-swa/trufflesqueak/releases/download/" + IMAGE_VERSION + "/TruffleSqueakImage-" + IMAGE_VERSION + ".zip"},
-                    {"Squeak/Smalltalk (6.0-22148)", "https://files.squeak.org/6.0/Squeak6.0-22148-64bit/Squeak6.0-22148-64bit.zip"},
-                    {"TruffleSqueak test image (6.0-22104)", "https://github.com/hpi-swa/trufflesqueak/releases/download/22.3.0/TruffleSqueakTestImage-6.0-22104-64bit.zip"},
-                    {"Cuis Smalltalk test image (7.3-7036)", "https://github.com/hpi-swa/trufflesqueak/releases/download/24.1.2/CuisTestImage-7.3-7036.zip"}};
+                    {"squeak-6.0", "Squeak/Smalltalk (6.0-22148)", "https://files.squeak.org/6.0/Squeak6.0-22148-64bit/Squeak6.0-22148-64bit.zip"},
+                    {"trufflesqueak-test", "TruffleSqueak test image (6.0-22104)", "https://github.com/hpi-swa/trufflesqueak/releases/download/22.3.0/TruffleSqueakTestImage-6.0-22104-64bit.zip"},
+                    {"cuis-7.3-test", "Cuis Smalltalk test image (7.3-7036)", "https://github.com/hpi-swa/trufflesqueak/releases/download/24.1.2/CuisTestImage-7.3-7036.zip"},
+                    {"pharo-13", "Pharo 13 - WIP", "https://files.pharo.org/image/130/stable-64.zip"}};
 
     private SqueakLanguageConfig() {
     }

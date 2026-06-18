@@ -26,10 +26,10 @@ import org.graalvm.home.HomeFinder;
 public final class SqueakImageLocator {
     /* Ensures that TruffleSqueak's resources directory exists and returns path to image file. */
     public static String findImage(final String userImage) {
-        return findImage(userImage, false);
+        return findImage(userImage, null, false);
     }
 
-    public static String findImage(final String userImage, final boolean isQuiet) {
+    public static String findImage(final String userImage, final String imageKey, final boolean isQuiet) {
         final File resourcesDirectory = findResourcesDirectory();
         try {
             ensureDirectory(resourcesDirectory);
@@ -40,23 +40,24 @@ public final class SqueakImageLocator {
             return userImage;
         }
         final String imageFile = findImageFile(resourcesDirectory);
-        if (imageFile != null) {
+        if (imageFile != null && imageKey == null) {
             return imageFile;
         } else {
             final String[][] supportedImages = SqueakLanguageConfig.SUPPORTED_IMAGES;
             final PrintStream out = System.out; // ignore checkstyle
-            final int selection;
-            if (isQuiet) {
-                selection = 0;
+            final String[] selectedEntry;
+            if (imageKey != null) {
+                selectedEntry = findSupportedImage(supportedImages, imageKey);
+            } else if (isQuiet) {
+                selectedEntry = supportedImages[0];
             } else {
-                selection = askUserToChooseImage(supportedImages, out);
+                selectedEntry = supportedImages[askUserToChooseImage(supportedImages, out)];
             }
-            final String[] selectedEntry = supportedImages[selection];
             if (!isQuiet) {
-                out.printf("Downloading %s...%n", selectedEntry[0]);
+                out.printf("Downloading %s...%n", selectedEntry[1]);
             }
-            downloadAndUnzip(selectedEntry[1], resourcesDirectory);
-            return Objects.requireNonNull(findImageFile(resourcesDirectory));
+            final String downloadedImage = downloadAndUnzip(selectedEntry[2], resourcesDirectory);
+            return downloadedImage != null ? downloadedImage : Objects.requireNonNull(findImageFile(resourcesDirectory));
         }
     }
 
@@ -64,7 +65,7 @@ public final class SqueakImageLocator {
         int selection;
         final Scanner userInput = new Scanner(System.in);
         for (int i = 0; i < supportedImages.length; i++) {
-            out.printf("%s) %s%n", i + 1, supportedImages[i][0]);
+            out.printf("%s) %s%n", i + 1, supportedImages[i][1]);
         }
         out.print("Choose Smalltalk image: ");
         selection = -1;
@@ -77,6 +78,22 @@ public final class SqueakImageLocator {
             throw new RuntimeException("Invalid selection. Please try again.");
         }
         return selection;
+    }
+
+    static String[] findSupportedImage(final String[][] supportedImages, final String imageKey) {
+        for (final String[] supportedImage : supportedImages) {
+            if (supportedImage[0].equals(imageKey)) {
+                return supportedImage;
+            }
+        }
+        final StringBuilder availableKeys = new StringBuilder();
+        for (int i = 0; i < supportedImages.length; i++) {
+            if (i > 0) {
+                availableKeys.append(", ");
+            }
+            availableKeys.append(supportedImages[i][0]);
+        }
+        throw new RuntimeException("Unknown image key '" + imageKey + "'. Available keys: " + availableKeys);
     }
 
     private static String findImageFile(final File resourcesDirectory) {
@@ -98,17 +115,18 @@ public final class SqueakImageLocator {
         return languageHome.resolve("resources").toFile();
     }
 
-    private static void downloadAndUnzip(final String url, final File destDirectory) {
+    private static String downloadAndUnzip(final String url, final File destDirectory) {
         try (BufferedInputStream bis = ImageDownloadSupport.openStream(URI.create(url))) {
-            unzip(bis, destDirectory);
+            return unzip(bis, destDirectory);
         } catch (final IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private static void unzip(final BufferedInputStream bis, final File destDirectory) throws IOException {
+    private static String unzip(final BufferedInputStream bis, final File destDirectory) throws IOException {
         final ZipInputStream zis = new ZipInputStream(bis);
         ZipEntry zipEntry = zis.getNextEntry();
+        String extractedImage = null;
         while (zipEntry != null) {
             final File destFile = new File(destDirectory, zipEntry.getName());
             // https://snyk.io/research/zip-slip-vulnerability
@@ -122,11 +140,15 @@ public final class SqueakImageLocator {
                 try (OutputStream fos = Files.newOutputStream(destFile.toPath())) {
                     zis.transferTo(fos);
                 }
+                if (zipEntry.getName().endsWith(".image")) {
+                    extractedImage = destFile.toPath().toString();
+                }
             }
             zipEntry = zis.getNextEntry();
         }
         zis.closeEntry();
         zis.close();
+        return extractedImage;
     }
 
     private static void ensureDirectory(final File directory) throws IOException {

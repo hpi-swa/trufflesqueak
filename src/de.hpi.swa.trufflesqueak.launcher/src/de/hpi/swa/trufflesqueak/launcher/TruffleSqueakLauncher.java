@@ -43,6 +43,7 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
     private boolean quiet;
     private String[] imageArguments = new String[0];
     private String imagePath;
+    private String downloadImageKey;
     private String sourceCode;
     private boolean enableTranscriptForwarding;
     private boolean addEnableEngineModeLatency = true;
@@ -90,6 +91,8 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
                 i = handleIntOption(arguments, i, arg, SqueakLanguageOptions.WATCHDOG_TIMEOUT_FLAG, val -> watchdogTimeoutMinutes = val, unrecognized);
             } else if (arg.startsWith(SqueakLanguageOptions.SDL_POLL_TIMEOUT_FLAG)) {
                 i = handleIntOption(arguments, i, arg, SqueakLanguageOptions.SDL_POLL_TIMEOUT_FLAG, val -> sdlPollTimeoutMilliseconds = val, unrecognized);
+            } else if (SqueakLanguageOptions.DOWNLOAD_IMAGE_FLAG.equals(arg)) {
+                downloadImageKey = getRequiredDownloadImageKey(arguments, ++i);
             } else {
                 // Check for options explicitly set by user
                 if (arg.contains(ENGINE_MODE_OPTION)) {
@@ -104,7 +107,9 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
     }
 
     /**
-     * Handles parsing a non-negative integer option, routing it to 'unrecognized' if it is a false prefix match.
+     * Handles parsing a non-negative integer option, routing it to 'unrecognized' if it is a false
+     * prefix match.
+     * 
      * @return the updated argument index 'i'
      */
     private int handleIntOption(final List<String> arguments, final int i, final String arg, final String flagName, final IntConsumer setter, final List<String> unrecognized) {
@@ -143,6 +148,17 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
         return arguments.subList(index + 1, arguments.size()).toArray(String[]::new);
     }
 
+    private String getRequiredDownloadImageKey(final List<String> arguments, final int index) {
+        if (index >= arguments.size()) {
+            throw abort("Missing value for " + SqueakLanguageOptions.DOWNLOAD_IMAGE_FLAG);
+        }
+        final String value = arguments.get(index);
+        if (value.startsWith("--")) {
+            throw abort("Missing value for " + SqueakLanguageOptions.DOWNLOAD_IMAGE_FLAG);
+        }
+        return value;
+    }
+
     @Override
     protected void launch(final Context.Builder contextBuilder) {
         if (headless) {
@@ -153,7 +169,7 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
     }
 
     private int execute(final Context.Builder contextBuilder) {
-        imagePath = SqueakImageLocator.findImage(imagePath, quiet);
+        imagePath = SqueakImageLocator.findImage(imagePath, downloadImageKey, quiet);
         if (printImagePath) {
             println(imagePath);
             return 0;
@@ -268,6 +284,7 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
         println("Usage: trufflesqueak [options] <image file> [image arguments]\n");
         println("Basic options:");
         launcherOption(SqueakLanguageOptions.CODE_FLAG + " \"<code>\", " + SqueakLanguageOptions.CODE_FLAG_SHORT + " \"<code>\"", SqueakLanguageOptions.CODE_HELP);
+        launcherOption(SqueakLanguageOptions.DOWNLOAD_IMAGE_FLAG + " \"<key>\"", SqueakLanguageOptions.DOWNLOAD_IMAGE_HELP);
         launcherOption(SqueakLanguageOptions.TRANSCRIPT_FORWARDING_FLAG, SqueakLanguageOptions.TRANSCRIPT_FORWARDING_HELP);
         launcherOption(SqueakLanguageOptions.HEADLESS_FLAG, SqueakLanguageOptions.HEADLESS_HELP);
         launcherOption(SqueakLanguageOptions.PRINT_IMAGE_PATH_FLAG, SqueakLanguageOptions.PRINT_IMAGE_PATH_HELP);
@@ -279,7 +296,8 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
     @Override
     protected void collectArguments(final Set<String> options) {
         options.addAll(List.of(SqueakLanguageOptions.WATCHDOG_TIMEOUT_FLAG, SqueakLanguageOptions.CODE_FLAG, SqueakLanguageOptions.CODE_FLAG_SHORT, SqueakLanguageOptions.HEADLESS_FLAG,
-                        SqueakLanguageOptions.QUIET_FLAG, SqueakLanguageOptions.PRINT_IMAGE_PATH_FLAG, SqueakLanguageOptions.RESOURCE_SUMMARY_FLAG, SqueakLanguageOptions.TRANSCRIPT_FORWARDING_FLAG));
+                        SqueakLanguageOptions.QUIET_FLAG, SqueakLanguageOptions.PRINT_IMAGE_PATH_FLAG, SqueakLanguageOptions.DOWNLOAD_IMAGE_FLAG, SqueakLanguageOptions.RESOURCE_SUMMARY_FLAG,
+                        SqueakLanguageOptions.TRANSCRIPT_FORWARDING_FLAG));
     }
 
     private static boolean isExistingImageFile(final String fileName) {
