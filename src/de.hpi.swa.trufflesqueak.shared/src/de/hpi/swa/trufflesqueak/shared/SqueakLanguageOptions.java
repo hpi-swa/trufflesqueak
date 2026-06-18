@@ -22,6 +22,9 @@ public final class SqueakLanguageOptions {
     public static final String IMAGE_PATH = "image-path";
     public static final String IMAGE_PATH_FLAG = "--" + IMAGE_PATH;
     public static final String IMAGE_PATH_HELP = "Path to image";
+    public static final String DOWNLOAD_IMAGE = "download-image";
+    public static final String DOWNLOAD_IMAGE_FLAG = "--" + DOWNLOAD_IMAGE;
+    public static final String DOWNLOAD_IMAGE_HELP = "Download and run a supported image";
     public static final String INTERCEPT_MESSAGES = "intercept-messages";
     public static final String INTERCEPT_MESSAGES_HELP = "Comma-separated list of messages to intercept with an instrument";
     public static final String INTERRUPTS = "disable-interrupts";
