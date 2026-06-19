@@ -47,7 +47,7 @@ public final class SqueakImageLocator {
             final PrintStream out = System.out; // ignore checkstyle
             final SqueakLanguageConfig.SupportedImage selectedEntry;
             if (imageKey != null) {
-                selectedEntry = findSupportedImage(supportedImages, imageKey);
+                selectedEntry = isDirectDownloadUrl(imageKey) ? SqueakLanguageConfig.SupportedImage.url(imageKey) : findSupportedImage(supportedImages, imageKey);
             } else if (isQuiet) {
                 selectedEntry = supportedImages[0];
             } else {
@@ -94,6 +94,10 @@ public final class SqueakImageLocator {
             availableKeys.append(supportedImages[i].id());
         }
         throw new RuntimeException("Unknown image key '" + imageKey + "'. Available keys: " + availableKeys);
+    }
+
+    static boolean isDirectDownloadUrl(final String imageKey) {
+        return imageKey.startsWith("https://");
     }
 
     private static String findImageFile(final File resourcesDirectory) {
