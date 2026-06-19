@@ -43,9 +43,9 @@ public final class SqueakImageLocator {
         if (imageFile != null && imageKey == null) {
             return imageFile;
         } else {
-            final String[][] supportedImages = SqueakLanguageConfig.SUPPORTED_IMAGES;
+            final SqueakLanguageConfig.SupportedImage[] supportedImages = SqueakLanguageConfig.SUPPORTED_IMAGES;
             final PrintStream out = System.out; // ignore checkstyle
-            final String[] selectedEntry;
+            final SqueakLanguageConfig.SupportedImage selectedEntry;
             if (imageKey != null) {
                 selectedEntry = findSupportedImage(supportedImages, imageKey);
             } else if (isQuiet) {
@@ -54,18 +54,18 @@ public final class SqueakImageLocator {
                 selectedEntry = supportedImages[askUserToChooseImage(supportedImages, out)];
             }
             if (!isQuiet) {
-                out.printf("Downloading %s...%n", selectedEntry[1]);
+                out.printf("Downloading %s...%n", selectedEntry.name());
             }
-            final String downloadedImage = downloadAndUnzip(selectedEntry[2], resourcesDirectory);
+            final String downloadedImage = downloadAndUnzip(selectedEntry.url(), resourcesDirectory);
             return downloadedImage != null ? downloadedImage : Objects.requireNonNull(findImageFile(resourcesDirectory));
         }
     }
 
-    private static int askUserToChooseImage(final String[][] supportedImages, final PrintStream out) {
+    private static int askUserToChooseImage(final SqueakLanguageConfig.SupportedImage[] supportedImages, final PrintStream out) {
         int selection;
         final Scanner userInput = new Scanner(System.in);
         for (int i = 0; i < supportedImages.length; i++) {
-            out.printf("%s) %s%n", i + 1, supportedImages[i][1]);
+            out.printf("%s) %s%n", i + 1, supportedImages[i].name());
         }
         out.print("Choose Smalltalk image: ");
         selection = -1;
@@ -80,9 +80,9 @@ public final class SqueakImageLocator {
         return selection;
     }
 
-    static String[] findSupportedImage(final String[][] supportedImages, final String imageKey) {
-        for (final String[] supportedImage : supportedImages) {
-            if (supportedImage[0].equals(imageKey)) {
+    static SqueakLanguageConfig.SupportedImage findSupportedImage(final SqueakLanguageConfig.SupportedImage[] supportedImages, final String imageKey) {
+        for (final SqueakLanguageConfig.SupportedImage supportedImage : supportedImages) {
+            if (supportedImage.id().equals(imageKey)) {
                 return supportedImage;
             }
         }
@@ -91,7 +91,7 @@ public final class SqueakImageLocator {
             if (i > 0) {
                 availableKeys.append(", ");
             }
-            availableKeys.append(supportedImages[i][0]);
+            availableKeys.append(supportedImages[i].id());
         }
         throw new RuntimeException("Unknown image key '" + imageKey + "'. Available keys: " + availableKeys);
     }
