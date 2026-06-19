@@ -97,7 +97,11 @@ public final class SqueakImageLocator {
     }
 
     static boolean isDirectDownloadUrl(final String imageKey) {
-        return imageKey.startsWith("https://");
+        final boolean isUrl = imageKey.startsWith("https://");
+        if (!imageKey.endsWith(".zip") && isUrl) {
+            throw new RuntimeException("Direct download URLs must point to a zip file containing the .image file.");
+        }
+        return isUrl;
     }
 
     private static String findImageFile(final File resourcesDirectory) {
