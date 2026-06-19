@@ -6,6 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.shared;
 
+import java.net.URI;
+
 public final class SqueakLanguageConfig {
     public static final String ID = "smalltalk";
     public static final String IMAGE_SOURCE_NAME = "<smalltalk image>";
@@ -18,6 +20,18 @@ public final class SqueakLanguageConfig {
     private static final String IMAGE_VERSION = "25.0.1"; // on release: `VERSION;`
 
     public record SupportedImage(String id, String name, String url) {
+        public static SupportedImage url(final String url) {
+            final String name = extractName(url);
+            return new SupportedImage(name, name, url);
+        }
+
+        private static String extractName(final String url) {
+            final String path = URI.create(url).getPath();
+            final int lastSlash = path.lastIndexOf('/') + 1;
+            final String fileName = path.substring(lastSlash);
+            final int lastDot = fileName.lastIndexOf('.');
+            return lastDot > 0 ? fileName.substring(0, lastDot) : fileName;
+        }
     }
 
     public static final SupportedImage[] SUPPORTED_IMAGES = {
