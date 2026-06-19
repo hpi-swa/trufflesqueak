@@ -93,7 +93,7 @@ public final class SqueakImageLocator {
             }
             availableKeys.append(supportedImages[i].id());
         }
-        throw new RuntimeException("Unknown image key '" + imageKey + "'. Available keys: " + availableKeys);
+        throw new RuntimeException("Not an URL and unknown image key '" + imageKey + "'. Available keys: " + availableKeys);
     }
 
     static boolean isDirectDownloadUrl(final String imageKey) {
