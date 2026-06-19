@@ -16,6 +16,8 @@ public final class WatchdogBridge {
     public static void triggerAction() {
         if (timeoutAction != null) {
             timeoutAction.run();
+        } else {
+            throw new IllegalStateException("Watchdog timeout action not set");
         }
     }
 }
