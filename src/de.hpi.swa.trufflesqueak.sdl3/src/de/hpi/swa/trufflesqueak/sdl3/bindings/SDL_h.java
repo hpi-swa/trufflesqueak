@@ -1467,14 +1467,72 @@ public class SDL_h extends SDL_h$shared {
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
+        }
+    }
+
+    private static class SDL_DestroyCursor {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.ofVoid(
+            SDL_h.C_POINTER
+        );
+
+        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_DestroyCursor");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+    }
+
+    /**
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * extern void SDL_DestroyCursor(SDL_Cursor *cursor)
+     * }
+     */
+    public static FunctionDescriptor SDL_DestroyCursor$descriptor() {
+        return SDL_DestroyCursor.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * extern void SDL_DestroyCursor(SDL_Cursor *cursor)
+     * }
+     */
+    public static MethodHandle SDL_DestroyCursor$handle() {
+        return SDL_DestroyCursor.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * extern void SDL_DestroyCursor(SDL_Cursor *cursor)
+     * }
+     */
+    public static MemorySegment SDL_DestroyCursor$address() {
+        return SDL_DestroyCursor.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * extern void SDL_DestroyCursor(SDL_Cursor *cursor)
+     * }
+     */
+    public static void SDL_DestroyCursor(MemorySegment cursor) {
+        var mh$ = SDL_DestroyCursor.HANDLE;
+        try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("SDL_DestroyCursor", cursor);
+            }
+            mh$.invokeExact(cursor);
+        } catch (Error | RuntimeException ex) {
+           throw ex;
+        } catch (Throwable ex$) {
+           throw new AssertionError("should not reach here", ex$);
         }
     }
 
     private static class SDL_ShowCursor {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
-            SDL_h.C_BOOL
-        );
+            SDL_h.C_BOOL    );
 
         public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ShowCursor");
 
@@ -1532,8 +1590,7 @@ public class SDL_h extends SDL_h$shared {
 
     private static class SDL_HideCursor {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
-            SDL_h.C_BOOL
-        );
+            SDL_h.C_BOOL    );
 
         public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_HideCursor");
 
@@ -1582,65 +1639,6 @@ public class SDL_h extends SDL_h$shared {
                 traceDowncall("SDL_HideCursor");
             }
             return (boolean)mh$.invokeExact();
-        } catch (Error | RuntimeException ex) {
-           throw ex;
-        } catch (Throwable ex$) {
-           throw new AssertionError("should not reach here", ex$);
-        }
-    }
-
-    private static class SDL_DestroyCursor {
-        public static final FunctionDescriptor DESC = FunctionDescriptor.ofVoid(
-            SDL_h.C_POINTER
-        );
-
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_DestroyCursor");
-
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
-    }
-
-    /**
-     * Function descriptor for:
-     * {@snippet lang=c :
-     * extern void SDL_DestroyCursor(SDL_Cursor *cursor)
-     * }
-     */
-    public static FunctionDescriptor SDL_DestroyCursor$descriptor() {
-        return SDL_DestroyCursor.DESC;
-    }
-
-    /**
-     * Downcall method handle for:
-     * {@snippet lang=c :
-     * extern void SDL_DestroyCursor(SDL_Cursor *cursor)
-     * }
-     */
-    public static MethodHandle SDL_DestroyCursor$handle() {
-        return SDL_DestroyCursor.HANDLE;
-    }
-
-    /**
-     * Address for:
-     * {@snippet lang=c :
-     * extern void SDL_DestroyCursor(SDL_Cursor *cursor)
-     * }
-     */
-    public static MemorySegment SDL_DestroyCursor$address() {
-        return SDL_DestroyCursor.ADDR;
-    }
-
-    /**
-     * {@snippet lang=c :
-     * extern void SDL_DestroyCursor(SDL_Cursor *cursor)
-     * }
-     */
-    public static void SDL_DestroyCursor(MemorySegment cursor) {
-        var mh$ = SDL_DestroyCursor.HANDLE;
-        try {
-            if (TRACE_DOWNCALLS) {
-                traceDowncall("SDL_DestroyCursor", cursor);
-            }
-            mh$.invokeExact(cursor);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -1712,13 +1710,14 @@ public class SDL_h extends SDL_h$shared {
         }
     }
 
-    private static class SDL_WaitEvent {
+    private static class SDL_WaitEventTimeout {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_BOOL,
-            SDL_h.C_POINTER
+            SDL_h.C_POINTER,
+            SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_WaitEvent");
+        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_WaitEventTimeout");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
@@ -1726,45 +1725,45 @@ public class SDL_h extends SDL_h$shared {
     /**
      * Function descriptor for:
      * {@snippet lang=c :
-     * extern bool SDL_WaitEvent(SDL_Event *event)
+     * extern bool SDL_WaitEventTimeout(SDL_Event *event, Sint32 timeoutMS)
      * }
      */
-    public static FunctionDescriptor SDL_WaitEvent$descriptor() {
-        return SDL_WaitEvent.DESC;
+    public static FunctionDescriptor SDL_WaitEventTimeout$descriptor() {
+        return SDL_WaitEventTimeout.DESC;
     }
 
     /**
      * Downcall method handle for:
      * {@snippet lang=c :
-     * extern bool SDL_WaitEvent(SDL_Event *event)
+     * extern bool SDL_WaitEventTimeout(SDL_Event *event, Sint32 timeoutMS)
      * }
      */
-    public static MethodHandle SDL_WaitEvent$handle() {
-        return SDL_WaitEvent.HANDLE;
+    public static MethodHandle SDL_WaitEventTimeout$handle() {
+        return SDL_WaitEventTimeout.HANDLE;
     }
 
     /**
      * Address for:
      * {@snippet lang=c :
-     * extern bool SDL_WaitEvent(SDL_Event *event)
+     * extern bool SDL_WaitEventTimeout(SDL_Event *event, Sint32 timeoutMS)
      * }
      */
-    public static MemorySegment SDL_WaitEvent$address() {
-        return SDL_WaitEvent.ADDR;
+    public static MemorySegment SDL_WaitEventTimeout$address() {
+        return SDL_WaitEventTimeout.ADDR;
     }
 
     /**
      * {@snippet lang=c :
-     * extern bool SDL_WaitEvent(SDL_Event *event)
+     * extern bool SDL_WaitEventTimeout(SDL_Event *event, Sint32 timeoutMS)
      * }
      */
-    public static boolean SDL_WaitEvent(MemorySegment event) {
-        var mh$ = SDL_WaitEvent.HANDLE;
+    public static boolean SDL_WaitEventTimeout(MemorySegment event, int timeoutMS) {
+        var mh$ = SDL_WaitEventTimeout.HANDLE;
         try {
             if (TRACE_DOWNCALLS) {
-                traceDowncall("SDL_WaitEvent", event);
+                traceDowncall("SDL_WaitEventTimeout", event, timeoutMS);
             }
-            return (boolean)mh$.invokeExact(event);
+            return (boolean)mh$.invokeExact(event, timeoutMS);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -2779,3 +2778,4 @@ public class SDL_h extends SDL_h$shared {
         return Holder.SDL_PROP_APP_METADATA_IDENTIFIER_STRING;
     }
 }
+

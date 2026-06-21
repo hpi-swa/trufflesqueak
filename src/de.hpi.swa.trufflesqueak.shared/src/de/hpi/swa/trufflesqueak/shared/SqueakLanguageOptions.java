@@ -35,6 +35,9 @@ public final class SqueakLanguageOptions {
     public static final String RESOURCE_SUMMARY = "resource-summary";
     public static final String RESOURCE_SUMMARY_FLAG = "--" + RESOURCE_SUMMARY;
     public static final String RESOURCE_SUMMARY_HELP = "Print resource summary on context exit";
+    public static final String SDL_POLL_TIMEOUT = "sdl-poll-timeout";
+    public static final String SDL_POLL_TIMEOUT_FLAG = "--" + SDL_POLL_TIMEOUT;
+    public static final String SDL_POLL_TIMEOUT_HELP = "Timeout in milliseconds for the SDL event loop (0 = disabled)";
     public static final String SIGNAL_INPUT_SEMAPHORE = "signal-input-semaphore";
     public static final String SIGNAL_INPUT_SEMAPHORE_HELP = "Signal the input semaphore";
     public static final String STARTUP = "disable-startup";
@@ -43,6 +46,9 @@ public final class SqueakLanguageOptions {
     public static final String TESTING_HELP = "For internal testing purposes only";
     public static final String TRANSCRIPT_FORWARDING_FLAG = "--enable-transcript-forwarding";
     public static final String TRANSCRIPT_FORWARDING_HELP = "Forward stdio to Smalltalk transcript";
+    public static final String WATCHDOG_TIMEOUT = "watchdog-timeout";
+    public static final String WATCHDOG_TIMEOUT_FLAG = "--" + WATCHDOG_TIMEOUT;
+    public static final String WATCHDOG_TIMEOUT_HELP = "Timeout in minutes for the watchdog (0 = disabled)";
 
     private SqueakLanguageOptions() {
     }

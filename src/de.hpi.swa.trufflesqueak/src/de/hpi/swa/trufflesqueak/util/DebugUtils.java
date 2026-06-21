@@ -11,7 +11,11 @@ import java.lang.management.LockInfo;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MonitorInfo;
 import java.lang.management.ThreadInfo;
+import java.lang.ref.WeakReference;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.Truffle;
@@ -30,12 +34,20 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SEMAPHORE;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
+import de.hpi.swa.trufflesqueak.shared.WatchdogBridge;
 
 /**
  * Helper functions for debugging purposes.
  */
 public final class DebugUtils {
     public static final boolean UNDER_DEBUG = isDebugging(ManagementFactory.getRuntimeMXBean().getInputArguments());
+
+    private static final Set<WeakReference<SqueakImageContext>> CONTEXTS = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
+    public static void registerContext(final SqueakImageContext image) {
+        CONTEXTS.add(new WeakReference<>(image));
+        WatchdogBridge.setAction(DebugUtils::dumpState);
+    }
 
     private static boolean isDebugging(final List<String> arguments) {
         for (final String argument : arguments) {
@@ -54,7 +66,39 @@ public final class DebugUtils {
         final StringBuilder sb = new StringBuilder("Thread dump");
         dumpThreads(sb);
         println(sb.toString());
-        println(currentState());
+
+        int contextIndex = 1;
+        for (final WeakReference<SqueakImageContext> ref : CONTEXTS) {
+            final SqueakImageContext image = ref.get();
+            if (image != null) {
+                // Temporarily bind the Truffle context to the watchdog thread
+                Object prevTruffleContext = null;
+                try {
+                    prevTruffleContext = image.env.getContext().enter(null);
+                } catch (final Throwable t) {
+                    println("-> Warning: Could not bind Truffle Context.");
+                }
+
+                try {
+                    println("\n== Squeak Context State (" + contextIndex++ + "/" + CONTEXTS.size() + ") =======================");
+                    println(currentState(image));
+                } finally {
+                    // Always cleanly leave the context
+                    if (prevTruffleContext != null) {
+                        image.env.getContext().leave(null, prevTruffleContext);
+                    }
+                }
+            }
+        }
+    }
+
+    public static void dumpState(final SqueakImageContext image) {
+        CompilerAsserts.neverPartOfCompilation("For debugging purposes only");
+        MiscUtils.systemGC();
+        final StringBuilder sb = new StringBuilder("Thread dump");
+        dumpThreads(sb);
+        println(sb.toString());
+        println(currentState(image));
     }
 
     public static void dumpThreads(final StringBuilder sb) {
@@ -118,8 +162,11 @@ public final class DebugUtils {
     }
 
     public static String currentState() {
-        CompilerAsserts.neverPartOfCompilation("For debugging purposes only");
         final SqueakImageContext image = SqueakImageContext.getSlow();
+        return currentState(image);
+    }
+
+    public static String currentState(final SqueakImageContext image) {
         final StringBuilder b = new StringBuilder(64);
         b.append("\nImage processes state\n");
         final PointersObject activeProcess = image.getActiveProcessSlow();
@@ -210,7 +257,12 @@ public final class DebugUtils {
             } else {
                 b.append(":\n");
             }
+            int failsafeDepth = 0;
             while (temp instanceof final PointersObject aProcess) {
+                if (failsafeDepth++ > 1000) {
+                    b.append("\t[... linked list traversal aborted (exceeded 1000 items, likely circular due to concurrent mutation)]\n");
+                    break;
+                }
                 final Object aContext = aProcess.instVarAt0Slow(PROCESS.SUSPENDED_CONTEXT);
                 if (aContext instanceof final ContextObject c) {
                     b.append("\tprocess @").append(Integer.toHexString(aProcess.hashCode())).append(" with suspended context ").append(aContext).append(" and stack trace:\n");

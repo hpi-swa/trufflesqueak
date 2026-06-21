@@ -86,7 +86,7 @@ jobs:
       # NOTE: If a dedicated Windows step is added for Cuis 7.5, update the step ID below
       cuis75_windows_2022: ${{ steps.timer_cuis75.outputs.cuis75_windows_2022 }}
     env:
-      VM_ARGS: "--vm.ea --vm.Xmx6G --experimental-options --smalltalk.resource-summary=true --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --compiler.DeoptCycleDetectionThreshold=-1 --engine.CompilationFailureAction=Diagnose --engine.CompilationStatistics"
+      VM_ARGS: "--vm.ea --vm.Xmx6G --experimental-options --smalltalk.resource-summary=true --watchdog-timeout=25 --sdl-poll-timeout=16 --compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --compiler.DeoptCycleDetectionThreshold=-1 --engine.CompilationFailureAction=Diagnose --engine.CompilationStatistics"
     name: build ${{ matrix.type }} ${{ matrix.os }}
     timeout-minutes: 45
     runs-on: ${{ matrix.os }}
@@ -301,7 +301,7 @@ jobs:
       # NOTE: If a dedicated Windows step is added for Cuis 7.5, update the step ID below
       cuis75_windows_2022: ${{ steps.timer_cuis75.outputs.cuis75_windows_2022 }}
     env:
-      VM_ARGS: "--vm.Xmx6G --headless --experimental-options --compiler.DeoptCycleDetectionThreshold=-1 --engine.CompilationFailureAction=Diagnose"
+      VM_ARGS: "--vm.Xmx6G --headless --experimental-options --watchdog-timeout=25 --sdl-poll-timeout=16 --compiler.DeoptCycleDetectionThreshold=-1 --engine.CompilationFailureAction=Diagnose"
     name: build ${{ matrix.type }} ${{ matrix.os }}
     timeout-minutes: 45
     runs-on: ${{ matrix.os }}

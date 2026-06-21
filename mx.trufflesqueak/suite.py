@@ -179,6 +179,7 @@ suite = {
             ],
             "requires": [
                 "java.desktop",
+                "java.management",
             ],
             "checkstyle": "de.hpi.swa.trufflesqueak",
             "jacoco": "include",

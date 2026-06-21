@@ -20,7 +20,7 @@ src/SDL-release-3.4.2/include/SDL3/SDL.h
 --include-function SDL_PushEvent
 --include-function SDL_SetEventEnabled
 --include-struct SDL_TextInputEvent
---include-function SDL_WaitEvent
+--include-function SDL_WaitEventTimeout
 --include-struct SDL_WindowEvent
 --include-struct SDL_AudioDeviceEvent
 --include-struct SDL_CameraDeviceEvent

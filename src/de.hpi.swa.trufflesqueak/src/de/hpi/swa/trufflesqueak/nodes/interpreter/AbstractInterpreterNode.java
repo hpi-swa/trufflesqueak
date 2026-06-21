@@ -45,6 +45,7 @@ import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.context.GetOrCreateContextWithFrameNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.AbstractDispatchNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0NodeFactory.Dispatch0NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1NodeFactory.Dispatch1NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2NodeFactory.Dispatch2NodeGen;
@@ -484,8 +485,22 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         return (bytecode & 7) + 1;
     }
 
+    protected abstract boolean isFastPathedMessageSend(int bytecode);
+
     protected final CheckForInterruptsInLoopNode createCheckForInterruptsInLoopNode(final int targetPC, final int jumpOpcodePC) {
-        return CheckForInterruptsInLoopNode.createForLoop(data, targetPC, jumpOpcodePC);
+        // No need to check for interrupts if there is a message dispatch within the loop.
+        final byte[] bc = code.getBytes();
+        for (int i = targetPC; i < jumpOpcodePC; i++) {
+            if (data[i] instanceof AbstractDispatchNode) {
+                final int bytecode = getUnsignedInt(bc, i);
+                if (isFastPathedMessageSend(bytecode)) {
+                    // The interpreter could handle this directly and might not check for interrupts.
+                    continue;
+                }
+                return null;
+            }
+        }
+        return CheckForInterruptsInLoopNode.createForLoop();
     }
 
     /**

@@ -2867,6 +2867,17 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         return Byte.toUnsignedInt(bytecode) + (extB << 8);
     }
 
+    @Override
+    protected boolean isFastPathedMessageSend(final int bytecode) {
+        return switch (bytecode) {
+            case BC.BYTECODE_PRIM_ADD, BC.BYTECODE_PRIM_SUBTRACT, BC.BYTECODE_PRIM_LESS_THAN, BC.BYTECODE_PRIM_GREATER_THAN, //
+                BC.BYTECODE_PRIM_LESS_OR_EQUAL, BC.BYTECODE_PRIM_GREATER_OR_EQUAL, BC.BYTECODE_PRIM_EQUAL, BC.BYTECODE_PRIM_NOT_EQUAL, //
+                BC.BYTECODE_PRIM_MULTIPLY, BC.BYTECODE_PRIM_DIV, BC.BYTECODE_PRIM_BIT_AND, BC.BYTECODE_PRIM_BIT_OR, //
+                BC.BYTECODE_PRIM_SIZE -> true;
+            default -> false;
+        };
+    }
+
     static class BC {
         /* 1 byte bytecodes */
         static final int PUSH_RCVR_VAR_0 = 0;

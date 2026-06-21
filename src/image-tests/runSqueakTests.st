@@ -208,6 +208,7 @@
         SequenceableCollectionTest -> #(#testCollectWithIndexDeprecation).
         SetInspectorTest -> #(#testExpressions).
         SHParserST80Test -> #(#testNumbers).
+        StringTest ->#(#testFindSelector).
         TestValueWithinFix -> #(#testValueWithinTimingBasic #testValueWithinTimingNestedInner #testValueWithinTimingNestedOuter #testValueWithinTimingRepeat).
         WeakIdentityDictionaryTest -> #(#testIsEmpty).
         WeakKeyDictionaryTest -> #(#testIsEmpty).
