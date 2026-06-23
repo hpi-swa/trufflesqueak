@@ -29,7 +29,7 @@
     isMacOS := Smalltalk platformName = 'Mac OS'.
     isWin := Smalltalk platformName = 'Win32'.
 
-    repoPath := (FileDirectory default containingDirectory / 'src' / 'image' / 'src') fullName.
+    repoPath := (((FileDirectory on: Smalltalk documentPath) containingDirectory containingDirectory) / 'image' / 'src') fullName.
     (FileDirectory default directoryExists: repoPath) ifFalse: [
         FileStream stdout cr; cr; nextPutAll: 'TruffleSqueak packages not found at "', repoPath, '". EXITING'; cr; cr; flush.
         Smalltalk quitPrimitive: 1].

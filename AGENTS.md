@@ -64,17 +64,11 @@ trufflesqueak --headless --quiet -- --evaluate "<smalltalk code>"
 # Run 10 iterations of the Towers benchmark from AWFY
 trufflesqueak --headless --quiet -- --evaluate "AWFYHarness run: #('Towers' 10 1500)"
 
-# Download TruffleSqueak test image
-mx.trufflesqueak/utils.sh download-trufflesqueak-test-image
-
 # Run TruffleSqueak tests
-trufflesqueak --vm.ea images/test-64bit.image -- src/image-tests/runSqueakTests.st
-
-# Download Cuis test image
-mx.trufflesqueak/utils.sh download-cuis-7-5-test-image
+trufflesqueak --vm.ea --download-image trufflesqueak-test -- src/image-tests/runSqueakTests.st
 
 # Run Cuis tests
-trufflesqueak --vm.ea images/Cuis7.5-7708.image -s src/image-tests/runCuisTests.st
+trufflesqueak --vm.ea --download-image cuis-7.5-test -- -s src/image-tests/runCuisTests.st
 ```
 
 ## Codebase Map

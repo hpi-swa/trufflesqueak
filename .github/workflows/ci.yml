@@ -128,15 +128,15 @@ jobs:
         echo %STANDALONE_HOME%/bin>>%GITHUB_PATH%
         echo [%STANDALONE_HOME%/bin added to $PATH]
       if: ${{ runner.os == 'Windows' }}
-    - &run_system_reporter
-      name: Run SystemReporter on TruffleSqueak standalone
-      shell: bash
-      run: |
-        trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings" images/test-64bit.image
     - &archive_standalone
       name: Archive TruffleSqueak standalone
       shell: bash
       run: mx.trufflesqueak/utils.sh archive-standalone ${{ matrix.type }}
+    - &run_system_reporter
+      name: Run SystemReporter on TruffleSqueak standalone
+      shell: bash
+      run: |
+        trufflesqueak --download-image trufflesqueak --code "(String streamContents: [:s | SystemReporter basicNew reportImage: s; reportVM: s; reportVMParameters: s]) withUnixLineEndings"
     - &deploy_standalone
       name: Deploy TruffleSqueak standalone
       shell: bash
@@ -153,7 +153,7 @@ jobs:
       name: Run trufflesqueak-polyglot-get on TruffleSqueak JVM standalone
       run: |
         trufflesqueak-polyglot-get -v ${{ env.GRAALVM_VERSION }} -a js
-        trufflesqueak --code "Polyglot eval: 'js' string: 'new Object({hello_world: 42})'" images/test-64bit.image
+        trufflesqueak --code "Polyglot eval: 'js' string: 'new Object({hello_world: 42})'"
       if: ${{ matrix.type == 'jvm' && ! endsWith(env.GRAALVM_VERSION, '-ea') }}
     - &start_xvfb
       name: Start Xvfb in background
@@ -165,9 +165,8 @@ jobs:
       name: Run Cuis 7.3 tests on TruffleSqueak standalone
       id: timer_cuis73
       run: |
-        mx.trufflesqueak/utils.sh download-cuis-7-3-test-image
         START_TIME=$SECONDS
-        trufflesqueak ${{ env.VM_ARGS }} images/Cuis?.?-????.image -s src/image-tests/runCuisTests.st
+        trufflesqueak --download-image cuis-7.3-test ${{ env.VM_ARGS }} -- -s src/image-tests/runCuisTests.st
         ELAPSED_TIME=$(($SECONDS - $START_TIME))
         FORMATTED_TIME=$(printf "%02d:%02d" $((ELAPSED_TIME / 60)) $((ELAPSED_TIME % 60)))
         SAFE_OS=$(echo "${{ matrix.os }}" | tr '-' '_' | tr '.' '_')
@@ -178,9 +177,8 @@ jobs:
       name: Run Cuis 7.5 tests on TruffleSqueak standalone
       id: timer_cuis75
       run: |
-        mx.trufflesqueak/utils.sh download-cuis-7-5-test-image
         START_TIME=$SECONDS
-        trufflesqueak ${{ env.VM_ARGS }} images/Cuis?.?-????.image -s src/image-tests/runCuisTests.st
+        trufflesqueak --download-image cuis-7.5-test ${{ env.VM_ARGS }} -- -s src/image-tests/runCuisTests.st
         ELAPSED_TIME=$(($SECONDS - $START_TIME))
         FORMATTED_TIME=$(printf "%02d:%02d" $((ELAPSED_TIME / 60)) $((ELAPSED_TIME % 60)))
         SAFE_OS=$(echo "${{ matrix.os }}" | tr '-' '_' | tr '.' '_')
@@ -192,7 +190,7 @@ jobs:
       id: timer_squeak_windows
       run: |
         $sw = [System.Diagnostics.Stopwatch]::StartNew()
-        trufflesqueak ${{ env.VM_ARGS }} images\test-64bit.image ..\src\image-tests\runSqueakTests.st
+        trufflesqueak --download-image trufflesqueak-test ${{ env.VM_ARGS }} -- ..\..\..\..\src\image-tests\runSqueakTests.st
         $sw.Stop()
         $formatted = "{0:D2}:{1:D2}" -f $sw.Elapsed.Minutes, $sw.Elapsed.Seconds
         $safeOs = "${{ matrix.os }}".Replace('-', '_').Replace('.', '_')
@@ -205,21 +203,13 @@ jobs:
       shell: bash
       run: |
         START_TIME=$SECONDS
-        trufflesqueak ${{ env.VM_ARGS }} images/test-64bit.image $(pwd)/src/image-tests/runSqueakTests.st
+        trufflesqueak --download-image trufflesqueak-test ${{ env.VM_ARGS }} -- $(pwd)/src/image-tests/runSqueakTests.st
         ELAPSED_TIME=$(($SECONDS - $START_TIME))
         FORMATTED_TIME=$(printf "%02d:%02d" $((ELAPSED_TIME / 60)) $((ELAPSED_TIME % 60)))
         SAFE_OS=$(echo "${{ matrix.os }}" | tr '-' '_' | tr '.' '_')
         echo "squeak_${SAFE_OS}=${FORMATTED_TIME}" >> "$GITHUB_OUTPUT"
       timeout-minutes: 30
       if: ${{ matrix.os != 'windows-2022' }}
-    - &upload_test_image
-      name: Upload test image on failure
-      uses: *upload_artifact_action
-      with:
-        name: test-image-${{ matrix.type }}-${{ matrix.os }}
-        path: images/test-64bit.*
-        retention-days: 5
-      if: failure()
     - &upload_graal_dumps
       name: Upload Graal compiler dumps
       uses: *upload_artifact_action
@@ -253,14 +243,13 @@ jobs:
     - *start_xvfb
     - name: Run Cuis 7.3 tests on instrumented TruffleSqueak standalone
       run: |
-        mx.trufflesqueak/utils.sh download-cuis-7-3-test-image
-        trufflesqueak --engine.Mode=default --vm.XX:ProfilesDumpFile=${{ env.PGO_FILE_CUIS }} --vm.XX:ProfilesLCOVFile=${{ env.PGO_LCOV_FILE_CUIS }} images/Cuis?.?-????.image -s src/image-tests/runCuisTests.st
+        trufflesqueak --download-image cuis-7.3-test --engine.Mode=default --vm.XX:ProfilesDumpFile=${{ env.PGO_FILE_CUIS }} --vm.XX:ProfilesLCOVFile=${{ env.PGO_LCOV_FILE_CUIS }} -- -s src/image-tests/runCuisTests.st
       timeout-minutes: 10
       if: ${{ matrix.os == 'ubuntu-22.04' }}
     - name: Run Squeak/Smalltalk tests on instrumented TruffleSqueak standalone
       shell: bash
       run: |
-        trufflesqueak --engine.Mode=default --vm.XX:ProfilesDumpFile=${{ env.PGO_FILE_SQUEAK }} --vm.XX:ProfilesLCOVFile=${{ env.PGO_LCOV_FILE_SQUEAK }} images/test-64bit.image $(pwd)/src/image-tests/runSqueakTests.st
+        trufflesqueak --download-image trufflesqueak-test --engine.Mode=default --vm.XX:ProfilesDumpFile=${{ env.PGO_FILE_SQUEAK }} --vm.XX:ProfilesLCOVFile=${{ env.PGO_LCOV_FILE_SQUEAK }} -- $(pwd)/src/image-tests/runSqueakTests.st
       timeout-minutes: 30
     - name: Report code coverage
       env:
@@ -353,8 +342,8 @@ jobs:
         echo %STANDALONE_HOME%/bin>>%GITHUB_PATH%
         echo [%STANDALONE_HOME%/bin added to $PATH]
       if: ${{ runner.os == 'Windows' }}
-    - *run_system_reporter
     - *archive_standalone
+    - *run_system_reporter
     - *deploy_standalone
     - *upload_standalone
     - *run_polyglot_smoketest
@@ -362,7 +351,6 @@ jobs:
     - *run_cuis75_tests
     - *run_squeak_tests_windows
     - *run_squeak_tests_unix
-    - *upload_test_image
     - *upload_graal_dumps
 
   run-benchmarks:
@@ -397,6 +385,7 @@ jobs:
       run: |
         tar -xzf trufflesqueak-*.tar.gz
         echo $(cd trufflesqueak-*-linux*/bin && pwd) >> $GITHUB_PATH
+    - *run_system_reporter
     - name: Run 'tinyBenchmarks'
       run: |
         ${{ env.EXEC }} trufflesqueak ${{ env.COMMON_VM_ARGS }} ${{ matrix.vm-args }} -- --evaluate "1 tinyBenchmarks"

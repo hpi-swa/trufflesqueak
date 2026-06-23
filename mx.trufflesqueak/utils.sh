@@ -17,17 +17,15 @@ readonly BASE_DIRECTORY="$(dirname "${SCRIPT_DIRECTORY}")"
 # Load metadata from suite.py
 readonly py_export=$(cat <<-END
 from suite import suite;
-vars= ' '.join(['DEP_%s=%s' % (k.upper(), v)
-  for k, v in suite['trufflesqueak:dependencyMap'].items()]);
 truffle_version = next(x['version'] for x in suite['imports']['suites'] if x['name'] == 'truffle')
 slug = '/'.join(suite['url'].split('/')[-2:]);
 mxversion = suite['mxversion']
-print('export %s TRUFFLE_VERSION=%s GITHUB_SLUG=%s MX_VERSION=%s' % (vars, truffle_version, slug, mxversion))
+print('export TRUFFLE_VERSION=%s GITHUB_SLUG=%s MX_VERSION=%s' % (truffle_version, slug, mxversion))
 END
 )
 $(cd "${SCRIPT_DIRECTORY}" && python3 -c "${py_export}")
 ([[ -z "${TRUFFLE_VERSION}" ]] || [[ -z "${GITHUB_SLUG}" ]]) && \
-  echo "Failed to load values from dependencyMap and GitHub slug." 1>&2 && exit 1
+  echo "Failed to load values from suite.py" 1>&2 && exit 1
 
 if [[ -n "${BOOTSTRAP_GRAALVM:-}" && -f "${BOOTSTRAP_GRAALVM}/release" ]]; then
   readonly GRAALVM_TRUFFLE_VERSION=$(sed -n 's/^COMMIT_INFO=//p' "${BOOTSTRAP_GRAALVM}/release" | jq -r '.truffle["commit.rev"]')
@@ -138,88 +136,9 @@ deploy-asset() {
     "https://uploads.github.com/repos/${GITHUB_SLUG}/releases/${release_id}/assets?name=$(basename "${filename}")"
 }
 
-download-asset() {
-  local filename=$1
-  local git_tag=$2
-  local target="${3:-$1}"
-
-  curl -s -L --retry 3 --retry-connrefused --retry-delay 2 -o "${target}" \
-    "https://github.com/${GITHUB_SLUG}/releases/download/${git_tag}/${filename}"
-}
-
 enable-jdk() {
   add-path "$1/bin"
   set-env "JAVA_HOME" "$(resolve-path "$1")"
-}
-
-download-trufflesqueak-image() {
-  local target_dir="${BASE_DIRECTORY}/images"
-  local version=$(grep -E 'public static final String VERSION' "${BASE_DIRECTORY}/src/de.hpi.swa.trufflesqueak.shared/src/de/hpi/swa/trufflesqueak/shared/SqueakLanguageConfig.java" | sed -E 's/.*"([^"]+)".*/\1/')
-  local filename="TruffleSqueakImage-${version}.zip"
-
-  if [[ -f "${target_dir}/TruffleSqueak-${version}.image" ]]; then
-    echo "[TruffleSqueak image already downloaded]"
-    return
-  fi
-
-  mkdir "${target_dir}" || true
-  pushd "${target_dir}" > /dev/null
-
-  download-asset "${filename}" "${version}"
-  unzip -qq "${filename}"
-
-  popd > /dev/null
-
-  echo "[TruffleSqueak image (${version}) downloaded successfully]"
-}
-
-download-trufflesqueak-test-image() {
-  local target_dir="${BASE_DIRECTORY}/images"
-
-  if [[ -f "${target_dir}/test-64bit.image" ]]; then
-    echo "[TruffleSqueak test image already downloaded]"
-    return
-  fi
-
-  mkdir "${target_dir}" || true
-  pushd "${target_dir}" > /dev/null
-
-  download-asset "${DEP_TEST_IMAGE}" "${DEP_TEST_IMAGE_TAG}"
-  unzip -qq "${DEP_TEST_IMAGE}"
-  mv ./*.image test-64bit.image
-  mv ./*.changes test-64bit.changes
-
-  popd > /dev/null
-
-  echo "[TruffleSqueak test image (${DEP_TEST_IMAGE_TAG}) downloaded successfully]"
-}
-
-download-cuis-7-3-test-image() {
-  local target_dir="${BASE_DIRECTORY}/images"
-
-  mkdir "${target_dir}" || true
-  pushd "${target_dir}" > /dev/null
-
-  download-asset "${DEP_CUIS_7_3_TEST_IMAGE}" "${DEP_CUIS_7_3_TEST_IMAGE_TAG}"
-  unzip -qq "${DEP_CUIS_7_3_TEST_IMAGE}"
-
-  popd > /dev/null
-
-  echo "[Cuis test image (${DEP_CUIS_7_3_TEST_IMAGE_TAG}) downloaded successfully]"
-}
-
-download-cuis-7-5-test-image() {
-  local target_dir="${BASE_DIRECTORY}/images"
-
-  mkdir "${target_dir}" || true
-  pushd "${target_dir}" > /dev/null
-
-  download-asset "${DEP_CUIS_7_5_TEST_IMAGE}" "${DEP_CUIS_7_5_TEST_IMAGE_TAG}"
-  unzip -qq "${DEP_CUIS_7_5_TEST_IMAGE}"
-
-  popd > /dev/null
-
-  echo "[Cuis test image (${DEP_CUIS_7_5_TEST_IMAGE_TAG}) downloaded successfully]"
 }
 
 standalone-dirname() {
@@ -269,7 +188,6 @@ set-up-dependencies() {
 
   set-up-mx
   shallow-clone-graal
-  download-trufflesqueak-test-image
 
   if [[ "${OS_NAME}" == "windows" ]]; then
     choco install zip -y # zip needed to archive standalone
