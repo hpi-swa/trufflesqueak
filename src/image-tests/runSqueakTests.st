@@ -1,5 +1,5 @@
 [
-    | repoPath isNative isLinux isMacOS isWin alphabetically ignoredTests failingTests flakyTests testSuite result retries exitCode |
+    | repoPath isLinux isMacOS isWin alphabetically ignoredTests failingTests flakyTests testSuite result retries exitCode |
 
     ToolSet default: CommandLineToolSet.
 
@@ -22,8 +22,6 @@
     TestCase compile: 'failureLog
         ^ FileStream stdout'
             classified: 'patched'.
-
-    isNative := [Java type: 'java.lang.System'. false] on: Error do: [true].
 
     isLinux := Smalltalk platformName = 'unix'.
     isMacOS := Smalltalk platformName = 'Mac OS'.
@@ -142,7 +140,7 @@
         testCase := assoc key.
         assoc value do: [:sel | ignoredTests add: (testCase selector: sel) ]].
 
-    isNative ifTrue: [
+    Java isAOT ifTrue: [
         {
             FFIPluginConstructedTests -> FFIPluginConstructedTests allTestSelectors.
             FFIPluginLibraryTests -> FFIPluginLibraryTests allTestSelectors.
