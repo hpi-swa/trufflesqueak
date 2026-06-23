@@ -37,10 +37,12 @@ public final class SqueakLanguageConfig {
     public static final SupportedImage[] SUPPORTED_IMAGES = {
                     new SupportedImage("trufflesqueak", "TruffleSqueak image (" + IMAGE_VERSION + ") (recommended)",
                                     "https://github.com/hpi-swa/trufflesqueak/releases/download/" + IMAGE_VERSION + "/TruffleSqueakImage-" + IMAGE_VERSION + ".zip"),
-                    new SupportedImage("squeak-6.0", "Squeak/Smalltalk (6.0-22148)", "https://files.squeak.org/6.0/Squeak6.0-22148-64bit/Squeak6.0-22148-64bit.zip"),
                     new SupportedImage("trufflesqueak-test", "TruffleSqueak test image (6.0-22104)",
                                     "https://github.com/hpi-swa/trufflesqueak/releases/download/22.3.0/TruffleSqueakTestImage-6.0-22104-64bit.zip"),
-                    new SupportedImage("cuis-7.3-test", "Cuis Smalltalk test image (7.3-7036)", "https://github.com/hpi-swa/trufflesqueak/releases/download/24.1.2/CuisTestImage-7.3-7036.zip")};
+                    new SupportedImage("cuis-7.5-test", "Cuis Smalltalk test image (7.5-7708)", "https://github.com/hpi-swa/trufflesqueak/releases/download/25.0.1/CuisTestImage-7.5-7708.zip"),
+                    new SupportedImage("cuis-7.3-test", "Cuis Smalltalk test image (7.3-7036)", "https://github.com/hpi-swa/trufflesqueak/releases/download/24.1.2/CuisTestImage-7.3-7036.zip"),
+                    new SupportedImage("squeak-6.0", "Squeak/Smalltalk (6.0-22148)", "https://files.squeak.org/6.0/Squeak6.0-22148-64bit/Squeak6.0-22148-64bit.zip"),
+    };
 
     private SqueakLanguageConfig() {
     }
