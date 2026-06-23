@@ -12,11 +12,13 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
 import java.util.Arrays;
+import java.util.HexFormat;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.Scanner;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -30,34 +32,56 @@ public final class SqueakImageLocator {
     }
 
     public static String findImage(final String userImage, final String imageKey, final boolean isQuiet) {
-        final File resourcesDirectory = findResourcesDirectory();
-        try {
-            ensureDirectory(resourcesDirectory);
-        } catch (final IOException e) {
-            throw new RuntimeException(e);
-        }
         if (userImage != null) {
             return userImage;
         }
-        final String imageFile = findImageFile(resourcesDirectory);
-        if (imageFile != null && imageKey == null) {
-            return imageFile;
-        } else {
-            final SqueakLanguageConfig.SupportedImage[] supportedImages = SqueakLanguageConfig.SUPPORTED_IMAGES;
-            final PrintStream out = System.out; // ignore checkstyle
-            final SqueakLanguageConfig.SupportedImage selectedEntry;
-            if (imageKey != null) {
-                selectedEntry = isDirectDownloadUrl(imageKey) ? SqueakLanguageConfig.SupportedImage.url(imageKey) : findSupportedImage(supportedImages, imageKey);
-            } else if (isQuiet) {
-                selectedEntry = supportedImages[0];
+        final File resourcesDirectory = findResourcesDirectory();
+        try {
+            ensureDirectory(resourcesDirectory);
+            final String imageFile = findImageFile(resourcesDirectory);
+            if (imageFile != null && imageKey == null) {
+                return imageFile;
             } else {
-                selectedEntry = supportedImages[askUserToChooseImage(supportedImages, out)];
+                final SqueakLanguageConfig.SupportedImage[] supportedImages = SqueakLanguageConfig.SUPPORTED_IMAGES;
+                final PrintStream out = System.out; // ignore checkstyle
+                final SqueakLanguageConfig.SupportedImage selectedEntry;
+                if (imageKey != null) {
+                    selectedEntry = isDirectDownloadUrl(imageKey) ? SqueakLanguageConfig.SupportedImage.url(imageKey) : findSupportedImage(supportedImages, imageKey);
+                } else if (isQuiet) {
+                    selectedEntry = supportedImages[0];
+                } else {
+                    selectedEntry = supportedImages[askUserToChooseImage(supportedImages, out)];
+                }
+                final String downloadUrl = selectedEntry.url();
+                final String cacheName = sha256(downloadUrl);
+                final Path cachePath = resourcesDirectory.toPath().resolve(cacheName);
+                if (Files.exists(cachePath)) {
+                    final Path cachedImage = resourcesDirectory.toPath().resolve(Files.readString(cachePath, StandardCharsets.UTF_8));
+                    if (!Files.exists(cachedImage)) {
+                        throw new RuntimeException("Cached image not found at: " + cachedImage);
+                    }
+                    return cachedImage.toString();
+                } else {
+                    if (!isQuiet) {
+                        out.printf("Downloading %s...%n", selectedEntry.name());
+                    }
+                    final Path downloadedImage = downloadAndUnzip(downloadUrl, resourcesDirectory);
+                    Files.writeString(cachePath, resourcesDirectory.toPath().relativize(downloadedImage).toString(), StandardCharsets.UTF_8);
+                    return downloadedImage.toString();
+                }
             }
-            if (!isQuiet) {
-                out.printf("Downloading %s...%n", selectedEntry.name());
-            }
-            final String downloadedImage = downloadAndUnzip(selectedEntry.url(), resourcesDirectory);
-            return downloadedImage != null ? downloadedImage : Objects.requireNonNull(findImageFile(resourcesDirectory));
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static String sha256(final String input) {
+        try {
+            final MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            final byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hash);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -123,7 +147,7 @@ public final class SqueakImageLocator {
         return languageHome.resolve("resources").toFile();
     }
 
-    private static String downloadAndUnzip(final String url, final File destDirectory) {
+    private static Path downloadAndUnzip(final String url, final File destDirectory) {
         try (BufferedInputStream bis = ImageDownloadSupport.openStream(URI.create(url))) {
             return unzip(bis, destDirectory);
         } catch (final IOException e) {
@@ -131,10 +155,10 @@ public final class SqueakImageLocator {
         }
     }
 
-    private static String unzip(final BufferedInputStream bis, final File destDirectory) throws IOException {
+    private static Path unzip(final BufferedInputStream bis, final File destDirectory) throws IOException {
         final ZipInputStream zis = new ZipInputStream(bis);
         ZipEntry zipEntry = zis.getNextEntry();
-        String extractedImage = null;
+        Path extractedImage = null;
         while (zipEntry != null) {
             final File destFile = new File(destDirectory, zipEntry.getName());
             // https://snyk.io/research/zip-slip-vulnerability
@@ -149,7 +173,7 @@ public final class SqueakImageLocator {
                     zis.transferTo(fos);
                 }
                 if (zipEntry.getName().endsWith(".image")) {
-                    extractedImage = destFile.toPath().toString();
+                    extractedImage = destFile.toPath();
                 }
             }
             zipEntry = zis.getNextEntry();
