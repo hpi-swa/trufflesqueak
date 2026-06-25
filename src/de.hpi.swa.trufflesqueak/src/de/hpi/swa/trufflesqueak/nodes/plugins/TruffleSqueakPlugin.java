@@ -124,7 +124,10 @@ public final class TruffleSqueakPlugin extends AbstractPrimitiveFactoryHolder {
             final Object[] elements = toObjectArrayNode.execute(node, array);
             final int arraySize = elements.length;
 
-            if (arraySize > SqueakImageContext.MAX_DNU_SHORTCUT_ARITY + 1) {
+            if (arraySize == 0) {
+                getContext().setDNUShortcutSelectors(null);
+                return receiver;
+            } else if (arraySize > SqueakImageContext.MAX_DNU_SHORTCUT_ARITY + 1) {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.BAD_ARGUMENT;
             }

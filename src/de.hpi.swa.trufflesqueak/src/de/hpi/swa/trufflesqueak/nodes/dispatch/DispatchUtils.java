@@ -71,11 +71,11 @@ public final class DispatchUtils {
     /**
      * Creates the complete assumption array for a message fallback node (DNU or CI). On top of the
      * standard class hierarchy stability, it registers two assumptions:
-     *
+     * <p>
      * Fallback Method Stability: Tracks the `callTargetStable` of the resolved fallback method
      * itself. This ensures the AST node is invalidated if the actual #doesNotUnderstand: or
      * #cannotInterpret: method is later modified or recompiled.
-     *
+     * <p>
      * Absent Selector Stability: Tracks an image-global assumption that the specific failing
      * selector does not exist. If a method for this missing selector is compiled, the VM's cache
      * flush (primitive 119) will trip this assumption globally. This prevents "stranded DNU" nodes

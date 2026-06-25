@@ -59,10 +59,11 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive7;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive8;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive9;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
+import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
-public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
+public final class DispatchSelectorNaryNode extends AbstractDispatchSelectorNode {
     protected abstract static class AbstractDispatchNaryNode extends AbstractDispatchNode {
         AbstractDispatchNaryNode(final NativeObject selector) {
             super(selector);
@@ -76,11 +77,43 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             super(selector);
         }
 
+        @NeverDefault
+        public static DispatchNaryNode create(final NativeObject selector) {
+            return DispatchSelectorNaryNodeFactory.DispatchNaryNodeGen.create(selector);
+        }
+
         @Specialization(guards = "guard.check(receiver)", assumptions = "dispatchDirectNode.getAssumptions()", limit = "INLINE_METHOD_CACHE_LIMIT")
         protected static final Object doDirect(final VirtualFrame frame, final Object receiver, final Object[] arguments,
                         @SuppressWarnings("unused") @Cached("create(receiver)") final LookupClassGuard guard,
                         @Cached("create(selector, guard, arguments.length)") final DispatchDirectNaryNode dispatchDirectNode) {
             return dispatchDirectNode.execute(frame, receiver, arguments);
+        }
+
+        @ReportPolymorphism.Megamorphic
+        @Specialization(replaces = "doDirect")
+        @HostCompilerDirectives.InliningCutoff
+        @SuppressWarnings("truffle-static-method")
+        protected final Object doIndirect(final VirtualFrame frame, final Object receiver, final Object[] arguments,
+                        @Cached final DispatchIndirectNaryNode dispatchNode) {
+            return dispatchNode.execute(frame, false, selector, receiver, arguments);
+        }
+    }
+
+    public abstract static class DispatchPerformNaryNode extends AbstractDispatchNaryNode {
+        DispatchPerformNaryNode(final NativeObject selector) {
+            super(selector);
+        }
+
+        @NeverDefault
+        public static DispatchPerformNaryNode create(final NativeObject selector) {
+            return DispatchSelectorNaryNodeFactory.DispatchPerformNaryNodeGen.create(selector);
+        }
+
+        @Specialization(guards = "guard.check(receiver)", assumptions = "dispatchDirectNode.getAssumptions()", limit = "INLINE_METHOD_CACHE_LIMIT")
+        protected static final Object doDirect(final VirtualFrame frame, final Object receiver, final Object[] arguments,
+                        @SuppressWarnings("unused") @Cached("create(receiver)") final LookupClassGuard guard,
+                        @Cached("create(selector, guard, arguments.length)") final DispatchDirectNaryNode dispatchDirectNode) {
+            return dispatchDirectNode.executeWithCheckedArguments(frame, receiver, arguments);
         }
 
         @ReportPolymorphism.Megamorphic
@@ -185,7 +218,7 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
                 if (primitiveNode != null) {
                     return new DispatchDirectPrimitiveNaryNode(assumptions, method, primitiveNode);
                 }
-                DispatchUtils.logMissingPrimitive(primitiveNode, method);
+                DispatchUtils.logMissingPrimitive(null, method);
             }
             return new DispatchDirectMethodNaryNode(assumptions, method);
         }
@@ -693,7 +726,7 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
 
         @GenerateInline
         @GenerateCached(false)
-        public abstract static class CreateFrameArgumentsForIndirectCallNaryNode extends AbstractNode {
+        public abstract static class CreateFrameArgumentsForIndirectCallNaryNode extends AbstractCreateFrameArgumentsForIndirectCallNode {
             public abstract Object[] execute(Node node, AbstractSqueakObject sender, Object receiver, Object[] arguments, ClassObject receiverClass, Object lookupResult, NativeObject selector);
 
             @Specialization
@@ -703,55 +736,82 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
                 return FrameAccess.newWith(sender, null, receiver, arguments);
             }
 
-            @Specialization(guards = {"lookupResult == null", "arguments.length == cachedArity"}, limit = "1")
-            @ExplodeLoop
+            @Specialization(guards = {"lookupResult == null", "arguments.length == cachedArity"}, limit = "1", assumptions = {"image.getDnuShortcutsAbsent()"})
             protected static final Object[] doMessageFallbackCached(final Node node, final AbstractSqueakObject sender, final Object receiver, final Object[] arguments,
                             final ClassObject receiverClass,
                             @SuppressWarnings("unused") final Object lookupResult, final NativeObject selector,
+                            @Bind final SqueakImageContext image,
+                            @Shared("isCannotInterpret") @Cached final InlinedConditionProfile isCannotInterpretProfile,
                             @Cached("arguments.length") final int cachedArity,
                             @Shared("writeNode") @Cached(inline = false) final AbstractPointersObjectWriteNode writeNode,
                             @Shared("createNode") @Cached(inline = false) final CreateMessageNode createMessageNode) {
-                return doMessageFallbackShared(node, sender, receiver, arguments, receiverClass, selector, cachedArity, writeNode, createMessageNode);
+                return doMessageFallbackShared(node, sender, receiver, arguments, receiverClass, selector, cachedArity, image, isCannotInterpretProfile, writeNode, createMessageNode);
             }
 
-            @Specialization(guards = "lookupResult == null", replaces = "doMessageFallbackCached")
+            @Specialization(guards = "lookupResult == null", replaces = "doMessageFallbackCached", assumptions = {"image.getDnuShortcutsAbsent()"})
             protected static final Object[] doMessageFallbackGeneric(final Node node, final AbstractSqueakObject sender, final Object receiver, final Object[] arguments,
                             final ClassObject receiverClass,
                             @SuppressWarnings("unused") final Object lookupResult, final NativeObject selector,
+                            @Bind final SqueakImageContext image,
+                            @Shared("isCannotInterpret") @Cached final InlinedConditionProfile isCannotInterpretProfile,
                             @Shared("writeNode") @Cached(inline = false) final AbstractPointersObjectWriteNode writeNode,
                             @Shared("createNode") @Cached(inline = false) final CreateMessageNode createMessageNode) {
-                return doMessageFallbackShared(node, sender, receiver, arguments, receiverClass, selector, arguments.length, writeNode, createMessageNode);
+                return doMessageFallbackShared(node, sender, receiver, arguments, receiverClass, selector, arguments.length, image, isCannotInterpretProfile, writeNode, createMessageNode);
             }
 
-            private static Object[] doMessageFallbackShared(final Node node, final AbstractSqueakObject sender, final Object receiver, final Object[] arguments, final ClassObject receiverClass,
-                            final NativeObject selector, final int arity, final AbstractPointersObjectWriteNode writeNode, final CreateMessageNode createMessageNode) {
+            private static Object[] doMessageFallbackShared(final Node node, final AbstractSqueakObject sender, final Object receiver, final Object[] arguments,
+                            final ClassObject receiverClass,
+                            final NativeObject selector, final int arity, final SqueakImageContext image,
+                            final InlinedConditionProfile isCannotInterpretProfile, final AbstractPointersObjectWriteNode writeNode, final CreateMessageNode createMessageNode) {
+                final ClassObject.DispatchFailureResult result = image.findMethodCacheEntry(receiverClass, selector).getOrCreateDispatchFailureResult(arity);
+                return newMessage(node, sender, receiver, arguments, receiverClass, selector, result, image, isCannotInterpretProfile, writeNode, createMessageNode);
+            }
 
-                final ClassObject.DispatchFailureResult result = getContext(node).findMethodCacheEntry(receiverClass, selector).getOrCreateDispatchFailureResult(arity);
+            @Specialization(guards = {"lookupResult == null", "arguments.length == cachedArity"}, limit = "1", replaces = {"doMessageFallbackCached", "doMessageFallbackGeneric"})
+            @ExplodeLoop
+            protected static final Object[] doMessageFallbackWithShortcutsCached(final Node node, final AbstractSqueakObject sender, final Object receiver, final Object[] arguments,
+                            final ClassObject receiverClass,
+                            @SuppressWarnings("unused") final Object lookupResult, final NativeObject selector,
+                            @Bind final SqueakImageContext image,
+                            @Shared("isShortcut") @Cached final InlinedConditionProfile isShortcutProfile,
+                            @Shared("isCannotInterpret") @Cached final InlinedConditionProfile isCannotInterpretProfile,
+                            @Cached("arguments.length") final int cachedArity,
+                            @Shared("writeNode") @Cached(inline = false) final AbstractPointersObjectWriteNode writeNode,
+                            @Shared("createNode") @Cached(inline = false) final CreateMessageNode createMessageNode) {
+                return doMessageFallbackWithShortcutsShared(node, sender, receiver, arguments, receiverClass, selector, cachedArity, image, isShortcutProfile, isCannotInterpretProfile, writeNode,
+                                createMessageNode);
+            }
 
-                if (result.convention() == ClassObject.FallbackConvention.SHORTCUT_DNU) {
+            @Specialization(guards = "lookupResult == null", replaces = {"doMessageFallbackCached", "doMessageFallbackGeneric", "doMessageFallbackWithShortcutsCached"})
+            protected static final Object[] doMessageFallbackWithShortcutsGeneric(final Node node, final AbstractSqueakObject sender, final Object receiver, final Object[] arguments,
+                            final ClassObject receiverClass,
+                            @SuppressWarnings("unused") final Object lookupResult, final NativeObject selector,
+                            @Bind final SqueakImageContext image,
+                            @Shared("isShortcut") @Cached final InlinedConditionProfile isShortcutProfile,
+                            @Shared("isCannotInterpret") @Cached final InlinedConditionProfile isCannotInterpretProfile,
+                            @Shared("writeNode") @Cached(inline = false) final AbstractPointersObjectWriteNode writeNode,
+                            @Shared("createNode") @Cached(inline = false) final CreateMessageNode createMessageNode) {
+                return doMessageFallbackWithShortcutsShared(node, sender, receiver, arguments, receiverClass, selector, arguments.length, image, isShortcutProfile, isCannotInterpretProfile, writeNode,
+                                createMessageNode);
+            }
+
+            private static Object[] doMessageFallbackWithShortcutsShared(final Node node, final AbstractSqueakObject sender, final Object receiver, final Object[] arguments,
+                            final ClassObject receiverClass,
+                            final NativeObject selector, final int arity, final SqueakImageContext image,
+                            final InlinedConditionProfile isShortcutProfile, final InlinedConditionProfile isCannotInterpretProfile, final AbstractPointersObjectWriteNode writeNode,
+                            final CreateMessageNode createMessageNode) {
+                final ClassObject.DispatchFailureResult result = image.findMethodCacheEntry(receiverClass, selector).getOrCreateDispatchFailureResult(arity);
+                if (isShortcutProfile.profile(node, result.convention() == ClassObject.FallbackConvention.SHORTCUT_DNU)) {
                     final Object[] shortcutArgs = new Object[arity + 1];
                     if (CompilerDirectives.isPartialEvaluationConstant(arity)) {
-                        copyExploded(arguments, shortcutArgs, arity);
+                        ArrayUtils.copyExploded(arguments, shortcutArgs, arity);
                     } else {
-                        System.arraycopy(arguments, 0, shortcutArgs, 0, arity);
+                        ArrayUtils.arraycopy(arguments, 0, shortcutArgs, 0, arity);
                     }
                     shortcutArgs[arity] = selector;
                     return FrameAccess.newWith(sender, null, receiver, shortcutArgs);
-                }
-
-                final PointersObject message;
-                if (result.convention() == ClassObject.FallbackConvention.CANNOT_INTERPRET) {
-                    message = DispatchUtils.buildNestedMessage(createMessageNode, selector, result.fallbackSelector(), receiver, arguments, result.fallbackDepth());
                 } else {
-                    message = getContext(node).newMessage(writeNode, selector, receiverClass, arguments);
-                }
-                return FrameAccess.newMessageFallbackWith(sender, receiver, message);
-            }
-
-            @ExplodeLoop
-            private static void copyExploded(final Object[] source, final Object[] dest, final int length) {
-                for (int i = 0; i < length; i++) {
-                    dest[i] = source[i];
+                    return newMessage(node, sender, receiver, arguments, receiverClass, selector, result, image, isCannotInterpretProfile, writeNode, createMessageNode);
                 }
             }
 

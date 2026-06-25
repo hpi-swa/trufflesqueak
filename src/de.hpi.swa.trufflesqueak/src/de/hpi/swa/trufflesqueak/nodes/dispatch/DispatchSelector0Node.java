@@ -13,6 +13,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.HostCompilerDirectives;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -47,10 +48,15 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
-public final class DispatchSelector0Node extends DispatchSelectorNode {
+public final class DispatchSelector0Node extends AbstractDispatchSelectorNode {
     public abstract static class Dispatch0Node extends AbstractDispatchNode {
         Dispatch0Node(final NativeObject selector) {
             super(selector);
+        }
+
+        @NeverDefault
+        public static Dispatch0Node create(final NativeObject selector) {
+            return DispatchSelector0NodeFactory.Dispatch0NodeGen.create(selector);
         }
 
         public abstract Object execute(VirtualFrame frame, Object receiver);
@@ -81,7 +87,7 @@ public final class DispatchSelector0Node extends DispatchSelectorNode {
 
         @NeverDefault
         protected static final DispatchDirect0Node create(final NativeObject selector, final LookupClassGuard guard) {
-            return create(selector, guard, false);
+            return create(selector, guard, true);
         }
 
         @NeverDefault
@@ -392,7 +398,7 @@ public final class DispatchSelector0Node extends DispatchSelectorNode {
 
         @GenerateInline
         @GenerateCached(false)
-        protected abstract static class CreateFrameArgumentsForIndirectCall0Node extends AbstractNode {
+        protected abstract static class CreateFrameArgumentsForIndirectCall0Node extends AbstractCreateFrameArgumentsForIndirectCallNode {
             abstract Object[] execute(Node node, AbstractSqueakObject sender, Object receiver, ClassObject receiverClass, Object lookupResult, NativeObject selector);
 
             @Specialization
@@ -402,25 +408,33 @@ public final class DispatchSelector0Node extends DispatchSelectorNode {
                 return FrameAccess.newWith(sender, null, receiver);
             }
 
-            @Specialization(guards = "lookupResult == null")
+            @Specialization(guards = "lookupResult == null", assumptions = {"image.getDnuShortcutsAbsent()"})
             protected static final Object[] doMessageFallback(final Node node, final AbstractSqueakObject sender, final Object receiver, final ClassObject receiverClass,
                             @SuppressWarnings("unused") final Object lookupResult, final NativeObject selector,
-                            @Cached(inline = false) final AbstractPointersObjectWriteNode writeNode,
-                            @Cached(inline = false) final CreateMessageNode createMessageNode) {
-                final ClassObject.DispatchFailureResult result = getContext(node).findMethodCacheEntry(receiverClass, selector).getOrCreateDispatchFailureResult(0);
-
-                if (result.convention() == ClassObject.FallbackConvention.SHORTCUT_DNU) {
-                    return FrameAccess.newWith(sender, null, receiver, selector);
-                }
-
+                            @Bind final SqueakImageContext image,
+                            @Exclusive @Cached final InlinedConditionProfile isCannotInterpretProfile,
+                            @Exclusive @Cached(inline = false) final AbstractPointersObjectWriteNode writeNode,
+                            @Exclusive @Cached(inline = false) final CreateMessageNode createMessageNode) {
+                final ClassObject.DispatchFailureResult result = image.findMethodCacheEntry(receiverClass, selector).getOrCreateDispatchFailureResult(0);
                 final Object[] arguments = ArrayUtils.EMPTY_ARRAY;
-                final PointersObject message;
-                if (result.convention() == ClassObject.FallbackConvention.CANNOT_INTERPRET) {
-                    message = DispatchUtils.buildNestedMessage(createMessageNode, selector, result.fallbackSelector(), receiver, arguments, result.fallbackDepth());
+                return newMessage(node, sender, receiver, arguments, receiverClass, selector, result, image, isCannotInterpretProfile, writeNode, createMessageNode);
+            }
+
+            @Specialization(guards = "lookupResult == null", replaces = "doMessageFallback")
+            protected static final Object[] doMessageFallbackWithShortcuts(final Node node, final AbstractSqueakObject sender, final Object receiver, final ClassObject receiverClass,
+                            @SuppressWarnings("unused") final Object lookupResult, final NativeObject selector,
+                            @Bind final SqueakImageContext image,
+                            @Exclusive @Cached final InlinedConditionProfile isShortcutProfile,
+                            @Exclusive @Cached final InlinedConditionProfile isCannotInterpretProfile,
+                            @Exclusive @Cached(inline = false) final AbstractPointersObjectWriteNode writeNode,
+                            @Exclusive @Cached(inline = false) final CreateMessageNode createMessageNode) {
+                final ClassObject.DispatchFailureResult result = image.findMethodCacheEntry(receiverClass, selector).getOrCreateDispatchFailureResult(0);
+                if (isShortcutProfile.profile(node, result.convention() == ClassObject.FallbackConvention.SHORTCUT_DNU)) {
+                    return FrameAccess.newWith(sender, null, receiver, selector);
                 } else {
-                    message = getContext(node).newMessage(writeNode, selector, receiverClass, arguments);
+                    final Object[] arguments = ArrayUtils.EMPTY_ARRAY;
+                    return newMessage(node, sender, receiver, arguments, receiverClass, selector, result, image, isCannotInterpretProfile, writeNode, createMessageNode);
                 }
-                return FrameAccess.newMessageFallbackWith(sender, receiver, message);
             }
 
             @Specialization(guards = {"targetObject != null", "!isCompiledCodeObject(targetObject)"})
