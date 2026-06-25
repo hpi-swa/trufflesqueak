@@ -10,18 +10,18 @@ import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.HostCompilerDirectives;
+import com.oracle.truffle.api.HostCompilerDirectives.InliningCutoff;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NeverDefault;
-import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedBranchProfile;
@@ -40,6 +40,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Abst
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.GetOrCreateContextWithoutFrameNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector4NodeFactory.DispatchDirectPrimitiveFallback4NodeGen;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector4NodeFactory.DispatchIndirect4NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive4;
@@ -47,40 +48,91 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class DispatchSelector4Node extends AbstractDispatchSelectorNode {
-    public abstract static class Dispatch4Node extends AbstractDispatchNode {
+    public static final class Dispatch4Node extends AbstractDispatchNode {
         protected final boolean canPrimFail;
+        @Child private DispatchCacheManager<DispatchDirect4Node> cache;
+        @Child private DispatchIndirect4Node indirectNode;
 
-        Dispatch4Node(final NativeObject selector, final boolean canPrimFail) {
+        private Dispatch4Node(final NativeObject selector, final boolean canPrimFail) {
             super(selector);
             this.canPrimFail = canPrimFail;
         }
 
         @NeverDefault
         public static Dispatch4Node create(final NativeObject selector) {
-            return DispatchSelector4NodeFactory.Dispatch4NodeGen.create(selector, false);
+            return new Dispatch4Node(selector, false);
         }
 
         @NeverDefault
         public static Dispatch4Node create(final NativeObject selector, final boolean canPrimFail) {
-            return DispatchSelector4NodeFactory.Dispatch4NodeGen.create(selector, canPrimFail);
+            return new Dispatch4Node(selector, canPrimFail);
         }
 
-        public abstract Object execute(VirtualFrame frame, Object receiver, Object arg1, Object arg2, Object arg3, Object arg4);
+        @ExplodeLoop
+        @InliningCutoff
+        public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4) {
+            // TIER 3: Megamorphic Fallback (Indirect Execution)
+            if (indirectNode != null) {
+                return indirectNode.execute(frame, canPrimFail, selector, receiver, arg1, arg2, arg3, arg4);
+            }
 
-        @Specialization(guards = "guard.check(receiver)", assumptions = "dispatchDirectNode.getAssumptions()", limit = "INLINE_METHOD_CACHE_LIMIT")
-        protected static final Object doDirect(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4,
-                        @SuppressWarnings("unused") @Cached("create(receiver)") final LookupClassGuard guard,
-                        @Cached("create(selector, guard)") final DispatchDirect4Node dispatchDirectNode) {
-            return dispatchDirectNode.execute(frame, receiver, arg1, arg2, arg3, arg4);
+            if (cache == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                cache = insert(new DispatchCacheManager<>());
+            }
+
+            // TIER 1: Direct Execution Fast Path
+            for (final DispatchEntry<DispatchDirect4Node> entry : cache.fastEntries) {
+                if (entry.isFastCacheHit(receiver)) {
+                    return entry.executor.execute(frame, receiver, arg1, arg2, arg3, arg4);
+                }
+            }
+
+            // TIER 2: Wide Execution (Class Polymorphism)
+            if (cache.wideEntries.length > 0) {
+                final ClassObject receiverClass = cache.classNode.executeLookup(cache, receiver);
+                final Object lookupResult = getContext().lookup(receiverClass, selector);
+
+                if (lookupResult instanceof CompiledCodeObject targetMethod) {
+                    for (final DispatchEntry<DispatchDirect4Node> entry : cache.wideEntries) {
+                        if (entry.isWideCacheHit(targetMethod)) {
+                            return entry.executor.execute(frame, receiver, arg1, arg2, arg3, arg4);
+                        }
+                    }
+                }
+            }
+
+            // Cache Miss: Delegate to Manager for Specialization
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            return executeAndSpecialize(frame, receiver, arg1, arg2, arg3, arg4);
         }
 
-        @ReportPolymorphism.Megamorphic
-        @Specialization(replaces = "doDirect")
-        @HostCompilerDirectives.InliningCutoff
-        @SuppressWarnings("truffle-static-method")
-        protected final Object doIndirect(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4,
-                        @Cached final DispatchIndirect4Node dispatchNode) {
-            return dispatchNode.execute(frame, canPrimFail, selector, receiver, arg1, arg2, arg3, arg4);
+        private Object executeAndSpecialize(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4) {
+            /*
+             * Guard against lagging recursive frames. If multiple frames of this method are on the
+             * stack executing compiled code, a deeper frame may have already deoptimized and
+             * transitioned this node to the indirect tier. This intercepts older deoptimized frames
+             * to prevent redundant specialization.
+             */
+            if (indirectNode != null) {
+                return indirectNode.execute(frame, canPrimFail, selector, receiver, arg1, arg2, arg3, arg4);
+            }
+
+            final ClassObject receiverClass = cache.classNode.executeLookup(cache, receiver);
+            final Object lookupResult = getContext().lookup(receiverClass, selector);
+
+            // Node creation handles method resolution, including DNU and OAM fallbacks.
+            final DispatchDirect4Node newDirectNode = DispatchDirect4Node.create(selector, receiverClass, canPrimFail);
+
+            final DispatchDirect4Node executor = cache.specialize(receiver, lookupResult, newDirectNode);
+
+            if (executor != null) {
+                return executor.execute(frame, receiver, arg1, arg2, arg3, arg4);
+            } else {
+                this.reportPolymorphicSpecialize();
+                indirectNode = insert(DispatchIndirect4NodeGen.create());
+                return indirectNode.execute(frame, canPrimFail, selector, receiver, arg1, arg2, arg3, arg4);
+            }
         }
     }
 
@@ -93,7 +145,7 @@ public final class DispatchSelector4Node extends AbstractDispatchSelectorNode {
 
         @NeverDefault
         protected static final DispatchDirect4Node create(final NativeObject selector, final LookupClassGuard guard) {
-            return create(selector, guard, true);
+            return create(selector, guard, false);
         }
 
         @NeverDefault
