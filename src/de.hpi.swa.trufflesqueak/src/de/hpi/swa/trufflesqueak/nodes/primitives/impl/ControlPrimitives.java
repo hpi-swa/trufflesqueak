@@ -95,6 +95,7 @@ import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.Dispatch
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchIndirectNaryNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchIndirectNaryNode.CreateFrameArgumentsForIndirectCallNaryNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchIndirectNaryNode.TryPrimitiveNaryNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchPerformNaryNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.LookupClassGuard;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.ResolveMethodNode;
@@ -270,19 +271,14 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 84)
     protected abstract static class PrimPerformWithArguments2Node extends AbstractPrimitiveWithFrameNode implements Primitive2 {
         @SuppressWarnings("unused")
-        @Specialization(guards = {"selector == cachedSelector", "guard.check(receiver)",
-                        "arity == cachedArity"}, assumptions = "dispatchDirectNode.getAssumptions()", limit = "PERFORM_SELECTOR_CACHE_LIMIT")
+        @Specialization(guards = "selector == cachedSelector", limit = "PERFORM_SELECTOR_CACHE_LIMIT")
         protected static final Object performCached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final ArrayObject argumentsArray,
                         @Bind final Node node,
                         @Cached("selector") final NativeObject cachedSelector,
-                        @Cached("create(receiver)") final LookupClassGuard guard,
-                        @Cached final ArrayObjectSizeNode sizeNode,
-                        @Bind("sizeNode.execute(node, argumentsArray)") final int arity,
-                        @Cached("arity") final int cachedArity,
-                        @Cached("create(cachedSelector, guard, cachedArity)") final DispatchDirectNaryNode dispatchDirectNode,
+                        @Cached("create(cachedSelector)") final DispatchPerformNaryNode dispatchNode,
                         @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode) {
             final Object[] arguments = getObjectArrayNode.execute(node, argumentsArray);
-            return dispatchDirectNode.executeWithCheckedArguments(frame, receiver, arguments);
+            return dispatchNode.execute(frame, receiver, arguments);
         }
 
         @Megamorphic

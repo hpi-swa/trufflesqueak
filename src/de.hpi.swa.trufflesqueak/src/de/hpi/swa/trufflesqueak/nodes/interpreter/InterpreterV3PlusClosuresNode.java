@@ -1009,7 +1009,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
     }
 
     @EarlyInline
-    private int handleExtendedSend(final VirtualFrame frame, final int currentPC, final int pc, int initialSP, final int numArgs) {
+    private int handleExtendedSend(final VirtualFrame frame, final int currentPC, final int pc, final int initialSP, final int numArgs) {
         int sp = initialSP;
         CompilerAsserts.partialEvaluationConstant(numArgs);
         switch (numArgs) {

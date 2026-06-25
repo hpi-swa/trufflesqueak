@@ -174,9 +174,7 @@ public abstract class AbstractDispatchNode extends AbstractNode {
                     removeGuardNode(current);
                     // Note: If the head becomes null, the owning FastDispatchDataNode will be pruned during
                     // the next specialization pass.
-                }
-                // 2. Check Receiver Class
-                else if (current.guard.check(receiver)) {
+                } else if (current.guard.check(receiver)) { // 2. Check Receiver Class
                     return true;
                 }
                 current = current.next;
