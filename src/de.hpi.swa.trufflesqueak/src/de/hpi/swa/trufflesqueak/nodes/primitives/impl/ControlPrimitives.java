@@ -74,17 +74,22 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectChangeClassOfToNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNode;
 import de.hpi.swa.trufflesqueak.nodes.context.GetOrCreateContextWithoutFrameNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0Node.Dispatch0Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0Node.DispatchDirect0Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0Node.DispatchIndirect0Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1Node.Dispatch1Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1Node.DispatchDirect1Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1Node.DispatchIndirect1Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2Node.Dispatch2Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2Node.DispatchDirect2Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2Node.DispatchIndirect2Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector3Node.Dispatch3Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector3Node.DispatchDirect3Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector3Node.DispatchIndirect3Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector4Node.Dispatch4Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector4Node.DispatchDirect4Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector4Node.DispatchIndirect4Node;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector5Node.DispatchDirect5Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector5Node.Dispatch5Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector5Node.DispatchIndirect5Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchDirectNaryNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchIndirectNaryNode;
@@ -131,12 +136,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 83)
     protected abstract static class PrimPerform0Node extends AbstractPrimitiveWithFrameNode implements Primitive1WithFallback {
         @SuppressWarnings("unused")
-        @Specialization(guards = {"selector == cachedSelector", "guard.check(receiver)"}, assumptions = "dispatchDirectNode.getAssumptions()", limit = "PERFORM_SELECTOR_CACHE_LIMIT")
+        @Specialization(guards = "selector == cachedSelector", limit = "PERFORM_SELECTOR_CACHE_LIMIT")
         protected static final Object perform0Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector,
                         @Cached("selector") final NativeObject cachedSelector,
-                        @Cached("create(receiver)") final LookupClassGuard guard,
-                        @Cached("create(cachedSelector, guard, true)") final DispatchDirect0Node dispatchDirectNode) {
-            return dispatchDirectNode.execute(frame, receiver);
+                        @Cached("create(cachedSelector)") final Dispatch0Node dispatchNode) {
+            return dispatchNode.execute(frame, receiver);
         }
 
         @SuppressWarnings("unused")
@@ -152,12 +156,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 83)
     protected abstract static class PrimPerform1Node extends AbstractPrimitiveWithFrameNode implements Primitive2WithFallback {
         @SuppressWarnings("unused")
-        @Specialization(guards = {"selector == cachedSelector", "guard.check(receiver)"}, assumptions = "dispatchDirectNode.getAssumptions()", limit = "PERFORM_SELECTOR_CACHE_LIMIT")
+        @Specialization(guards = "selector == cachedSelector", limit = "PERFORM_SELECTOR_CACHE_LIMIT")
         protected static final Object perform1Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object arg1,
                         @Cached("selector") final NativeObject cachedSelector,
-                        @Cached("create(receiver)") final LookupClassGuard guard,
-                        @Cached("create(cachedSelector, guard, true)") final DispatchDirect1Node dispatchDirectNode) {
-            return dispatchDirectNode.execute(frame, receiver, arg1);
+                        @Cached("create(cachedSelector)") final Dispatch1Node dispatchNode) {
+            return dispatchNode.execute(frame, receiver, arg1);
         }
 
         @SuppressWarnings("unused")
@@ -173,12 +176,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 83)
     protected abstract static class PrimPerform2Node extends AbstractPrimitiveWithFrameNode implements Primitive3WithFallback {
         @SuppressWarnings("unused")
-        @Specialization(guards = {"selector == cachedSelector", "guard.check(receiver)"}, assumptions = "dispatchDirectNode.getAssumptions()", limit = "PERFORM_SELECTOR_CACHE_LIMIT")
+        @Specialization(guards = "selector == cachedSelector", limit = "PERFORM_SELECTOR_CACHE_LIMIT")
         protected static final Object perform2Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object arg1, final Object arg2,
                         @Cached("selector") final NativeObject cachedSelector,
-                        @Cached("create(receiver)") final LookupClassGuard guard,
-                        @Cached("create(cachedSelector, guard, true)") final DispatchDirect2Node dispatchDirectNode) {
-            return dispatchDirectNode.execute(frame, receiver, arg1, arg2);
+                        @Cached("create(cachedSelector)") final Dispatch2Node dispatchNode) {
+            return dispatchNode.execute(frame, receiver, arg1, arg2);
         }
 
         @SuppressWarnings("unused")
@@ -194,12 +196,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 83)
     protected abstract static class PrimPerform3Node extends AbstractPrimitiveWithFrameNode implements Primitive4WithFallback {
         @SuppressWarnings("unused")
-        @Specialization(guards = {"selector == cachedSelector", "guard.check(receiver)"}, assumptions = "dispatchDirectNode.getAssumptions()", limit = "PERFORM_SELECTOR_CACHE_LIMIT")
+        @Specialization(guards = "selector == cachedSelector", limit = "PERFORM_SELECTOR_CACHE_LIMIT")
         protected static final Object perform3Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object arg1, final Object arg2, final Object arg3,
                         @Cached("selector") final NativeObject cachedSelector,
-                        @Cached("create(receiver)") final LookupClassGuard guard,
-                        @Cached("create(cachedSelector, guard, true)") final DispatchDirect3Node dispatchDirectNode) {
-            return dispatchDirectNode.execute(frame, receiver, arg1, arg2, arg3);
+                        @Cached("create(cachedSelector)") final Dispatch3Node dispatchNode) {
+            return dispatchNode.execute(frame, receiver, arg1, arg2, arg3);
         }
 
         @SuppressWarnings("unused")
@@ -215,13 +216,12 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 83)
     protected abstract static class PrimPerform4Node extends AbstractPrimitiveWithFrameNode implements Primitive5WithFallback {
         @SuppressWarnings("unused")
-        @Specialization(guards = {"selector == cachedSelector", "guard.check(receiver)"}, assumptions = "dispatchDirectNode.getAssumptions()", limit = "PERFORM_SELECTOR_CACHE_LIMIT")
+        @Specialization(guards = "selector == cachedSelector", limit = "PERFORM_SELECTOR_CACHE_LIMIT")
         protected static final Object perform4Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object arg1, final Object arg2, final Object arg3,
                         final Object arg4,
                         @Cached("selector") final NativeObject cachedSelector,
-                        @Cached("create(receiver)") final LookupClassGuard guard,
-                        @Cached("create(cachedSelector, guard, true)") final DispatchDirect4Node dispatchDirectNode) {
-            return dispatchDirectNode.execute(frame, receiver, arg1, arg2, arg3, arg4);
+                        @Cached("create(cachedSelector)") final Dispatch4Node dispatchNode) {
+            return dispatchNode.execute(frame, receiver, arg1, arg2, arg3, arg4);
         }
 
         @SuppressWarnings("unused")
@@ -238,13 +238,12 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 83)
     protected abstract static class PrimPerform5Node extends AbstractPrimitiveWithFrameNode implements Primitive6WithFallback {
         @SuppressWarnings("unused")
-        @Specialization(guards = {"selector == cachedSelector", "guard.check(receiver)"}, assumptions = "dispatchDirectNode.getAssumptions()", limit = "PERFORM_SELECTOR_CACHE_LIMIT")
+        @Specialization(guards = "selector == cachedSelector", limit = "PERFORM_SELECTOR_CACHE_LIMIT")
         protected static final Object perform5Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object arg1, final Object arg2, final Object arg3,
                         final Object arg4, final Object arg5,
                         @Cached("selector") final NativeObject cachedSelector,
-                        @Cached("create(receiver)") final LookupClassGuard guard,
-                        @Cached("create(cachedSelector, guard, true)") final DispatchDirect5Node dispatchDirectNode) {
-            return dispatchDirectNode.execute(frame, receiver, arg1, arg2, arg3, arg4, arg5);
+                        @Cached("create(cachedSelector)") final Dispatch5Node dispatchNode) {
+            return dispatchNode.execute(frame, receiver, arg1, arg2, arg3, arg4, arg5);
         }
 
         @SuppressWarnings("unused")

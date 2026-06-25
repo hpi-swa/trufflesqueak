@@ -78,6 +78,11 @@ public final class FrameAccess {
         private static final int CLOSURE_OR_NULL = 1;
         private static final int RECEIVER = 2;
         private static final int ARGUMENTS_START = 3;
+        private static final int ARGUMENT_1 = ARGUMENTS_START;
+        private static final int ARGUMENT_2 = ARGUMENT_1 + 1;
+        private static final int ARGUMENT_3 = ARGUMENT_2 + 1;
+        private static final int ARGUMENT_4 = ARGUMENT_3 + 1;
+        private static final int ARGUMENT_5 = ARGUMENT_4 + 1;
     }
 
     private static final class SlotIndices {
@@ -167,7 +172,7 @@ public final class FrameAccess {
     }
 
     public static int getNumArguments(final Frame frame) {
-        return frame.getArguments().length - getArgumentStartIndex();
+        return frame.getArguments().length - ArgumentIndices.ARGUMENTS_START;
     }
 
     public static Object[] getReceiverAndArguments(final Frame frame) {
@@ -405,7 +410,7 @@ public final class FrameAccess {
         frameArguments[ArgumentIndices.SENDER] = sender;
         frameArguments[ArgumentIndices.CLOSURE_OR_NULL] = closure;
         frameArguments[ArgumentIndices.RECEIVER] = receiver;
-        frameArguments[ArgumentIndices.ARGUMENTS_START] = arg1;
+        frameArguments[ArgumentIndices.ARGUMENT_1] = arg1;
         return frameArguments;
     }
 
@@ -415,8 +420,8 @@ public final class FrameAccess {
         frameArguments[ArgumentIndices.SENDER] = sender;
         frameArguments[ArgumentIndices.CLOSURE_OR_NULL] = closure;
         frameArguments[ArgumentIndices.RECEIVER] = receiver;
-        frameArguments[ArgumentIndices.ARGUMENTS_START] = arg1;
-        frameArguments[ArgumentIndices.ARGUMENTS_START + 1] = arg2;
+        frameArguments[ArgumentIndices.ARGUMENT_1] = arg1;
+        frameArguments[ArgumentIndices.ARGUMENT_2] = arg2;
         return frameArguments;
     }
 
@@ -426,9 +431,9 @@ public final class FrameAccess {
         frameArguments[ArgumentIndices.SENDER] = sender;
         frameArguments[ArgumentIndices.CLOSURE_OR_NULL] = closure;
         frameArguments[ArgumentIndices.RECEIVER] = receiver;
-        frameArguments[ArgumentIndices.ARGUMENTS_START] = arg1;
-        frameArguments[ArgumentIndices.ARGUMENTS_START + 1] = arg2;
-        frameArguments[ArgumentIndices.ARGUMENTS_START + 2] = arg3;
+        frameArguments[ArgumentIndices.ARGUMENT_1] = arg1;
+        frameArguments[ArgumentIndices.ARGUMENT_2] = arg2;
+        frameArguments[ArgumentIndices.ARGUMENT_3] = arg3;
         return frameArguments;
     }
 
@@ -439,10 +444,10 @@ public final class FrameAccess {
         frameArguments[ArgumentIndices.SENDER] = sender;
         frameArguments[ArgumentIndices.CLOSURE_OR_NULL] = closure;
         frameArguments[ArgumentIndices.RECEIVER] = receiver;
-        frameArguments[ArgumentIndices.ARGUMENTS_START] = arg1;
-        frameArguments[ArgumentIndices.ARGUMENTS_START + 1] = arg2;
-        frameArguments[ArgumentIndices.ARGUMENTS_START + 2] = arg3;
-        frameArguments[ArgumentIndices.ARGUMENTS_START + 3] = arg4;
+        frameArguments[ArgumentIndices.ARGUMENT_1] = arg1;
+        frameArguments[ArgumentIndices.ARGUMENT_2] = arg2;
+        frameArguments[ArgumentIndices.ARGUMENT_3] = arg3;
+        frameArguments[ArgumentIndices.ARGUMENT_4] = arg4;
         return frameArguments;
     }
 
@@ -453,11 +458,11 @@ public final class FrameAccess {
         frameArguments[ArgumentIndices.SENDER] = sender;
         frameArguments[ArgumentIndices.CLOSURE_OR_NULL] = closure;
         frameArguments[ArgumentIndices.RECEIVER] = receiver;
-        frameArguments[ArgumentIndices.ARGUMENTS_START] = arg1;
-        frameArguments[ArgumentIndices.ARGUMENTS_START + 1] = arg2;
-        frameArguments[ArgumentIndices.ARGUMENTS_START + 2] = arg3;
-        frameArguments[ArgumentIndices.ARGUMENTS_START + 3] = arg4;
-        frameArguments[ArgumentIndices.ARGUMENTS_START + 4] = arg5;
+        frameArguments[ArgumentIndices.ARGUMENT_1] = arg1;
+        frameArguments[ArgumentIndices.ARGUMENT_2] = arg2;
+        frameArguments[ArgumentIndices.ARGUMENT_3] = arg3;
+        frameArguments[ArgumentIndices.ARGUMENT_4] = arg4;
+        frameArguments[ArgumentIndices.ARGUMENT_5] = arg5;
         return frameArguments;
     }
 
@@ -520,33 +525,33 @@ public final class FrameAccess {
     }
 
     public static void fillClosureTemplateWith(final Object[] template, final Object arg1) {
-        template[ArgumentIndices.ARGUMENTS_START + 0] = arg1;
+        template[ArgumentIndices.ARGUMENT_1] = arg1;
     }
 
     public static void fillClosureTemplateWith(final Object[] template, final Object arg1, final Object arg2) {
-        template[ArgumentIndices.ARGUMENTS_START + 0] = arg1;
-        template[ArgumentIndices.ARGUMENTS_START + 1] = arg2;
+        template[ArgumentIndices.ARGUMENT_1] = arg1;
+        template[ArgumentIndices.ARGUMENT_2] = arg2;
     }
 
     public static void fillClosureTemplateWith(final Object[] template, final Object arg1, final Object arg2, final Object arg3) {
-        template[ArgumentIndices.ARGUMENTS_START + 0] = arg1;
-        template[ArgumentIndices.ARGUMENTS_START + 1] = arg2;
-        template[ArgumentIndices.ARGUMENTS_START + 2] = arg3;
+        template[ArgumentIndices.ARGUMENT_1] = arg1;
+        template[ArgumentIndices.ARGUMENT_2] = arg2;
+        template[ArgumentIndices.ARGUMENT_3] = arg3;
     }
 
     public static void fillClosureTemplateWith(final Object[] template, final Object arg1, final Object arg2, final Object arg3, final Object arg4) {
-        template[ArgumentIndices.ARGUMENTS_START + 0] = arg1;
-        template[ArgumentIndices.ARGUMENTS_START + 1] = arg2;
-        template[ArgumentIndices.ARGUMENTS_START + 2] = arg3;
-        template[ArgumentIndices.ARGUMENTS_START + 3] = arg4;
+        template[ArgumentIndices.ARGUMENT_1] = arg1;
+        template[ArgumentIndices.ARGUMENT_2] = arg2;
+        template[ArgumentIndices.ARGUMENT_3] = arg3;
+        template[ArgumentIndices.ARGUMENT_4] = arg4;
     }
 
     public static void fillClosureTemplateWith(final Object[] template, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5) {
-        template[ArgumentIndices.ARGUMENTS_START + 0] = arg1;
-        template[ArgumentIndices.ARGUMENTS_START + 1] = arg2;
-        template[ArgumentIndices.ARGUMENTS_START + 2] = arg3;
-        template[ArgumentIndices.ARGUMENTS_START + 3] = arg4;
-        template[ArgumentIndices.ARGUMENTS_START + 4] = arg5;
+        template[ArgumentIndices.ARGUMENT_1] = arg1;
+        template[ArgumentIndices.ARGUMENT_2] = arg2;
+        template[ArgumentIndices.ARGUMENT_3] = arg3;
+        template[ArgumentIndices.ARGUMENT_4] = arg4;
+        template[ArgumentIndices.ARGUMENT_5] = arg5;
     }
 
     public static int expectedArgumentSize(final int numArgsAndCopied) {

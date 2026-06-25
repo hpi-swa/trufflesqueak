@@ -22,6 +22,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedBranchProfile;
@@ -47,27 +48,77 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class DispatchSelector2Node extends DispatchSelectorNode {
-    public abstract static class Dispatch2Node extends AbstractDispatchNode {
-        Dispatch2Node(final NativeObject selector) {
+    public static final class Dispatch2Node extends AbstractDispatchNode {
+        @Child private DispatchCacheManager<DispatchDirect2Node> cache;
+        @Child private DispatchIndirect2Node indirectNode;
+
+        private Dispatch2Node(final NativeObject selector) {
             super(selector);
         }
 
-        public abstract Object execute(VirtualFrame frame, Object receiver, Object arg1, Object arg2);
-
-        @Specialization(guards = "guard.check(receiver)", assumptions = "dispatchDirectNode.getAssumptions()", limit = "INLINE_METHOD_CACHE_LIMIT")
-        protected static final Object doDirect(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2,
-                        @SuppressWarnings("unused") @Cached("create(receiver)") final LookupClassGuard guard,
-                        @Cached("create(selector, guard)") final DispatchDirect2Node dispatchDirectNode) {
-            return dispatchDirectNode.execute(frame, receiver, arg1, arg2);
+        @NeverDefault
+        public static Dispatch2Node create(final NativeObject selector) {
+            return new Dispatch2Node(selector);
         }
 
-        @ReportPolymorphism.Megamorphic
-        @Specialization(replaces = "doDirect")
-        @HostCompilerDirectives.InliningCutoff
-        @SuppressWarnings("truffle-static-method")
-        protected final Object doIndirect(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2,
-                        @Cached final DispatchIndirect2Node dispatchNode) {
-            return dispatchNode.execute(frame, false, selector, receiver, arg1, arg2);
+        @ExplodeLoop
+        public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2) {
+            // TIER 4: Megamorphic Fallback (Indirect Execution)
+            if (indirectNode != null) {
+                return indirectNode.execute(frame, true, selector, receiver, arg1, arg2);
+            }
+
+            if (cache == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                cache = insert(new DispatchCacheManager<>());
+            }
+
+            // TIER 1: Direct Execution Fast Path
+            FastDispatchDataNode<DispatchDirect2Node> currentFast = cache.headFast;
+            while (currentFast != null) {
+                if (currentFast.guardChainNode.execute(receiver)) {
+                    return currentFast.dispatchDirectNode.execute(frame, receiver, arg1, arg2);
+                }
+                currentFast = currentFast.next;
+            }
+
+            // TIER 2 & 3: Wide Execution (Class Polymorphism)
+            if (cache.headWide != null) {
+                final ClassObject receiverClass = SqueakObjectClassNode.executeUncached(receiver);
+                final Object lookupResult = getContext().lookup(receiverClass, selector);
+
+                if (lookupResult instanceof CompiledCodeObject targetMethod) {
+                    WideDispatchDataNode<DispatchDirect2Node> currentWide = cache.headWide;
+                    while (currentWide != null) {
+                        if (currentWide.standardMethod == targetMethod) {
+                            return currentWide.dispatchDirectNode.execute(frame, receiver, arg1, arg2);
+                        }
+                        currentWide = currentWide.next;
+                    }
+                }
+            }
+
+            // Cache Miss: Delegate to Manager for Specialization
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            return executeAndSpecialize(frame, receiver, arg1, arg2);
+        }
+
+        private Object executeAndSpecialize(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2) {
+            final ClassObject receiverClass = SqueakObjectClassNode.executeUncached(receiver);
+            final Object lookupResult = getContext().lookup(receiverClass, selector);
+
+            // Node creation handles method resolution, including DNU and OAM fallbacks.
+            final DispatchDirect2Node newDirectNode = DispatchDirect2Node.create(selector, receiverClass, true);
+
+            final DispatchDirect2Node executor = cache.specialize(receiver, lookupResult, newDirectNode);
+
+            if (executor != null) {
+                return executor.execute(frame, receiver, arg1, arg2);
+            } else {
+                this.reportPolymorphicSpecialize();
+                indirectNode = insert(DispatchSelector2NodeFactory.DispatchIndirect2NodeGen.create());
+                return indirectNode.execute(frame, true, selector, receiver, arg1, arg2);
+            }
         }
     }
 

@@ -20,6 +20,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedBranchProfile;
@@ -45,6 +46,80 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class DispatchSelector3Node extends DispatchSelectorNode {
+    public static final class Dispatch3Node extends AbstractDispatchNode {
+        @Child private DispatchCacheManager<DispatchDirect3Node> cache;
+        @Child private DispatchIndirect3Node indirectNode;
+
+        private Dispatch3Node(final NativeObject selector) {
+            super(selector);
+        }
+
+        @NeverDefault
+        public static Dispatch3Node create(final NativeObject selector) {
+            return new Dispatch3Node(selector);
+        }
+
+        @ExplodeLoop
+        public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3) {
+            // TIER 4: Megamorphic Fallback (Indirect Execution)
+            if (indirectNode != null) {
+                return indirectNode.execute(frame, true, selector, receiver, arg1, arg2, arg3);
+            }
+
+            if (cache == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                cache = insert(new DispatchCacheManager<>());
+            }
+
+            // TIER 1: Direct Execution Fast Path
+            FastDispatchDataNode<DispatchDirect3Node> currentFast = cache.headFast;
+            while (currentFast != null) {
+                if (currentFast.guardChainNode.execute(receiver)) {
+                    return currentFast.dispatchDirectNode.execute(frame, receiver, arg1, arg2, arg3);
+                }
+                currentFast = currentFast.next;
+            }
+
+            // TIER 2 & 3: Wide Execution (Class Polymorphism)
+            if (cache.headWide != null) {
+                final ClassObject receiverClass = SqueakObjectClassNode.executeUncached(receiver);
+                final Object lookupResult = getContext().lookup(receiverClass, selector);
+
+                if (lookupResult instanceof CompiledCodeObject targetMethod) {
+                    WideDispatchDataNode<DispatchDirect3Node> currentWide = cache.headWide;
+                    while (currentWide != null) {
+                        if (currentWide.standardMethod == targetMethod) {
+                            return currentWide.dispatchDirectNode.execute(frame, receiver, arg1, arg2, arg3);
+                        }
+                        currentWide = currentWide.next;
+                    }
+                }
+            }
+
+            // Cache Miss: Delegate to Manager for Specialization
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            return executeAndSpecialize(frame, receiver, arg1, arg2, arg3);
+        }
+
+        private Object executeAndSpecialize(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3) {
+            final ClassObject receiverClass = SqueakObjectClassNode.executeUncached(receiver);
+            final Object lookupResult = getContext().lookup(receiverClass, selector);
+
+            // Node creation handles method resolution, including DNU and OAM fallbacks.
+            final DispatchDirect3Node newDirectNode = DispatchDirect3Node.create(selector, receiverClass, true);
+
+            final DispatchDirect3Node executor = cache.specialize(receiver, lookupResult, newDirectNode);
+
+            if (executor != null) {
+                return executor.execute(frame, receiver, arg1, arg2, arg3);
+            } else {
+                this.reportPolymorphicSpecialize();
+                indirectNode = insert(DispatchSelector3NodeFactory.DispatchIndirect3NodeGen.create());
+                return indirectNode.execute(frame, true, selector, receiver, arg1, arg2, arg3);
+            }
+        }
+    }
+
     public abstract static class DispatchDirect3Node extends AbstractDispatchDirectNode {
         DispatchDirect3Node(final Assumption[] assumptions) {
             super(assumptions);
