@@ -49,6 +49,9 @@ import de.hpi.swa.trufflesqueak.nodes.dispatch.AbstractDispatchNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0Node.Dispatch0Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1Node.Dispatch1Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2Node.Dispatch2Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector3Node.Dispatch3Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector4Node.Dispatch4Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector5Node.Dispatch5Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchNaryNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchValueNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchValueWithArgNodeGen;
@@ -157,6 +160,42 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     private Object dispatch(final VirtualFrame frame, final int currentPC, final Object receiver, final Object arg1, final Object arg2) {
         try {
             return ACCESS.uncheckedCast(getData(currentPC), Dispatch2Node.class).execute(frame, receiver, arg1, arg2);
+        } catch (final AbstractStandardSendReturn r) {
+            return handleReturnException(frame, currentPC, r);
+        }
+    }
+
+    protected final Object send(final VirtualFrame frame, final int currentPC, final Object receiver, final Object arg1, final Object arg2, final Object arg3) {
+        return followForwarded(currentPC, dispatch(frame, currentPC, receiver, arg1, arg2, arg3));
+    }
+
+    private Object dispatch(final VirtualFrame frame, final int currentPC, final Object receiver, final Object arg1, final Object arg2, final Object arg3) {
+        try {
+            return ACCESS.uncheckedCast(getData(currentPC), Dispatch3Node.class).execute(frame, receiver, arg1, arg2, arg3);
+        } catch (final AbstractStandardSendReturn r) {
+            return handleReturnException(frame, currentPC, r);
+        }
+    }
+
+    protected final Object send(final VirtualFrame frame, final int currentPC, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4) {
+        return followForwarded(currentPC, dispatch(frame, currentPC, receiver, arg1, arg2, arg3, arg4));
+    }
+
+    private Object dispatch(final VirtualFrame frame, final int currentPC, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4) {
+        try {
+            return ACCESS.uncheckedCast(getData(currentPC), Dispatch4Node.class).execute(frame, receiver, arg1, arg2, arg3, arg4);
+        } catch (final AbstractStandardSendReturn r) {
+            return handleReturnException(frame, currentPC, r);
+        }
+    }
+
+    protected final Object send(final VirtualFrame frame, final int currentPC, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5) {
+        return followForwarded(currentPC, dispatch(frame, currentPC, receiver, arg1, arg2, arg3, arg4, arg5));
+    }
+
+    private Object dispatch(final VirtualFrame frame, final int currentPC, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5) {
+        try {
+            return ACCESS.uncheckedCast(getData(currentPC), Dispatch5Node.class).execute(frame, receiver, arg1, arg2, arg3, arg4, arg5);
         } catch (final AbstractStandardSendReturn r) {
             return handleReturnException(frame, currentPC, r);
         }

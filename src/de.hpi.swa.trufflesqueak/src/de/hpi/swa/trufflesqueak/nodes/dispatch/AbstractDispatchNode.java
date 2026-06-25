@@ -67,8 +67,8 @@ public abstract class AbstractDispatchNode extends AbstractNode {
 
                 // Only coalesce standard methods. Fallbacks (null) and OAMs are isolated by class.
                 if (lookupResult instanceof CompiledCodeObject targetMethod &&
-                        currentFast.standardMethodOrNull == targetMethod &&
-                        currentFast.dispatchDirectNode.getClass() == newDispatchNode.getClass()) {
+                                currentFast.standardMethodOrNull == targetMethod &&
+                                currentFast.dispatchDirectNode.getClass() == newDispatchNode.getClass()) {
 
                     if (currentFast.guardChainNode.append(receiver, newDispatchNode.getAssumptions())) {
                         return currentFast.dispatchDirectNode;
@@ -152,6 +152,7 @@ public abstract class AbstractDispatchNode extends AbstractNode {
 
     public abstract static class AbstractGuardNode extends AbstractNode {
         public abstract boolean execute(Object receiver);
+
         public abstract boolean append(Object receiver, Assumption[] assumptions);
     }
 

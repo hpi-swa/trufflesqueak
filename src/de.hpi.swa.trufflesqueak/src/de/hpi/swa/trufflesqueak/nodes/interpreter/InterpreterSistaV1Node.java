@@ -42,6 +42,7 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
+import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0NodeGen;
@@ -50,6 +51,9 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0Node.Dispatch0Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1Node.Dispatch1Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2Node.Dispatch2Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector3Node.Dispatch3Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector4Node.Dispatch4Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector5Node.Dispatch5Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchNaryNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchDirectedSuperNaryNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchSuperNaryNodeGen;
@@ -327,7 +331,8 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     final int byte1 = getUnsignedInt(bc, pc++);
                     final int literalIndex = (byte1 >> 3) + (vstate.getExtA() << 5);
                     final NativeObject selector = (NativeObject) code.getAndResolveLiteral(literalIndex);
-                    setData(currentPC, insert(DispatchNaryNode.create(selector)));
+                    final int numArgs = (byte1 & 7) + (vstate.getExtB() << 3);
+                    setData(currentPC, insert(createDispatchNode(numArgs, selector)));
                     vstate.resetExtAB();
                     break;
                 }
@@ -2503,11 +2508,69 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final int byte1 = getUnsignedInt(state.bytecode, pc + 1);
         final int numArgs = (byte1 & 7) + (vstate.getExtB() << 3);
         CompilerAsserts.partialEvaluationConstant(numArgs);
-        final Object[] arguments = popN(frame, vstate.sp, numArgs);
-        vstate.sp -= numArgs;
-        final Object receiver = pop(frame, --vstate.sp);
-        FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
-        push(frame, vstate.sp++, sendNary(frame, pc, receiver, arguments));
+
+        switch (numArgs) {
+            case 0: {
+                final Object receiver = pop(frame, --vstate.sp);
+                FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
+                push(frame, vstate.sp++, send(frame, pc, receiver));
+                break;
+            }
+            case 1: {
+                final Object arg1 = pop(frame, --vstate.sp);
+                final Object receiver = pop(frame, --vstate.sp);
+                FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
+                push(frame, vstate.sp++, send(frame, pc, receiver, arg1));
+                break;
+            }
+            case 2: {
+                final Object arg2 = pop(frame, --vstate.sp);
+                final Object arg1 = pop(frame, --vstate.sp);
+                final Object receiver = pop(frame, --vstate.sp);
+                FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
+                push(frame, vstate.sp++, send(frame, pc, receiver, arg1, arg2));
+                break;
+            }
+            case 3: {
+                final Object arg3 = pop(frame, --vstate.sp);
+                final Object arg2 = pop(frame, --vstate.sp);
+                final Object arg1 = pop(frame, --vstate.sp);
+                final Object receiver = pop(frame, --vstate.sp);
+                FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
+                push(frame, vstate.sp++, send(frame, pc, receiver, arg1, arg2, arg3));
+                break;
+            }
+            case 4: {
+                final Object arg4 = pop(frame, --vstate.sp);
+                final Object arg3 = pop(frame, --vstate.sp);
+                final Object arg2 = pop(frame, --vstate.sp);
+                final Object arg1 = pop(frame, --vstate.sp);
+                final Object receiver = pop(frame, --vstate.sp);
+                FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
+                push(frame, vstate.sp++, send(frame, pc, receiver, arg1, arg2, arg3, arg4));
+                break;
+            }
+            case 5: {
+                final Object arg5 = pop(frame, --vstate.sp);
+                final Object arg4 = pop(frame, --vstate.sp);
+                final Object arg3 = pop(frame, --vstate.sp);
+                final Object arg2 = pop(frame, --vstate.sp);
+                final Object arg1 = pop(frame, --vstate.sp);
+                final Object receiver = pop(frame, --vstate.sp);
+                FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
+                push(frame, vstate.sp++, send(frame, pc, receiver, arg1, arg2, arg3, arg4, arg5));
+                break;
+            }
+            default: {
+                final Object[] arguments = popN(frame, vstate.sp, numArgs);
+                vstate.sp -= numArgs;
+                final Object receiver = pop(frame, --vstate.sp);
+                FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
+                push(frame, vstate.sp++, sendNary(frame, pc, receiver, arguments));
+                break;
+            }
+        }
+
         vstate.resetExtAB();
         return nextPC;
     }
@@ -2861,6 +2924,18 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         } catch (final AbstractStandardSendReturn r) {
             return handleReturnException(frame, currentPC, r);
         }
+    }
+
+    private static AbstractNode createDispatchNode(final int numArgs, final NativeObject selector) {
+        return switch (numArgs) {
+            case 0 -> Dispatch0Node.create(selector);
+            case 1 -> Dispatch1Node.create(selector);
+            case 2 -> Dispatch2Node.create(selector);
+            case 3 -> Dispatch3Node.create(selector);
+            case 4 -> Dispatch4Node.create(selector);
+            case 5 -> Dispatch5Node.create(selector);
+            default -> DispatchNaryNode.create(selector);
+        };
     }
 
     public static int calculateLongExtendedOffset(final byte bytecode, final int extB) {
