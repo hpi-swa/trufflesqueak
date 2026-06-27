@@ -82,7 +82,7 @@ public final class DispatchSelector4Node extends DispatchSelectorNode {
 
             // TIER 2 & 3: Wide Execution (Class Polymorphism)
             if (cache.headWide != null) {
-                final ClassObject receiverClass = SqueakObjectClassNode.executeUncached(receiver);
+                final ClassObject receiverClass = cache.headWide.classNode.executeLookup(cache.headWide, receiver);
                 final Object lookupResult = getContext().lookup(receiverClass, selector);
 
                 if (lookupResult instanceof CompiledCodeObject targetMethod) {
@@ -443,16 +443,18 @@ public final class DispatchSelector4Node extends DispatchSelectorNode {
             @Specialization(guards = "lookupResult == null")
             protected static final Object[] doMessageFallback(final Node node, final AbstractSqueakObject sender, final Object receiver, final Object arg1, final Object arg2, final Object arg3,
                             final Object arg4, final ClassObject receiverClass, @SuppressWarnings("unused") final Object lookupResult, final NativeObject selector,
+                            @Bind("getContext(node)") final SqueakImageContext image,
+                            @Cached final InlinedConditionProfile isCannotInterpretProfile,
                             @Cached(inline = false) final AbstractPointersObjectWriteNode writeNode,
                             @Cached(inline = false) final CreateMessageNode createMessageNode) {
-                final ClassObject.DispatchFailureResult result = getContext(node).findMethodCacheEntry(receiverClass, selector).getOrCreateDispatchFailureResult(4);
+                final ClassObject.DispatchFailureResult result = image.findMethodCacheEntry(receiverClass, selector).getOrCreateDispatchFailureResult(4);
                 final Object[] arguments = new Object[]{arg1, arg2, arg3, arg4};
 
                 final PointersObject message;
-                if (result.convention() == ClassObject.FallbackConvention.CANNOT_INTERPRET) {
+                if (isCannotInterpretProfile.profile(node, result.convention() == ClassObject.FallbackConvention.CANNOT_INTERPRET)) {
                     message = DispatchUtils.buildNestedMessage(createMessageNode, selector, result.fallbackSelector(), receiver, arguments, result.fallbackDepth());
                 } else {
-                    message = getContext(node).newMessage(writeNode, selector, receiverClass, arguments);
+                    message = image.newMessage(writeNode, selector, receiverClass, arguments);
                 }
                 return FrameAccess.newMessageFallbackWith(sender, receiver, message);
             }

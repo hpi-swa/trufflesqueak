@@ -15,6 +15,8 @@ import com.oracle.truffle.api.nodes.Node;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNodeGen;
 
 public abstract class AbstractDispatchNode extends AbstractNode {
     protected static final int LOOKUP_CACHE_SIZE = 8;
@@ -46,6 +48,14 @@ public abstract class AbstractDispatchNode extends AbstractNode {
     public static final class DispatchCacheManager<T extends AbstractDispatchDirectNode> extends Node {
         @Child public FastDispatchDataNode<T> headFast;
         @Child public WideDispatchDataNode<T> headWide;
+
+        @TruffleBoundary
+        protected T convertToIndirect() {
+            // Safely drop the fast and wide tiers to free memory.
+            this.headFast = null;
+            this.headWide = null;
+            return null;
+        }
 
         @TruffleBoundary
         protected T specialize(final Object receiver, final Object lookupResult, final T newDispatchNode) {
@@ -101,7 +111,7 @@ public abstract class AbstractDispatchNode extends AbstractNode {
             }
 
             // Signals that the dispatch cache capacity is exhausted, requiring a transition to indirect execution.
-            return null;
+            return convertToIndirect();
         }
 
         @TruffleBoundary
@@ -141,12 +151,14 @@ public abstract class AbstractDispatchNode extends AbstractNode {
     public static final class WideDispatchDataNode<T extends AbstractDispatchDirectNode> extends Node {
         public final CompiledCodeObject standardMethod;
         @Child public T dispatchDirectNode;
+        @Child public SqueakObjectClassNode classNode;
         @Child public WideDispatchDataNode<T> next;
 
         public WideDispatchDataNode(final CompiledCodeObject method, final T dispatchNode) {
             assert method != null : "Fallbacks must not enter the wide cache tier";
             this.standardMethod = method;
             this.dispatchDirectNode = dispatchNode;
+            this.classNode = SqueakObjectClassNodeGen.create();
         }
     }
 

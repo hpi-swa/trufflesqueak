@@ -106,7 +106,7 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
 
             // TIER 2 & 3: Wide Execution (Class Polymorphism)
             if (cache.headWide != null) {
-                final ClassObject receiverClass = SqueakObjectClassNode.executeUncached(receiver);
+                final ClassObject receiverClass = cache.headWide.classNode.executeLookup(cache.headWide, receiver);
                 final Object lookupResult = getContext().lookup(receiverClass, selector);
 
                 if (lookupResult instanceof CompiledCodeObject targetMethod) {
@@ -181,7 +181,7 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
 
             // TIER 2 & 3: Wide Execution (Class Polymorphism)
             if (cache.headWide != null) {
-                final ClassObject receiverClass = SqueakObjectClassNode.executeUncached(receiver);
+                final ClassObject receiverClass = cache.headWide.classNode.executeLookup(cache.headWide, receiver);
                 final Object lookupResult = getContext().lookup(receiverClass, selector);
 
                 if (lookupResult instanceof CompiledCodeObject targetMethod) {
@@ -832,27 +832,37 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             protected static final Object[] doMessageFallbackCached(final Node node, final AbstractSqueakObject sender, final Object receiver, final Object[] arguments,
                             final ClassObject receiverClass,
                             @SuppressWarnings("unused") final Object lookupResult, final NativeObject selector,
+                            @Bind("getContext(node)") final SqueakImageContext image,
+                            @Shared("isShortcut") @Cached final InlinedConditionProfile isShortcutProfile,
+                            @Shared("isCannotInterpret") @Cached final InlinedConditionProfile isCannotInterpretProfile,
                             @Cached("arguments.length") final int cachedArity,
                             @Shared("writeNode") @Cached(inline = false) final AbstractPointersObjectWriteNode writeNode,
                             @Shared("createNode") @Cached(inline = false) final CreateMessageNode createMessageNode) {
-                return doMessageFallbackShared(node, sender, receiver, arguments, receiverClass, selector, cachedArity, writeNode, createMessageNode);
+                return doMessageFallbackShared(node, sender, receiver, arguments, receiverClass, selector, cachedArity, image, isShortcutProfile, isCannotInterpretProfile, writeNode,
+                                createMessageNode);
             }
 
             @Specialization(guards = "lookupResult == null", replaces = "doMessageFallbackCached")
             protected static final Object[] doMessageFallbackGeneric(final Node node, final AbstractSqueakObject sender, final Object receiver, final Object[] arguments,
                             final ClassObject receiverClass,
                             @SuppressWarnings("unused") final Object lookupResult, final NativeObject selector,
+                            @Bind("getContext(node)") final SqueakImageContext image,
+                            @Shared("isShortcut") @Cached final InlinedConditionProfile isShortcutProfile,
+                            @Shared("isCannotInterpret") @Cached final InlinedConditionProfile isCannotInterpretProfile,
                             @Shared("writeNode") @Cached(inline = false) final AbstractPointersObjectWriteNode writeNode,
                             @Shared("createNode") @Cached(inline = false) final CreateMessageNode createMessageNode) {
-                return doMessageFallbackShared(node, sender, receiver, arguments, receiverClass, selector, arguments.length, writeNode, createMessageNode);
+                return doMessageFallbackShared(node, sender, receiver, arguments, receiverClass, selector, arguments.length, image, isShortcutProfile, isCannotInterpretProfile, writeNode,
+                                createMessageNode);
             }
 
             private static Object[] doMessageFallbackShared(final Node node, final AbstractSqueakObject sender, final Object receiver, final Object[] arguments, final ClassObject receiverClass,
-                            final NativeObject selector, final int arity, final AbstractPointersObjectWriteNode writeNode, final CreateMessageNode createMessageNode) {
+                            final NativeObject selector, final int arity, final SqueakImageContext image,
+                            final InlinedConditionProfile isShortcutProfile, final InlinedConditionProfile isCannotInterpretProfile, final AbstractPointersObjectWriteNode writeNode,
+                            final CreateMessageNode createMessageNode) {
 
-                final ClassObject.DispatchFailureResult result = getContext(node).findMethodCacheEntry(receiverClass, selector).getOrCreateDispatchFailureResult(arity);
+                final ClassObject.DispatchFailureResult result = image.findMethodCacheEntry(receiverClass, selector).getOrCreateDispatchFailureResult(arity);
 
-                if (result.convention() == ClassObject.FallbackConvention.SHORTCUT_DNU) {
+                if (isShortcutProfile.profile(node, result.convention() == ClassObject.FallbackConvention.SHORTCUT_DNU)) {
                     final Object[] shortcutArgs = new Object[arity + 1];
                     if (CompilerDirectives.isPartialEvaluationConstant(arity)) {
                         copyExploded(arguments, shortcutArgs, arity);
@@ -864,10 +874,10 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
                 }
 
                 final PointersObject message;
-                if (result.convention() == ClassObject.FallbackConvention.CANNOT_INTERPRET) {
+                if (isCannotInterpretProfile.profile(node, result.convention() == ClassObject.FallbackConvention.CANNOT_INTERPRET)) {
                     message = DispatchUtils.buildNestedMessage(createMessageNode, selector, result.fallbackSelector(), receiver, arguments, result.fallbackDepth());
                 } else {
-                    message = getContext(node).newMessage(writeNode, selector, receiverClass, arguments);
+                    message = image.newMessage(writeNode, selector, receiverClass, arguments);
                 }
                 return FrameAccess.newMessageFallbackWith(sender, receiver, message);
             }
