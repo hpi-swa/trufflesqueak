@@ -38,10 +38,10 @@ jobs:
     steps:
     - &checkout_repo
       name: Clone TruffleSqueak repository
-      uses: &checkout_action actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      uses: &checkout_action actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
     - &setup_python
       name: Set up Python
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+      uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
       with:
         python-version: '${{ env.PYTHON_VERSION }}'
     - name: Set up dependencies
@@ -98,7 +98,7 @@ jobs:
         submodules: true
     - &setup_graalvm
       name: Set up Oracle GraalVM
-      uses: graalvm/setup-graalvm@f744c72a42b1995d7b0cbc314bde4bace7ac1fe1  # v1.5.0
+      uses: graalvm/setup-graalvm@6f3fa030c4b8f77c1f554a860f593a654538fa38  # v1.5.6
       with:
         java-version: '${{ env.GRAALVM_VERSION }}'
         distribution: 'graalvm'
@@ -458,7 +458,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Download GraalVM Compiler Dumps (if any)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: graal_dumps-*
           path: all-times
