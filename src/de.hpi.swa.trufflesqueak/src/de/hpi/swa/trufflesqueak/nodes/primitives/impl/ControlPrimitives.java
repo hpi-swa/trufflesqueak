@@ -1305,29 +1305,31 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
              * the time left on the current Delay. If it does wait, the wait terminates
              * early when an interrupt event is received.
              *
-             * Here, we emulate this behavior by checking and handling interrupts before and
-             * after the park. By registering the current thread, newly arriving interrupts
-             * will force the park to exit early.
+             * Here, we emulate this behavior by checking for interrupts before the park.
+             * By registering the current thread, newly arriving interrupts will force the
+             * park to exit early, allowing the next iteration of the Smalltalk idle loop to
+             * catch them.
              */
 
-            // Register the current VM thread.
-            image.interrupt.setVMThread(Thread.currentThread());
-
             try {
-                interruptNode.execute(frame);
-            } catch (final ProcessSwitch ps) {
-                pushNode.execute(frame, receiver);
-                throw ps;
+                // Register this thread to be notified if an interrupt occurs.
+                image.interrupt.setVMThread(Thread.currentThread());
+
+                // Check for interrupts enqueued before primitive send.
+                try {
+                    interruptNode.execute(frame);
+                } catch (final ProcessSwitch ps) {
+                    pushNode.execute(frame, receiver);
+                    throw ps;
+                }
+
+                // Sleep for duration or until interrupt, whichever comes first.
+                MiscUtils.park(timeMicroseconds * 1000);
+            } finally {
+                image.interrupt.setVMThread(null);
             }
 
-            MiscUtils.park(timeMicroseconds * 1000);
-
-            try {
-                interruptNode.execute(frame);
-            } catch (final ProcessSwitch ps) {
-                pushNode.execute(frame, receiver);
-                throw ps;
-            }
+            // If an interrupt terminates the park, it will be handled on the next idle loop.
             return receiver;
         }
     }
