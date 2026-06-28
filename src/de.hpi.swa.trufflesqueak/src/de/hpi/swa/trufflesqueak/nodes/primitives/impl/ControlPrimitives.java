@@ -1292,13 +1292,36 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimRelinquishProcessorNode extends AbstractPrimitiveWithFrameNode implements Primitive1WithFallback {
         @Specialization
         protected static final Object doRelinquish(final VirtualFrame frame, final Object receiver, final long timeMicroseconds,
+                        @Bind final SqueakImageContext image,
                         @Cached final CheckForInterruptsFullNode interruptNode,
                         @Cached final PushToStackNode pushNode) {
-            MiscUtils.park(timeMicroseconds * 1000);
             /*
-             * Perform interrupt check (even if interrupt handler is not active), otherwise
-             * idleProcess gets stuck.
+             * Because this primitive is called within a loop that contains a message send,
+             * interrupts are not checked on the backwards jump to the loop head. Here, we
+             * perform the check to make sure that interrupts are processed.
+             *
+             * In OSVM, this primitive returns immediately if there are pending interrupts.
+             * Also, it waits until the minimum of the duration given by the argument and
+             * the time left on the current Delay. If it does wait, the wait terminates
+             * early when an interrupt event is received.
+             *
+             * Here, we emulate this behavior by checking and handling interrupts before and
+             * after the park. By registering the current thread, newly arriving interrupts
+             * will force the park to exit early.
              */
+
+            // Register the current VM thread.
+            image.interrupt.setVMThread(Thread.currentThread());
+
+            try {
+                interruptNode.execute(frame);
+            } catch (final ProcessSwitch ps) {
+                pushNode.execute(frame, receiver);
+                throw ps;
+            }
+
+            MiscUtils.park(timeMicroseconds * 1000);
+
             try {
                 interruptNode.execute(frame);
             } catch (final ProcessSwitch ps) {
