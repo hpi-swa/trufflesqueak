@@ -58,6 +58,7 @@ public final class CheckForInterruptsState {
     @SuppressWarnings("unused") private boolean shouldTrigger;
 
     private Thread thread;
+    private volatile Thread vmThread;
 
     public CheckForInterruptsState(final SqueakImageContext image) {
         this.image = image;
@@ -90,6 +91,7 @@ public final class CheckForInterruptsState {
                      */
                     if (nextWakeUpTickTrigger()) {
                         SHOULD_TRIGGER.setOpaque(CheckForInterruptsState.this, true);
+                        wakeupVM();
                     }
                     LockSupport.parkNanos(interruptCheckNanos);
                 }
@@ -105,6 +107,19 @@ public final class CheckForInterruptsState {
         if (thread != null) {
             thread.interrupt();
             thread = null;
+        }
+    }
+
+    /* Relinquish Processor Primitive Helper */
+
+    public void setVMThread(final Thread thread) {
+        this.vmThread = thread;
+    }
+
+    private void wakeupVM() {
+        final Thread theThread = vmThread;
+        if (theThread != null) {
+            LockSupport.unpark(theThread);
         }
     }
 
@@ -164,6 +179,7 @@ public final class CheckForInterruptsState {
     public void setInterruptPending() {
         interruptPending = true;
         SHOULD_TRIGGER.setOpaque(this, true);
+        wakeupVM();
     }
 
     /* Timer interrupt */
@@ -215,6 +231,7 @@ public final class CheckForInterruptsState {
     public void setPendingFinalizations() {
         hasPendingFinalizations = true;
         SHOULD_TRIGGER.setOpaque(this, true);
+        wakeupVM();
     }
 
     /* Semaphore interrupts */
@@ -240,6 +257,7 @@ public final class CheckForInterruptsState {
     public void signalSemaphoreWithIndex(final int index) {
         semaphoresToSignal.addLast(index);
         SHOULD_TRIGGER.setOpaque(this, true);
+        wakeupVM();
     }
 
     /*
