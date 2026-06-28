@@ -46,7 +46,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
-public final class DispatchSelector1Node extends DispatchSelectorNode {
+public final class DispatchSelector1Node extends AbstractDispatchSelectorNode {
     public static final class Dispatch1Node extends AbstractDispatchNode {
         @Child private DispatchCacheManager<DispatchDirect1Node> cache;
         @Child private DispatchIndirect1Node indirectNode;
@@ -443,7 +443,7 @@ public final class DispatchSelector1Node extends DispatchSelectorNode {
 
         @GenerateInline
         @GenerateCached(false)
-        protected abstract static class CreateFrameArgumentsForIndirectCall1Node extends AbstractNode {
+        protected abstract static class CreateFrameArgumentsForIndirectCall1Node extends AbstractCreateFrameArgumentsForIndirectCallNode {
             abstract Object[] execute(Node node, AbstractSqueakObject sender, Object receiver, Object arg1, ClassObject receiverClass, Object lookupResult, NativeObject selector);
 
             @Specialization
@@ -465,16 +465,10 @@ public final class DispatchSelector1Node extends DispatchSelectorNode {
 
                 if (isShortcutProfile.profile(node, result.convention() == ClassObject.FallbackConvention.SHORTCUT_DNU)) {
                     return FrameAccess.newWith(sender, null, receiver, arg1, selector);
-                }
-
-                final Object[] arguments = new Object[]{arg1};
-                final PointersObject message;
-                if (isCannotInterpretProfile.profile(node, result.convention() == ClassObject.FallbackConvention.CANNOT_INTERPRET)) {
-                    message = DispatchUtils.buildNestedMessage(createMessageNode, selector, result.fallbackSelector(), receiver, arguments, result.fallbackDepth());
                 } else {
-                    message = image.newMessage(writeNode, selector, receiverClass, arguments);
+                    final Object[] arguments = new Object[]{arg1};
+                    return newMessage(node, sender, receiver, arguments, receiverClass, selector, result, image, isCannotInterpretProfile, writeNode, createMessageNode);
                 }
-                return FrameAccess.newMessageFallbackWith(sender, receiver, message);
             }
 
             @Specialization(guards = {"targetObject != null", "!isCompiledCodeObject(targetObject)"})

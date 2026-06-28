@@ -58,10 +58,11 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive7;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive8;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive9;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
+import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
-public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
+public final class DispatchSelectorNaryNode extends AbstractDispatchSelectorNode {
     protected abstract static class AbstractDispatchNaryNode extends AbstractDispatchNode {
         AbstractDispatchNaryNode(final NativeObject selector) {
             super(selector);
@@ -819,7 +820,7 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
 
         @GenerateInline
         @GenerateCached(false)
-        public abstract static class CreateFrameArgumentsForIndirectCallNaryNode extends AbstractNode {
+        public abstract static class CreateFrameArgumentsForIndirectCallNaryNode extends AbstractCreateFrameArgumentsForIndirectCallNode {
             public abstract Object[] execute(Node node, AbstractSqueakObject sender, Object receiver, Object[] arguments, ClassObject receiverClass, Object lookupResult, NativeObject selector);
 
             @Specialization
@@ -867,28 +868,15 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
                 if (isShortcutProfile.profile(node, result.convention() == ClassObject.FallbackConvention.SHORTCUT_DNU)) {
                     final Object[] shortcutArgs = new Object[arity + 1];
                     if (CompilerDirectives.isPartialEvaluationConstant(arity)) {
-                        copyExploded(arguments, shortcutArgs, arity);
+                        ArrayUtils.copyExploded(arguments, shortcutArgs, arity);
                     } else {
-                        System.arraycopy(arguments, 0, shortcutArgs, 0, arity);
+                        ArrayUtils.arraycopy(arguments, 0, shortcutArgs, 0, arity);
                     }
                     shortcutArgs[arity] = selector;
                     return FrameAccess.newWith(sender, null, receiver, shortcutArgs);
                 }
 
-                final PointersObject message;
-                if (isCannotInterpretProfile.profile(node, result.convention() == ClassObject.FallbackConvention.CANNOT_INTERPRET)) {
-                    message = DispatchUtils.buildNestedMessage(createMessageNode, selector, result.fallbackSelector(), receiver, arguments, result.fallbackDepth());
-                } else {
-                    message = image.newMessage(writeNode, selector, receiverClass, arguments);
-                }
-                return FrameAccess.newMessageFallbackWith(sender, receiver, message);
-            }
-
-            @ExplodeLoop
-            private static void copyExploded(final Object[] source, final Object[] dest, final int length) {
-                for (int i = 0; i < length; i++) {
-                    dest[i] = source[i];
-                }
+                return newMessage(node, sender, receiver, arguments, receiverClass, selector, result, image, isCannotInterpretProfile, writeNode, createMessageNode);
             }
 
             @Specialization(guards = {"targetObject != null", "!isCompiledCodeObject(targetObject)"})

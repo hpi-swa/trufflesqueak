@@ -46,7 +46,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive5;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
-public final class DispatchSelector5Node extends DispatchSelectorNode {
+public final class DispatchSelector5Node extends AbstractDispatchSelectorNode {
     public static final class Dispatch5Node extends AbstractDispatchNode {
         @Child private DispatchCacheManager<DispatchDirect5Node> cache;
         @Child private DispatchIndirect5Node indirectNode;
@@ -426,7 +426,7 @@ public final class DispatchSelector5Node extends DispatchSelectorNode {
 
         @GenerateInline
         @GenerateCached(false)
-        protected abstract static class CreateFrameArgumentsForIndirectCall5Node extends AbstractNode {
+        protected abstract static class CreateFrameArgumentsForIndirectCall5Node extends AbstractCreateFrameArgumentsForIndirectCallNode {
             abstract Object[] execute(Node node, AbstractSqueakObject sender, Object receiver, Object arg1, Object arg2, Object arg3, Object arg4, Object arg5, ClassObject receiverClass,
                             Object lookupResult, NativeObject selector);
 
@@ -446,14 +446,7 @@ public final class DispatchSelector5Node extends DispatchSelectorNode {
                             @Cached(inline = false) final CreateMessageNode createMessageNode) {
                 final ClassObject.DispatchFailureResult result = image.findMethodCacheEntry(receiverClass, selector).getOrCreateDispatchFailureResult(5);
                 final Object[] arguments = new Object[]{arg1, arg2, arg3, arg4, arg5};
-
-                final PointersObject message;
-                if (isCannotInterpretProfile.profile(node, result.convention() == ClassObject.FallbackConvention.CANNOT_INTERPRET)) {
-                    message = DispatchUtils.buildNestedMessage(createMessageNode, selector, result.fallbackSelector(), receiver, arguments, result.fallbackDepth());
-                } else {
-                    message = image.newMessage(writeNode, selector, receiverClass, arguments);
-                }
-                return FrameAccess.newMessageFallbackWith(sender, receiver, message);
+                return newMessage(node, sender, receiver, arguments, receiverClass, selector, result, image, isCannotInterpretProfile, writeNode, createMessageNode);
             }
 
             @Specialization(guards = {"targetObject != null", "!isCompiledCodeObject(targetObject)"})
