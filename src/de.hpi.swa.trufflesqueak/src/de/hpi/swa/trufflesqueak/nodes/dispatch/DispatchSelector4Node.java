@@ -445,7 +445,7 @@ public final class DispatchSelector4Node extends AbstractDispatchSelectorNode {
             @Specialization(guards = "lookupResult == null")
             protected static final Object[] doMessageFallback(final Node node, final AbstractSqueakObject sender, final Object receiver, final Object arg1, final Object arg2, final Object arg3,
                             final Object arg4, final ClassObject receiverClass, @SuppressWarnings("unused") final Object lookupResult, final NativeObject selector,
-                            @Bind("getContext(node)") final SqueakImageContext image,
+                            @Bind final SqueakImageContext image,
                             @Cached final InlinedConditionProfile isCannotInterpretProfile,
                             @Cached(inline = false) final AbstractPointersObjectWriteNode writeNode,
                             @Cached(inline = false) final CreateMessageNode createMessageNode) {

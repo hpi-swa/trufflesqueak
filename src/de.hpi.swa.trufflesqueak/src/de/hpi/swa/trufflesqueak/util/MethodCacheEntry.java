@@ -7,8 +7,8 @@
 package de.hpi.swa.trufflesqueak.util;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 
@@ -37,7 +37,7 @@ public final class MethodCacheEntry {
         return dispatchFailure;
     }
 
-    @CompilerDirectives.TruffleBoundary
+    @TruffleBoundary
     private ClassObject.DispatchFailureResult createDispatchFailureResult(final int arity) {
         return classObject.resolveDispatchFailure(selector, arity);
     }

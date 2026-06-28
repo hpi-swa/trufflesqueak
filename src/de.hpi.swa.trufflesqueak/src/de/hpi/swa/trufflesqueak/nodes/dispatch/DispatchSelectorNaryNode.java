@@ -830,41 +830,71 @@ public final class DispatchSelectorNaryNode extends AbstractDispatchSelectorNode
                 return FrameAccess.newWith(sender, null, receiver, arguments);
             }
 
-            @Specialization(guards = {"lookupResult == null", "arguments.length == cachedArity"}, limit = "1")
-            @ExplodeLoop
+            @Specialization(guards = {"lookupResult == null", "arguments.length == cachedArity"}, limit = "1", assumptions = {"image.getDnuShortcutsAbsent()"})
             protected static final Object[] doMessageFallbackCached(final Node node, final AbstractSqueakObject sender, final Object receiver, final Object[] arguments,
                             final ClassObject receiverClass,
                             @SuppressWarnings("unused") final Object lookupResult, final NativeObject selector,
-                            @Bind("getContext(node)") final SqueakImageContext image,
+                            @Bind final SqueakImageContext image,
+                            @Shared("isCannotInterpret") @Cached final InlinedConditionProfile isCannotInterpretProfile,
+                            @Cached("arguments.length") final int cachedArity,
+                            @Shared("writeNode") @Cached(inline = false) final AbstractPointersObjectWriteNode writeNode,
+                            @Shared("createNode") @Cached(inline = false) final CreateMessageNode createMessageNode) {
+                return doMessageFallbackShared(node, sender, receiver, arguments, receiverClass, selector, cachedArity, image, isCannotInterpretProfile, writeNode, createMessageNode);
+            }
+
+            @Specialization(guards = "lookupResult == null", replaces = "doMessageFallbackCached", assumptions = {"image.getDnuShortcutsAbsent()"})
+            protected static final Object[] doMessageFallbackGeneric(final Node node, final AbstractSqueakObject sender, final Object receiver, final Object[] arguments,
+                            final ClassObject receiverClass,
+                            @SuppressWarnings("unused") final Object lookupResult, final NativeObject selector,
+                            @Bind final SqueakImageContext image,
+                            @Shared("isCannotInterpret") @Cached final InlinedConditionProfile isCannotInterpretProfile,
+                            @Shared("writeNode") @Cached(inline = false) final AbstractPointersObjectWriteNode writeNode,
+                            @Shared("createNode") @Cached(inline = false) final CreateMessageNode createMessageNode) {
+                return doMessageFallbackShared(node, sender, receiver, arguments, receiverClass, selector, arguments.length, image, isCannotInterpretProfile, writeNode, createMessageNode);
+            }
+
+            private static Object[] doMessageFallbackShared(final Node node, final AbstractSqueakObject sender, final Object receiver, final Object[] arguments,
+                            final ClassObject receiverClass,
+                            final NativeObject selector, final int arity, final SqueakImageContext image,
+                            final InlinedConditionProfile isCannotInterpretProfile, final AbstractPointersObjectWriteNode writeNode, final CreateMessageNode createMessageNode) {
+                final ClassObject.DispatchFailureResult result = image.findMethodCacheEntry(receiverClass, selector).getOrCreateDispatchFailureResult(arity);
+                return newMessage(node, sender, receiver, arguments, receiverClass, selector, result, image, isCannotInterpretProfile, writeNode, createMessageNode);
+            }
+
+            @Specialization(guards = {"lookupResult == null", "arguments.length == cachedArity"}, limit = "1", replaces = {"doMessageFallbackCached", "doMessageFallbackGeneric"})
+            @ExplodeLoop
+            protected static final Object[] doMessageFallbackWithShortcutsCached(final Node node, final AbstractSqueakObject sender, final Object receiver, final Object[] arguments,
+                            final ClassObject receiverClass,
+                            @SuppressWarnings("unused") final Object lookupResult, final NativeObject selector,
+                            @Bind final SqueakImageContext image,
                             @Shared("isShortcut") @Cached final InlinedConditionProfile isShortcutProfile,
                             @Shared("isCannotInterpret") @Cached final InlinedConditionProfile isCannotInterpretProfile,
                             @Cached("arguments.length") final int cachedArity,
                             @Shared("writeNode") @Cached(inline = false) final AbstractPointersObjectWriteNode writeNode,
                             @Shared("createNode") @Cached(inline = false) final CreateMessageNode createMessageNode) {
-                return doMessageFallbackShared(node, sender, receiver, arguments, receiverClass, selector, cachedArity, image, isShortcutProfile, isCannotInterpretProfile, writeNode,
+                return doMessageFallbackWithShortcutsShared(node, sender, receiver, arguments, receiverClass, selector, cachedArity, image, isShortcutProfile, isCannotInterpretProfile, writeNode,
                                 createMessageNode);
             }
 
-            @Specialization(guards = "lookupResult == null", replaces = "doMessageFallbackCached")
-            protected static final Object[] doMessageFallbackGeneric(final Node node, final AbstractSqueakObject sender, final Object receiver, final Object[] arguments,
+            @Specialization(guards = "lookupResult == null", replaces = {"doMessageFallbackCached", "doMessageFallbackGeneric", "doMessageFallbackWithShortcutsCached"})
+            protected static final Object[] doMessageFallbackWithShortcutsGeneric(final Node node, final AbstractSqueakObject sender, final Object receiver, final Object[] arguments,
                             final ClassObject receiverClass,
                             @SuppressWarnings("unused") final Object lookupResult, final NativeObject selector,
-                            @Bind("getContext(node)") final SqueakImageContext image,
+                            @Bind final SqueakImageContext image,
                             @Shared("isShortcut") @Cached final InlinedConditionProfile isShortcutProfile,
                             @Shared("isCannotInterpret") @Cached final InlinedConditionProfile isCannotInterpretProfile,
                             @Shared("writeNode") @Cached(inline = false) final AbstractPointersObjectWriteNode writeNode,
                             @Shared("createNode") @Cached(inline = false) final CreateMessageNode createMessageNode) {
-                return doMessageFallbackShared(node, sender, receiver, arguments, receiverClass, selector, arguments.length, image, isShortcutProfile, isCannotInterpretProfile, writeNode,
+                return doMessageFallbackWithShortcutsShared(node, sender, receiver, arguments, receiverClass, selector, arguments.length, image, isShortcutProfile, isCannotInterpretProfile, writeNode,
                                 createMessageNode);
             }
 
-            private static Object[] doMessageFallbackShared(final Node node, final AbstractSqueakObject sender, final Object receiver, final Object[] arguments, final ClassObject receiverClass,
+            private static Object[] doMessageFallbackWithShortcutsShared(final Node node, final AbstractSqueakObject sender, final Object receiver, final Object[] arguments,
+                            final ClassObject receiverClass,
                             final NativeObject selector, final int arity, final SqueakImageContext image,
                             final InlinedConditionProfile isShortcutProfile, final InlinedConditionProfile isCannotInterpretProfile, final AbstractPointersObjectWriteNode writeNode,
                             final CreateMessageNode createMessageNode) {
-
                 final ClassObject.DispatchFailureResult result = image.findMethodCacheEntry(receiverClass, selector).getOrCreateDispatchFailureResult(arity);
-
                 if (isShortcutProfile.profile(node, result.convention() == ClassObject.FallbackConvention.SHORTCUT_DNU)) {
                     final Object[] shortcutArgs = new Object[arity + 1];
                     if (CompilerDirectives.isPartialEvaluationConstant(arity)) {
@@ -874,9 +904,9 @@ public final class DispatchSelectorNaryNode extends AbstractDispatchSelectorNode
                     }
                     shortcutArgs[arity] = selector;
                     return FrameAccess.newWith(sender, null, receiver, shortcutArgs);
+                } else {
+                    return newMessage(node, sender, receiver, arguments, receiverClass, selector, result, image, isCannotInterpretProfile, writeNode, createMessageNode);
                 }
-
-                return newMessage(node, sender, receiver, arguments, receiverClass, selector, result, image, isCannotInterpretProfile, writeNode, createMessageNode);
             }
 
             @Specialization(guards = {"targetObject != null", "!isCompiledCodeObject(targetObject)"})

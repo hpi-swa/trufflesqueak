@@ -13,6 +13,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.HostCompilerDirectives.InliningCutoff;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -453,16 +454,27 @@ public final class DispatchSelector0Node extends AbstractDispatchSelectorNode {
                 return FrameAccess.newWith(sender, null, receiver);
             }
 
-            @Specialization(guards = "lookupResult == null")
+            @Specialization(guards = "lookupResult == null", assumptions = {"image.getDnuShortcutsAbsent()"})
             protected static final Object[] doMessageFallback(final Node node, final AbstractSqueakObject sender, final Object receiver, final ClassObject receiverClass,
                             @SuppressWarnings("unused") final Object lookupResult, final NativeObject selector,
-                            @Bind("getContext(node)") final SqueakImageContext image,
-                            @Cached final InlinedConditionProfile isShortcutProfile,
-                            @Cached final InlinedConditionProfile isCannotInterpretProfile,
-                            @Cached(inline = false) final AbstractPointersObjectWriteNode writeNode,
-                            @Cached(inline = false) final CreateMessageNode createMessageNode) {
+                            @Bind final SqueakImageContext image,
+                            @Exclusive @Cached final InlinedConditionProfile isCannotInterpretProfile,
+                            @Exclusive @Cached(inline = false) final AbstractPointersObjectWriteNode writeNode,
+                            @Exclusive @Cached(inline = false) final CreateMessageNode createMessageNode) {
                 final ClassObject.DispatchFailureResult result = image.findMethodCacheEntry(receiverClass, selector).getOrCreateDispatchFailureResult(0);
+                final Object[] arguments = ArrayUtils.EMPTY_ARRAY;
+                return newMessage(node, sender, receiver, arguments, receiverClass, selector, result, image, isCannotInterpretProfile, writeNode, createMessageNode);
+            }
 
+            @Specialization(guards = "lookupResult == null", replaces = "doMessageFallback")
+            protected static final Object[] doMessageFallbackWithShortcuts(final Node node, final AbstractSqueakObject sender, final Object receiver, final ClassObject receiverClass,
+                            @SuppressWarnings("unused") final Object lookupResult, final NativeObject selector,
+                            @Bind final SqueakImageContext image,
+                            @Exclusive @Cached final InlinedConditionProfile isShortcutProfile,
+                            @Exclusive @Cached final InlinedConditionProfile isCannotInterpretProfile,
+                            @Exclusive @Cached(inline = false) final AbstractPointersObjectWriteNode writeNode,
+                            @Exclusive @Cached(inline = false) final CreateMessageNode createMessageNode) {
+                final ClassObject.DispatchFailureResult result = image.findMethodCacheEntry(receiverClass, selector).getOrCreateDispatchFailureResult(0);
                 if (isShortcutProfile.profile(node, result.convention() == ClassObject.FallbackConvention.SHORTCUT_DNU)) {
                     return FrameAccess.newWith(sender, null, receiver, selector);
                 } else {

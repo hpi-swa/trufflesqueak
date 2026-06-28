@@ -13,6 +13,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.HostCompilerDirectives.InliningCutoff;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -451,16 +452,29 @@ public final class DispatchSelector3Node extends AbstractDispatchSelectorNode {
                 return FrameAccess.newWith(sender, null, receiver, arg1, arg2, arg3);
             }
 
-            @Specialization(guards = "lookupResult == null")
+            @Specialization(guards = "lookupResult == null", assumptions = {"image.getDnuShortcutsAbsent()"})
             protected static final Object[] doMessageFallback(final Node node, final AbstractSqueakObject sender, final Object receiver, final Object arg1, final Object arg2, final Object arg3,
                             final ClassObject receiverClass, @SuppressWarnings("unused") final Object lookupResult, final NativeObject selector,
-                            @Bind("getContext(node)") final SqueakImageContext image,
-                            @Cached final InlinedConditionProfile isCannotInterpretProfile,
-                            @Cached(inline = false) final AbstractPointersObjectWriteNode writeNode,
-                            @Cached(inline = false) final CreateMessageNode createMessageNode) {
+                            @Bind final SqueakImageContext image,
+                            @Exclusive @Cached final InlinedConditionProfile isCannotInterpretProfile,
+                            @Exclusive @Cached(inline = false) final AbstractPointersObjectWriteNode writeNode,
+                            @Exclusive @Cached(inline = false) final CreateMessageNode createMessageNode) {
                 final ClassObject.DispatchFailureResult result = image.findMethodCacheEntry(receiverClass, selector).getOrCreateDispatchFailureResult(3);
+                final Object[] arguments = new Object[]{arg1, arg2, arg3};
+                return newMessage(node, sender, receiver, arguments, receiverClass, selector, result, image, isCannotInterpretProfile, writeNode, createMessageNode);
+            }
 
-                if (result.convention() == ClassObject.FallbackConvention.SHORTCUT_DNU) {
+            @Specialization(guards = "lookupResult == null", replaces = "doMessageFallback")
+            protected static final Object[] doMessageFallbackWithShortcuts(final Node node, final AbstractSqueakObject sender, final Object receiver, final Object arg1, final Object arg2,
+                            final Object arg3,
+                            final ClassObject receiverClass, @SuppressWarnings("unused") final Object lookupResult, final NativeObject selector,
+                            @Bind final SqueakImageContext image,
+                            @Exclusive @Cached final InlinedConditionProfile isShortcutProfile,
+                            @Exclusive @Cached final InlinedConditionProfile isCannotInterpretProfile,
+                            @Exclusive @Cached(inline = false) final AbstractPointersObjectWriteNode writeNode,
+                            @Exclusive @Cached(inline = false) final CreateMessageNode createMessageNode) {
+                final ClassObject.DispatchFailureResult result = image.findMethodCacheEntry(receiverClass, selector).getOrCreateDispatchFailureResult(3);
+                if (isShortcutProfile.profile(node, result.convention() == ClassObject.FallbackConvention.SHORTCUT_DNU)) {
                     return FrameAccess.newWith(sender, null, receiver, arg1, arg2, arg3, selector);
                 } else {
                     final Object[] arguments = new Object[]{arg1, arg2, arg3};

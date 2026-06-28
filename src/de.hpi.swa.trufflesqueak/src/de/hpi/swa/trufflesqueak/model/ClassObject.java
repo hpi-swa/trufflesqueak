@@ -6,7 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
-import de.hpi.swa.trufflesqueak.util.LogUtils;
 import org.graalvm.collections.UnmodifiableEconomicMap;
 
 import com.oracle.truffle.api.Assumption;
@@ -30,6 +29,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.METACLASS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.METHOD_DICT;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
+import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
 /*
@@ -481,7 +481,6 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
      * @return The CompiledCodeObject for the fallback method.
      * @throws SqueakException if the fallback method cannot be found (fatal VM error).
      */
-    @TruffleBoundary
     public DispatchFailureResult resolveDispatchFailure(final NativeObject originalSelector, final int arity) {
         CompilerAsserts.neverPartOfCompilation();
 
@@ -500,8 +499,9 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
             assert originalSelector != image.doesNotUnderstand : "Fatal dispatch error: Recursive doesNotUnderstand:";
 
             // Attempt the Shortcut DNU first
-            final NativeObject shortcutSelector = image.getDNUShortcutSelector(arity);
-            if (shortcutSelector != null) {
+            if (image.hasDNUShortcut(arity)) {
+                final NativeObject shortcutSelector = image.getDNUShortcutSelector(arity);
+                assert shortcutSelector != null;
                 final CompiledCodeObject shortcutMethod = lookupMethodInMethodDictSlow(shortcutSelector);
                 if (shortcutMethod != null) {
                     if (shortcutMethod.getNumArgs() == arity + 1) {
