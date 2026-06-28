@@ -130,87 +130,68 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     }
 
     protected final Object send(final VirtualFrame frame, final int currentPC, final Object receiver) {
-        return followForwarded(currentPC, dispatch(frame, currentPC, receiver));
+        return followForwarded(currentPC, dispatchHandled(frame, currentPC, receiver));
     }
 
-    private Object dispatch(final VirtualFrame frame, final int currentPC, final Object receiver) {
+    private Object dispatchHandled(final VirtualFrame frame, final int currentPC, final Object receiver) {
         try {
-            return ACCESS.uncheckedCast(getData(currentPC), Dispatch0Node.class).execute(frame, receiver);
+            return dispatch(frame, currentPC, receiver);
         } catch (final AbstractStandardSendReturn r) {
             return handleReturnException(frame, currentPC, r);
         }
+    }
+
+    protected final Object dispatch(final VirtualFrame frame, final int currentPC, final Object receiver) {
+        return ACCESS.uncheckedCast(getData(currentPC), Dispatch0Node.class).execute(frame, receiver);
     }
 
     protected final Object send(final VirtualFrame frame, final int currentPC, final Object receiver, final Object arg) {
-        return followForwarded(currentPC, dispatch(frame, currentPC, receiver, arg));
+        return followForwarded(currentPC, dispatchHandled(frame, currentPC, receiver, arg));
     }
 
-    private Object dispatch(final VirtualFrame frame, final int currentPC, final Object receiver, final Object arg) {
+    private Object dispatchHandled(final VirtualFrame frame, final int currentPC, final Object receiver, final Object arg) {
         try {
-            return ACCESS.uncheckedCast(getData(currentPC), Dispatch1Node.class).execute(frame, receiver, arg);
+            return dispatch(frame, currentPC, receiver, arg);
         } catch (final AbstractStandardSendReturn r) {
             return handleReturnException(frame, currentPC, r);
         }
+    }
+
+    protected final Object dispatch(final VirtualFrame frame, final int currentPC, final Object receiver, final Object arg) {
+        return ACCESS.uncheckedCast(getData(currentPC), Dispatch1Node.class).execute(frame, receiver, arg);
     }
 
     protected final Object send(final VirtualFrame frame, final int currentPC, final Object receiver, final Object arg1, final Object arg2) {
-        return followForwarded(currentPC, dispatch(frame, currentPC, receiver, arg1, arg2));
+        return followForwarded(currentPC, dispatchHandled(frame, currentPC, receiver, arg1, arg2));
     }
 
-    private Object dispatch(final VirtualFrame frame, final int currentPC, final Object receiver, final Object arg1, final Object arg2) {
+    private Object dispatchHandled(final VirtualFrame frame, final int currentPC, final Object receiver, final Object arg1, final Object arg2) {
         try {
-            return ACCESS.uncheckedCast(getData(currentPC), Dispatch2Node.class).execute(frame, receiver, arg1, arg2);
+            return dispatch(frame, currentPC, receiver, arg1, arg2);
         } catch (final AbstractStandardSendReturn r) {
             return handleReturnException(frame, currentPC, r);
         }
     }
 
-    protected final Object send(final VirtualFrame frame, final int currentPC, final Object receiver, final Object arg1, final Object arg2, final Object arg3) {
-        return followForwarded(currentPC, dispatch(frame, currentPC, receiver, arg1, arg2, arg3));
+    protected final Object dispatch(final VirtualFrame frame, final int currentPC, final Object receiver, final Object arg1, final Object arg2) {
+        return ACCESS.uncheckedCast(getData(currentPC), Dispatch2Node.class).execute(frame, receiver, arg1, arg2);
     }
 
-    private Object dispatch(final VirtualFrame frame, final int currentPC, final Object receiver, final Object arg1, final Object arg2, final Object arg3) {
-        try {
-            return ACCESS.uncheckedCast(getData(currentPC), Dispatch3Node.class).execute(frame, receiver, arg1, arg2, arg3);
-        } catch (final AbstractStandardSendReturn r) {
-            return handleReturnException(frame, currentPC, r);
-        }
+    protected final Object dispatch(final VirtualFrame frame, final int currentPC, final Object receiver, final Object arg1, final Object arg2, final Object arg3) {
+        return ACCESS.uncheckedCast(getData(currentPC), Dispatch3Node.class).execute(frame, receiver, arg1, arg2, arg3);
     }
 
-    protected final Object send(final VirtualFrame frame, final int currentPC, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4) {
-        return followForwarded(currentPC, dispatch(frame, currentPC, receiver, arg1, arg2, arg3, arg4));
+    protected final Object dispatch(final VirtualFrame frame, final int currentPC, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4) {
+        return ACCESS.uncheckedCast(getData(currentPC), Dispatch4Node.class).execute(frame, receiver, arg1, arg2, arg3, arg4);
     }
 
-    private Object dispatch(final VirtualFrame frame, final int currentPC, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4) {
-        try {
-            return ACCESS.uncheckedCast(getData(currentPC), Dispatch4Node.class).execute(frame, receiver, arg1, arg2, arg3, arg4);
-        } catch (final AbstractStandardSendReturn r) {
-            return handleReturnException(frame, currentPC, r);
-        }
+    protected final Object dispatch(final VirtualFrame frame, final int currentPC, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4,
+                    final Object arg5) {
+        return ACCESS.uncheckedCast(getData(currentPC), Dispatch5Node.class).execute(frame, receiver, arg1, arg2, arg3, arg4, arg5);
     }
 
-    protected final Object send(final VirtualFrame frame, final int currentPC, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5) {
-        return followForwarded(currentPC, dispatch(frame, currentPC, receiver, arg1, arg2, arg3, arg4, arg5));
-    }
-
-    private Object dispatch(final VirtualFrame frame, final int currentPC, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5) {
-        try {
-            return ACCESS.uncheckedCast(getData(currentPC), Dispatch5Node.class).execute(frame, receiver, arg1, arg2, arg3, arg4, arg5);
-        } catch (final AbstractStandardSendReturn r) {
-            return handleReturnException(frame, currentPC, r);
-        }
-    }
-
-    protected final Object sendNary(final VirtualFrame frame, final int currentPC, final Object receiver, final Object[] arguments) {
-        return followForwarded(currentPC, dispatchNary(frame, currentPC, receiver, arguments));
-    }
-
-    private Object dispatchNary(final VirtualFrame frame, final int currentPC, final Object receiver, final Object[] arguments) {
-        try {
-            return ACCESS.uncheckedCast(getData(currentPC), DispatchNaryNode.class).execute(frame, receiver, arguments);
-        } catch (final AbstractStandardSendReturn r) {
-            return handleReturnException(frame, currentPC, r);
-        }
+    protected final Object dispatchNary(final VirtualFrame frame, final int currentPC, final Object receiver, final Object[] arguments) {
+        return ACCESS.uncheckedCast(getData(currentPC), DispatchNaryNode.class).execute(frame, receiver, arguments);
     }
 
     protected final Object sendValue(final VirtualFrame frame, final int currentPC, final Object receiver) {
@@ -446,7 +427,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     /*
      * Handling of forwarding pointers
      */
-    private Object followForwarded(final int currentPC, final Object value) {
+    protected final Object followForwarded(final int currentPC, final Object value) {
         final byte profile = getProfile(currentPC);
         if (value instanceof final AbstractSqueakObjectWithClassAndHash object) {
             enter(currentPC, profile, BRANCH6);
@@ -533,7 +514,8 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
             if (data[i] instanceof AbstractDispatchNode) {
                 final int bytecode = getUnsignedInt(bc, i);
                 if (isFastPathedMessageSend(bytecode)) {
-                    // The interpreter could handle this directly and might not check for interrupts.
+                    // The interpreter could handle this directly and might not check for
+                    // interrupts.
                     continue;
                 }
                 return null;

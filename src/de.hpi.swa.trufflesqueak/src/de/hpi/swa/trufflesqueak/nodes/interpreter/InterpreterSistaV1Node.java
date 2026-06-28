@@ -42,12 +42,12 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
-import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.AbstractDispatchNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0Node.Dispatch0Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1Node.Dispatch1Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2Node.Dispatch2Node;
@@ -2508,69 +2508,60 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final int byte1 = getUnsignedInt(state.bytecode, pc + 1);
         final int numArgs = (byte1 & 7) + (vstate.getExtB() << 3);
         CompilerAsserts.partialEvaluationConstant(numArgs);
-
-        switch (numArgs) {
-            case 0: {
-                final Object receiver = pop(frame, --vstate.sp);
-                FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
-                push(frame, vstate.sp++, send(frame, pc, receiver));
-                break;
-            }
-            case 1: {
-                final Object arg1 = pop(frame, --vstate.sp);
-                final Object receiver = pop(frame, --vstate.sp);
-                FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
-                push(frame, vstate.sp++, send(frame, pc, receiver, arg1));
-                break;
-            }
-            case 2: {
-                final Object arg2 = pop(frame, --vstate.sp);
-                final Object arg1 = pop(frame, --vstate.sp);
-                final Object receiver = pop(frame, --vstate.sp);
-                FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
-                push(frame, vstate.sp++, send(frame, pc, receiver, arg1, arg2));
-                break;
-            }
-            case 3: {
-                final Object arg3 = pop(frame, --vstate.sp);
-                final Object arg2 = pop(frame, --vstate.sp);
-                final Object arg1 = pop(frame, --vstate.sp);
-                final Object receiver = pop(frame, --vstate.sp);
-                FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
-                push(frame, vstate.sp++, send(frame, pc, receiver, arg1, arg2, arg3));
-                break;
-            }
-            case 4: {
-                final Object arg4 = pop(frame, --vstate.sp);
-                final Object arg3 = pop(frame, --vstate.sp);
-                final Object arg2 = pop(frame, --vstate.sp);
-                final Object arg1 = pop(frame, --vstate.sp);
-                final Object receiver = pop(frame, --vstate.sp);
-                FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
-                push(frame, vstate.sp++, send(frame, pc, receiver, arg1, arg2, arg3, arg4));
-                break;
-            }
-            case 5: {
-                final Object arg5 = pop(frame, --vstate.sp);
-                final Object arg4 = pop(frame, --vstate.sp);
-                final Object arg3 = pop(frame, --vstate.sp);
-                final Object arg2 = pop(frame, --vstate.sp);
-                final Object arg1 = pop(frame, --vstate.sp);
-                final Object receiver = pop(frame, --vstate.sp);
-                FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
-                push(frame, vstate.sp++, send(frame, pc, receiver, arg1, arg2, arg3, arg4, arg5));
-                break;
-            }
-            default: {
-                final Object[] arguments = popN(frame, vstate.sp, numArgs);
-                vstate.sp -= numArgs;
-                final Object receiver = pop(frame, --vstate.sp);
-                FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
-                push(frame, vstate.sp++, sendNary(frame, pc, receiver, arguments));
-                break;
-            }
+        FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp - 1 - numArgs);
+        Object result;
+        try {
+            result = switch (numArgs) {
+                case 0 -> {
+                    final Object receiver = pop(frame, --vstate.sp);
+                    yield dispatch(frame, pc, receiver);
+                }
+                case 1 -> {
+                    final Object arg1 = pop(frame, --vstate.sp);
+                    final Object receiver = pop(frame, --vstate.sp);
+                    yield dispatch(frame, pc, receiver, arg1);
+                }
+                case 2 -> {
+                    final Object arg2 = pop(frame, --vstate.sp);
+                    final Object arg1 = pop(frame, --vstate.sp);
+                    final Object receiver = pop(frame, --vstate.sp);
+                    yield dispatch(frame, pc, receiver, arg1, arg2);
+                }
+                case 3 -> {
+                    final Object arg3 = pop(frame, --vstate.sp);
+                    final Object arg2 = pop(frame, --vstate.sp);
+                    final Object arg1 = pop(frame, --vstate.sp);
+                    final Object receiver = pop(frame, --vstate.sp);
+                    yield dispatch(frame, pc, receiver, arg1, arg2, arg3);
+                }
+                case 4 -> {
+                    final Object arg4 = pop(frame, --vstate.sp);
+                    final Object arg3 = pop(frame, --vstate.sp);
+                    final Object arg2 = pop(frame, --vstate.sp);
+                    final Object arg1 = pop(frame, --vstate.sp);
+                    final Object receiver = pop(frame, --vstate.sp);
+                    yield dispatch(frame, pc, receiver, arg1, arg2, arg3, arg4);
+                }
+                case 5 -> {
+                    final Object arg5 = pop(frame, --vstate.sp);
+                    final Object arg4 = pop(frame, --vstate.sp);
+                    final Object arg3 = pop(frame, --vstate.sp);
+                    final Object arg2 = pop(frame, --vstate.sp);
+                    final Object arg1 = pop(frame, --vstate.sp);
+                    final Object receiver = pop(frame, --vstate.sp);
+                    yield dispatch(frame, pc, receiver, arg1, arg2, arg3, arg4, arg5);
+                }
+                default -> {
+                    final Object[] arguments = popN(frame, vstate.sp, numArgs);
+                    vstate.sp -= numArgs;
+                    final Object receiver = pop(frame, --vstate.sp);
+                    yield dispatchNary(frame, pc, receiver, arguments);
+                }
+            };
+        } catch (final AbstractStandardSendReturn r) {
+            result = handleReturnException(frame, pc, r);
         }
-
+        push(frame, vstate.sp++, followForwarded(pc, result));
         vstate.resetExtAB();
         return nextPC;
     }
@@ -2926,7 +2917,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         }
     }
 
-    private static AbstractNode createDispatchNode(final int numArgs, final NativeObject selector) {
+    private static AbstractDispatchNode createDispatchNode(final int numArgs, final NativeObject selector) {
         return switch (numArgs) {
             case 0 -> Dispatch0Node.create(selector);
             case 1 -> Dispatch1Node.create(selector);

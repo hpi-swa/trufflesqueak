@@ -10,6 +10,7 @@ import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.HostCompilerDirectives.InliningCutoff;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
@@ -84,6 +85,7 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
 
         @Override
         @ExplodeLoop
+        @InliningCutoff
         public Object execute(final VirtualFrame frame, final Object receiver, final Object[] arguments) {
             // TIER 4: Megamorphic Fallback (Indirect Execution)
             if (indirectNode != null) {
