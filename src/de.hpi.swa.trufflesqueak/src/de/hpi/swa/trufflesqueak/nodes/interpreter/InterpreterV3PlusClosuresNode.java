@@ -33,10 +33,14 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0NodeFactory.Dispatch0NodeGen;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1NodeFactory.Dispatch1NodeGen;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2NodeFactory.Dispatch2NodeGen;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchNaryNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.AbstractDispatchNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0Node.Dispatch0Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1Node.Dispatch1Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2Node.Dispatch2Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector3Node.Dispatch3Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector4Node.Dispatch4Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector5Node.Dispatch5Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchNaryNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchSuperNaryNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchValueNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchValueWithArgNodeGen;
@@ -144,8 +148,9 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     break;
                 }
                 case BC.SINGLE_EXTENDED_SEND: {
+                    final int numArgs = getUnsignedInt(bc, pc) >> 5;
                     final NativeObject selector = (NativeObject) code.getLiteral(getByte(bc, pc++) & 0x1F);
-                    setData(currentPC, insert(DispatchNaryNodeGen.create(selector)));
+                    setData(currentPC, insert(createDispatchNode(numArgs, selector)));
                     break;
                 }
                 case BC.DOUBLE_EXTENDED_DO_ANYTHING: {
@@ -153,8 +158,9 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     final int byte3 = getUnsignedInt(bc, pc++);
                     switch (byte2 >> 5) {
                         case 0: {
+                            final int numArgs = byte2 & 0x1F;
                             final NativeObject selector = (NativeObject) code.getLiteral(byte3);
-                            setData(currentPC, insert(DispatchNaryNodeGen.create(selector)));
+                            setData(currentPC, insert(createDispatchNode(numArgs, selector)));
                             break;
                         }
                         case 1: {
@@ -191,8 +197,9 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     break;
                 }
                 case BC.SECOND_EXTENDED_SEND: {
+                    final int numArgs = getUnsignedInt(bc, pc) >> 6;
                     final NativeObject selector = (NativeObject) code.getLiteral(getByte(bc, pc++) & 0x3F);
-                    setData(currentPC, insert(DispatchNaryNodeGen.create(selector)));
+                    setData(currentPC, insert(createDispatchNode(numArgs, selector)));
                     break;
                 }
                 case BC.PUSH_NEW_ARRAY: {
@@ -248,7 +255,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     break;
                 }
                 case BC.BYTECODE_PRIM_SIZE, BC.BYTECODE_PRIM_NEXT, BC.BYTECODE_PRIM_AT_END, BC.BYTECODE_PRIM_NEW, BC.BYTECODE_PRIM_POINT_X, BC.BYTECODE_PRIM_POINT_Y: {
-                    setData(currentPC, insert(Dispatch0NodeGen.create(image.getSpecialSelector(b - BC.BYTECODE_PRIM_ADD))));
+                    setData(currentPC, insert(Dispatch0Node.create(image.getSpecialSelector(b - BC.BYTECODE_PRIM_ADD))));
                     break;
                 }
                 case BC.BYTECODE_PRIM_CLASS: {
@@ -258,7 +265,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                 case BC.BYTECODE_PRIM_ADD, BC.BYTECODE_PRIM_SUBTRACT, BC.BYTECODE_PRIM_LESS_THAN, BC.BYTECODE_PRIM_GREATER_THAN, BC.BYTECODE_PRIM_LESS_OR_EQUAL, BC.BYTECODE_PRIM_GREATER_OR_EQUAL, //
                     BC.BYTECODE_PRIM_EQUAL, BC.BYTECODE_PRIM_NOT_EQUAL, BC.BYTECODE_PRIM_MULTIPLY, BC.BYTECODE_PRIM_DIVIDE, BC.BYTECODE_PRIM_MOD, BC.BYTECODE_PRIM_MAKE_POINT, BC.BYTECODE_PRIM_BIT_SHIFT, BC.BYTECODE_PRIM_DIV, //
                     BC.BYTECODE_PRIM_BIT_AND, BC.BYTECODE_PRIM_BIT_OR, BC.BYTECODE_PRIM_AT, BC.BYTECODE_PRIM_NEXT_PUT, BC.BYTECODE_PRIM_DO, BC.BYTECODE_PRIM_NEW_WITH_ARG: {
-                    setData(currentPC, insert(Dispatch1NodeGen.create(image.getSpecialSelector(b - BC.BYTECODE_PRIM_ADD))));
+                    setData(currentPC, insert(Dispatch1Node.create(image.getSpecialSelector(b - BC.BYTECODE_PRIM_ADD))));
                     break;
                 }
                 case BC.BYTECODE_PRIM_IDENTICAL, BC.BYTECODE_PRIM_NOT_IDENTICAL: {
@@ -274,25 +281,25 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     break;
                 }
                 case BC.BYTECODE_PRIM_AT_PUT: {
-                    setData(currentPC, insert(Dispatch2NodeGen.create(image.getSpecialSelector(b - BC.BYTECODE_PRIM_ADD))));
+                    setData(currentPC, insert(Dispatch2Node.create(image.getSpecialSelector(b - BC.BYTECODE_PRIM_ADD))));
                     break;
                 }
                 case BC.SEND_LIT_SEL0_0, BC.SEND_LIT_SEL0_1, BC.SEND_LIT_SEL0_2, BC.SEND_LIT_SEL0_3, BC.SEND_LIT_SEL0_4, BC.SEND_LIT_SEL0_5, BC.SEND_LIT_SEL0_6, BC.SEND_LIT_SEL0_7, //
                     BC.SEND_LIT_SEL0_8, BC.SEND_LIT_SEL0_9, BC.SEND_LIT_SEL0_A, BC.SEND_LIT_SEL0_B, BC.SEND_LIT_SEL0_C, BC.SEND_LIT_SEL0_D, BC.SEND_LIT_SEL0_E, BC.SEND_LIT_SEL0_F: {
                     final NativeObject selector = (NativeObject) code.getAndResolveLiteral(b & 0xF);
-                    setData(currentPC, insert(Dispatch0NodeGen.create(selector)));
+                    setData(currentPC, insert(Dispatch0Node.create(selector)));
                     break;
                 }
                 case BC.SEND_LIT_SEL1_0, BC.SEND_LIT_SEL1_1, BC.SEND_LIT_SEL1_2, BC.SEND_LIT_SEL1_3, BC.SEND_LIT_SEL1_4, BC.SEND_LIT_SEL1_5, BC.SEND_LIT_SEL1_6, BC.SEND_LIT_SEL1_7, //
                     BC.SEND_LIT_SEL1_8, BC.SEND_LIT_SEL1_9, BC.SEND_LIT_SEL1_A, BC.SEND_LIT_SEL1_B, BC.SEND_LIT_SEL1_C, BC.SEND_LIT_SEL1_D, BC.SEND_LIT_SEL1_E, BC.SEND_LIT_SEL1_F: {
                     final NativeObject selector = (NativeObject) code.getAndResolveLiteral(b & 0xF);
-                    setData(currentPC, insert(Dispatch1NodeGen.create(selector)));
+                    setData(currentPC, insert(Dispatch1Node.create(selector)));
                     break;
                 }
                 case BC.SEND_LIT_SEL2_0, BC.SEND_LIT_SEL2_1, BC.SEND_LIT_SEL2_2, BC.SEND_LIT_SEL2_3, BC.SEND_LIT_SEL2_4, BC.SEND_LIT_SEL2_5, BC.SEND_LIT_SEL2_6, BC.SEND_LIT_SEL2_7, //
                     BC.SEND_LIT_SEL2_8, BC.SEND_LIT_SEL2_9, BC.SEND_LIT_SEL2_A, BC.SEND_LIT_SEL2_B, BC.SEND_LIT_SEL2_C, BC.SEND_LIT_SEL2_D, BC.SEND_LIT_SEL2_E, BC.SEND_LIT_SEL2_F: {
                     final NativeObject selector = (NativeObject) code.getAndResolveLiteral(b & 0xF);
-                    setData(currentPC, insert(Dispatch2NodeGen.create(selector)));
+                    setData(currentPC, insert(Dispatch2Node.create(selector)));
                     break;
                 }
                 default: {
@@ -511,11 +518,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     }
                     case BC.SINGLE_EXTENDED_SEND: {
                         final int numArgs = getUnsignedInt(bc, pc++) >> 5;
-                        final Object[] arguments = popN(frame, sp, numArgs);
-                        sp -= numArgs;
-                        final Object receiver = pop(frame, --sp);
-                        FrameAccess.externalizePCAndSP(frame, pc, sp);
-                        push(frame, sp++, sendNary(frame, currentPC, receiver, arguments));
+                        sp = handleExtendedSend(frame, currentPC, pc, sp, numArgs);
                         break;
                     }
                     case BC.DOUBLE_EXTENDED_DO_ANYTHING: {
@@ -526,11 +529,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         switch (opType) {
                             case 0: {
                                 final int numArgs = byte2 & 31;
-                                final Object[] arguments = popN(frame, sp, numArgs);
-                                sp -= numArgs;
-                                final Object receiver = pop(frame, --sp);
-                                FrameAccess.externalizePCAndSP(frame, pc, sp);
-                                push(frame, sp++, sendNary(frame, currentPC, receiver, arguments));
+                                sp = handleExtendedSend(frame, currentPC, pc, sp, numArgs);
                                 break;
                             }
                             case 1: {
@@ -585,11 +584,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     }
                     case BC.SECOND_EXTENDED_SEND: {
                         final int numArgs = getUnsignedInt(bc, pc++) >> 6;
-                        final Object[] arguments = popN(frame, sp, numArgs);
-                        sp -= numArgs;
-                        final Object receiver = pop(frame, --sp);
-                        FrameAccess.externalizePCAndSP(frame, pc, sp);
-                        push(frame, sp++, sendNary(frame, currentPC, receiver, arguments));
+                        sp = handleExtendedSend(frame, currentPC, pc, sp, numArgs);
                         break;
                     }
                     case BC.POP_STACK: {
@@ -1011,6 +1006,85 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
         } catch (final AbstractStandardSendReturn r) {
             return handleReturnException(frame, currentPC, r);
         }
+    }
+
+    @EarlyInline
+    private int handleExtendedSend(final VirtualFrame frame, final int currentPC, final int pc, final int initialSP, final int numArgs) {
+        int sp = initialSP;
+        CompilerAsserts.partialEvaluationConstant(numArgs);
+        Object result;
+        try {
+            result = switch (numArgs) {
+                case 0 -> {
+                    final Object receiver = pop(frame, --sp);
+                    FrameAccess.externalizePCAndSP(frame, pc, sp);
+                    yield dispatch(frame, currentPC, receiver);
+                }
+                case 1 -> {
+                    final Object arg1 = pop(frame, --sp);
+                    final Object receiver = pop(frame, --sp);
+                    FrameAccess.externalizePCAndSP(frame, pc, sp);
+                    yield dispatch(frame, currentPC, receiver, arg1);
+                }
+                case 2 -> {
+                    final Object arg2 = pop(frame, --sp);
+                    final Object arg1 = pop(frame, --sp);
+                    final Object receiver = pop(frame, --sp);
+                    FrameAccess.externalizePCAndSP(frame, pc, sp);
+                    yield dispatch(frame, currentPC, receiver, arg1, arg2);
+                }
+                case 3 -> {
+                    final Object arg3 = pop(frame, --sp);
+                    final Object arg2 = pop(frame, --sp);
+                    final Object arg1 = pop(frame, --sp);
+                    final Object receiver = pop(frame, --sp);
+                    FrameAccess.externalizePCAndSP(frame, pc, sp);
+                    yield dispatch(frame, currentPC, receiver, arg1, arg2, arg3);
+                }
+                case 4 -> {
+                    final Object arg4 = pop(frame, --sp);
+                    final Object arg3 = pop(frame, --sp);
+                    final Object arg2 = pop(frame, --sp);
+                    final Object arg1 = pop(frame, --sp);
+                    final Object receiver = pop(frame, --sp);
+                    FrameAccess.externalizePCAndSP(frame, pc, sp);
+                    yield dispatch(frame, currentPC, receiver, arg1, arg2, arg3, arg4);
+                }
+                case 5 -> {
+                    final Object arg5 = pop(frame, --sp);
+                    final Object arg4 = pop(frame, --sp);
+                    final Object arg3 = pop(frame, --sp);
+                    final Object arg2 = pop(frame, --sp);
+                    final Object arg1 = pop(frame, --sp);
+                    final Object receiver = pop(frame, --sp);
+                    FrameAccess.externalizePCAndSP(frame, pc, sp);
+                    yield dispatch(frame, currentPC, receiver, arg1, arg2, arg3, arg4, arg5);
+                }
+                default -> {
+                    final Object[] arguments = popN(frame, sp, numArgs);
+                    sp -= numArgs;
+                    final Object receiver = pop(frame, --sp);
+                    FrameAccess.externalizePCAndSP(frame, pc, sp);
+                    yield dispatchNary(frame, currentPC, receiver, arguments);
+                }
+            };
+        } catch (final AbstractStandardSendReturn r) {
+            result = handleReturnException(frame, currentPC, r);
+        }
+        push(frame, sp++, result);
+        return sp;
+    }
+
+    private static AbstractDispatchNode createDispatchNode(final int numArgs, final NativeObject selector) {
+        return switch (numArgs) {
+            case 0 -> Dispatch0Node.create(selector);
+            case 1 -> Dispatch1Node.create(selector);
+            case 2 -> Dispatch2Node.create(selector);
+            case 3 -> Dispatch3Node.create(selector);
+            case 4 -> Dispatch4Node.create(selector);
+            case 5 -> Dispatch5Node.create(selector);
+            default -> DispatchNaryNode.create(selector);
+        };
     }
 
     @EarlyInline
