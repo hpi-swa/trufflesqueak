@@ -274,7 +274,7 @@ public final class MiscUtils {
     }
 
     @TruffleBoundary
-    public static void park(final long nanos) {
+    public static void parkNanos(final long nanos) {
         LockSupport.parkNanos(nanos);
     }
 
