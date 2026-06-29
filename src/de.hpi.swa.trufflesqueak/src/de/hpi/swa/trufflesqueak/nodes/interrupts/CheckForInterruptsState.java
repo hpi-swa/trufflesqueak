@@ -118,6 +118,7 @@ public final class CheckForInterruptsState {
 
     private void wakeupVM() {
         LockSupport.unpark(vmThread);
+        vmThread = null; // Only ever unpark once.
     }
 
     /* Interrupt check interval */
