@@ -184,39 +184,19 @@
 
     flakyTests := OrderedCollection new.
     {
-        BasicInspectorTest -> #(#testExpressions).
         BitBltSimulationTest -> #(#testAlphaCompositing2Simulated #testAlphaCompositingSimulated).
-        ClassInspectorTest -> #(#testExpressions).
-        CollectionInspectorTest -> #(#testExpressions).
-        CompiledCodeInspectorTest -> #(#testExpressions).
-        ContextInspectorTest -> #(#testExpressions).
-        ContextVariablesInspectorTest -> #(#testExpressions).
         DebuggerTests -> #(#test02UnhandledException #test19Abandon).
-        DictionaryInspectorTest -> #(#testExpressions).
-        FileList2ModalDialogsTest -> #(#testModalFolderSelector #testModalFolderSelectorForProjectLoad).
-        FSFileHandleTest -> #(#testCloseWhenGarbageCollected).
-        InspectorTest -> #(#testExpressions).
-        IntegerTest -> #(#testReciprocalModulo).
-        MCDictionaryRepositoryTest -> #(#testIncludesName #testStoreAndLoad).
         MCSnapshotTest -> #(#testInstanceReuse).
-        MethodHighlightingTests -> #(#testMethodHighlighting).
         MorphicToolBuilderTests -> #(#testGetButtonColor).
-        PCCByCompilationTest -> #(#testSwitchPrimCallOffOn).
         PCCByLiteralsTest -> #(#testSwitchPrimCallOffOn).
-        SequenceableCollectionTest -> #(#testCollectWithIndexDeprecation).
-        SetInspectorTest -> #(#testExpressions).
         SHParserST80Test -> #(#testNumbers).
         StringTest ->#(#testFindSelector).
-        TestValueWithinFix -> #(#testValueWithinTimingBasic #testValueWithinTimingNestedInner #testValueWithinTimingNestedOuter #testValueWithinTimingRepeat).
-        WeakIdentityDictionaryTest -> #(#testIsEmpty).
-        WeakKeyDictionaryTest -> #(#testIsEmpty).
+        TestValueWithinFix -> #(#testValueWithinTimingRepeat).
         WeakSetInspectorTest -> #(#testSymbolTableM6812 #testUninitialized).
-        WeakSetTest -> #(#testIsEmpty).
         WideStringTest -> #(#testAsIntegerSignedUsingRandomNumbers). "sometimes hitting timeout due to slow becomeForward:"
 
         "failing on some platforms"
         GIFReadWriterTest -> #(#testAnimatedColorsOutIn).
-        MCPackageTest -> #(#testUnload).
     } collect: [:assoc | | testCase |
         testCase := assoc key.
         assoc value do: [:sel | flakyTests add: (testCase selector: sel) ]].
@@ -224,8 +204,6 @@
     isWin ifTrue: [
         {
             DurationTest -> #(#testBusyWait #testBusyWaitMicro). "Fails on Windows native"
-            FSFileHandleTest -> #("May fail with 'FileDoesNotExist: plonk' on Windows" #testAt #testAtPut #testAtPutBinaryAscii #testAtWriteBinaryAscii #testClose #testCreatedOpen #testIO #testReadBufferTooLarge #testReadOnly #testReference #testSizeAfterGrow #testSizeNoGrow #testTruncate #testTruncateEmpty #testWriteStream).
-            PNGReadWriterTest -> #("May fail with FileDoesNotExistException on Windows" #testBlue16 #testBlue32 #testBlue8).
         } collect: [:assoc | | testCase |
             testCase := assoc key.
             assoc value do: [:sel | flakyTests add: (testCase selector: sel) ]].
