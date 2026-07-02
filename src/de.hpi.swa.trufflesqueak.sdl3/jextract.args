@@ -94,6 +94,7 @@ src/SDL-release-3.4.2/include/SDL3/SDL.h
 --include-function SDL_GetPrimaryDisplay
 --include-function SDL_GetWindowDisplayScale
 --include-function SDL_RaiseWindow
+--include-function SDL_ShowWindow
 --include-function SDL_SetWindowFullscreen
 --include-function SDL_SetWindowIcon
 --include-function SDL_SetWindowSize

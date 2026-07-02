@@ -1109,6 +1109,66 @@ public class SDL_h extends SDL_h$shared {
         }
     }
 
+    private static class SDL_ShowWindow {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            SDL_h.C_BOOL,
+            SDL_h.C_POINTER
+        );
+
+        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ShowWindow");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+    }
+
+    /**
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * extern bool SDL_ShowWindow(SDL_Window *window)
+     * }
+     */
+    public static FunctionDescriptor SDL_ShowWindow$descriptor() {
+        return SDL_ShowWindow.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * extern bool SDL_ShowWindow(SDL_Window *window)
+     * }
+     */
+    public static MethodHandle SDL_ShowWindow$handle() {
+        return SDL_ShowWindow.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * extern bool SDL_ShowWindow(SDL_Window *window)
+     * }
+     */
+    public static MemorySegment SDL_ShowWindow$address() {
+        return SDL_ShowWindow.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * extern bool SDL_ShowWindow(SDL_Window *window)
+     * }
+     */
+    public static boolean SDL_ShowWindow(MemorySegment window) {
+        var mh$ = SDL_ShowWindow.HANDLE;
+        try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("SDL_ShowWindow", window);
+            }
+            return (boolean)mh$.invokeExact(window);
+        } catch (Error | RuntimeException ex) {
+           throw ex;
+        } catch (Throwable ex$) {
+           throw new AssertionError("should not reach here", ex$);
+        }
+    }
+
     private static class SDL_RaiseWindow {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_BOOL,
