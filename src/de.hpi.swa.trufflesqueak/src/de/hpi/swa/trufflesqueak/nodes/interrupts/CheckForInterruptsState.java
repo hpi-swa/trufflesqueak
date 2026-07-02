@@ -117,8 +117,10 @@ public final class CheckForInterruptsState {
     }
 
     private void wakeupVM() {
+        // If vmThread is null, this is a no-op. If vmThread is parked, this will unpark it.
+        // If vmThread is not parked, this simply sets a bit in vmThread for examination.
+        // All execution overhead is paid by the caller and not vmThread.
         LockSupport.unpark(vmThread);
-        vmThread = null; // Only ever unpark once.
     }
 
     /* Interrupt check interval */

@@ -1308,21 +1308,24 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind final SqueakImageContext image,
                         @Cached final CheckForInterruptsFullNode interruptNode,
                         @Cached final PushToStackNode pushNode) {
-            // Check for interrupts enqueued before primitive send.
             try {
-                interruptNode.execute(frame);
-            } catch (final ProcessSwitch ps) {
-                pushNode.execute(frame, receiver);
-                throw ps;
+                // Register this thread to be notified if an interrupt occurs.
+                image.interrupt.setVMThread(Thread.currentThread());
+
+                // Check for interrupts enqueued before primitive send.
+                try {
+                    interruptNode.execute(frame);
+                } catch (final ProcessSwitch ps) {
+                    pushNode.execute(frame, receiver);
+                    throw ps;
+                }
+
+                // Sleep for duration or until interrupt, whichever comes first.
+                MiscUtils.parkNanos(timeMicroseconds * 1000);
+            } finally {
+                // Unregister this thread.
+                image.interrupt.setVMThread(null);
             }
-
-            // Register this thread to be notified if an interrupt occurs.
-            image.interrupt.setVMThread(Thread.currentThread());
-            // Sleep for duration or until interrupt, whichever comes first.
-            MiscUtils.parkNanos(timeMicroseconds * 1000);
-            // Unregister this thread.
-            image.interrupt.setVMThread(null);
-
             // If an interrupt terminates the park, it will be handled on the next idle loop.
             return receiver;
         }
