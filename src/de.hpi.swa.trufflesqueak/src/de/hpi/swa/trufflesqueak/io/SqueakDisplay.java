@@ -83,6 +83,7 @@ import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDL_PIXELFORMAT_ARGB88
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDL_SCALEMODE_NEAREST;
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDL_TEXTUREACCESS_STREAMING;
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDL_WINDOW_HIGH_PIXEL_DENSITY;
+import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDL_WINDOW_HIDDEN;
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDL_WINDOW_RESIZABLE;
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Utils.checkSdlError;
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Utils.getSDLError;
@@ -119,6 +120,7 @@ import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_SetWindowIcon;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_SetWindowSize;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_SetWindowTitle;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_ShowCursor;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_ShowWindow;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_StartTextInput;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_UnlockSurface;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_UpdateTexture;
@@ -175,6 +177,8 @@ public final class SqueakDisplay {
     private MemorySegment cursor = MemorySegment.NULL;
     private MemorySegment renderer = MemorySegment.NULL;
     private MemorySegment texture = MemorySegment.NULL;
+
+    private boolean isWindowHidden = false;
 
     // Squeak bitmap (physical pixels)
     private int width;
@@ -379,6 +383,16 @@ public final class SqueakDisplay {
     private SqueakDisplay(final SqueakImageContext image) {
         this.image = image;
         PlatformEventLoop.start(this::processEvent, this::performRenderIfNeeded);
+
+        // Initial window size is obtained from the image header.
+        logicalWindowWidth = image.flags.getScreenWidth();
+        logicalWindowHeight = image.flags.getScreenHeight();
+
+        // If window size was not saved, use default as in OSVM.
+        if (logicalWindowWidth == 0 || logicalWindowHeight == 0) {
+            logicalWindowWidth = 640;
+            logicalWindowHeight = 480;
+        }
     }
 
     public static SqueakDisplay create(final SqueakImageContext image) {
@@ -494,6 +508,17 @@ public final class SqueakDisplay {
         checkSdlError(SDL_RenderClear(renderer));
         checkSdlError(SDL_RenderTexture(renderer, texture, MemorySegment.NULL, MemorySegment.NULL));
         checkSdlError(SDL_RenderPresent(renderer));
+
+        // Show the window and move it to the front, if needed.
+        if (isWindowHidden) {
+            final int currentLogicalWidth = (int) Math.ceil(width / getDisplayScale());
+            final int currentLogicalHeight = (int) Math.ceil(height / getDisplayScale());
+            if (currentLogicalWidth == getLogicalWindowWidth() && currentLogicalHeight == getLogicalWindowHeight()) {
+                isWindowHidden = false;
+                checkSdlError(SDL_ShowWindow(window));
+                checkSdlError(SDL_RaiseWindow(window));
+            }
+        }
     }
 
     private void requestRender() {
@@ -665,33 +690,28 @@ public final class SqueakDisplay {
                             : imageFileName + " running on " + SqueakLanguageConfig.IMPLEMENTATION_NAME;
             try (Arena arena = Arena.ofConfined()) {
                 /*
-                 * When Smalltalk opens the Display the first time, we do not yet know the
-                 * scaleFactor. We assume that Smalltalk uses the values stored in the image header
-                 * together with the current scaleFactor (1.0 initially) to create the initial
-                 * Display. Therefore, we can request an initial window with logical pixel
-                 * dimensions equal to the bitmap dimensions. After we create the window, we will
-                 * know the scaleFactor and Smalltalk can use that scaleFactor to resize Display.
+                 * Creating the window: We create it hidden so the user doesn't see
+                 * a black screen during image start up. We use the saved dimensions from
+                 * the image header for the size. The window will be explicitly unhidden
+                 * later in the render loop once the Smalltalk UI is fully drawn.
                  */
                 SDL_RunOnMainThread(SDL_MainThreadCallback.allocate((_) -> {
-                    long windowFlags = SDL_WINDOW_RESIZABLE;
+                    // The window is initially hidden. It will be shown when rendered at full size.
+                    isWindowHidden = true;
+                    long windowFlags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN;
                     if (image.flags.upscaleDisplayIfHighDPI()) {
                         windowFlags |= SDL_WINDOW_HIGH_PIXEL_DENSITY;
                     }
 
                     try (Arena windowTitleArena = Arena.ofConfined()) {
-                        window = checkSdlError(SDL_CreateWindow(windowTitleArena.allocateFrom(title), width, height, windowFlags));
+                        window = checkSdlError(SDL_CreateWindow(windowTitleArena.allocateFrom(title), logicalWindowWidth, logicalWindowHeight, windowFlags));
                     }
 
                     renderer = checkSdlError(SDL_CreateRenderer(window, MemorySegment.NULL));
 
                     setWindowIcon(window);
-                    checkSdlError(SDL_RaiseWindow(window));
 
                     scaleFactor = checkSdlError(SDL_GetWindowDisplayScale(window));
-
-                    // Store the logical dimensions exactly as Smalltalk requested them
-                    logicalWindowWidth = width;
-                    logicalWindowHeight = height;
 
                     checkSdlError(SDL_StartTextInput(window));
                     fullDamage();
@@ -703,23 +723,7 @@ public final class SqueakDisplay {
                     }
                 }, arena), MemorySegment.NULL, true);
             }
-        } else {
-            /*
-             * On subsequent calls to open() (via DisplayScreen>>beDisplay), we assume that
-             * Smalltalk knows the scaleFactor and the dimensions are in physical pixels. Therefore,
-             * we request the window to resize to the logical pixel dimensions.
-             */
-            final int targetLogicalWidth = (int) Math.ceil(width / getDisplayScale());
-            final int targetLogicalHeight = (int) Math.ceil(height / getDisplayScale());
-            if (targetLogicalWidth != logicalWindowWidth || targetLogicalHeight != logicalWindowHeight) {
-                logicalWindowWidth = targetLogicalWidth;
-                logicalWindowHeight = targetLogicalHeight;
-                SDL_RunOnMainThread(resizeTask, MemorySegment.NULL, true);
-            }
         }
-
-        // Save current logical window size in flags for later writing to disk image
-        image.flags.setScreenSize(getLogicalWindowWidth(), getLogicalWindowHeight());
     }
 
     private static void setWindowIcon(final MemorySegment window) {

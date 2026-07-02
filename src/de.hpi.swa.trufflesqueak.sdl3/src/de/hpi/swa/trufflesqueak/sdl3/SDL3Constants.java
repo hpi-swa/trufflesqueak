@@ -113,6 +113,7 @@ public final class SDL3Constants {
     public static final int SDL_SCALEMODE_NEAREST = 0;
 
     // SDL_video.h
+    public static final long SDL_WINDOW_HIDDEN = 0x0000000000000008L;
     public static final long SDL_WINDOW_RESIZABLE = 0x0000000000000020L;
     public static final long SDL_WINDOW_HIGH_PIXEL_DENSITY = 0x0000000000002000L;
 
