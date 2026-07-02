@@ -201,10 +201,10 @@ public final class SqueakDisplay {
     // UI thread tracking
     private int textureWidth = -1;
     private int textureHeight = -1;
+
     private volatile int logicalWindowWidth;
     private volatile int logicalWindowHeight;
-
-    private float scaleFactor;
+    private volatile float scaleFactor;
 
     private final ConcurrentLinkedDeque<long[]> deferredEvents = new ConcurrentLinkedDeque<>();
 
@@ -218,7 +218,7 @@ public final class SqueakDisplay {
     private double pendingScrollX = 0.0;
     private double pendingScrollY = 0.0;
 
-    private String clipboardText;
+    private volatile String clipboardText;
     private final List<String> dropFilesAccumulator = new ArrayList<>();
     private final int[] primaryDisplayDimensions = {0, 0};
 
@@ -297,64 +297,64 @@ public final class SqueakDisplay {
         }
 
         // Use SDL_LockSurface to ensure we have CPU access to the pixel buffer
-        checkSdlError(SDL_LockSurface(surface));
         try {
-            final MemorySegment pixels = SDL_Surface.pixels(surface);
-            final int pitch = SDL_Surface.pitch(surface);
-            final int[] sqPixels = data.cursorWords;
-            final int[] sqMask = data.maskWords;
+            checkSdlError(SDL_LockSurface(surface));
+            try {
+                final MemorySegment pixels = SDL_Surface.pixels(surface);
+                final int pitch = SDL_Surface.pitch(surface);
+                final int[] sqPixels = data.cursorWords;
+                final int[] sqMask = data.maskWords;
 
-            if (data.depth == 32) {
-                /* Case 1: 32-bit ARGB (Direct Copy) */
-                for (int y = 0; y < h; y++) {
-                    final long srcOffset = (long) y * w * Integer.BYTES;
-                    final long dstOffset = (long) y * pitch;
-                    MemorySegment.copy(MemorySegment.ofArray(sqPixels), srcOffset, pixels, dstOffset, (long) w * Integer.BYTES);
-                }
-            } else if (sqMask != null && w == SqueakIOConstants.CURSOR_WIDTH && h == SqueakIOConstants.CURSOR_HEIGHT) {
-                /* Case 2: Legacy 16x16 Masked Cursor */
-                for (int y = 0; y < h; y++) {
-                    final int cWord = sqPixels[y];
-                    final int mWord = sqMask[y];
-                    for (int x = 0; x < w; x++) {
-                        final int bit = 0x80000000 >>> x;
-                        final boolean c = (cWord & bit) != 0;
-                        final boolean m = (mWord & bit) != 0;
+                if (data.depth == 32) {
+                    /* Case 1: 32-bit ARGB (Direct Copy) */
+                    for (int y = 0; y < h; y++) {
+                        final long srcOffset = (long) y * w * Integer.BYTES;
+                        final long dstOffset = (long) y * pitch;
+                        MemorySegment.copy(MemorySegment.ofArray(sqPixels), srcOffset, pixels, dstOffset, (long) w * Integer.BYTES);
+                    }
+                } else if (sqMask != null && w == SqueakIOConstants.CURSOR_WIDTH && h == SqueakIOConstants.CURSOR_HEIGHT) {
+                    /* Case 2: Legacy 16x16 Masked Cursor */
+                    for (int y = 0; y < h; y++) {
+                        final int cWord = sqPixels[y];
+                        final int mWord = sqMask[y];
+                        for (int x = 0; x < w; x++) {
+                            final int bit = 0x80000000 >>> x;
+                            final boolean c = (cWord & bit) != 0;
+                            final boolean m = (mWord & bit) != 0;
 
-                        int argb = 0; // Transparent (0,0)
-                        if (m && c) {
-                            argb = 0xFF000000;      // Black (1,1)
-                        } else if (m) {
-                            argb = 0xFFFFFFFF;      // White (1,0)
-                        } else if (c) {
-                            // True XOR/Invert is not supported by SDL3 ARGB cursors.
-                            // Fallback to opaque Black so XOR crosshairs remain visible.
-                            argb = 0xFF000000;      // Fallback Black (0,1)
+                            int argb = 0; // Transparent (0,0)
+                            if (m && c) {
+                                argb = 0xFF000000;      // Black (1,1)
+                            } else if (m) {
+                                argb = 0xFFFFFFFF;      // White (1,0)
+                            } else if (c) {
+                                // True XOR/Invert is not supported by SDL3 ARGB cursors.
+                                // Fallback to opaque Black so XOR crosshairs remain visible.
+                                argb = 0xFF000000;      // Fallback Black (0,1)
+                            }
+
+                            pixels.set(ValueLayout.JAVA_INT, (long) y * pitch + (long) x * 4, argb);
                         }
+                    }
+                } else {
+                    /* Case 3: Arbitrary Sized Monochrome (1-bit) */
+                    // Squeak bit-padding: rows are padded to 32-bit boundaries
+                    final int wordsPerRow = (w + 31) / 32;
+                    for (int y = 0; y < h; y++) {
+                        for (int x = 0; x < w; x++) {
+                            final int wordIdx = y * wordsPerRow + (x / 32);
+                            final int bitIdx = x % 32;
+                            final boolean isSet = (sqPixels[wordIdx] & (0x80000000 >>> bitIdx)) != 0;
 
-                        pixels.set(ValueLayout.JAVA_INT, (long) y * pitch + (long) x * 4, argb);
+                            // Map 1 to Black, 0 to Transparent
+                            pixels.set(ValueLayout.JAVA_INT, (long) y * pitch + (long) x * 4, isSet ? 0xFF000000 : 0x00000000);
+                        }
                     }
                 }
-            } else {
-                /* Case 3: Arbitrary Sized Monochrome (1-bit) */
-                // Squeak bit-padding: rows are padded to 32-bit boundaries
-                final int wordsPerRow = (w + 31) / 32;
-                for (int y = 0; y < h; y++) {
-                    for (int x = 0; x < w; x++) {
-                        final int wordIdx = y * wordsPerRow + (x / 32);
-                        final int bitIdx = x % 32;
-                        final boolean isSet = (sqPixels[wordIdx] & (0x80000000 >>> bitIdx)) != 0;
-
-                        // Map 1 to Black, 0 to Transparent
-                        pixels.set(ValueLayout.JAVA_INT, (long) y * pitch + (long) x * 4, isSet ? 0xFF000000 : 0x00000000);
-                    }
-                }
+            } finally {
+                SDL_UnlockSurface(surface);
             }
-        } finally {
-            SDL_UnlockSurface(surface);
-        }
 
-        try {
             cursor = checkSdlError(SDL_CreateColorCursor(surface, data.offsetX, data.offsetY));
             if (cursor != MemorySegment.NULL) {
                 checkSdlError(SDL_SetCursor(cursor));
@@ -429,7 +429,9 @@ public final class SqueakDisplay {
     // Called by the main thread at the end of the event loop
     private void performRenderIfNeeded() {
         if (renderer == MemorySegment.NULL || stagingBuffer == MemorySegment.NULL) {
-            frameRequested = false;
+            synchronized (this) {
+                frameRequested = false;
+            }
             return;
         }
 
