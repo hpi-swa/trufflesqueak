@@ -737,7 +737,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         final boolean oldHasPrimitive = hasPrimitive();
         internalHeader = CompiledCodeHeaderUtils.fromSmallIntegerValue(value);
         assert getNumLiterals() == oldNumLiterals;
-        if (oldHasPrimitive && !hasPrimitive()) {
+        if (oldHasPrimitive != hasPrimitive()) {
             primitiveNodeOrNull = UNINITIALIZED_PRIMITIVE_NODE;
         }
         invalidateCallTarget();
