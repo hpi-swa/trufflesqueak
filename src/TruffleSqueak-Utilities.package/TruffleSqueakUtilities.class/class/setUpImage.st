@@ -1,6 +1,8 @@
 image creation
 setUpImage
 	"Install polyglot tools"
+	| currentScale |
+	
 	PolyglotToolSet register.
 	ToolSet default: PolyglotToolSet.
 	
@@ -38,19 +40,21 @@ setUpImage
 	
 	self closeAllWindowsAndMorphs.
 
-	self openButton: PolyglotWorkspace asString, ' open' at: 20@28.
-	self openButton: PolyglotNotebook asString, ' open' at: 190@28.
+	currentScale := Display platformScaleFactor.	
+
+	self openButton: PolyglotWorkspace asString, ' open' at: 20@28 * currentScale.
+	self openButton: PolyglotNotebook asString, ' open' at: 190@28 * currentScale.
 
 	self logo asMorph
-		position: 650@28;
+		position: 650@28 * currentScale;
 		borderWidth: 10;
 		setToAdhereToEdge: #bottomRight;
 		beSticky;
 		openInWorld.
 
 	PolyglotWorkspace open
-		position: 20@60;
-		extent: 600@300.
+		position: 20@60 * currentScale;
+		extent: 600@300 * currentScale.
 
 	"Clean up image"
 	Smalltalk garbageCollect.
