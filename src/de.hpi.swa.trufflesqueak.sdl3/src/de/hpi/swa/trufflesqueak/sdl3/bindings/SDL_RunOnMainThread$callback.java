@@ -14,12 +14,12 @@ import static java.lang.foreign.MemoryLayout.PathElement.*;
 
 /**
  * {@snippet lang=c :
- * typedef void (*SDL_MainThreadCallback)(void *)
+ * SDL_MainThreadCallback callback
  * }
  */
-public final class SDL_MainThreadCallback {
+public final class SDL_RunOnMainThread$callback {
 
-    private SDL_MainThreadCallback() {
+    private SDL_RunOnMainThread$callback() {
         // Should not be called directly
     }
 
@@ -27,7 +27,7 @@ public final class SDL_MainThreadCallback {
      * The function pointer signature, expressed as a functional interface
      */
     public interface Function {
-        void apply(MemorySegment userdata);
+        void apply(MemorySegment _x0);
     }
 
     private static final FunctionDescriptor $DESC = FunctionDescriptor.ofVoid(
@@ -41,13 +41,13 @@ public final class SDL_MainThreadCallback {
         return $DESC;
     }
 
-    private static final MethodHandle UP$MH = SDL_h.upcallHandle(SDL_MainThreadCallback.Function.class, "apply", $DESC);
+    private static final MethodHandle UP$MH = SDL_h.upcallHandle(SDL_RunOnMainThread$callback.Function.class, "apply", $DESC);
 
     /**
      * Allocates a new upcall stub, whose implementation is defined by {@code fi}.
      * The lifetime of the returned segment is managed by {@code arena}
      */
-    public static MemorySegment allocate(SDL_MainThreadCallback.Function fi, Arena arena) {
+    public static MemorySegment allocate(SDL_RunOnMainThread$callback.Function fi, Arena arena) {
         return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
     }
 
@@ -57,9 +57,9 @@ public final class SDL_MainThreadCallback {
     /**
      * Invoke the upcall stub {@code funcPtr}, with given parameters
      */
-    public static void invoke(MemorySegment funcPtr, MemorySegment userdata) {
+    public static void invoke(MemorySegment funcPtr, MemorySegment _x0) {
         try {
-             DOWN$MH.invokeExact(funcPtr.address(), userdata);
+             DOWN$MH.invokeExact(funcPtr.address(), _x0);
         } catch (Error | RuntimeException ex) {
             throw ex;
         } catch (Throwable ex$) {

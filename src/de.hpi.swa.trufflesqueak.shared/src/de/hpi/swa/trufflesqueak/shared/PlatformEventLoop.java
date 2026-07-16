@@ -39,6 +39,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
 
 import de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_Event;
+import de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h;
 
 public final class PlatformEventLoop {
     private static final int EVENT_FETCH_BATCH_SIZE = 32;
@@ -51,6 +52,7 @@ public final class PlatformEventLoop {
     private static final MemorySegment wakeUpEvent;
 
     static {
+        SDL_h.initialize();
         wakeUpEvent = SDL_Event.allocate(Arena.global());
         SDL_Event.type(wakeUpEvent, SDL_EVENT_USER);
     }

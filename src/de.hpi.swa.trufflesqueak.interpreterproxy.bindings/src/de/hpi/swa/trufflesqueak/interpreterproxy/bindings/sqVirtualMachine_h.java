@@ -18,10 +18,27 @@ public class sqVirtualMachine_h extends sqVirtualMachine_h$shared {
         // Should not be called directly
     }
 
-    static final Arena LIBRARY_ARENA = Arena.ofAuto();
+    static Arena libraryArena;
 
-    static final SymbolLookup SYMBOL_LOOKUP = SymbolLookup.loaderLookup()
+    static SymbolLookup symbolLookup;
+
+
+    public static void initialize() {
+        if (symbolLookup != null) {
+            return;
+        }
+        libraryArena = Arena.ofAuto();
+        symbolLookup = SymbolLookup.loaderLookup()
             .or(Linker.nativeLinker().defaultLookup());
+        initialize$addresses();
+        initialize$constants();
+    }
 
+
+    static void initialize$addresses() {
+    }
+
+    static void initialize$constants() {
+    }
 }
 

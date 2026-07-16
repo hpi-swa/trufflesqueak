@@ -32,7 +32,20 @@ public class sqVirtualMachine_h$shared {
                     ? sqVirtualMachine_h.C_LONG_LONG
                     : (ValueLayout.OfLong) Linker.nativeLinker().canonicalLayouts().get("long");
 
-    static final boolean TRACE_DOWNCALLS = Boolean.getBoolean("jextract.trace.downcalls");
+    static final MethodHandle OF_ADDRESS;
+
+    static {
+        try {
+            OF_ADDRESS = MethodHandles.lookup().findStatic(MemorySegment.class, "ofAddress",
+                    MethodType.methodType(MemorySegment.class, long.class));
+        } catch (NoSuchMethodException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    static final boolean TRACE_DOWNCALLS =
+            !"buildtime".equals(System.getProperty("org.graalvm.nativeimage.imagecode")) &&
+            Boolean.getBoolean("jextract.trace.downcalls");
 
     static void traceDowncall(String name, Object... args) {
          String traceArgs = Arrays.stream(args)
