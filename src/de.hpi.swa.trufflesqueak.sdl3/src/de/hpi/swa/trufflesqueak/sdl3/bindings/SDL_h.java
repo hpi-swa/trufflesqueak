@@ -18,15 +18,9 @@ public class SDL_h extends SDL_h$shared {
         // Should not be called directly
     }
 
-    static final Arena LIBRARY_ARENA = Arena.ofAuto();
+    static Arena libraryArena;
 
-
-    static {
-        System.loadLibrary("SDL3");
-    }
-
-    static final SymbolLookup SYMBOL_LOOKUP = SymbolLookup.loaderLookup()
-            .or(Linker.nativeLinker().defaultLookup());
+    static SymbolLookup symbolLookup;
 
 
     private static class SDL_free {
@@ -34,9 +28,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_free");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -66,7 +61,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_free$address() {
-        return SDL_free.ADDR;
+        return MemorySegment.ofAddress(SDL_free.addr);
     }
 
     /**
@@ -80,7 +75,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_free", mem);
             }
-            mh$.invokeExact(mem);
+            mh$.invokeExact(SDL_free.addr, mem);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -92,15 +87,16 @@ public class SDL_h extends SDL_h$shared {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_POINTER    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetError");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
      * Function descriptor for:
      * {@snippet lang=c :
-     * extern const char *SDL_GetError()
+     * extern const char *SDL_GetError(void)
      * }
      */
     public static FunctionDescriptor SDL_GetError$descriptor() {
@@ -110,7 +106,7 @@ public class SDL_h extends SDL_h$shared {
     /**
      * Downcall method handle for:
      * {@snippet lang=c :
-     * extern const char *SDL_GetError()
+     * extern const char *SDL_GetError(void)
      * }
      */
     public static MethodHandle SDL_GetError$handle() {
@@ -120,16 +116,16 @@ public class SDL_h extends SDL_h$shared {
     /**
      * Address for:
      * {@snippet lang=c :
-     * extern const char *SDL_GetError()
+     * extern const char *SDL_GetError(void)
      * }
      */
     public static MemorySegment SDL_GetError$address() {
-        return SDL_GetError.ADDR;
+        return MemorySegment.ofAddress(SDL_GetError.addr);
     }
 
     /**
      * {@snippet lang=c :
-     * extern const char *SDL_GetError()
+     * extern const char *SDL_GetError(void)
      * }
      */
     public static MemorySegment SDL_GetError() {
@@ -138,7 +134,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_GetError");
             }
-            return (MemorySegment)mh$.invokeExact();
+            return (MemorySegment)mh$.invokeExact(SDL_GetError.addr);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -153,9 +149,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_SIZE_T
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_IOFromMem");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -185,7 +182,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_IOFromMem$address() {
-        return SDL_IOFromMem.ADDR;
+        return MemorySegment.ofAddress(SDL_IOFromMem.addr);
     }
 
     /**
@@ -199,7 +196,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_IOFromMem", mem, size);
             }
-            return (MemorySegment)mh$.invokeExact(mem, size);
+            return (MemorySegment)mh$.invokeExact(SDL_IOFromMem.addr, mem, size);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -215,9 +212,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_CreateSurface");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -247,7 +245,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_CreateSurface$address() {
-        return SDL_CreateSurface.ADDR;
+        return MemorySegment.ofAddress(SDL_CreateSurface.addr);
     }
 
     /**
@@ -261,7 +259,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_CreateSurface", width, height, format);
             }
-            return (MemorySegment)mh$.invokeExact(width, height, format);
+            return (MemorySegment)mh$.invokeExact(SDL_CreateSurface.addr, width, height, format);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -274,9 +272,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_DestroySurface");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -306,7 +305,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_DestroySurface$address() {
-        return SDL_DestroySurface.ADDR;
+        return MemorySegment.ofAddress(SDL_DestroySurface.addr);
     }
 
     /**
@@ -320,7 +319,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_DestroySurface", surface);
             }
-            mh$.invokeExact(surface);
+            mh$.invokeExact(SDL_DestroySurface.addr, surface);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -334,9 +333,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_LockSurface");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -366,7 +366,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_LockSurface$address() {
-        return SDL_LockSurface.ADDR;
+        return MemorySegment.ofAddress(SDL_LockSurface.addr);
     }
 
     /**
@@ -380,7 +380,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_LockSurface", surface);
             }
-            return (boolean)mh$.invokeExact(surface);
+            return (boolean)mh$.invokeExact(SDL_LockSurface.addr, surface);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -393,9 +393,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_UnlockSurface");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -425,7 +426,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_UnlockSurface$address() {
-        return SDL_UnlockSurface.ADDR;
+        return MemorySegment.ofAddress(SDL_UnlockSurface.addr);
     }
 
     /**
@@ -439,7 +440,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_UnlockSurface", surface);
             }
-            mh$.invokeExact(surface);
+            mh$.invokeExact(SDL_UnlockSurface.addr, surface);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -454,9 +455,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_BOOL
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_LoadPNG_IO");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -486,7 +488,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_LoadPNG_IO$address() {
-        return SDL_LoadPNG_IO.ADDR;
+        return MemorySegment.ofAddress(SDL_LoadPNG_IO.addr);
     }
 
     /**
@@ -500,7 +502,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_LoadPNG_IO", src, closeio);
             }
-            return (MemorySegment)mh$.invokeExact(src, closeio);
+            return (MemorySegment)mh$.invokeExact(SDL_LoadPNG_IO.addr, src, closeio);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -514,9 +516,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetClipboardText");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -546,7 +549,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_SetClipboardText$address() {
-        return SDL_SetClipboardText.ADDR;
+        return MemorySegment.ofAddress(SDL_SetClipboardText.addr);
     }
 
     /**
@@ -560,7 +563,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_SetClipboardText", text);
             }
-            return (boolean)mh$.invokeExact(text);
+            return (boolean)mh$.invokeExact(SDL_SetClipboardText.addr, text);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -572,15 +575,16 @@ public class SDL_h extends SDL_h$shared {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_POINTER    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetClipboardText");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
      * Function descriptor for:
      * {@snippet lang=c :
-     * extern char *SDL_GetClipboardText()
+     * extern char *SDL_GetClipboardText(void)
      * }
      */
     public static FunctionDescriptor SDL_GetClipboardText$descriptor() {
@@ -590,7 +594,7 @@ public class SDL_h extends SDL_h$shared {
     /**
      * Downcall method handle for:
      * {@snippet lang=c :
-     * extern char *SDL_GetClipboardText()
+     * extern char *SDL_GetClipboardText(void)
      * }
      */
     public static MethodHandle SDL_GetClipboardText$handle() {
@@ -600,16 +604,16 @@ public class SDL_h extends SDL_h$shared {
     /**
      * Address for:
      * {@snippet lang=c :
-     * extern char *SDL_GetClipboardText()
+     * extern char *SDL_GetClipboardText(void)
      * }
      */
     public static MemorySegment SDL_GetClipboardText$address() {
-        return SDL_GetClipboardText.ADDR;
+        return MemorySegment.ofAddress(SDL_GetClipboardText.addr);
     }
 
     /**
      * {@snippet lang=c :
-     * extern char *SDL_GetClipboardText()
+     * extern char *SDL_GetClipboardText(void)
      * }
      */
     public static MemorySegment SDL_GetClipboardText() {
@@ -618,7 +622,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_GetClipboardText");
             }
-            return (MemorySegment)mh$.invokeExact();
+            return (MemorySegment)mh$.invokeExact(SDL_GetClipboardText.addr);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -630,15 +634,16 @@ public class SDL_h extends SDL_h$shared {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_BOOL    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_HasClipboardText");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
      * Function descriptor for:
      * {@snippet lang=c :
-     * extern bool SDL_HasClipboardText()
+     * extern bool SDL_HasClipboardText(void)
      * }
      */
     public static FunctionDescriptor SDL_HasClipboardText$descriptor() {
@@ -648,7 +653,7 @@ public class SDL_h extends SDL_h$shared {
     /**
      * Downcall method handle for:
      * {@snippet lang=c :
-     * extern bool SDL_HasClipboardText()
+     * extern bool SDL_HasClipboardText(void)
      * }
      */
     public static MethodHandle SDL_HasClipboardText$handle() {
@@ -658,16 +663,16 @@ public class SDL_h extends SDL_h$shared {
     /**
      * Address for:
      * {@snippet lang=c :
-     * extern bool SDL_HasClipboardText()
+     * extern bool SDL_HasClipboardText(void)
      * }
      */
     public static MemorySegment SDL_HasClipboardText$address() {
-        return SDL_HasClipboardText.ADDR;
+        return MemorySegment.ofAddress(SDL_HasClipboardText.addr);
     }
 
     /**
      * {@snippet lang=c :
-     * extern bool SDL_HasClipboardText()
+     * extern bool SDL_HasClipboardText(void)
      * }
      */
     public static boolean SDL_HasClipboardText() {
@@ -676,7 +681,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_HasClipboardText");
             }
-            return (boolean)mh$.invokeExact();
+            return (boolean)mh$.invokeExact(SDL_HasClipboardText.addr);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -688,15 +693,16 @@ public class SDL_h extends SDL_h$shared {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_INT    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetPrimaryDisplay");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
      * Function descriptor for:
      * {@snippet lang=c :
-     * extern SDL_DisplayID SDL_GetPrimaryDisplay()
+     * extern SDL_DisplayID SDL_GetPrimaryDisplay(void)
      * }
      */
     public static FunctionDescriptor SDL_GetPrimaryDisplay$descriptor() {
@@ -706,7 +712,7 @@ public class SDL_h extends SDL_h$shared {
     /**
      * Downcall method handle for:
      * {@snippet lang=c :
-     * extern SDL_DisplayID SDL_GetPrimaryDisplay()
+     * extern SDL_DisplayID SDL_GetPrimaryDisplay(void)
      * }
      */
     public static MethodHandle SDL_GetPrimaryDisplay$handle() {
@@ -716,16 +722,16 @@ public class SDL_h extends SDL_h$shared {
     /**
      * Address for:
      * {@snippet lang=c :
-     * extern SDL_DisplayID SDL_GetPrimaryDisplay()
+     * extern SDL_DisplayID SDL_GetPrimaryDisplay(void)
      * }
      */
     public static MemorySegment SDL_GetPrimaryDisplay$address() {
-        return SDL_GetPrimaryDisplay.ADDR;
+        return MemorySegment.ofAddress(SDL_GetPrimaryDisplay.addr);
     }
 
     /**
      * {@snippet lang=c :
-     * extern SDL_DisplayID SDL_GetPrimaryDisplay()
+     * extern SDL_DisplayID SDL_GetPrimaryDisplay(void)
      * }
      */
     public static int SDL_GetPrimaryDisplay() {
@@ -734,7 +740,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_GetPrimaryDisplay");
             }
-            return (int)mh$.invokeExact();
+            return (int)mh$.invokeExact(SDL_GetPrimaryDisplay.addr);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -748,9 +754,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetDesktopDisplayMode");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -780,7 +787,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_GetDesktopDisplayMode$address() {
-        return SDL_GetDesktopDisplayMode.ADDR;
+        return MemorySegment.ofAddress(SDL_GetDesktopDisplayMode.addr);
     }
 
     /**
@@ -794,7 +801,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_GetDesktopDisplayMode", displayID);
             }
-            return (MemorySegment)mh$.invokeExact(displayID);
+            return (MemorySegment)mh$.invokeExact(SDL_GetDesktopDisplayMode.addr, displayID);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -808,9 +815,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_GetWindowDisplayScale");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -840,7 +848,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_GetWindowDisplayScale$address() {
-        return SDL_GetWindowDisplayScale.ADDR;
+        return MemorySegment.ofAddress(SDL_GetWindowDisplayScale.addr);
     }
 
     /**
@@ -854,7 +862,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_GetWindowDisplayScale", window);
             }
-            return (float)mh$.invokeExact(window);
+            return (float)mh$.invokeExact(SDL_GetWindowDisplayScale.addr, window);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -871,9 +879,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_LONG_LONG
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_CreateWindow");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -903,7 +912,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_CreateWindow$address() {
-        return SDL_CreateWindow.ADDR;
+        return MemorySegment.ofAddress(SDL_CreateWindow.addr);
     }
 
     /**
@@ -917,7 +926,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_CreateWindow", title, w, h, flags);
             }
-            return (MemorySegment)mh$.invokeExact(title, w, h, flags);
+            return (MemorySegment)mh$.invokeExact(SDL_CreateWindow.addr, title, w, h, flags);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -932,9 +941,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetWindowTitle");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -964,7 +974,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_SetWindowTitle$address() {
-        return SDL_SetWindowTitle.ADDR;
+        return MemorySegment.ofAddress(SDL_SetWindowTitle.addr);
     }
 
     /**
@@ -978,7 +988,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_SetWindowTitle", window, title);
             }
-            return (boolean)mh$.invokeExact(window, title);
+            return (boolean)mh$.invokeExact(SDL_SetWindowTitle.addr, window, title);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -993,9 +1003,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetWindowIcon");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -1025,7 +1036,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_SetWindowIcon$address() {
-        return SDL_SetWindowIcon.ADDR;
+        return MemorySegment.ofAddress(SDL_SetWindowIcon.addr);
     }
 
     /**
@@ -1039,7 +1050,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_SetWindowIcon", window, icon);
             }
-            return (boolean)mh$.invokeExact(window, icon);
+            return (boolean)mh$.invokeExact(SDL_SetWindowIcon.addr, window, icon);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -1055,9 +1066,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetWindowSize");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -1087,7 +1099,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_SetWindowSize$address() {
-        return SDL_SetWindowSize.ADDR;
+        return MemorySegment.ofAddress(SDL_SetWindowSize.addr);
     }
 
     /**
@@ -1101,7 +1113,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_SetWindowSize", window, w, h);
             }
-            return (boolean)mh$.invokeExact(window, w, h);
+            return (boolean)mh$.invokeExact(SDL_SetWindowSize.addr, window, w, h);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -1115,9 +1127,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ShowWindow");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -1147,7 +1160,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_ShowWindow$address() {
-        return SDL_ShowWindow.ADDR;
+        return MemorySegment.ofAddress(SDL_ShowWindow.addr);
     }
 
     /**
@@ -1161,7 +1174,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_ShowWindow", window);
             }
-            return (boolean)mh$.invokeExact(window);
+            return (boolean)mh$.invokeExact(SDL_ShowWindow.addr, window);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -1175,9 +1188,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_RaiseWindow");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -1207,7 +1221,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_RaiseWindow$address() {
-        return SDL_RaiseWindow.ADDR;
+        return MemorySegment.ofAddress(SDL_RaiseWindow.addr);
     }
 
     /**
@@ -1221,7 +1235,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_RaiseWindow", window);
             }
-            return (boolean)mh$.invokeExact(window);
+            return (boolean)mh$.invokeExact(SDL_RaiseWindow.addr, window);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -1236,9 +1250,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_BOOL
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetWindowFullscreen");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -1268,7 +1283,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_SetWindowFullscreen$address() {
-        return SDL_SetWindowFullscreen.ADDR;
+        return MemorySegment.ofAddress(SDL_SetWindowFullscreen.addr);
     }
 
     /**
@@ -1282,7 +1297,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_SetWindowFullscreen", window, fullscreen);
             }
-            return (boolean)mh$.invokeExact(window, fullscreen);
+            return (boolean)mh$.invokeExact(SDL_SetWindowFullscreen.addr, window, fullscreen);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -1295,9 +1310,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_DestroyWindow");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -1327,7 +1343,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_DestroyWindow$address() {
-        return SDL_DestroyWindow.ADDR;
+        return MemorySegment.ofAddress(SDL_DestroyWindow.addr);
     }
 
     /**
@@ -1341,7 +1357,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_DestroyWindow", window);
             }
-            mh$.invokeExact(window);
+            mh$.invokeExact(SDL_DestroyWindow.addr, window);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -1355,9 +1371,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_StartTextInput");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -1387,7 +1404,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_StartTextInput$address() {
-        return SDL_StartTextInput.ADDR;
+        return MemorySegment.ofAddress(SDL_StartTextInput.addr);
     }
 
     /**
@@ -1401,7 +1418,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_StartTextInput", window);
             }
-            return (boolean)mh$.invokeExact(window);
+            return (boolean)mh$.invokeExact(SDL_StartTextInput.addr, window);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -1417,9 +1434,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_CreateColorCursor");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -1449,7 +1467,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_CreateColorCursor$address() {
-        return SDL_CreateColorCursor.ADDR;
+        return MemorySegment.ofAddress(SDL_CreateColorCursor.addr);
     }
 
     /**
@@ -1463,7 +1481,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_CreateColorCursor", surface, hot_x, hot_y);
             }
-            return (MemorySegment)mh$.invokeExact(surface, hot_x, hot_y);
+            return (MemorySegment)mh$.invokeExact(SDL_CreateColorCursor.addr, surface, hot_x, hot_y);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -1477,9 +1495,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetCursor");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -1509,7 +1528,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_SetCursor$address() {
-        return SDL_SetCursor.ADDR;
+        return MemorySegment.ofAddress(SDL_SetCursor.addr);
     }
 
     /**
@@ -1523,7 +1542,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_SetCursor", cursor);
             }
-            return (boolean)mh$.invokeExact(cursor);
+            return (boolean)mh$.invokeExact(SDL_SetCursor.addr, cursor);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -1536,9 +1555,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_DestroyCursor");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -1568,7 +1588,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_DestroyCursor$address() {
-        return SDL_DestroyCursor.ADDR;
+        return MemorySegment.ofAddress(SDL_DestroyCursor.addr);
     }
 
     /**
@@ -1582,7 +1602,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_DestroyCursor", cursor);
             }
-            mh$.invokeExact(cursor);
+            mh$.invokeExact(SDL_DestroyCursor.addr, cursor);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -1594,15 +1614,16 @@ public class SDL_h extends SDL_h$shared {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_BOOL    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_ShowCursor");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
      * Function descriptor for:
      * {@snippet lang=c :
-     * extern bool SDL_ShowCursor()
+     * extern bool SDL_ShowCursor(void)
      * }
      */
     public static FunctionDescriptor SDL_ShowCursor$descriptor() {
@@ -1612,7 +1633,7 @@ public class SDL_h extends SDL_h$shared {
     /**
      * Downcall method handle for:
      * {@snippet lang=c :
-     * extern bool SDL_ShowCursor()
+     * extern bool SDL_ShowCursor(void)
      * }
      */
     public static MethodHandle SDL_ShowCursor$handle() {
@@ -1622,16 +1643,16 @@ public class SDL_h extends SDL_h$shared {
     /**
      * Address for:
      * {@snippet lang=c :
-     * extern bool SDL_ShowCursor()
+     * extern bool SDL_ShowCursor(void)
      * }
      */
     public static MemorySegment SDL_ShowCursor$address() {
-        return SDL_ShowCursor.ADDR;
+        return MemorySegment.ofAddress(SDL_ShowCursor.addr);
     }
 
     /**
      * {@snippet lang=c :
-     * extern bool SDL_ShowCursor()
+     * extern bool SDL_ShowCursor(void)
      * }
      */
     public static boolean SDL_ShowCursor() {
@@ -1640,7 +1661,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_ShowCursor");
             }
-            return (boolean)mh$.invokeExact();
+            return (boolean)mh$.invokeExact(SDL_ShowCursor.addr);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -1652,15 +1673,16 @@ public class SDL_h extends SDL_h$shared {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_BOOL    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_HideCursor");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
      * Function descriptor for:
      * {@snippet lang=c :
-     * extern bool SDL_HideCursor()
+     * extern bool SDL_HideCursor(void)
      * }
      */
     public static FunctionDescriptor SDL_HideCursor$descriptor() {
@@ -1670,7 +1692,7 @@ public class SDL_h extends SDL_h$shared {
     /**
      * Downcall method handle for:
      * {@snippet lang=c :
-     * extern bool SDL_HideCursor()
+     * extern bool SDL_HideCursor(void)
      * }
      */
     public static MethodHandle SDL_HideCursor$handle() {
@@ -1680,16 +1702,16 @@ public class SDL_h extends SDL_h$shared {
     /**
      * Address for:
      * {@snippet lang=c :
-     * extern bool SDL_HideCursor()
+     * extern bool SDL_HideCursor(void)
      * }
      */
     public static MemorySegment SDL_HideCursor$address() {
-        return SDL_HideCursor.ADDR;
+        return MemorySegment.ofAddress(SDL_HideCursor.addr);
     }
 
     /**
      * {@snippet lang=c :
-     * extern bool SDL_HideCursor()
+     * extern bool SDL_HideCursor(void)
      * }
      */
     public static boolean SDL_HideCursor() {
@@ -1698,7 +1720,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_HideCursor");
             }
-            return (boolean)mh$.invokeExact();
+            return (boolean)mh$.invokeExact(SDL_HideCursor.addr);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -1716,9 +1738,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_PeepEvents");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -1748,7 +1771,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_PeepEvents$address() {
-        return SDL_PeepEvents.ADDR;
+        return MemorySegment.ofAddress(SDL_PeepEvents.addr);
     }
 
     /**
@@ -1762,7 +1785,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_PeepEvents", events, numevents, action, minType, maxType);
             }
-            return (int)mh$.invokeExact(events, numevents, action, minType, maxType);
+            return (int)mh$.invokeExact(SDL_PeepEvents.addr, events, numevents, action, minType, maxType);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -1777,9 +1800,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_WaitEventTimeout");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -1809,7 +1833,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_WaitEventTimeout$address() {
-        return SDL_WaitEventTimeout.ADDR;
+        return MemorySegment.ofAddress(SDL_WaitEventTimeout.addr);
     }
 
     /**
@@ -1823,7 +1847,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_WaitEventTimeout", event, timeoutMS);
             }
-            return (boolean)mh$.invokeExact(event, timeoutMS);
+            return (boolean)mh$.invokeExact(SDL_WaitEventTimeout.addr, event, timeoutMS);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -1837,9 +1861,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_PushEvent");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -1869,7 +1894,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_PushEvent$address() {
-        return SDL_PushEvent.ADDR;
+        return MemorySegment.ofAddress(SDL_PushEvent.addr);
     }
 
     /**
@@ -1883,7 +1908,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_PushEvent", event);
             }
-            return (boolean)mh$.invokeExact(event);
+            return (boolean)mh$.invokeExact(SDL_PushEvent.addr, event);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -1897,9 +1922,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_BOOL
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetEventEnabled");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -1929,7 +1955,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_SetEventEnabled$address() {
-        return SDL_SetEventEnabled.ADDR;
+        return MemorySegment.ofAddress(SDL_SetEventEnabled.addr);
     }
 
     /**
@@ -1943,7 +1969,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_SetEventEnabled", type, enabled);
             }
-            mh$.invokeExact(type, enabled);
+            mh$.invokeExact(SDL_SetEventEnabled.addr, type, enabled);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -1958,9 +1984,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetHint");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -1990,7 +2017,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_SetHint$address() {
-        return SDL_SetHint.ADDR;
+        return MemorySegment.ofAddress(SDL_SetHint.addr);
     }
 
     /**
@@ -2004,7 +2031,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_SetHint", name, value);
             }
-            return (boolean)mh$.invokeExact(name, value);
+            return (boolean)mh$.invokeExact(SDL_SetHint.addr, name, value);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -2018,9 +2045,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_Init");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -2050,7 +2078,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_Init$address() {
-        return SDL_Init.ADDR;
+        return MemorySegment.ofAddress(SDL_Init.addr);
     }
 
     /**
@@ -2064,7 +2092,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_Init", flags);
             }
-            return (boolean)mh$.invokeExact(flags);
+            return (boolean)mh$.invokeExact(SDL_Init.addr, flags);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -2075,15 +2103,16 @@ public class SDL_h extends SDL_h$shared {
     private static class SDL_Quit {
         public static final FunctionDescriptor DESC = FunctionDescriptor.ofVoid(    );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_Quit");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
      * Function descriptor for:
      * {@snippet lang=c :
-     * extern void SDL_Quit()
+     * extern void SDL_Quit(void)
      * }
      */
     public static FunctionDescriptor SDL_Quit$descriptor() {
@@ -2093,7 +2122,7 @@ public class SDL_h extends SDL_h$shared {
     /**
      * Downcall method handle for:
      * {@snippet lang=c :
-     * extern void SDL_Quit()
+     * extern void SDL_Quit(void)
      * }
      */
     public static MethodHandle SDL_Quit$handle() {
@@ -2103,16 +2132,16 @@ public class SDL_h extends SDL_h$shared {
     /**
      * Address for:
      * {@snippet lang=c :
-     * extern void SDL_Quit()
+     * extern void SDL_Quit(void)
      * }
      */
     public static MemorySegment SDL_Quit$address() {
-        return SDL_Quit.ADDR;
+        return MemorySegment.ofAddress(SDL_Quit.addr);
     }
 
     /**
      * {@snippet lang=c :
-     * extern void SDL_Quit()
+     * extern void SDL_Quit(void)
      * }
      */
     public static void SDL_Quit() {
@@ -2121,7 +2150,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_Quit");
             }
-            mh$.invokeExact();
+            mh$.invokeExact(SDL_Quit.addr);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -2137,9 +2166,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_BOOL
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_RunOnMainThread");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -2169,7 +2199,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_RunOnMainThread$address() {
-        return SDL_RunOnMainThread.ADDR;
+        return MemorySegment.ofAddress(SDL_RunOnMainThread.addr);
     }
 
     /**
@@ -2183,7 +2213,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_RunOnMainThread", callback, userdata, wait_complete);
             }
-            return (boolean)mh$.invokeExact(callback, userdata, wait_complete);
+            return (boolean)mh$.invokeExact(SDL_RunOnMainThread.addr, callback, userdata, wait_complete);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -2198,9 +2228,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetAppMetadataProperty");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -2230,7 +2261,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_SetAppMetadataProperty$address() {
-        return SDL_SetAppMetadataProperty.ADDR;
+        return MemorySegment.ofAddress(SDL_SetAppMetadataProperty.addr);
     }
 
     /**
@@ -2244,7 +2275,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_SetAppMetadataProperty", name, value);
             }
-            return (boolean)mh$.invokeExact(name, value);
+            return (boolean)mh$.invokeExact(SDL_SetAppMetadataProperty.addr, name, value);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -2259,9 +2290,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_CreateRenderer");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -2291,7 +2323,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_CreateRenderer$address() {
-        return SDL_CreateRenderer.ADDR;
+        return MemorySegment.ofAddress(SDL_CreateRenderer.addr);
     }
 
     /**
@@ -2305,7 +2337,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_CreateRenderer", window, name);
             }
-            return (MemorySegment)mh$.invokeExact(window, name);
+            return (MemorySegment)mh$.invokeExact(SDL_CreateRenderer.addr, window, name);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -2323,9 +2355,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_CreateTexture");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -2355,7 +2388,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_CreateTexture$address() {
-        return SDL_CreateTexture.ADDR;
+        return MemorySegment.ofAddress(SDL_CreateTexture.addr);
     }
 
     /**
@@ -2369,7 +2402,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_CreateTexture", renderer, format, access, w, h);
             }
-            return (MemorySegment)mh$.invokeExact(renderer, format, access, w, h);
+            return (MemorySegment)mh$.invokeExact(SDL_CreateTexture.addr, renderer, format, access, w, h);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -2384,9 +2417,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_SetTextureScaleMode");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -2416,7 +2450,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_SetTextureScaleMode$address() {
-        return SDL_SetTextureScaleMode.ADDR;
+        return MemorySegment.ofAddress(SDL_SetTextureScaleMode.addr);
     }
 
     /**
@@ -2430,7 +2464,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_SetTextureScaleMode", texture, scaleMode);
             }
-            return (boolean)mh$.invokeExact(texture, scaleMode);
+            return (boolean)mh$.invokeExact(SDL_SetTextureScaleMode.addr, texture, scaleMode);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -2447,9 +2481,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_INT
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_UpdateTexture");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -2479,7 +2514,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_UpdateTexture$address() {
-        return SDL_UpdateTexture.ADDR;
+        return MemorySegment.ofAddress(SDL_UpdateTexture.addr);
     }
 
     /**
@@ -2493,7 +2528,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_UpdateTexture", texture, rect, pixels, pitch);
             }
-            return (boolean)mh$.invokeExact(texture, rect, pixels, pitch);
+            return (boolean)mh$.invokeExact(SDL_UpdateTexture.addr, texture, rect, pixels, pitch);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -2507,9 +2542,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_RenderClear");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -2539,7 +2575,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_RenderClear$address() {
-        return SDL_RenderClear.ADDR;
+        return MemorySegment.ofAddress(SDL_RenderClear.addr);
     }
 
     /**
@@ -2553,7 +2589,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_RenderClear", renderer);
             }
-            return (boolean)mh$.invokeExact(renderer);
+            return (boolean)mh$.invokeExact(SDL_RenderClear.addr, renderer);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -2570,9 +2606,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_RenderTexture");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -2602,7 +2639,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_RenderTexture$address() {
-        return SDL_RenderTexture.ADDR;
+        return MemorySegment.ofAddress(SDL_RenderTexture.addr);
     }
 
     /**
@@ -2616,7 +2653,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_RenderTexture", renderer, texture, srcrect, dstrect);
             }
-            return (boolean)mh$.invokeExact(renderer, texture, srcrect, dstrect);
+            return (boolean)mh$.invokeExact(SDL_RenderTexture.addr, renderer, texture, srcrect, dstrect);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -2630,9 +2667,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_RenderPresent");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -2662,7 +2700,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_RenderPresent$address() {
-        return SDL_RenderPresent.ADDR;
+        return MemorySegment.ofAddress(SDL_RenderPresent.addr);
     }
 
     /**
@@ -2676,7 +2714,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_RenderPresent", renderer);
             }
-            return (boolean)mh$.invokeExact(renderer);
+            return (boolean)mh$.invokeExact(SDL_RenderPresent.addr, renderer);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -2689,9 +2727,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_DestroyTexture");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -2721,7 +2760,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_DestroyTexture$address() {
-        return SDL_DestroyTexture.ADDR;
+        return MemorySegment.ofAddress(SDL_DestroyTexture.addr);
     }
 
     /**
@@ -2735,7 +2774,7 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_DestroyTexture", texture);
             }
-            mh$.invokeExact(texture);
+            mh$.invokeExact(SDL_DestroyTexture.addr, texture);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -2748,9 +2787,10 @@ public class SDL_h extends SDL_h$shared {
             SDL_h.C_POINTER
         );
 
-        public static final MemorySegment ADDR = SYMBOL_LOOKUP.findOrThrow("SDL_DestroyRenderer");
+        public static long addr;
 
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
     }
 
     /**
@@ -2780,7 +2820,7 @@ public class SDL_h extends SDL_h$shared {
      * }
      */
     public static MemorySegment SDL_DestroyRenderer$address() {
-        return SDL_DestroyRenderer.ADDR;
+        return MemorySegment.ofAddress(SDL_DestroyRenderer.addr);
     }
 
     /**
@@ -2794,48 +2834,116 @@ public class SDL_h extends SDL_h$shared {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("SDL_DestroyRenderer", renderer);
             }
-            mh$.invokeExact(renderer);
+            mh$.invokeExact(SDL_DestroyRenderer.addr, renderer);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
            throw new AssertionError("should not reach here", ex$);
         }
     }
+    private static class SDL_PROP_APP_METADATA_NAME_STRING$constants {
+        static MemorySegment SDL_PROP_APP_METADATA_NAME_STRING;
+    }
+
     /**
      * {@snippet lang=c :
      * #define SDL_PROP_APP_METADATA_NAME_STRING "SDL.app.metadata.name"
      * }
      */
     public static MemorySegment SDL_PROP_APP_METADATA_NAME_STRING() {
-        class Holder {
-            static final MemorySegment SDL_PROP_APP_METADATA_NAME_STRING
-                = SDL_h.LIBRARY_ARENA.allocateFrom("SDL.app.metadata.name");
-        }
-        return Holder.SDL_PROP_APP_METADATA_NAME_STRING;
+        return SDL_PROP_APP_METADATA_NAME_STRING$constants.SDL_PROP_APP_METADATA_NAME_STRING;
     }
+    private static class SDL_PROP_APP_METADATA_VERSION_STRING$constants {
+        static MemorySegment SDL_PROP_APP_METADATA_VERSION_STRING;
+    }
+
     /**
      * {@snippet lang=c :
      * #define SDL_PROP_APP_METADATA_VERSION_STRING "SDL.app.metadata.version"
      * }
      */
     public static MemorySegment SDL_PROP_APP_METADATA_VERSION_STRING() {
-        class Holder {
-            static final MemorySegment SDL_PROP_APP_METADATA_VERSION_STRING
-                = SDL_h.LIBRARY_ARENA.allocateFrom("SDL.app.metadata.version");
-        }
-        return Holder.SDL_PROP_APP_METADATA_VERSION_STRING;
+        return SDL_PROP_APP_METADATA_VERSION_STRING$constants.SDL_PROP_APP_METADATA_VERSION_STRING;
     }
+    private static class SDL_PROP_APP_METADATA_IDENTIFIER_STRING$constants {
+        static MemorySegment SDL_PROP_APP_METADATA_IDENTIFIER_STRING;
+    }
+
     /**
      * {@snippet lang=c :
      * #define SDL_PROP_APP_METADATA_IDENTIFIER_STRING "SDL.app.metadata.identifier"
      * }
      */
     public static MemorySegment SDL_PROP_APP_METADATA_IDENTIFIER_STRING() {
-        class Holder {
-            static final MemorySegment SDL_PROP_APP_METADATA_IDENTIFIER_STRING
-                = SDL_h.LIBRARY_ARENA.allocateFrom("SDL.app.metadata.identifier");
+        return SDL_PROP_APP_METADATA_IDENTIFIER_STRING$constants.SDL_PROP_APP_METADATA_IDENTIFIER_STRING;
+    }
+
+    public static void initialize() {
+        if (symbolLookup != null) {
+            return;
         }
-        return Holder.SDL_PROP_APP_METADATA_IDENTIFIER_STRING;
+        libraryArena = Arena.ofAuto();
+        System.loadLibrary("SDL3");
+        symbolLookup = SymbolLookup.loaderLookup()
+            .or(Linker.nativeLinker().defaultLookup());
+        initialize$addresses();
+        initialize$constants();
+    }
+
+
+    static void initialize$addresses() {
+        SDL_free.addr = symbolLookup.findOrThrow("SDL_free").address();
+        SDL_GetError.addr = symbolLookup.findOrThrow("SDL_GetError").address();
+        SDL_IOFromMem.addr = symbolLookup.findOrThrow("SDL_IOFromMem").address();
+        SDL_CreateSurface.addr = symbolLookup.findOrThrow("SDL_CreateSurface").address();
+        SDL_DestroySurface.addr = symbolLookup.findOrThrow("SDL_DestroySurface").address();
+        SDL_LockSurface.addr = symbolLookup.findOrThrow("SDL_LockSurface").address();
+        SDL_UnlockSurface.addr = symbolLookup.findOrThrow("SDL_UnlockSurface").address();
+        SDL_LoadPNG_IO.addr = symbolLookup.findOrThrow("SDL_LoadPNG_IO").address();
+        SDL_SetClipboardText.addr = symbolLookup.findOrThrow("SDL_SetClipboardText").address();
+        SDL_GetClipboardText.addr = symbolLookup.findOrThrow("SDL_GetClipboardText").address();
+        SDL_HasClipboardText.addr = symbolLookup.findOrThrow("SDL_HasClipboardText").address();
+        SDL_GetPrimaryDisplay.addr = symbolLookup.findOrThrow("SDL_GetPrimaryDisplay").address();
+        SDL_GetDesktopDisplayMode.addr = symbolLookup.findOrThrow("SDL_GetDesktopDisplayMode").address();
+        SDL_GetWindowDisplayScale.addr = symbolLookup.findOrThrow("SDL_GetWindowDisplayScale").address();
+        SDL_CreateWindow.addr = symbolLookup.findOrThrow("SDL_CreateWindow").address();
+        SDL_SetWindowTitle.addr = symbolLookup.findOrThrow("SDL_SetWindowTitle").address();
+        SDL_SetWindowIcon.addr = symbolLookup.findOrThrow("SDL_SetWindowIcon").address();
+        SDL_SetWindowSize.addr = symbolLookup.findOrThrow("SDL_SetWindowSize").address();
+        SDL_ShowWindow.addr = symbolLookup.findOrThrow("SDL_ShowWindow").address();
+        SDL_RaiseWindow.addr = symbolLookup.findOrThrow("SDL_RaiseWindow").address();
+        SDL_SetWindowFullscreen.addr = symbolLookup.findOrThrow("SDL_SetWindowFullscreen").address();
+        SDL_DestroyWindow.addr = symbolLookup.findOrThrow("SDL_DestroyWindow").address();
+        SDL_StartTextInput.addr = symbolLookup.findOrThrow("SDL_StartTextInput").address();
+        SDL_CreateColorCursor.addr = symbolLookup.findOrThrow("SDL_CreateColorCursor").address();
+        SDL_SetCursor.addr = symbolLookup.findOrThrow("SDL_SetCursor").address();
+        SDL_DestroyCursor.addr = symbolLookup.findOrThrow("SDL_DestroyCursor").address();
+        SDL_ShowCursor.addr = symbolLookup.findOrThrow("SDL_ShowCursor").address();
+        SDL_HideCursor.addr = symbolLookup.findOrThrow("SDL_HideCursor").address();
+        SDL_PeepEvents.addr = symbolLookup.findOrThrow("SDL_PeepEvents").address();
+        SDL_WaitEventTimeout.addr = symbolLookup.findOrThrow("SDL_WaitEventTimeout").address();
+        SDL_PushEvent.addr = symbolLookup.findOrThrow("SDL_PushEvent").address();
+        SDL_SetEventEnabled.addr = symbolLookup.findOrThrow("SDL_SetEventEnabled").address();
+        SDL_SetHint.addr = symbolLookup.findOrThrow("SDL_SetHint").address();
+        SDL_Init.addr = symbolLookup.findOrThrow("SDL_Init").address();
+        SDL_Quit.addr = symbolLookup.findOrThrow("SDL_Quit").address();
+        SDL_RunOnMainThread.addr = symbolLookup.findOrThrow("SDL_RunOnMainThread").address();
+        SDL_SetAppMetadataProperty.addr = symbolLookup.findOrThrow("SDL_SetAppMetadataProperty").address();
+        SDL_CreateRenderer.addr = symbolLookup.findOrThrow("SDL_CreateRenderer").address();
+        SDL_CreateTexture.addr = symbolLookup.findOrThrow("SDL_CreateTexture").address();
+        SDL_SetTextureScaleMode.addr = symbolLookup.findOrThrow("SDL_SetTextureScaleMode").address();
+        SDL_UpdateTexture.addr = symbolLookup.findOrThrow("SDL_UpdateTexture").address();
+        SDL_RenderClear.addr = symbolLookup.findOrThrow("SDL_RenderClear").address();
+        SDL_RenderTexture.addr = symbolLookup.findOrThrow("SDL_RenderTexture").address();
+        SDL_RenderPresent.addr = symbolLookup.findOrThrow("SDL_RenderPresent").address();
+        SDL_DestroyTexture.addr = symbolLookup.findOrThrow("SDL_DestroyTexture").address();
+        SDL_DestroyRenderer.addr = symbolLookup.findOrThrow("SDL_DestroyRenderer").address();
+    }
+
+    static void initialize$constants() {
+        SDL_PROP_APP_METADATA_NAME_STRING$constants.SDL_PROP_APP_METADATA_NAME_STRING = libraryArena.allocateFrom("SDL.app.metadata.name");
+        SDL_PROP_APP_METADATA_VERSION_STRING$constants.SDL_PROP_APP_METADATA_VERSION_STRING = libraryArena.allocateFrom("SDL.app.metadata.version");
+        SDL_PROP_APP_METADATA_IDENTIFIER_STRING$constants.SDL_PROP_APP_METADATA_IDENTIFIER_STRING = libraryArena.allocateFrom("SDL.app.metadata.identifier");
     }
 }
 

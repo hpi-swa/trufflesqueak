@@ -436,14 +436,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -534,14 +535,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -634,14 +636,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -735,14 +738,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0, long _x1) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0, _x1);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0, _x1);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -835,14 +839,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -935,14 +940,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -1035,14 +1041,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, double _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -1135,14 +1142,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -1235,14 +1243,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static double invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (double) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (double) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -1335,14 +1344,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -1435,14 +1445,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -1535,14 +1546,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -1635,14 +1647,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -1735,14 +1748,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static MemorySegment invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (MemorySegment) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (MemorySegment) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -1835,14 +1849,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -1936,14 +1951,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static MemorySegment invoke(MemorySegment funcPtr, long _x0, long _x1) {
             try {
-                return (MemorySegment) DOWN$MH.invokeExact(funcPtr, _x0, _x1);
+                return (MemorySegment) DOWN$MH.invokeExact(funcPtr.address(), _x0, _x1);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -2036,14 +2052,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -2137,14 +2154,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static double invoke(MemorySegment funcPtr, long _x0, long _x1) {
             try {
-                return (double) DOWN$MH.invokeExact(funcPtr, _x0, _x1);
+                return (double) DOWN$MH.invokeExact(funcPtr.address(), _x0, _x1);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -2238,14 +2256,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0, long _x1) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0, _x1);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0, _x1);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -2339,14 +2358,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0, long _x1) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0, _x1);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0, _x1);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -2438,14 +2458,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static void invoke(MemorySegment funcPtr, MemorySegment _x0) {
             try {
-                 DOWN$MH.invokeExact(funcPtr, _x0);
+                 DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -2538,14 +2559,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static MemorySegment invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (MemorySegment) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (MemorySegment) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -2638,14 +2660,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static MemorySegment invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (MemorySegment) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (MemorySegment) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -2739,14 +2762,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0, long _x1) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0, _x1);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0, _x1);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -2839,14 +2863,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -2937,14 +2962,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -3035,14 +3061,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -3135,14 +3162,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -3235,14 +3263,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, MemorySegment _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -3335,14 +3364,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -3436,14 +3466,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0, long _x1) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0, _x1);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0, _x1);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -3538,14 +3569,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0, long _x1, long _x2) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0, _x1, _x2);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0, _x1, _x2);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -3638,14 +3670,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -3739,14 +3772,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static void invoke(MemorySegment funcPtr, long _x0, long _x1, long _x2) {
             try {
-                 DOWN$MH.invokeExact(funcPtr, _x0, _x1, _x2);
+                 DOWN$MH.invokeExact(funcPtr.address(), _x0, _x1, _x2);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -3841,14 +3875,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0, long _x1, long _x2) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0, _x1, _x2);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0, _x1, _x2);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -3942,14 +3977,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0, MemorySegment _x1) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0, _x1);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0, _x1);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -4043,14 +4079,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0, MemorySegment _x1) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0, _x1);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0, _x1);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -4143,14 +4180,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -4243,14 +4281,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -4343,14 +4382,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -4443,14 +4483,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -4543,14 +4584,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -4643,14 +4685,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -4743,14 +4786,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -4843,14 +4887,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -4943,14 +4988,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -5043,14 +5089,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -5143,14 +5190,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -5243,14 +5291,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, double _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -5343,14 +5392,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static double invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (double) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (double) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -5443,14 +5493,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -5543,14 +5594,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -5643,14 +5695,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, int _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -5743,14 +5796,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -5841,14 +5895,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -5941,14 +5996,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -6039,14 +6095,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -6137,14 +6194,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -6235,14 +6293,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -6333,14 +6392,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -6431,14 +6491,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -6529,14 +6590,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -6627,14 +6689,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -6725,14 +6788,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -6823,14 +6887,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -6921,14 +6986,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -7019,14 +7085,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -7117,14 +7184,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -7215,14 +7283,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -7315,14 +7384,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -7416,14 +7486,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0, long _x1) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0, _x1);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0, _x1);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -7517,14 +7588,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0, long _x1) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0, _x1);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0, _x1);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -7615,14 +7687,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -7715,14 +7788,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -7816,14 +7890,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0, long _x1) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0, _x1);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0, _x1);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -7916,14 +7991,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -8014,14 +8090,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -8112,14 +8189,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -8209,14 +8287,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static void invoke(MemorySegment funcPtr) {
             try {
-                 DOWN$MH.invokeExact(funcPtr);
+                 DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -8306,14 +8385,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static void invoke(MemorySegment funcPtr) {
             try {
-                 DOWN$MH.invokeExact(funcPtr);
+                 DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -8404,14 +8484,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -8508,14 +8589,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0, long _x1, long _x2, long _x3, long _x4) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0, _x1, _x2, _x3, _x4);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0, _x1, _x2, _x3, _x4);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -8608,14 +8690,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -8708,14 +8791,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -8808,14 +8892,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -8906,14 +8991,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -9006,14 +9092,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, MemorySegment _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -9106,14 +9193,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -9204,14 +9292,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -9306,14 +9395,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0, long _x1, long _x2) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0, _x1, _x2);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0, _x1, _x2);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -9404,14 +9494,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -9504,14 +9595,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -9604,14 +9696,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static int invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (int) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (int) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -9705,14 +9798,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0, long _x1) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0, _x1);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0, _x1);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -9803,14 +9897,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -9901,14 +9996,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -9999,14 +10095,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -10097,14 +10194,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -10195,14 +10293,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -10293,14 +10392,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -10394,14 +10494,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static MemorySegment invoke(MemorySegment funcPtr, long _x0, long _x1) {
             try {
-                return (MemorySegment) DOWN$MH.invokeExact(funcPtr, _x0, _x1);
+                return (MemorySegment) DOWN$MH.invokeExact(funcPtr.address(), _x0, _x1);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -10496,14 +10597,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static MemorySegment invoke(MemorySegment funcPtr, long _x0, long _x1, MemorySegment _x2) {
             try {
-                return (MemorySegment) DOWN$MH.invokeExact(funcPtr, _x0, _x1, _x2);
+                return (MemorySegment) DOWN$MH.invokeExact(funcPtr.address(), _x0, _x1, _x2);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -10596,14 +10698,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -10697,14 +10800,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static MemorySegment invoke(MemorySegment funcPtr, MemorySegment _x0, MemorySegment _x1) {
             try {
-                return (MemorySegment) DOWN$MH.invokeExact(funcPtr, _x0, _x1);
+                return (MemorySegment) DOWN$MH.invokeExact(funcPtr.address(), _x0, _x1);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -10795,14 +10899,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static int invoke(MemorySegment funcPtr) {
             try {
-                return (int) DOWN$MH.invokeExact(funcPtr);
+                return (int) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -10895,14 +11000,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -10995,14 +11101,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -11095,14 +11202,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -11195,14 +11303,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -11295,14 +11404,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -11392,14 +11502,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static void invoke(MemorySegment funcPtr) {
             try {
-                 DOWN$MH.invokeExact(funcPtr);
+                 DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -11493,14 +11604,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0, long _x1) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0, _x1);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0, _x1);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -11591,14 +11703,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -11694,14 +11807,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, MemorySegment _x0, MemorySegment _x1, long _x2, long _x3) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0, _x1, _x2, _x3);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0, _x1, _x2, _x3);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -11792,14 +11906,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -11892,14 +12007,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, MemorySegment _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -11993,14 +12109,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0, long _x1) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0, _x1);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0, _x1);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -12093,14 +12210,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, MemorySegment _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -12193,14 +12311,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, MemorySegment _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -12293,14 +12412,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -12393,14 +12513,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static MemorySegment invoke(MemorySegment funcPtr, MemorySegment _x0) {
             try {
-                return (MemorySegment) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (MemorySegment) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -12491,14 +12612,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -12589,14 +12711,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -12691,14 +12814,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0, long _x1, long _x2) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0, _x1, _x2);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0, _x1, _x2);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -12791,14 +12915,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -12889,14 +13014,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static MemorySegment invoke(MemorySegment funcPtr) {
             try {
-                return (MemorySegment) DOWN$MH.invokeExact(funcPtr);
+                return (MemorySegment) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -12989,14 +13115,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -13089,14 +13216,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -13189,14 +13317,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -13289,14 +13418,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, double _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -13389,14 +13519,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -13489,14 +13620,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, MemorySegment _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -13589,14 +13721,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -13687,14 +13820,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -13787,14 +13921,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -13887,14 +14022,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -13987,14 +14123,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static void invoke(MemorySegment funcPtr, MemorySegment _x0, int _x1) {
             try {
-                 DOWN$MH.invokeExact(funcPtr, _x0, _x1);
+                 DOWN$MH.invokeExact(funcPtr.address(), _x0, _x1);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -14088,14 +14225,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static void invoke(MemorySegment funcPtr, MemorySegment _x0, int _x1, int _x2) {
             try {
-                 DOWN$MH.invokeExact(funcPtr, _x0, _x1, _x2);
+                 DOWN$MH.invokeExact(funcPtr.address(), _x0, _x1, _x2);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -14186,14 +14324,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -14283,14 +14422,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static void invoke(MemorySegment funcPtr) {
             try {
-                 DOWN$MH.invokeExact(funcPtr);
+                 DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -14383,14 +14523,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -14484,14 +14625,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0, long _x1) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0, _x1);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0, _x1);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -14582,14 +14724,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -14680,14 +14823,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -14780,14 +14924,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -14880,14 +15025,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, MemorySegment _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -14982,14 +15128,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0, MemorySegment _x1, long _x2) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0, _x1, _x2);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0, _x1, _x2);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -15082,14 +15229,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -15182,14 +15330,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -15282,14 +15431,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -15382,14 +15532,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -15480,14 +15631,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -15580,14 +15732,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static MemorySegment invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (MemorySegment) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (MemorySegment) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -15680,14 +15833,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static MemorySegment invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (MemorySegment) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (MemorySegment) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -15780,14 +15934,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -15880,14 +16035,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -15980,14 +16136,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -16080,14 +16237,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, int _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -16180,14 +16338,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -16280,14 +16439,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -16380,14 +16540,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, int _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -16480,14 +16641,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -16580,14 +16742,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -16680,14 +16843,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -16780,14 +16944,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -16878,14 +17043,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -16979,14 +17145,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0, long _x1) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0, _x1);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0, _x1);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -17079,14 +17246,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -17179,14 +17347,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -17277,14 +17446,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -17375,14 +17545,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -17473,14 +17644,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -17571,14 +17743,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -17669,14 +17842,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -17769,14 +17943,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -17869,14 +18044,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -17969,14 +18145,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -18069,14 +18246,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -18169,14 +18347,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr, long _x0) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr, _x0);
+                return (long) DOWN$MH.invokeExact(funcPtr.address(), _x0);
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -18267,14 +18446,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -18365,14 +18545,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {
@@ -18463,14 +18644,15 @@ public class VirtualMachine {
             return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
         }
 
-        private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+        private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle($DESC), 0, sqVirtualMachine_h.OF_ADDRESS);
 
         /**
          * Invoke the upcall stub {@code funcPtr}, with given parameters
          */
         public static long invoke(MemorySegment funcPtr) {
             try {
-                return (long) DOWN$MH.invokeExact(funcPtr);
+                return (long) DOWN$MH.invokeExact(funcPtr.address());
             } catch (Error | RuntimeException ex) {
                 throw ex;
             } catch (Throwable ex$) {

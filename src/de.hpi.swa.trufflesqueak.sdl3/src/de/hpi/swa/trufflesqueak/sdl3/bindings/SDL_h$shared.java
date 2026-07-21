@@ -27,11 +27,23 @@ public class SDL_h$shared {
     public static final ValueLayout.OfDouble C_DOUBLE = (ValueLayout.OfDouble) Linker.nativeLinker().canonicalLayouts().get("double");
     public static final AddressLayout C_POINTER = ((AddressLayout) Linker.nativeLinker().canonicalLayouts().get("void*"))
             .withTargetLayout(MemoryLayout.sequenceLayout(java.lang.Long.MAX_VALUE, C_CHAR));
-    // Windows uses LLP64, so C `long` is 32-bit there even on 64-bit builds.
     public static final ValueLayout C_LONG = (ValueLayout) Linker.nativeLinker().canonicalLayouts().get("long");
     public static final ValueLayout C_SIZE_T = (ValueLayout) Linker.nativeLinker().canonicalLayouts().get("size_t");
 
-    static final boolean TRACE_DOWNCALLS = Boolean.getBoolean("jextract.trace.downcalls");
+    static final MethodHandle OF_ADDRESS;
+
+    static {
+        try {
+            OF_ADDRESS = MethodHandles.lookup().findStatic(MemorySegment.class, "ofAddress",
+                    MethodType.methodType(MemorySegment.class, long.class));
+        } catch (NoSuchMethodException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    static final boolean TRACE_DOWNCALLS =
+            !"buildtime".equals(System.getProperty("org.graalvm.nativeimage.imagecode")) &&
+            Boolean.getBoolean("jextract.trace.downcalls");
 
     static void traceDowncall(String name, Object... args) {
          String traceArgs = Arrays.stream(args)
