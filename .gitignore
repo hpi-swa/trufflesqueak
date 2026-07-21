@@ -55,4 +55,4 @@ trufflesqueak*.jar
 /UserChanges/
 
 # SDL3 sources
-src/SDL-release-3.4.2/**
+src/SDL-release-*/**

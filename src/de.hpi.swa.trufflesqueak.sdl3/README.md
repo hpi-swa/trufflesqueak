@@ -2,7 +2,7 @@
 
 To regenerate the checked-in SDL3 bindings:
 
-1. Download the [SDL3 sources](https://github.com/libsdl-org/SDL/archive/refs/tags/release-3.4.2.zip) and extract them in TruffleSqueak's `src/` directory.
+1. Download the [SDL3 sources](https://github.com/libsdl-org/SDL/archive/refs/tags/release-3.4.12.zip) and extract them in TruffleSqueak's `src/` directory.
 2. Download [jextract](https://jdk.java.net/jextract/) and run it with:
 
     ```bash

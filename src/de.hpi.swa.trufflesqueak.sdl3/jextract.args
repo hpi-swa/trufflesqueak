@@ -5,8 +5,8 @@ de.hpi.swa.trufflesqueak.sdl3.bindings
 --library SDL3
 --use-system-load-library
 -I
-src/SDL-release-3.4.2/include
-src/SDL-release-3.4.2/include/SDL3/SDL.h
+src/SDL-release-3.4.12/include
+src/SDL-release-3.4.12/include/SDL3/SDL.h
 --include-function SDL_GetClipboardText
 --include-function SDL_HasClipboardText
 --include-function SDL_SetClipboardText
