@@ -33,7 +33,7 @@ import static java.lang.foreign.MemoryLayout.PathElement.*;
  *     void *(*fetchArrayofObject)(sqInt, sqInt);
  *     sqInt (*fetchClassOf)(sqInt);
  *     double (*fetchFloatofObject)(sqInt, sqInt);
- *     long (*fetchIntegerofObject)(sqInt, sqInt);
+ *     int64_t (*fetchIntegerofObject)(sqInt, sqInt);
  *     sqInt (*fetchPointerofObject)(sqInt, sqInt);
  *     void (*error)(const char *);
  *     void *(*firstFixedField)(sqInt);
@@ -48,7 +48,7 @@ import static java.lang.foreign.MemoryLayout.PathElement.*;
  *     sqInt (*stObjectat)(sqInt, sqInt);
  *     sqInt (*stObjectatput)(sqInt, sqInt, sqInt);
  *     sqInt (*stSizeOf)(sqInt);
- *     void (*storeIntegerofObjectwithValue)(sqInt, sqInt, long);
+ *     void (*storeIntegerofObjectwithValue)(sqInt, sqInt, int64_t);
  *     sqInt (*storePointerofObjectwithValue)(sqInt, sqInt, sqInt);
  *     sqInt (*isKindOf)(sqInt, char *);
  *     sqInt (*isMemberOf)(sqInt, char *);
@@ -120,10 +120,10 @@ import static java.lang.foreign.MemoryLayout.PathElement.*;
  *     sqInt (*isInMemory)(sqInt);
  *     void *(*ioLoadFunctionFrom)(char *, char *);
  *     unsigned int (*ioMicroMSecs)(void);
- *     sqInt (*positive64BitIntegerFor)(unsigned long);
- *     unsigned long (*positive64BitValueOf)(sqInt);
- *     sqInt (*signed64BitIntegerFor)(long);
- *     long (*signed64BitValueOf)(sqInt);
+ *     sqInt (*positive64BitIntegerFor)(uint64_t);
+ *     uint64_t (*positive64BitValueOf)(sqInt);
+ *     sqInt (*signed64BitIntegerFor)(int64_t);
+ *     int64_t (*signed64BitValueOf)(sqInt);
  *     sqInt (*isArray)(sqInt);
  *     void (*forceInterruptCheck)(void);
  *     sqInt (*fetchLong32ofObject)(sqInt, sqInt);
@@ -131,7 +131,7 @@ import static java.lang.foreign.MemoryLayout.PathElement.*;
  *     sqInt (*ioFilenamefromStringofLengthresolveAliases)(char *, char *, sqInt, sqInt);
  *     sqInt (*vmEndianness)(void);
  *     sqInt (*callbackEnter)(sqInt *);
- *     sqInt (*primitiveFailForwithSecondary)(sqInt, long);
+ *     sqInt (*primitiveFailForwithSecondary)(sqInt, int64_t);
  *     sqInt (*addGCRoot)(sqInt *);
  *     sqInt (*removeGCRoot)(sqInt *);
  *     sqInt (*primitiveFailFor)(sqInt);
@@ -153,7 +153,7 @@ import static java.lang.foreign.MemoryLayout.PathElement.*;
  *     sqInt (*ownVM)(sqInt);
  *     void (*addHighPriorityTickee)(void (*)(void), unsigned int);
  *     void (*addSynchronousTickee)(void (*)(void), unsigned int, unsigned int);
- *     unsigned long (*utcMicroseconds)(void);
+ *     uint64_t (*utcMicroseconds)(void);
  *     void (*tenuringIncrementalGC)(void);
  *     sqInt (*isYoung)(sqInt);
  *     sqInt (*isKindOfClass)(sqInt, sqInt);
@@ -179,9 +179,9 @@ import static java.lang.foreign.MemoryLayout.PathElement.*;
  *     sqInt (*isPinned)(sqInt);
  *     sqInt (*pinObject)(sqInt);
  *     sqInt (*unpinObject)(sqInt);
- *     sqInt (*primitiveFailForOSError)(long);
+ *     sqInt (*primitiveFailForOSError)(int64_t);
  *     sqInt (*methodReturnReceiver)(void);
- *     sqInt (*primitiveFailForFFIExceptionat)(unsigned long, usqInt);
+ *     sqInt (*primitiveFailForFFIExceptionat)(uint64_t, usqInt);
  *     sqInt (*isBooleanObject)(sqInt);
  *     sqInt (*isPositiveMachineIntegerObject)(sqInt);
  *     sqInt (*classDoubleByteArray)(void);
@@ -417,7 +417,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -515,7 +515,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -613,8 +613,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -713,9 +713,9 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -814,8 +814,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -914,8 +914,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -1014,7 +1014,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
             sqVirtualMachine_h.C_DOUBLE
         );
 
@@ -1114,8 +1114,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -1215,7 +1215,7 @@ public class VirtualMachine {
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
             sqVirtualMachine_h.C_DOUBLE,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -1314,8 +1314,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -1414,8 +1414,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -1514,8 +1514,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -1614,8 +1614,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -1715,7 +1715,7 @@ public class VirtualMachine {
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
             sqVirtualMachine_h.C_POINTER,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -1814,8 +1814,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -1915,8 +1915,8 @@ public class VirtualMachine {
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
             sqVirtualMachine_h.C_POINTER,
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -2015,8 +2015,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -2116,8 +2116,8 @@ public class VirtualMachine {
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
             sqVirtualMachine_h.C_DOUBLE,
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -2199,7 +2199,7 @@ public class VirtualMachine {
 
     /**
      * {@snippet lang=c :
-     * long (*fetchIntegerofObject)(sqInt, sqInt)
+     * int64_t (*fetchIntegerofObject)(sqInt, sqInt)
      * }
      */
     public final static class fetchIntegerofObject {
@@ -2216,9 +2216,9 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -2259,7 +2259,7 @@ public class VirtualMachine {
     /**
      * Layout for field:
      * {@snippet lang=c :
-     * long (*fetchIntegerofObject)(sqInt, sqInt)
+     * int64_t (*fetchIntegerofObject)(sqInt, sqInt)
      * }
      */
     public static final AddressLayout fetchIntegerofObject$layout() {
@@ -2271,7 +2271,7 @@ public class VirtualMachine {
     /**
      * Offset for field:
      * {@snippet lang=c :
-     * long (*fetchIntegerofObject)(sqInt, sqInt)
+     * int64_t (*fetchIntegerofObject)(sqInt, sqInt)
      * }
      */
     public static final long fetchIntegerofObject$offset() {
@@ -2281,7 +2281,7 @@ public class VirtualMachine {
     /**
      * Getter for field:
      * {@snippet lang=c :
-     * long (*fetchIntegerofObject)(sqInt, sqInt)
+     * int64_t (*fetchIntegerofObject)(sqInt, sqInt)
      * }
      */
     public static MemorySegment fetchIntegerofObject(MemorySegment struct) {
@@ -2291,7 +2291,7 @@ public class VirtualMachine {
     /**
      * Setter for field:
      * {@snippet lang=c :
-     * long (*fetchIntegerofObject)(sqInt, sqInt)
+     * int64_t (*fetchIntegerofObject)(sqInt, sqInt)
      * }
      */
     public static void fetchIntegerofObject(MemorySegment struct, MemorySegment fieldValue) {
@@ -2317,9 +2317,9 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -2518,7 +2518,7 @@ public class VirtualMachine {
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
             sqVirtualMachine_h.C_POINTER,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -2618,7 +2618,7 @@ public class VirtualMachine {
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
             sqVirtualMachine_h.C_POINTER,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -2717,9 +2717,9 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -2818,8 +2818,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -2918,7 +2918,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -3016,7 +3016,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -3114,8 +3114,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -3214,7 +3214,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
             sqVirtualMachine_h.C_POINTER
         );
 
@@ -3314,8 +3314,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -3414,9 +3414,9 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -3515,10 +3515,10 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -3617,8 +3617,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -3700,7 +3700,7 @@ public class VirtualMachine {
 
     /**
      * {@snippet lang=c :
-     * void (*storeIntegerofObjectwithValue)(sqInt, sqInt, long)
+     * void (*storeIntegerofObjectwithValue)(sqInt, sqInt, int64_t)
      * }
      */
     public final static class storeIntegerofObjectwithValue {
@@ -3717,9 +3717,9 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.ofVoid(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -3760,7 +3760,7 @@ public class VirtualMachine {
     /**
      * Layout for field:
      * {@snippet lang=c :
-     * void (*storeIntegerofObjectwithValue)(sqInt, sqInt, long)
+     * void (*storeIntegerofObjectwithValue)(sqInt, sqInt, int64_t)
      * }
      */
     public static final AddressLayout storeIntegerofObjectwithValue$layout() {
@@ -3772,7 +3772,7 @@ public class VirtualMachine {
     /**
      * Offset for field:
      * {@snippet lang=c :
-     * void (*storeIntegerofObjectwithValue)(sqInt, sqInt, long)
+     * void (*storeIntegerofObjectwithValue)(sqInt, sqInt, int64_t)
      * }
      */
     public static final long storeIntegerofObjectwithValue$offset() {
@@ -3782,7 +3782,7 @@ public class VirtualMachine {
     /**
      * Getter for field:
      * {@snippet lang=c :
-     * void (*storeIntegerofObjectwithValue)(sqInt, sqInt, long)
+     * void (*storeIntegerofObjectwithValue)(sqInt, sqInt, int64_t)
      * }
      */
     public static MemorySegment storeIntegerofObjectwithValue(MemorySegment struct) {
@@ -3792,7 +3792,7 @@ public class VirtualMachine {
     /**
      * Setter for field:
      * {@snippet lang=c :
-     * void (*storeIntegerofObjectwithValue)(sqInt, sqInt, long)
+     * void (*storeIntegerofObjectwithValue)(sqInt, sqInt, int64_t)
      * }
      */
     public static void storeIntegerofObjectwithValue(MemorySegment struct, MemorySegment fieldValue) {
@@ -3818,10 +3818,10 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -3920,8 +3920,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
             sqVirtualMachine_h.C_POINTER
         );
 
@@ -4021,8 +4021,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
             sqVirtualMachine_h.C_POINTER
         );
 
@@ -4122,8 +4122,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -4222,8 +4222,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -4322,8 +4322,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -4422,8 +4422,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -4522,8 +4522,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -4622,8 +4622,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -4722,8 +4722,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -4822,8 +4822,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -4922,8 +4922,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -5022,8 +5022,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -5122,8 +5122,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -5222,7 +5222,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
             sqVirtualMachine_h.C_DOUBLE
         );
 
@@ -5323,7 +5323,7 @@ public class VirtualMachine {
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
             sqVirtualMachine_h.C_DOUBLE,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -5422,8 +5422,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -5522,8 +5522,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -5622,7 +5622,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
             sqVirtualMachine_h.C_INT
         );
 
@@ -5722,8 +5722,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -5822,7 +5822,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -5920,8 +5920,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -6020,7 +6020,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -6118,7 +6118,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -6216,7 +6216,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -6314,7 +6314,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -6412,7 +6412,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -6510,7 +6510,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -6608,7 +6608,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -6706,7 +6706,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -6804,7 +6804,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -6902,7 +6902,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -7000,7 +7000,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -7098,7 +7098,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -7196,7 +7196,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -7294,8 +7294,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -7394,9 +7394,9 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -7495,9 +7495,9 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -7596,7 +7596,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -7694,8 +7694,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -7794,9 +7794,9 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -7895,8 +7895,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -7995,7 +7995,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -8093,7 +8093,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -8385,7 +8385,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -8483,12 +8483,12 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -8587,8 +8587,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -8687,8 +8687,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -8787,8 +8787,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -8887,7 +8887,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -8985,7 +8985,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
             sqVirtualMachine_h.C_POINTER
         );
 
@@ -9085,8 +9085,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -9185,7 +9185,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -9283,10 +9283,10 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -9385,7 +9385,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -9483,8 +9483,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -9584,7 +9584,7 @@ public class VirtualMachine {
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
             sqVirtualMachine_h.C_INT,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -9683,9 +9683,9 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -9784,7 +9784,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -9882,7 +9882,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -9980,7 +9980,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -10078,7 +10078,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -10176,7 +10176,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -10274,7 +10274,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -10373,8 +10373,8 @@ public class VirtualMachine {
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
             sqVirtualMachine_h.C_POINTER,
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -10474,8 +10474,8 @@ public class VirtualMachine {
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
             sqVirtualMachine_h.C_POINTER,
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
             sqVirtualMachine_h.C_POINTER
         );
 
@@ -10575,8 +10575,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -10857,7 +10857,7 @@ public class VirtualMachine {
 
     /**
      * {@snippet lang=c :
-     * sqInt (*positive64BitIntegerFor)(unsigned long)
+     * sqInt (*positive64BitIntegerFor)(uint64_t)
      * }
      */
     public final static class positive64BitIntegerFor {
@@ -10874,8 +10874,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -10916,7 +10916,7 @@ public class VirtualMachine {
     /**
      * Layout for field:
      * {@snippet lang=c :
-     * sqInt (*positive64BitIntegerFor)(unsigned long)
+     * sqInt (*positive64BitIntegerFor)(uint64_t)
      * }
      */
     public static final AddressLayout positive64BitIntegerFor$layout() {
@@ -10928,7 +10928,7 @@ public class VirtualMachine {
     /**
      * Offset for field:
      * {@snippet lang=c :
-     * sqInt (*positive64BitIntegerFor)(unsigned long)
+     * sqInt (*positive64BitIntegerFor)(uint64_t)
      * }
      */
     public static final long positive64BitIntegerFor$offset() {
@@ -10938,7 +10938,7 @@ public class VirtualMachine {
     /**
      * Getter for field:
      * {@snippet lang=c :
-     * sqInt (*positive64BitIntegerFor)(unsigned long)
+     * sqInt (*positive64BitIntegerFor)(uint64_t)
      * }
      */
     public static MemorySegment positive64BitIntegerFor(MemorySegment struct) {
@@ -10948,7 +10948,7 @@ public class VirtualMachine {
     /**
      * Setter for field:
      * {@snippet lang=c :
-     * sqInt (*positive64BitIntegerFor)(unsigned long)
+     * sqInt (*positive64BitIntegerFor)(uint64_t)
      * }
      */
     public static void positive64BitIntegerFor(MemorySegment struct, MemorySegment fieldValue) {
@@ -10957,7 +10957,7 @@ public class VirtualMachine {
 
     /**
      * {@snippet lang=c :
-     * unsigned long (*positive64BitValueOf)(sqInt)
+     * uint64_t (*positive64BitValueOf)(sqInt)
      * }
      */
     public final static class positive64BitValueOf {
@@ -10974,8 +10974,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -11016,7 +11016,7 @@ public class VirtualMachine {
     /**
      * Layout for field:
      * {@snippet lang=c :
-     * unsigned long (*positive64BitValueOf)(sqInt)
+     * uint64_t (*positive64BitValueOf)(sqInt)
      * }
      */
     public static final AddressLayout positive64BitValueOf$layout() {
@@ -11028,7 +11028,7 @@ public class VirtualMachine {
     /**
      * Offset for field:
      * {@snippet lang=c :
-     * unsigned long (*positive64BitValueOf)(sqInt)
+     * uint64_t (*positive64BitValueOf)(sqInt)
      * }
      */
     public static final long positive64BitValueOf$offset() {
@@ -11038,7 +11038,7 @@ public class VirtualMachine {
     /**
      * Getter for field:
      * {@snippet lang=c :
-     * unsigned long (*positive64BitValueOf)(sqInt)
+     * uint64_t (*positive64BitValueOf)(sqInt)
      * }
      */
     public static MemorySegment positive64BitValueOf(MemorySegment struct) {
@@ -11048,7 +11048,7 @@ public class VirtualMachine {
     /**
      * Setter for field:
      * {@snippet lang=c :
-     * unsigned long (*positive64BitValueOf)(sqInt)
+     * uint64_t (*positive64BitValueOf)(sqInt)
      * }
      */
     public static void positive64BitValueOf(MemorySegment struct, MemorySegment fieldValue) {
@@ -11057,7 +11057,7 @@ public class VirtualMachine {
 
     /**
      * {@snippet lang=c :
-     * sqInt (*signed64BitIntegerFor)(long)
+     * sqInt (*signed64BitIntegerFor)(int64_t)
      * }
      */
     public final static class signed64BitIntegerFor {
@@ -11074,8 +11074,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -11116,7 +11116,7 @@ public class VirtualMachine {
     /**
      * Layout for field:
      * {@snippet lang=c :
-     * sqInt (*signed64BitIntegerFor)(long)
+     * sqInt (*signed64BitIntegerFor)(int64_t)
      * }
      */
     public static final AddressLayout signed64BitIntegerFor$layout() {
@@ -11128,7 +11128,7 @@ public class VirtualMachine {
     /**
      * Offset for field:
      * {@snippet lang=c :
-     * sqInt (*signed64BitIntegerFor)(long)
+     * sqInt (*signed64BitIntegerFor)(int64_t)
      * }
      */
     public static final long signed64BitIntegerFor$offset() {
@@ -11138,7 +11138,7 @@ public class VirtualMachine {
     /**
      * Getter for field:
      * {@snippet lang=c :
-     * sqInt (*signed64BitIntegerFor)(long)
+     * sqInt (*signed64BitIntegerFor)(int64_t)
      * }
      */
     public static MemorySegment signed64BitIntegerFor(MemorySegment struct) {
@@ -11148,7 +11148,7 @@ public class VirtualMachine {
     /**
      * Setter for field:
      * {@snippet lang=c :
-     * sqInt (*signed64BitIntegerFor)(long)
+     * sqInt (*signed64BitIntegerFor)(int64_t)
      * }
      */
     public static void signed64BitIntegerFor(MemorySegment struct, MemorySegment fieldValue) {
@@ -11157,7 +11157,7 @@ public class VirtualMachine {
 
     /**
      * {@snippet lang=c :
-     * long (*signed64BitValueOf)(sqInt)
+     * int64_t (*signed64BitValueOf)(sqInt)
      * }
      */
     public final static class signed64BitValueOf {
@@ -11174,8 +11174,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -11216,7 +11216,7 @@ public class VirtualMachine {
     /**
      * Layout for field:
      * {@snippet lang=c :
-     * long (*signed64BitValueOf)(sqInt)
+     * int64_t (*signed64BitValueOf)(sqInt)
      * }
      */
     public static final AddressLayout signed64BitValueOf$layout() {
@@ -11228,7 +11228,7 @@ public class VirtualMachine {
     /**
      * Offset for field:
      * {@snippet lang=c :
-     * long (*signed64BitValueOf)(sqInt)
+     * int64_t (*signed64BitValueOf)(sqInt)
      * }
      */
     public static final long signed64BitValueOf$offset() {
@@ -11238,7 +11238,7 @@ public class VirtualMachine {
     /**
      * Getter for field:
      * {@snippet lang=c :
-     * long (*signed64BitValueOf)(sqInt)
+     * int64_t (*signed64BitValueOf)(sqInt)
      * }
      */
     public static MemorySegment signed64BitValueOf(MemorySegment struct) {
@@ -11248,7 +11248,7 @@ public class VirtualMachine {
     /**
      * Setter for field:
      * {@snippet lang=c :
-     * long (*signed64BitValueOf)(sqInt)
+     * int64_t (*signed64BitValueOf)(sqInt)
      * }
      */
     public static void signed64BitValueOf(MemorySegment struct, MemorySegment fieldValue) {
@@ -11274,8 +11274,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -11471,9 +11471,9 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -11572,7 +11572,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -11670,11 +11670,11 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
             sqVirtualMachine_h.C_POINTER,
             sqVirtualMachine_h.C_POINTER,
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -11773,7 +11773,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -11871,7 +11871,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
             sqVirtualMachine_h.C_POINTER
         );
 
@@ -11954,7 +11954,7 @@ public class VirtualMachine {
 
     /**
      * {@snippet lang=c :
-     * sqInt (*primitiveFailForwithSecondary)(sqInt, long)
+     * sqInt (*primitiveFailForwithSecondary)(sqInt, int64_t)
      * }
      */
     public final static class primitiveFailForwithSecondary {
@@ -11971,9 +11971,9 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -12014,7 +12014,7 @@ public class VirtualMachine {
     /**
      * Layout for field:
      * {@snippet lang=c :
-     * sqInt (*primitiveFailForwithSecondary)(sqInt, long)
+     * sqInt (*primitiveFailForwithSecondary)(sqInt, int64_t)
      * }
      */
     public static final AddressLayout primitiveFailForwithSecondary$layout() {
@@ -12026,7 +12026,7 @@ public class VirtualMachine {
     /**
      * Offset for field:
      * {@snippet lang=c :
-     * sqInt (*primitiveFailForwithSecondary)(sqInt, long)
+     * sqInt (*primitiveFailForwithSecondary)(sqInt, int64_t)
      * }
      */
     public static final long primitiveFailForwithSecondary$offset() {
@@ -12036,7 +12036,7 @@ public class VirtualMachine {
     /**
      * Getter for field:
      * {@snippet lang=c :
-     * sqInt (*primitiveFailForwithSecondary)(sqInt, long)
+     * sqInt (*primitiveFailForwithSecondary)(sqInt, int64_t)
      * }
      */
     public static MemorySegment primitiveFailForwithSecondary(MemorySegment struct) {
@@ -12046,7 +12046,7 @@ public class VirtualMachine {
     /**
      * Setter for field:
      * {@snippet lang=c :
-     * sqInt (*primitiveFailForwithSecondary)(sqInt, long)
+     * sqInt (*primitiveFailForwithSecondary)(sqInt, int64_t)
      * }
      */
     public static void primitiveFailForwithSecondary(MemorySegment struct, MemorySegment fieldValue) {
@@ -12072,7 +12072,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
             sqVirtualMachine_h.C_POINTER
         );
 
@@ -12172,7 +12172,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
             sqVirtualMachine_h.C_POINTER
         );
 
@@ -12272,8 +12272,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -12472,7 +12472,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -12570,7 +12570,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -12668,10 +12668,10 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -12770,8 +12770,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -12968,8 +12968,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -13068,8 +13068,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -13168,8 +13168,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -13268,7 +13268,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
             sqVirtualMachine_h.C_DOUBLE
         );
 
@@ -13368,8 +13368,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -13468,7 +13468,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
             sqVirtualMachine_h.C_POINTER
         );
 
@@ -13568,8 +13568,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -13668,7 +13668,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -13766,8 +13766,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -13866,8 +13866,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -14150,7 +14150,7 @@ public class VirtualMachine {
 
     /**
      * {@snippet lang=c :
-     * unsigned long (*utcMicroseconds)(void)
+     * uint64_t (*utcMicroseconds)(void)
      * }
      */
     public final static class utcMicroseconds {
@@ -14167,7 +14167,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -14207,7 +14207,7 @@ public class VirtualMachine {
     /**
      * Layout for field:
      * {@snippet lang=c :
-     * unsigned long (*utcMicroseconds)(void)
+     * uint64_t (*utcMicroseconds)(void)
      * }
      */
     public static final AddressLayout utcMicroseconds$layout() {
@@ -14219,7 +14219,7 @@ public class VirtualMachine {
     /**
      * Offset for field:
      * {@snippet lang=c :
-     * unsigned long (*utcMicroseconds)(void)
+     * uint64_t (*utcMicroseconds)(void)
      * }
      */
     public static final long utcMicroseconds$offset() {
@@ -14229,7 +14229,7 @@ public class VirtualMachine {
     /**
      * Getter for field:
      * {@snippet lang=c :
-     * unsigned long (*utcMicroseconds)(void)
+     * uint64_t (*utcMicroseconds)(void)
      * }
      */
     public static MemorySegment utcMicroseconds(MemorySegment struct) {
@@ -14239,7 +14239,7 @@ public class VirtualMachine {
     /**
      * Setter for field:
      * {@snippet lang=c :
-     * unsigned long (*utcMicroseconds)(void)
+     * uint64_t (*utcMicroseconds)(void)
      * }
      */
     public static void utcMicroseconds(MemorySegment struct, MemorySegment fieldValue) {
@@ -14362,8 +14362,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -14462,9 +14462,9 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -14563,7 +14563,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -14661,7 +14661,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -14759,8 +14759,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -14859,7 +14859,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
             sqVirtualMachine_h.C_POINTER
         );
 
@@ -14959,10 +14959,10 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
             sqVirtualMachine_h.C_POINTER,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -15061,8 +15061,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -15161,8 +15161,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -15261,8 +15261,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -15361,8 +15361,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -15461,7 +15461,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -15560,7 +15560,7 @@ public class VirtualMachine {
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
             sqVirtualMachine_h.C_POINTER,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -15660,7 +15660,7 @@ public class VirtualMachine {
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
             sqVirtualMachine_h.C_POINTER,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -15759,8 +15759,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -15859,8 +15859,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -15959,8 +15959,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -16059,7 +16059,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
             sqVirtualMachine_h.C_INT
         );
 
@@ -16159,8 +16159,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -16259,8 +16259,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -16359,7 +16359,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
             sqVirtualMachine_h.C_INT
         );
 
@@ -16459,8 +16459,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -16559,8 +16559,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -16659,8 +16659,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -16742,7 +16742,7 @@ public class VirtualMachine {
 
     /**
      * {@snippet lang=c :
-     * sqInt (*primitiveFailForOSError)(long)
+     * sqInt (*primitiveFailForOSError)(int64_t)
      * }
      */
     public final static class primitiveFailForOSError {
@@ -16759,8 +16759,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -16801,7 +16801,7 @@ public class VirtualMachine {
     /**
      * Layout for field:
      * {@snippet lang=c :
-     * sqInt (*primitiveFailForOSError)(long)
+     * sqInt (*primitiveFailForOSError)(int64_t)
      * }
      */
     public static final AddressLayout primitiveFailForOSError$layout() {
@@ -16813,7 +16813,7 @@ public class VirtualMachine {
     /**
      * Offset for field:
      * {@snippet lang=c :
-     * sqInt (*primitiveFailForOSError)(long)
+     * sqInt (*primitiveFailForOSError)(int64_t)
      * }
      */
     public static final long primitiveFailForOSError$offset() {
@@ -16823,7 +16823,7 @@ public class VirtualMachine {
     /**
      * Getter for field:
      * {@snippet lang=c :
-     * sqInt (*primitiveFailForOSError)(long)
+     * sqInt (*primitiveFailForOSError)(int64_t)
      * }
      */
     public static MemorySegment primitiveFailForOSError(MemorySegment struct) {
@@ -16833,7 +16833,7 @@ public class VirtualMachine {
     /**
      * Setter for field:
      * {@snippet lang=c :
-     * sqInt (*primitiveFailForOSError)(long)
+     * sqInt (*primitiveFailForOSError)(int64_t)
      * }
      */
     public static void primitiveFailForOSError(MemorySegment struct, MemorySegment fieldValue) {
@@ -16859,7 +16859,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -16940,7 +16940,7 @@ public class VirtualMachine {
 
     /**
      * {@snippet lang=c :
-     * sqInt (*primitiveFailForFFIExceptionat)(unsigned long, usqInt)
+     * sqInt (*primitiveFailForFFIExceptionat)(uint64_t, usqInt)
      * }
      */
     public final static class primitiveFailForFFIExceptionat {
@@ -16957,9 +16957,9 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -17000,7 +17000,7 @@ public class VirtualMachine {
     /**
      * Layout for field:
      * {@snippet lang=c :
-     * sqInt (*primitiveFailForFFIExceptionat)(unsigned long, usqInt)
+     * sqInt (*primitiveFailForFFIExceptionat)(uint64_t, usqInt)
      * }
      */
     public static final AddressLayout primitiveFailForFFIExceptionat$layout() {
@@ -17012,7 +17012,7 @@ public class VirtualMachine {
     /**
      * Offset for field:
      * {@snippet lang=c :
-     * sqInt (*primitiveFailForFFIExceptionat)(unsigned long, usqInt)
+     * sqInt (*primitiveFailForFFIExceptionat)(uint64_t, usqInt)
      * }
      */
     public static final long primitiveFailForFFIExceptionat$offset() {
@@ -17022,7 +17022,7 @@ public class VirtualMachine {
     /**
      * Getter for field:
      * {@snippet lang=c :
-     * sqInt (*primitiveFailForFFIExceptionat)(unsigned long, usqInt)
+     * sqInt (*primitiveFailForFFIExceptionat)(uint64_t, usqInt)
      * }
      */
     public static MemorySegment primitiveFailForFFIExceptionat(MemorySegment struct) {
@@ -17032,7 +17032,7 @@ public class VirtualMachine {
     /**
      * Setter for field:
      * {@snippet lang=c :
-     * sqInt (*primitiveFailForFFIExceptionat)(unsigned long, usqInt)
+     * sqInt (*primitiveFailForFFIExceptionat)(uint64_t, usqInt)
      * }
      */
     public static void primitiveFailForFFIExceptionat(MemorySegment struct, MemorySegment fieldValue) {
@@ -17058,8 +17058,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -17158,8 +17158,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -17258,7 +17258,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -17356,7 +17356,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -17454,7 +17454,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -17552,7 +17552,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -17650,7 +17650,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -17748,8 +17748,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -17848,8 +17848,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -17948,8 +17948,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -18048,8 +18048,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -18148,8 +18148,8 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG,
-            sqVirtualMachine_h.C_LONG
+            sqVirtualMachine_h.C_LONG_LONG,
+            sqVirtualMachine_h.C_LONG_LONG
         );
 
         /**
@@ -18248,7 +18248,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -18346,7 +18346,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer
@@ -18444,7 +18444,7 @@ public class VirtualMachine {
         }
 
         private static final FunctionDescriptor $DESC = FunctionDescriptor.of(
-            sqVirtualMachine_h.C_LONG);
+            sqVirtualMachine_h.C_LONG_LONG);
 
         /**
          * The descriptor of this function pointer

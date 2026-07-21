@@ -27,10 +27,7 @@ public class sqVirtualMachine_h$shared {
     public static final ValueLayout.OfDouble C_DOUBLE = (ValueLayout.OfDouble) Linker.nativeLinker().canonicalLayouts().get("double");
     public static final AddressLayout C_POINTER = ((AddressLayout) Linker.nativeLinker().canonicalLayouts().get("void*"))
             .withTargetLayout(MemoryLayout.sequenceLayout(java.lang.Long.MAX_VALUE, C_CHAR));
-    // Windows uses LLP64, so C `long` is 32-bit there even on 64-bit builds.
-    public static final ValueLayout.OfLong C_LONG /* sqInt */ = System.getProperty("os.name").toLowerCase().contains("win")
-                    ? sqVirtualMachine_h.C_LONG_LONG
-                    : (ValueLayout.OfLong) Linker.nativeLinker().canonicalLayouts().get("long");
+    public static final ValueLayout.OfLong C_LONG = (ValueLayout.OfLong) Linker.nativeLinker().canonicalLayouts().get("long");
 
     static final boolean TRACE_DOWNCALLS = Boolean.getBoolean("jextract.trace.downcalls");
 
