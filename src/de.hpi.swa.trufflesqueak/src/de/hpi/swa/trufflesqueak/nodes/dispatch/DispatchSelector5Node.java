@@ -10,12 +10,14 @@ import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.HostCompilerDirectives;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NeverDefault;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -45,12 +47,41 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class DispatchSelector5Node extends DispatchSelectorNode {
+    public abstract static class Dispatch5Node extends AbstractDispatchNode {
+        Dispatch5Node(final NativeObject selector) {
+            super(selector);
+        }
+
+        public abstract Object execute(VirtualFrame frame, Object receiver, Object arg1, Object arg2, Object arg3, Object arg4, Object arg5);
+
+        @Specialization(guards = "guard.check(receiver)", assumptions = "dispatchDirectNode.getAssumptions()", limit = "INLINE_METHOD_CACHE_LIMIT")
+        protected static final Object doDirect(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5,
+                        @SuppressWarnings("unused") @Cached("create(receiver)") final LookupClassGuard guard,
+                        @Cached("create(selector, guard)") final DispatchDirect5Node dispatchDirectNode) {
+            return dispatchDirectNode.execute(frame, receiver, arg1, arg2, arg3, arg4, arg5);
+        }
+
+        @ReportPolymorphism.Megamorphic
+        @Specialization(replaces = "doDirect")
+        @HostCompilerDirectives.InliningCutoff
+        @SuppressWarnings("truffle-static-method")
+        protected final Object doIndirect(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5,
+                        @Cached final DispatchIndirect5Node dispatchNode) {
+            return dispatchNode.execute(frame, false, selector, receiver, arg1, arg2, arg3, arg4, arg5);
+        }
+    }
+
     public abstract static class DispatchDirect5Node extends AbstractDispatchDirectNode {
         DispatchDirect5Node(final Assumption[] assumptions) {
             super(assumptions);
         }
 
         public abstract Object execute(VirtualFrame frame, Object receiver, Object arg1, Object arg2, Object arg3, Object arg4, Object arg5);
+
+        @NeverDefault
+        protected static final DispatchDirect5Node create(final NativeObject selector, final LookupClassGuard guard) {
+            return create(selector, guard, true);
+        }
 
         @NeverDefault
         public static final DispatchDirect5Node create(final NativeObject selector, final LookupClassGuard guard, final boolean canPrimFail) {

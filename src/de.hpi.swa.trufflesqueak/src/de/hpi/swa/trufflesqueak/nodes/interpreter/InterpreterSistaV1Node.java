@@ -51,7 +51,6 @@ import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0NodeFactory.Disp
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1NodeFactory.Dispatch1NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2NodeFactory.Dispatch2NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchDirectedSuperNaryNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchNaryNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchSuperNaryNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchValueNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchValueWithArgNodeGen;
@@ -309,7 +308,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     vstate.resetExtAB();
                     break;
                 }
-                case BC.EXT_PUSH_LITERAL, BC.EXT_PUSH_CHARACTER: {
+                case BC.EXT_PUSH_LITERAL, BC.EXT_PUSH_INTEGER, BC.EXT_PUSH_CHARACTER: {
                     pc++;
                     vstate.resetExtAB();
                     break;
@@ -318,16 +317,12 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     pc++;
                     break;
                 }
-                case BC.EXT_PUSH_INTEGER: {
-                    pc++;
-                    vstate.resetExtAB();
-                    break;
-                }
                 case BC.EXT_SEND: {
                     final int byte1 = getUnsignedInt(bc, pc++);
                     final int literalIndex = (byte1 >> 3) + (vstate.getExtA() << 5);
                     final NativeObject selector = (NativeObject) code.getAndResolveLiteral(literalIndex);
-                    setData(currentPC, insert(DispatchNaryNodeGen.create(selector)));
+                    final int numArgs = (byte1 & 7) + (vstate.getExtB() << 3);
+                    setData(currentPC, insert(createDispatchNode(numArgs, selector)));
                     vstate.resetExtAB();
                     break;
                 }
@@ -2503,11 +2498,60 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final int byte1 = getUnsignedInt(state.bytecode, pc + 1);
         final int numArgs = (byte1 & 7) + (vstate.getExtB() << 3);
         CompilerAsserts.partialEvaluationConstant(numArgs);
-        final Object[] arguments = popN(frame, vstate.sp, numArgs);
-        vstate.sp -= numArgs;
-        final Object receiver = pop(frame, --vstate.sp);
-        FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
-        push(frame, vstate.sp++, sendNary(frame, pc, receiver, arguments));
+        FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp - 1 - numArgs);
+        Object result;
+        try {
+            result = switch (numArgs) {
+                case 0 -> {
+                    final Object receiver = pop(frame, --vstate.sp);
+                    yield dispatch(frame, pc, receiver);
+                }
+                case 1 -> {
+                    final Object arg1 = pop(frame, --vstate.sp);
+                    final Object receiver = pop(frame, --vstate.sp);
+                    yield dispatch(frame, pc, receiver, arg1);
+                }
+                case 2 -> {
+                    final Object arg2 = pop(frame, --vstate.sp);
+                    final Object arg1 = pop(frame, --vstate.sp);
+                    final Object receiver = pop(frame, --vstate.sp);
+                    yield dispatch(frame, pc, receiver, arg1, arg2);
+                }
+                case 3 -> {
+                    final Object arg3 = pop(frame, --vstate.sp);
+                    final Object arg2 = pop(frame, --vstate.sp);
+                    final Object arg1 = pop(frame, --vstate.sp);
+                    final Object receiver = pop(frame, --vstate.sp);
+                    yield dispatch(frame, pc, receiver, arg1, arg2, arg3);
+                }
+                case 4 -> {
+                    final Object arg4 = pop(frame, --vstate.sp);
+                    final Object arg3 = pop(frame, --vstate.sp);
+                    final Object arg2 = pop(frame, --vstate.sp);
+                    final Object arg1 = pop(frame, --vstate.sp);
+                    final Object receiver = pop(frame, --vstate.sp);
+                    yield dispatch(frame, pc, receiver, arg1, arg2, arg3, arg4);
+                }
+                case 5 -> {
+                    final Object arg5 = pop(frame, --vstate.sp);
+                    final Object arg4 = pop(frame, --vstate.sp);
+                    final Object arg3 = pop(frame, --vstate.sp);
+                    final Object arg2 = pop(frame, --vstate.sp);
+                    final Object arg1 = pop(frame, --vstate.sp);
+                    final Object receiver = pop(frame, --vstate.sp);
+                    yield dispatch(frame, pc, receiver, arg1, arg2, arg3, arg4, arg5);
+                }
+                default -> {
+                    final Object[] arguments = popN(frame, vstate.sp, numArgs);
+                    vstate.sp -= numArgs;
+                    final Object receiver = pop(frame, --vstate.sp);
+                    yield dispatchNary(frame, pc, receiver, arguments);
+                }
+            };
+        } catch (final AbstractStandardSendReturn r) {
+            result = handleReturnException(frame, pc, r);
+        }
+        push(frame, vstate.sp++, followForwarded(pc, result));
         vstate.resetExtAB();
         return nextPC;
     }

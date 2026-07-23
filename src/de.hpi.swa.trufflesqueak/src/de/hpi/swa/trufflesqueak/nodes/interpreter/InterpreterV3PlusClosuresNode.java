@@ -36,7 +36,6 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0NodeFactory.Dispatch0NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1NodeFactory.Dispatch1NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2NodeFactory.Dispatch2NodeGen;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchNaryNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchSuperNaryNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchValueNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchValueWithArgNodeGen;
@@ -147,8 +146,9 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     break;
                 }
                 case BC.SINGLE_EXTENDED_SEND: {
+                    final int numArgs = getUnsignedInt(bc, pc) >> 5;
                     final NativeObject selector = (NativeObject) code.getLiteral(getByte(bc, pc++) & 0x1F);
-                    setData(currentPC, insert(DispatchNaryNodeGen.create(selector)));
+                    setData(currentPC, insert(createDispatchNode(numArgs, selector)));
                     break;
                 }
                 case BC.DOUBLE_EXTENDED_DO_ANYTHING: {
@@ -156,8 +156,9 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     final int byte3 = getUnsignedInt(bc, pc++);
                     switch (byte2 >> 5) {
                         case 0: {
+                            final int numArgs = byte2 & 0x1F;
                             final NativeObject selector = (NativeObject) code.getLiteral(byte3);
-                            setData(currentPC, insert(DispatchNaryNodeGen.create(selector)));
+                            setData(currentPC, insert(createDispatchNode(numArgs, selector)));
                             break;
                         }
                         case 1: {
@@ -194,8 +195,9 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     break;
                 }
                 case BC.SECOND_EXTENDED_SEND: {
+                    final int numArgs = getUnsignedInt(bc, pc) >> 6;
                     final NativeObject selector = (NativeObject) code.getLiteral(getByte(bc, pc++) & 0x3F);
-                    setData(currentPC, insert(DispatchNaryNodeGen.create(selector)));
+                    setData(currentPC, insert(createDispatchNode(numArgs, selector)));
                     break;
                 }
                 case BC.PUSH_NEW_ARRAY: {
@@ -517,11 +519,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     }
                     case BC.SINGLE_EXTENDED_SEND: {
                         final int numArgs = getUnsignedInt(bc, pc++) >> 5;
-                        final Object[] arguments = popN(frame, sp, numArgs);
-                        sp -= numArgs;
-                        final Object receiver = pop(frame, --sp);
-                        FrameAccess.externalizePCAndSP(frame, pc, sp);
-                        push(frame, sp++, sendNary(frame, currentPC, receiver, arguments));
+                        sp = handleExtendedSend(frame, currentPC, pc, sp, numArgs);
                         break;
                     }
                     case BC.DOUBLE_EXTENDED_DO_ANYTHING: {
@@ -532,11 +530,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         switch (opType) {
                             case 0: {
                                 final int numArgs = byte2 & 31;
-                                final Object[] arguments = popN(frame, sp, numArgs);
-                                sp -= numArgs;
-                                final Object receiver = pop(frame, --sp);
-                                FrameAccess.externalizePCAndSP(frame, pc, sp);
-                                push(frame, sp++, sendNary(frame, currentPC, receiver, arguments));
+                                sp = handleExtendedSend(frame, currentPC, pc, sp, numArgs);
                                 break;
                             }
                             case 1: {
@@ -591,11 +585,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     }
                     case BC.SECOND_EXTENDED_SEND: {
                         final int numArgs = getUnsignedInt(bc, pc++) >> 6;
-                        final Object[] arguments = popN(frame, sp, numArgs);
-                        sp -= numArgs;
-                        final Object receiver = pop(frame, --sp);
-                        FrameAccess.externalizePCAndSP(frame, pc, sp);
-                        push(frame, sp++, sendNary(frame, currentPC, receiver, arguments));
+                        sp = handleExtendedSend(frame, currentPC, pc, sp, numArgs);
                         break;
                     }
                     case BC.POP_STACK: {
@@ -1017,6 +1007,73 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
         } catch (final AbstractStandardSendReturn r) {
             return handleReturnException(frame, currentPC, r);
         }
+    }
+
+    @EarlyInline
+    private int handleExtendedSend(final VirtualFrame frame, final int currentPC, final int pc, final int initialSP, final int numArgs) {
+        int sp = initialSP;
+        CompilerAsserts.partialEvaluationConstant(numArgs);
+        Object result;
+        try {
+            result = switch (numArgs) {
+                case 0 -> {
+                    final Object receiver = pop(frame, --sp);
+                    FrameAccess.externalizePCAndSP(frame, pc, sp);
+                    yield dispatch(frame, currentPC, receiver);
+                }
+                case 1 -> {
+                    final Object arg1 = pop(frame, --sp);
+                    final Object receiver = pop(frame, --sp);
+                    FrameAccess.externalizePCAndSP(frame, pc, sp);
+                    yield dispatch(frame, currentPC, receiver, arg1);
+                }
+                case 2 -> {
+                    final Object arg2 = pop(frame, --sp);
+                    final Object arg1 = pop(frame, --sp);
+                    final Object receiver = pop(frame, --sp);
+                    FrameAccess.externalizePCAndSP(frame, pc, sp);
+                    yield dispatch(frame, currentPC, receiver, arg1, arg2);
+                }
+                case 3 -> {
+                    final Object arg3 = pop(frame, --sp);
+                    final Object arg2 = pop(frame, --sp);
+                    final Object arg1 = pop(frame, --sp);
+                    final Object receiver = pop(frame, --sp);
+                    FrameAccess.externalizePCAndSP(frame, pc, sp);
+                    yield dispatch(frame, currentPC, receiver, arg1, arg2, arg3);
+                }
+                case 4 -> {
+                    final Object arg4 = pop(frame, --sp);
+                    final Object arg3 = pop(frame, --sp);
+                    final Object arg2 = pop(frame, --sp);
+                    final Object arg1 = pop(frame, --sp);
+                    final Object receiver = pop(frame, --sp);
+                    FrameAccess.externalizePCAndSP(frame, pc, sp);
+                    yield dispatch(frame, currentPC, receiver, arg1, arg2, arg3, arg4);
+                }
+                case 5 -> {
+                    final Object arg5 = pop(frame, --sp);
+                    final Object arg4 = pop(frame, --sp);
+                    final Object arg3 = pop(frame, --sp);
+                    final Object arg2 = pop(frame, --sp);
+                    final Object arg1 = pop(frame, --sp);
+                    final Object receiver = pop(frame, --sp);
+                    FrameAccess.externalizePCAndSP(frame, pc, sp);
+                    yield dispatch(frame, currentPC, receiver, arg1, arg2, arg3, arg4, arg5);
+                }
+                default -> {
+                    final Object[] arguments = popN(frame, sp, numArgs);
+                    sp -= numArgs;
+                    final Object receiver = pop(frame, --sp);
+                    FrameAccess.externalizePCAndSP(frame, pc, sp);
+                    yield dispatchNary(frame, currentPC, receiver, arguments);
+                }
+            };
+        } catch (final AbstractStandardSendReturn r) {
+            result = handleReturnException(frame, currentPC, r);
+        }
+        push(frame, sp++, followForwarded(currentPC, result));
+        return sp;
     }
 
     @EarlyInline
