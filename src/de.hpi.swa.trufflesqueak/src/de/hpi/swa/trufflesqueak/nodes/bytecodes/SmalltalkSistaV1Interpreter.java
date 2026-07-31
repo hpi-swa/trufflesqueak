@@ -320,18 +320,19 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
     static class SistaV1BytecodeParser implements BytecodeParser<SmalltalkSistaV1InterpreterGen.Builder> {
         private final CompiledCodeObject code;
         private final BytecodeLocal[] temporarySlots;
-        private final StackValue[] stackSlots;
+        private final StackEntry[] stackSlots;
         private final Map<Integer, Integer> jumpStackPointers = new HashMap<>();
         private Map<Integer, Integer> loopLocations;
         private EconomicMap<Integer, BytecodeLabel> jumpLocations;
 
+        private EmissionState emissionState;
         private int index;
         private int sp;
 
         SistaV1BytecodeParser(final CompiledCodeObject code) {
             this.code = code;
             temporarySlots = new BytecodeLocal[code.getNumTemps()];
-            stackSlots = new StackValue[code.getNumTemps() + code.getMaxNumStackSlots()];
+            stackSlots = new StackEntry[code.getNumTemps() + code.getMaxNumStackSlots()];
         }
 
         @Override
@@ -350,6 +351,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
             while (index < trailerPosition) {
                 final boolean isLoopStart = loopLocations.containsKey(index);
                 if (isLoopStart) {
+                    materializeStack(b);
                     /*
                      * Keep the original Sista control flow inside an infinite structured loop.
                      * Forward conditional jumps leave the loop through their regular labels; the
@@ -367,12 +369,14 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                     final Integer jumpStackPointer = jumpStackPointers.get(index);
                     assert jumpStackPointer != null;
                     sp = jumpStackPointer;
+                    materializeStack(b);
                     b.emitLabel(jumpLabel);
                 }
                 index += translateBytecode(b, 0, 0, 0, 0);
                 final boolean isLoopEnd = loopLocations.containsValue(index);
                 if (isLoopEnd) {
                     assert !isLoopStart;
+                    materializeStack(b);
                     b.endBlock();
                     b.endWhile();
                 }
@@ -491,22 +495,30 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                         fail(op); // unused
                     }
                 }
-                case 0x53 -> emitPush(b, () -> emitTop(b));
+                case 0x53 -> {
+                    stackSlots[sp - 1].materialize(b);
+                    stackSlots[sp] = stackSlots[sp - 1];
+                    sp++;
+                }
                 // unused
                 case 0x58 -> emitReturn(b, () -> emitLoadReceiver(b));
                 case 0x59 -> emitReturn(b, () -> b.emitLoadConstant(BooleanObject.TRUE));
                 case 0x5A -> emitReturn(b, () -> b.emitLoadConstant(BooleanObject.FALSE));
                 case 0x5B -> emitReturn(b, () -> b.emitLoadConstant(NilObject.SINGLETON));
-                case 0x5C -> emitReturn(b, () -> {
+                case 0x5C -> {
+                    final StackEntry returnValue = popAndMaterializeStack(b);
+                    b.beginReturn();
                     b.beginReturnTopFromMethod();
-                    emitTop(b);
+                    returnValue.emit(b);
                     b.endReturnTopFromMethod();
-                });
+                    b.endReturn();
+                }
                 case 0x5D -> b.emitReturnNilFromClosure();
                 case 0x5E -> {
                     if (extA == 0) {
+                        final StackEntry returnValue = popAndMaterializeStack(b);
                         b.beginReturnTopFromClosure();
-                        emitTop(b);
+                        returnValue.emit(b);
                         b.endReturnTopFromClosure();
                     } else {
                         fail(op); // shouldBeImplemented, see #genExtReturnTopFromBlock
@@ -680,23 +692,26 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                 case 0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7 -> {
                     final int jumpTarget = index + 1 + InterpreterSistaV1Node.calculateShortOffset(op);
                     if (jumpTarget > index) {
+                        materializeStack(b);
                         recordJumpStackPointer(jumpTarget);
                         b.emitBranch(jumpLocations.get(jumpTarget));
                     }
                 }
                 case 0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE, 0xBF -> {
                     final int jumpTarget = index + 1 + InterpreterSistaV1Node.calculateShortOffset(op);
+                    final StackEntry condition = popAndMaterializeStack(b);
                     b.beginIfThen();
-                    emitPop(b);
+                    condition.emit(b);
                     recordJumpStackPointer(jumpTarget);
                     b.emitBranch(jumpLocations.get(jumpTarget));
                     b.endIfThen();
                 }
                 case 0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7 -> {
                     final int jumpTarget = index + 1 + InterpreterSistaV1Node.calculateShortOffset(op);
+                    final StackEntry condition = popAndMaterializeStack(b);
                     b.beginIfThen();
                     b.beginNot();
-                    emitPop(b);
+                    condition.emit(b);
                     b.endNot();
                     recordJumpStackPointer(jumpTarget);
                     b.emitBranch(jumpLocations.get(jumpTarget));
@@ -722,10 +737,10 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                     final byte param = getByte(indexWithExt + 1);
                     final int arraySize = param & 127;
                     if (param < 0) {
-                        final StackValue[] values = popStackValues(arraySize);
+                        final StackEntry[] values = popStackEntries(arraySize);
                         emitPush(b, () -> {
                             b.beginNewArrayFromStack();
-                            emitStackValues(b, values);
+                            emitStackEntries(b, values);
                             b.endNewArrayFromStack();
                         });
                     } else {
@@ -744,23 +759,26 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                 case 0xED -> {
                     final int jumpTarget = index + 2 + extBytes + InterpreterSistaV1Node.calculateLongExtendedOffset(getByte(indexWithExt + 1), extB);
                     if (jumpTarget > index) {
+                        materializeStack(b);
                         recordJumpStackPointer(jumpTarget);
                         b.emitBranch(jumpLocations.get(jumpTarget));
                     }
                 }
                 case 0xEE -> {
                     final int jumpTarget = index + 2 + extBytes + InterpreterSistaV1Node.calculateLongExtendedOffset(getByte(indexWithExt + 1), extB);
+                    final StackEntry condition = popAndMaterializeStack(b);
                     b.beginIfThen();
-                    emitPop(b);
+                    condition.emit(b);
                     recordJumpStackPointer(jumpTarget);
                     b.emitBranch(jumpLocations.get(jumpTarget));
                     b.endIfThen();
                 }
                 case 0xEF -> {
                     final int jumpTarget = index + 2 + extBytes + InterpreterSistaV1Node.calculateLongExtendedOffset(getByte(indexWithExt + 1), extB);
+                    final StackEntry condition = popAndMaterializeStack(b);
                     b.beginIfThen();
                     b.beginNot();
-                    emitPop(b);
+                    condition.emit(b);
                     b.endNot();
                     recordJumpStackPointer(jumpTarget);
                     b.emitBranch(jumpLocations.get(jumpTarget));
@@ -809,16 +827,58 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
         }
 
         private void emitPush(final SmalltalkSistaV1InterpreterGen.Builder b, final int numPopped, final PushOperation pushOperation) {
-            final int stackIndex = sp - numPopped;
-            b.beginBindStackValue();
-            pushOperation.perform();
+            final StackEntry[] operands = popStackEntries(numPopped);
+            final int stackIndex = sp;
+            stackSlots[stackIndex] = new StackEntry(() -> {
+                final EmissionState previousState = emissionState;
+                emissionState = new EmissionState(operands);
+                pushOperation.perform();
+                assert emissionState.index == operands.length;
+                emissionState = previousState;
+            });
             sp++;
-            stackSlots[stackIndex] = b.endBindStackValue();
         }
 
         @FunctionalInterface
         public interface PushOperation {
             void perform();
+        }
+
+        /** A deferred expression that is only bound to a StackValue when it crosses a control-flow boundary or is duplicated. */
+        private static final class StackEntry {
+            private PushOperation operation;
+            private StackValue stackValue;
+
+            private StackEntry(final PushOperation operation) {
+                this.operation = operation;
+            }
+
+            private void emit(final SmalltalkSistaV1InterpreterGen.Builder b) {
+                if (stackValue == null) {
+                    operation.perform();
+                } else {
+                    b.emitLoadStackValue(stackValue);
+                }
+            }
+
+            private void materialize(final SmalltalkSistaV1InterpreterGen.Builder b) {
+                if (stackValue == null) {
+                    b.beginBindStackValue();
+                    operation.perform();
+                    stackValue = b.endBindStackValue();
+                    operation = null;
+                }
+            }
+        }
+
+        /** Supplies captured operands while a deferred operation emits its nested children. */
+        private static final class EmissionState {
+            private final StackEntry[] operands;
+            private int index;
+
+            private EmissionState(final StackEntry[] operands) {
+                this.operands = operands;
+            }
         }
 
         private static void emitLoadReceiver(final SmalltalkSistaV1InterpreterGen.Builder b) {
@@ -830,11 +890,23 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
         }
 
         private void emitPopN(final SmalltalkSistaV1InterpreterGen.Builder b, final int numPopped) {
-            emitStackValues(b, popStackValues(numPopped));
+            if (emissionState == null) {
+                final StackEntry[] entries = popStackEntries(numPopped);
+                materializeStack(b);
+                emitStackEntries(b, entries);
+            } else {
+                final int nextIndex = emissionState.index + numPopped;
+                assert nextIndex <= emissionState.operands.length;
+                while (emissionState.index < nextIndex) {
+                    emissionState.operands[emissionState.index++].emit(b);
+                }
+            }
         }
 
-        private void emitTop(final SmalltalkSistaV1InterpreterGen.Builder b) {
-            b.emitLoadStackValue(stackSlots[sp - 1]);
+        private StackEntry popAndMaterializeStack(final SmalltalkSistaV1InterpreterGen.Builder b) {
+            final StackEntry entry = popStackEntries(1)[0];
+            materializeStack(b);
+            return entry;
         }
 
         private static void emitReturn(final SmalltalkSistaV1InterpreterGen.Builder b, final ReturnOperation returnOperation) {
@@ -848,47 +920,54 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
             void perform();
         }
 
-        private StackValue[] popStackValues(final int size) {
-            final StackValue[] values = new StackValue[size];
+        private StackEntry[] popStackEntries(final int size) {
+            final StackEntry[] entries = new StackEntry[size];
             sp -= size;
-            System.arraycopy(stackSlots, sp, values, 0, size);
-            return values;
+            System.arraycopy(stackSlots, sp, entries, 0, size);
+            return entries;
         }
 
-        private static void emitStackValues(final SmalltalkSistaV1InterpreterGen.Builder b, final StackValue[] values) {
-            for (final StackValue value : values) {
-                b.emitLoadStackValue(value);
+        private static void emitStackEntries(final SmalltalkSistaV1InterpreterGen.Builder b, final StackEntry[] entries) {
+            for (final StackEntry entry : entries) {
+                entry.emit(b);
+            }
+        }
+
+        private void materializeStack(final SmalltalkSistaV1InterpreterGen.Builder b) {
+            /* Values must be concrete before labels, branches, loops, and side-effecting stores. */
+            for (int i = code.getInitialSP(); i < sp; i++) {
+                stackSlots[i].materialize(b);
             }
         }
 
         private void emitStoreIntoReceiverVariable(final SmalltalkSistaV1InterpreterGen.Builder b, final int variableIndex, final boolean shouldPop) {
+            final StackEntry value = prepareStoreValue(b, shouldPop);
             b.beginStoreIntoReceiverVariable(variableIndex);
-            if (shouldPop) {
-                emitPop(b);
-            } else {
-                emitTop(b);
-            }
+            value.emit(b);
             b.endStoreIntoReceiverVariable();
         }
 
         private void emitStoreIntoLiteralVariable(final SmalltalkSistaV1InterpreterGen.Builder b, final int literalIndex, final boolean shouldPop) {
+            final StackEntry value = prepareStoreValue(b, shouldPop);
             b.beginStoreIntoLiteralVariable(code.getAndResolveLiteral(literalIndex), ObjectLayouts.ASSOCIATION.VALUE);
-            if (shouldPop) {
-                emitPop(b);
-            } else {
-                emitTop(b);
-            }
+            value.emit(b);
             b.endStoreIntoLiteralVariable();
         }
 
         private void emitStoreIntoTemporaryLocation(final SmalltalkSistaV1InterpreterGen.Builder b, final int tempIndex, final boolean shouldPop) {
+            final StackEntry value = prepareStoreValue(b, shouldPop);
             b.beginStoreLocal(temporarySlots[tempIndex]);
-            if (shouldPop) {
-                emitPop(b);
-            } else {
-                emitTop(b);
-            }
+            value.emit(b);
             b.endStoreLocal();
+        }
+
+        private StackEntry prepareStoreValue(final SmalltalkSistaV1InterpreterGen.Builder b, final boolean shouldPop) {
+            if (shouldPop) {
+                return popAndMaterializeStack(b);
+            } else {
+                materializeStack(b);
+                return stackSlots[sp - 1];
+            }
         }
 
         private void emitPushRemoteTemporaryLocation(final SmalltalkSistaV1InterpreterGen.Builder b, final int indexInArray, final int indexOfArray) {
@@ -900,13 +979,10 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
         }
 
         private void emitStoreIntoRemoteTemporaryLocation(final SmalltalkSistaV1InterpreterGen.Builder b, final int indexInArray, final int indexOfArray, final boolean shouldPop) {
+            final StackEntry value = prepareStoreValue(b, shouldPop);
             b.beginStoreIntoRemoteTemp(indexInArray);
             b.emitLoadLocal(temporarySlots[indexOfArray]);
-            if (shouldPop) {
-                emitPop(b);
-            } else {
-                emitTop(b);
-            }
+            value.emit(b);
             b.endStoreIntoRemoteTemp();
         }
 
@@ -918,11 +994,13 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
             final int numCopied = Byte.toUnsignedInt(byteB) & 63;
             final boolean ignoreOuterContext = (byteB >> 6 & 1) == 1;
             final boolean receiverOnStack = (byteB >> 7 & 1) == 1;
-            final StackValue[] copiedValues = popStackValues(numCopied);
+            materializeStack(b);
+            final StackEntry[] copiedValues = popStackEntries(numCopied);
+            final StackEntry receiver = receiverOnStack ? popStackEntries(1)[0] : null;
             emitPush(b, () -> {
                 b.beginFullClosure(block);
                 if (receiverOnStack) {
-                    emitPop(b);
+                    receiver.emit(b);
                 } else {
                     emitLoadReceiver(b);
                 }
@@ -931,7 +1009,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                 } else {
                     b.emitActiveContext();
                 }
-                emitStackValues(b, copiedValues);
+                emitStackEntries(b, copiedValues);
                 b.endFullClosure();
             });
         }
@@ -944,10 +1022,11 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
             final int successorPC = code.getInitialPC() + index + 3 + extBytes;
             final int blockSize = Byte.toUnsignedInt(byteB) + (extB << 8);
             final CompiledCodeObject block = code.createShadowBlock(successorPC, numArgs, numCopied, blockSize);
-            final StackValue[] copiedValues = popStackValues(numCopied);
+            materializeStack(b);
+            final StackEntry[] copiedValues = popStackEntries(numCopied);
             emitPush(b, () -> {
                 b.beginClosure(block);
-                emitStackValues(b, copiedValues);
+                emitStackEntries(b, copiedValues);
                 b.endClosure();
             });
             return 3 + extBytes + blockSize;
