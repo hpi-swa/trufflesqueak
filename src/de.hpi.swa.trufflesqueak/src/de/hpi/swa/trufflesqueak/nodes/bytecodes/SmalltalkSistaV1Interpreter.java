@@ -353,7 +353,15 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
             while (index < trailerPosition) {
                 final boolean isLoopStart = loopLocations.containsKey(index);
                 if (isLoopStart) {
+                    /*
+                     * Keep the original Sista control flow inside an infinite structured loop.
+                     * Forward conditional jumps leave the loop through their regular labels; the
+                     * backward jump itself is represented by endWhile(). A Sista loop condition
+                     * may span several bytecodes, so it must not be inferred from the first
+                     * bytecode at the back-jump target.
+                     */
                     b.beginWhile();
+                    b.emitLoadConstant(true);
                     b.beginBlock();
                 }
                 final BytecodeLabel jumpLabel = jumpLocations.get(index);
@@ -362,11 +370,6 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                     b.emitLabel(jumpLabel);
                 }
                 index += translateBytecode(b, 0, 0, 0, 0);
-                if (isLoopStart) {
-                    emitTop(b);
-                    b.endBlock();
-                    b.beginBlock();
-                }
                 final boolean isLoopEnd = loopLocations.containsValue(index);
                 if (isLoopEnd) {
                     assert !isLoopStart;

@@ -60,6 +60,7 @@ public final class SqueakImage implements TruffleObject {
         return true;
     }
 
+    @SuppressWarnings("checkstyle:RegexpSingleline")
     @ExportMessage
     @TruffleBoundary
     public Object execute(final Object... arguments) {
@@ -69,9 +70,9 @@ public final class SqueakImage implements TruffleObject {
 
         Object result = null;
         for (String methodName : new String[]{"odd", "isPowerOfTwo", "bitCount", "hashMultiply"}) {
-            CompiledCodeObject method = (CompiledCodeObject) LookupMethodByStringNode.executeUncached(image.smallIntegerClass, methodName);
+            final CompiledCodeObject method = (CompiledCodeObject) LookupMethodByStringNode.executeUncached(image.smallIntegerClass, methodName);
             System.out.println("Calling " + method);
-            SmalltalkSistaV1Interpreter interp = SmalltalkSistaV1Interpreter.build(method);
+            final SmalltalkSistaV1Interpreter interp = SmalltalkSistaV1Interpreter.build(method);
             System.out.println(interp.dump());
             result = interp.getCallTarget().call(FrameAccess.newWith(NilObject.SINGLETON, null, new Object[]{1L}));
             System.out.println(methodName + ": " + result);

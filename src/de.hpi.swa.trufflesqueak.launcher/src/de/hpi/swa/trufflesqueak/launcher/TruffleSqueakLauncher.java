@@ -265,7 +265,8 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
                     err.setUp(context);
                 }
                 println(image.execute().toString());
-                throw abort("A Squeak/Smalltalk image cannot return a result, it can only exit.");
+                return 0;
+                // throw abort("A Squeak/Smalltalk image cannot return a result, it can only exit.");
             }
         } catch (final IllegalArgumentException e) {
             if (e.getMessage().contains("Could not find option with name " + SqueakLanguageConfig.ID)) {
