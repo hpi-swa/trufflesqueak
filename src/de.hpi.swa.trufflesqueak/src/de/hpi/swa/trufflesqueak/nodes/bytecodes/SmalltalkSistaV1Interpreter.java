@@ -213,7 +213,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                         @Bind final Node location,
                         @Cached final InlinedConditionProfile hasModifiedSenderProfile) {
             assert !FrameAccess.hasClosure(frame);
-            if (hasModifiedSenderProfile.profile(location, FrameAccess.hasModifiedSender(frame))) {
+            if (false) { // (hasModifiedSenderProfile.profile(location, FrameAccess.hasModifiedSender(frame))) {
                 final AbstractSqueakObject sender = FrameAccess.getSender(frame);
                 if (sender instanceof final ContextObject context && !context.isDead()) {
                     throw new NonVirtualReturn(returnValue, sender);
@@ -222,7 +222,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                     throw new CannotReturnToTarget(returnValue, GetOrCreateContextWithFrameNode.executeUncached(frame));
                 }
             } else {
-                FrameAccess.terminateFrame(frame);
+                // FIXME: FrameAccess.terminateFrame(frame);
                 return returnValue;
             }
         }
