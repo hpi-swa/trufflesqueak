@@ -25,6 +25,7 @@ import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.TruffleLanguage.ParsingRequest;
 import com.oracle.truffle.api.dsl.Bind.DefaultExpression;
+import com.oracle.truffle.api.dsl.Idempotent;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.Message;
@@ -250,6 +251,7 @@ public final class SqueakImageContext {
         DebugUtils.registerContext(this);
     }
 
+    @Idempotent
     public static SqueakImageContext get(final Node node) {
         return REFERENCE.get(node);
     }
