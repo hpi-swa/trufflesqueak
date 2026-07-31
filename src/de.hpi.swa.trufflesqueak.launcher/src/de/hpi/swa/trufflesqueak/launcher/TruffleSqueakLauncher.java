@@ -264,7 +264,7 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
                     out.setUp(context);
                     err.setUp(context);
                 }
-                image.execute();
+                println(image.execute().toString());
                 throw abort("A Squeak/Smalltalk image cannot return a result, it can only exit.");
             }
         } catch (final IllegalArgumentException e) {

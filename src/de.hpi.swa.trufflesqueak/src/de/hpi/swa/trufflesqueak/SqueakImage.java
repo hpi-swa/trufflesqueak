@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2017-2026 Software Architecture Group, Hasso Plattner Institute
- * Copyright (c) 2021-2026 Oracle and/or its affiliates
+ * Copyright (c) 2017-2024 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2021-2024 Oracle and/or its affiliates
  *
  * Licensed under the MIT License.
  */
@@ -17,7 +17,11 @@ import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageReader;
+import de.hpi.swa.trufflesqueak.interop.LookupMethodByStringNode;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SmalltalkSistaV1Interpreter;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 @ExportLibrary(InteropLibrary.class)
 public final class SqueakImage implements TruffleObject {
@@ -62,7 +66,19 @@ public final class SqueakImage implements TruffleObject {
         assert arguments.length == 0;
         image.interrupt.start();
         image.attachDisplayIfNecessary();
-        return image.getActiveContextNode().getCallTarget().call();
+
+        Object result = null;
+        for (String methodName : new String[]{"odd", "isPowerOfTwo", "bitCount", "hashMultiply"}) {
+            CompiledCodeObject method = (CompiledCodeObject) LookupMethodByStringNode.executeUncached(image.smallIntegerClass, methodName);
+            System.out.println("Calling " + method);
+            SmalltalkSistaV1Interpreter interp = SmalltalkSistaV1Interpreter.build(method);
+            System.out.println(interp.dump());
+            result = interp.getCallTarget().call(FrameAccess.newWith(NilObject.SINGLETON, null, new Object[]{1L}));
+            System.out.println(methodName + ": " + result);
+        }
+
+        return result;
+// return image.getActiveContextNode().getCallTarget().call();
     }
 
     @SuppressWarnings("static-method")
