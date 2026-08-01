@@ -1,5 +1,8 @@
 image creation
 setUpAfterLoadingPackages
-	"Called by LoadTruffleSqueakPackages.st as part of SqueakSUnitTest"
+	"Called by runSqueakTests.st"
+
 	SystemBrowser default: Browser.
 	ToolSet default: PolyglotToolSet.
+	
+	self patchBehaviorBasicRemoveSelector.

@@ -4,6 +4,8 @@ setUpImage
 	PolyglotToolSet register.
 	ToolSet default: PolyglotToolSet.
 	
+	self patchBehaviorBasicRemoveSelector.
+	
 	"Ensure FullBlockClosure is in special objects array"
 	(Smalltalk specialObjectsArray at: 38) ifNil:
 		[ Smalltalk specialObjectsArray at: 38 put: FullBlockClosure ].
