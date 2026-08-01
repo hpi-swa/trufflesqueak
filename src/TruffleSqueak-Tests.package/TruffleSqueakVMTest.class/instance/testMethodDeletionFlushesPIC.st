@@ -29,7 +29,7 @@ testMethodDeletionFlushesPIC
 
 		"Run it 5,000 times to ensure Graal compiles the call site and builds the IC"
 		1 to: 5000 do: [ :i |
-			self assert: instance callTestMessage equals: 'sub'.
+			self assert: 'sub' equals: instance callTestMessage.
 		].
 
 		"Deleting this should signal the TruffleSqueak VM to invalidate the assumption protecting the inline cache at `callTestMessage`."
@@ -37,7 +37,7 @@ testMethodDeletionFlushesPIC
 
 		"If the PIC was NOT flushed, this might still return 'sub' (stale cache).
 		 If it WAS properly flushed, it will re-evaluate and find the superclass method."
-		self assert: instance callTestMessage equals: 'super'.
+		self assert: 'super' equals: instance callTestMessage.
 
 	] ensure: [
 		dummySub removeFromSystem.

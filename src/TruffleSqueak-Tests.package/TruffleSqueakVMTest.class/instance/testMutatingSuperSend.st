@@ -24,30 +24,32 @@ testMutatingSuperSend
 		classVariableNames: '' 
 		poolDictionaries: '' 
 		category: 'TruffleSqueak-Tests'.
+		
+	[
+		"4. Install a method that changes its own superclass mid-execution"
+		subClass compile: 'doMutatingSuperSend
+			"Redefine the class to inherit from SuperB. This triggers a becomeForward:"
+			TSVMSuperSendTestB subclass: #TSVMSuperSendTestSub 
+				instanceVariableNames: '''' 
+				classVariableNames: '''' 
+				poolDictionaries: '''' 
+				category: ''TruffleSqueak-Tests''.
 
-	"4. Install a method that changes its own superclass mid-execution"
-	subClass compile: 'doMutatingSuperSend
-		"Redefine the class to inherit from SuperB. This triggers a becomeForward:"
-		TSVMSuperSendTestB subclass: #TSVMSuperSendTestSub 
-			instanceVariableNames: '''' 
-			classVariableNames: '''' 
-			poolDictionaries: '''' 
-			category: ''TruffleSqueak-Tests''.
-			
-		"Execute extended super send. 
-		- Unpatched AST will use the stale class and call SuperA >> dummy (returns 1).
-		- Patched AST will heal itself, follow the forwarding pointer to the new class, 
-		and call SuperB >> dummy (returns 2)."
-		^ super dummy: 1 with: 2 with: 3'.
+			"Execute extended super send. 
+			- Unpatched AST will use the stale class and call SuperA >> dummy (returns 1).
+			- Patched AST will heal itself, follow the forwarding pointer to the new class, 
+			and call SuperB >> dummy (returns 2)."
+			^ super dummy: 1 with: 2 with: 3'.
 
-	"5. Execute the test"
-	instance := subClass new.
-	result := instance doMutatingSuperSend.
-
-	"6. Cleanup"
-	subClass removeFromSystem.
-	superA removeFromSystem.
-	superB removeFromSystem.
+		"5. Execute the test"
+		instance := subClass new.
+		result := instance doMutatingSuperSend.
+	] ensure: [
+		"6. Cleanup"
+		subClass removeFromSystem.
+		superA removeFromSystem.
+		superB removeFromSystem.
+	].
 
 	"7. Assert the fix"
 	self assert: result = 2
