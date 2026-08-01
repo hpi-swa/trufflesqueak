@@ -54,10 +54,6 @@
 
     ignoredTests := OrderedCollection new.
     {
-        "slow tests"
-        CompiledMethodComparisonTest.
-        MCFileInTest.
-
         "ignored tests"
         AioEventHandlerTestCase.
         CogARMCompilerTests.
@@ -81,8 +77,6 @@
         InterpreterPrimitivesTest.
         IslandVMTweaksTestCase.
         LangEnvBugs.
-        MutexTest. "assertion errors"
-        ReleaseTest.
         SlangBasicTypeInferenceTest. "many tests broken"
         SlangTypeForArithmeticTest.
         SlangTypeForDereferenceTest.
@@ -100,25 +94,21 @@
         UnixProcessWin32FileLockingTestCase.
         WebClientServerTest. "some tests pass slowly"
         WebMessageTest.
-        WriteBarrierTest. "requires supportsReadOnlyObjects"
         ZzzFileSystemGitAfterSuiteTest.
         ZzzGitAfterSuiteTest.
     } collect: [:testCase |
         testCase allTestSelectors do: [:sel | ignoredTests add: (testCase selector: sel) ]].
 
-    (isLinux or: [ isWin ]) ifTrue: [
+    isLinux ifTrue: [
         {
-            SqueakSSLTest. "known OSVM issue"
+            SqueakSSLTest. "certificate errors on Ubuntu 22.04"
         } collect: [:testCase |
             testCase allTestSelectors do: [:sel | ignoredTests add: (testCase selector: sel) ]].
     ].
 
     {
         "slow tests"
-        CompilerTest -> #(#testAllNodePCsAreForBytecodesInCollections #testAllNodePCsAreForBytecodesInKernel #testAllNodePCsAreForBytecodesInMorphic).
-        FloatTest -> #(#testCompiledConstants).
         LocaleTest -> #(#test04InstallFont).
-        ObjectTest -> #(#testIfNotNilDoDeprecation).
         StringTest -> #(#testPercentEncodingJa).
 
         "ignored tests"
@@ -127,7 +117,6 @@
         BytecodeDecodingTests -> #(#testPCPreviousTo "fails with assertion error: Unexpected argument size, maybe dummy frame had wrong size?").
         CompiledCodeInspectorTest -> #(#testDebugConstruction). "broken"
         ContextInspectorTest -> #(#testDebugConstruction). "broken"
-        DebuggerTests -> #(#test01UserInterrupt #test17HandleBlockCannotReturn #test18HandleNestedBlockCannotReturn #test20TerminateProcess #test23TerminateDoubleErrorInEnsure #test24TerminateTripleErrorInEnsure). "fail, and can lock up or crash image sometimes"
         HtmlReadWriterTest -> #(#test16ImgTag).
         MemoryTests -> #(#testFrameActivationLeak).
         SlangTests -> #(#testSimpleMethod). "broken"
@@ -135,7 +124,7 @@
         SmalltalkImageTest -> #(#testForceChangesToDiskRobustness).
         SocketTest -> #(#testSocketReuse #testTCPSocketReuse #testUDP).
         StackInterpreterTests -> #(#testImmediateFloats #testPointerTaggingDetagging). "broken"
-        SystemChangeFileTest -> #(#testClassRenamed). "flaky and can hang the system"
+        WriteBarrierTest -> #(#testBasicReadOnly #testBasicWritable #testRetryingInstVarModification #testSetIsReadOnlyFailure #testSetIsReadOnlyFailureProxy #testSetIsReadOnlyImmediate #testSetIsReadOnlyImmediateProxy).
     } collect: [:assoc | | testCase |
         testCase := assoc key.
         assoc value do: [:sel | ignoredTests add: (testCase selector: sel) ]].
@@ -164,6 +153,7 @@
         HelpBrowserTest -> #(#testRegistration).
         ObjectTest -> #(#testEvaluateWheneverChangeIn #testEvaluateWheneverChangeInTransparent "become EmptyObject->PointersObject not yet supported" #testPinning "not yet supported").
         PackageDependencyTest -> #(#testBalloon #testPreferenceBrowser #testSUnit).
+        ReleaseTest -> #(#testUndeclared).
         SequenceableCollectionTest -> #(#testDoWithIndexDeprecation).
         SetInspectorTest -> #(#testUninitialized). "failing"
         SmallIntegerTest -> #(#testMaxVal #testMinVal #testPrintString). "assume SmallIntegers are 31 or 61 bit rather than 64 bit (long)."
@@ -176,6 +166,7 @@
     {
         BitBltSimulationTest -> #(#testAlphaCompositing2Simulated #testAlphaCompositingSimulated).
         DebuggerTests -> #(#test02UnhandledException #test19Abandon).
+        FloatTest -> #(#testCompiledConstants). "fails on PGO-instrumented standalone"
         MCSnapshotTest -> #(#testInstanceReuse).
         MorphicToolBuilderTests -> #(#testGetButtonColor).
         PCCByLiteralsTest -> #(#testSwitchPrimCallOffOn).
