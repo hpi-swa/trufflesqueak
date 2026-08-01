@@ -7,7 +7,7 @@ testMutatingSuperSend
 		instanceVariableNames: '' 
 		classVariableNames: '' 
 		poolDictionaries: '' 
-		category: 'TruffleSqueakVM-Tests'.
+		category: 'TruffleSqueak-Tests'.
 	superA compile: 'dummy: a with: b with: c ^ 1'.
 
 	"2. Create the New Superclass (returns 2)"
@@ -15,7 +15,7 @@ testMutatingSuperSend
 		instanceVariableNames: '' 
 		classVariableNames: '' 
 		poolDictionaries: '' 
-		category: 'TruffleSqueakVM-Tests'.
+		category: 'TruffleSqueak-Tests'.
 	superB compile: 'dummy: a with: b with: c ^ 2'.
 
 	"3. Create our Target Class, initially inheriting from SuperA"
@@ -23,7 +23,7 @@ testMutatingSuperSend
 		instanceVariableNames: '' 
 		classVariableNames: '' 
 		poolDictionaries: '' 
-		category: 'TruffleSqueakVM-Tests'.
+		category: 'TruffleSqueak-Tests'.
 
 	"4. Install a method that changes its own superclass mid-execution"
 	subClass compile: 'doMutatingSuperSend
@@ -32,7 +32,7 @@ testMutatingSuperSend
 			instanceVariableNames: '''' 
 			classVariableNames: '''' 
 			poolDictionaries: '''' 
-			category: ''TruffleSqueakVM-Tests''.
+			category: ''TruffleSqueak-Tests''.
 			
 		"Execute extended super send. 
 		- Unpatched AST will use the stale class and call SuperA >> dummy (returns 1).
