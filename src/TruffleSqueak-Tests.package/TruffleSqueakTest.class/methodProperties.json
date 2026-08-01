@@ -3,7 +3,6 @@
 		 },
 	"instance" : {
 		"assertSorted:name:" : "fn 1/25/2020 15:24",
-		"testAdoptInstanceArrays" : "fn 1/31/2020 10:20",
 		"testArrayStatistics" : "fn 10/20/2024 19:39",
 		"testCallTarget" : "fn 10/26/2021 21:10",
 		"testLayoutStatistics" : "fn 10/20/2024 19:39",
