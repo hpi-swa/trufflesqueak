@@ -36,4 +36,11 @@ public final class LogUtils {
     public static final TruffleLogger SOCKET = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "socket");
 
     public static final boolean GC_IS_LOGGABLE_FINE = GC.isLoggable(Level.FINE);
+
+    public static void severe(final String message, final Throwable throwable) {
+        // Checkstyle: stop
+        System.err.println(message);
+        // Checkstyle: start
+        throwable.printStackTrace(System.err);
+    }
 }

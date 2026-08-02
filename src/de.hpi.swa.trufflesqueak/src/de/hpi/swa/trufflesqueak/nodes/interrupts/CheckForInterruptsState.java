@@ -10,7 +10,6 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.locks.LockSupport;
-import java.util.logging.Level;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -96,7 +95,7 @@ public final class CheckForInterruptsState {
                     LockSupport.parkNanos(interruptCheckNanos);
                 }
             } catch (Throwable t) {
-                LogUtils.INTERRUPTS.log(Level.SEVERE, "CheckForInterruptsThread FATAL CRASH", t);
+                LogUtils.severe("CheckForInterruptsThread FATAL CRASH", t);
                 System.exit(1);
             }
         }
