@@ -359,16 +359,18 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "!isStdioFileDescriptor(fd)")
         protected static final Object doClose(final Object receiver, final PointersObject fd) {
             final Object channelOrNil = getChannelOrNil(fd);
-            if (channelOrNil != NilObject.SINGLETON) {
-                closeFailsafe(channelOrNil);
+            if (channelOrNil instanceof final SeekableByteChannel channel) {
+                closeFailsafe(channel);
+            } else {
+                assert channelOrNil == NilObject.SINGLETON;
             }
             return receiver;
         }
 
         @TruffleBoundary
-        private static void closeFailsafe(final Object channel) {
+        private static void closeFailsafe(final SeekableByteChannel channel) {
             try {
-                ((SeekableByteChannel) channel).close();
+                channel.close();
             } catch (final IOException e) {
                 log("Failed to close file", e);
             }
