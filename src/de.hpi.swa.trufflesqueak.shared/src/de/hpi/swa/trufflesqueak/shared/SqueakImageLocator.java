@@ -154,17 +154,16 @@ public final class SqueakImageLocator {
         final ImageDownloadSupport.DownloadStream download = ImageDownloadSupport.openStream(URI.create(url));
 
         // Suppress the progress if the user requested quiet mode, or if there is no console or running on CI.
-        final boolean isInteractive = System.console() != null || Boolean.parseBoolean(System.getenv("CI"));
-        final boolean disableProgress = isQuiet || !isInteractive;
+        final boolean disableProgress = isQuiet || System.console() == null || Boolean.parseBoolean(System.getenv("CI"));
 
         try (BufferedInputStream bis = download.stream(); InputStream is = disableProgress ? bis : new ProgressTrackingInputStream(bis, download.contentLength(), downloadText, out)) {
             return unzip(is, destDirectory);
         } finally {
             if (!isQuiet) {
-                if (isInteractive) {
-                    out.printf("\r%sdone!          %n", downloadText);
-                } else {
+                if (disableProgress) {
                     out.printf("done!%n");
+                } else {
+                    out.printf("\r%sdone!          %n", downloadText);
                 }
             }
         }
