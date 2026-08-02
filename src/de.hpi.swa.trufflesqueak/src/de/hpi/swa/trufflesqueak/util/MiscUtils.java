@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
@@ -29,7 +30,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLogger;
 
-import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectGraphOperations;
 
 public final class MiscUtils {
@@ -195,10 +195,10 @@ public final class MiscUtils {
 
     @TruffleBoundary
     public static String getVMInformation() {
-        final String releaseFilePath = System.getProperty("java.home") + File.separator + "languages" + File.separator + SqueakLanguageConfig.ID + File.separator + "release";
+        final String releaseFilePath = System.getProperty("java.home") + File.separator + "release";
         final Properties properties = new Properties();
-        try {
-            properties.load(Files.newInputStream(Paths.get(releaseFilePath)));
+        try (InputStream is = Files.newInputStream(Paths.get(releaseFilePath))) {
+            properties.load(is);
         } catch (final IOException e) {
             return String.format("\n%s (%s; %s)\n", System.getProperty("java.vm.name"), System.getProperty("java.vm.version"), System.getProperty("java.vm.info"));
         }
