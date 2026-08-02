@@ -7,10 +7,7 @@
 package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
 import java.lang.management.ManagementFactory;
-import java.lang.ref.Reference;
-import java.lang.ref.ReferenceQueue;
 import java.util.List;
-import java.util.logging.Level;
 
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanException;
@@ -812,11 +809,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 forceFullGC();
             }
 
-            final boolean hasPendingFinalizations = LogUtils.GC_IS_LOGGABLE_FINE ? hasPendingFinalizationsWithLogging(image) : hasPendingFinalizations(image);
-            final boolean hasPendingEphemerons = image.containsEphemerons && image.objectGraphUtils.checkEphemerons();
-            if (hasPendingFinalizations || hasPendingEphemerons) {
-                image.interrupt.setPendingFinalizations();
-            }
+            image.checkEphemerons();
+            image.checkForPendingFinalizations();
             return MiscUtils.runtimeFreeMemory();
         }
 
@@ -830,24 +824,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             } catch (InstanceNotFoundException | ReflectionException | MBeanException e) {
                 LogUtils.MAIN.warning("Invoking gcRun failed: " + e);
             }
-        }
-
-        @TruffleBoundary
-        private static boolean hasPendingFinalizations(final SqueakImageContext image) {
-            return image.weakPointersQueue.poll() != null;
-        }
-
-        @TruffleBoundary
-        private static boolean hasPendingFinalizationsWithLogging(final SqueakImageContext image) {
-            final ReferenceQueue<AbstractSqueakObject> queue = image.weakPointersQueue;
-            Reference<?> element = queue.poll();
-            int count = 0;
-            while (element != null) {
-                count++;
-                element = queue.poll();
-            }
-            LogUtils.GC.log(Level.FINE, "Number of garbage collected WeakPointersObjects: {0}", count);
-            return count > 0;
         }
     }
 

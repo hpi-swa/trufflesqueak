@@ -396,7 +396,7 @@ public final class ObjectGraphUtils {
     }
 
     @TruffleBoundary
-    public boolean checkEphemerons() {
+    public void checkEphemerons() {
         assert !isUnfollowNeeded();
 
         final long startTime = System.nanoTime();
@@ -424,8 +424,6 @@ public final class ObjectGraphUtils {
         if (trackOperations) {
             ObjectGraphOperations.CHECK_EPHEMERONS.addNanos(System.nanoTime() - startTime);
         }
-
-        return !image.ephemeronsQueue.isEmpty();
     }
 
     private static void traceRemainingEphemerons(final ArrayDeque<EphemeronObject> ephemeronsToBeMarked, final ObjectTracer tracer) {

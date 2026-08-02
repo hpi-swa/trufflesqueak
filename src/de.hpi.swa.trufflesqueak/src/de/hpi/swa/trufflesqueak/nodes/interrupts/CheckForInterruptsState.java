@@ -91,6 +91,8 @@ public final class CheckForInterruptsState {
                     if (nextWakeUpTickTrigger()) {
                         SHOULD_TRIGGER.setOpaque(CheckForInterruptsState.this, true);
                         wakeupVM();
+                    } else {
+                        image.checkForPendingFinalizations();
                     }
                     LockSupport.parkNanos(interruptCheckNanos);
                 }
