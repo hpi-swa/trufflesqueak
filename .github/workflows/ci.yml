@@ -179,7 +179,7 @@ jobs:
       id: timer_squeak_windows
       run: |
         $sw = [System.Diagnostics.Stopwatch]::StartNew()
-        trufflesqueak --download-image trufflesqueak-test ${{ env.VM_ARGS }} -- ..\..\..\..\src\image-tests\runSqueakTests.st
+        trufflesqueak --download-image squeak-6.1rc2 ${{ env.VM_ARGS }} -- ..\..\..\..\src\image-tests\runSqueakTests.st
         $sw.Stop()
         $formatted = "{0:D2}:{1:D2}" -f $sw.Elapsed.Minutes, $sw.Elapsed.Seconds
         $safeOs = "${{ matrix.os }}".Replace('-', '_').Replace('.', '_')
@@ -192,7 +192,7 @@ jobs:
       shell: bash
       run: |
         START_TIME=$SECONDS
-        trufflesqueak --download-image trufflesqueak-test ${{ env.VM_ARGS }} -- $(pwd)/src/image-tests/runSqueakTests.st
+        trufflesqueak --download-image squeak-6.1rc2 ${{ env.VM_ARGS }} -- $(pwd)/src/image-tests/runSqueakTests.st
         ELAPSED_TIME=$(($SECONDS - $START_TIME))
         FORMATTED_TIME=$(printf "%02d:%02d" $((ELAPSED_TIME / 60)) $((ELAPSED_TIME % 60)))
         SAFE_OS=$(echo "${{ matrix.os }}" | tr '-' '_' | tr '.' '_')
@@ -238,7 +238,7 @@ jobs:
     - name: Run Squeak/Smalltalk tests on instrumented TruffleSqueak standalone
       shell: bash
       run: |
-        trufflesqueak --download-image trufflesqueak-test --engine.Mode=default --vm.XX:ProfilesDumpFile=${{ env.PGO_FILE_SQUEAK }} --vm.XX:ProfilesLCOVFile=${{ env.PGO_LCOV_FILE_SQUEAK }} -- $(pwd)/src/image-tests/runSqueakTests.st
+        trufflesqueak --download-image squeak-6.1rc2 --engine.Mode=default --vm.XX:ProfilesDumpFile=${{ env.PGO_FILE_SQUEAK }} --vm.XX:ProfilesLCOVFile=${{ env.PGO_LCOV_FILE_SQUEAK }} -- $(pwd)/src/image-tests/runSqueakTests.st
       timeout-minutes: 30
     - name: Report code coverage
       env:
