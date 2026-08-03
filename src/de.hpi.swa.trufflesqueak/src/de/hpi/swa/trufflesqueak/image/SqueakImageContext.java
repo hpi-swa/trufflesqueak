@@ -8,9 +8,9 @@ package de.hpi.swa.trufflesqueak.image;
 
 import java.lang.foreign.SymbolLookup;
 import java.lang.ref.ReferenceQueue;
-import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.logging.Level;
 
 import org.graalvm.collections.UnmodifiableEconomicMap;
@@ -209,7 +209,7 @@ public final class SqueakImageContext {
 
     /* Ephemeron support */
     public boolean containsEphemerons;
-    public final ArrayDeque<EphemeronObject> ephemeronsQueue = new ArrayDeque<>();
+    public final ConcurrentLinkedDeque<EphemeronObject> ephemeronsQueue = new ConcurrentLinkedDeque<>();
 
     /* Context stack depth */
     @CompilationFinal private final int maxContextStackDepth;
