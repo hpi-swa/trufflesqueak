@@ -9,6 +9,7 @@ package de.hpi.swa.trufflesqueak.nodes.interrupts;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.LockSupport;
 
 import com.oracle.truffle.api.CompilerAsserts;
@@ -54,6 +55,7 @@ public final class CheckForInterruptsState {
     private volatile long nextWakeupTick;
     private volatile boolean interruptPending;
     private volatile boolean hasPendingFinalizations;
+    private final AtomicBoolean pendingFinalizationsLatch = new AtomicBoolean(false);
     @SuppressWarnings("unused") private boolean shouldTrigger;
 
     private Thread thread;
@@ -229,10 +231,17 @@ public final class CheckForInterruptsState {
         }
     }
 
+    public void resetPendingFinalizationsLatch() {
+        pendingFinalizationsLatch.set(false);
+    }
+
     public void setPendingFinalizations() {
-        hasPendingFinalizations = true;
-        SHOULD_TRIGGER.setOpaque(this, true);
-        wakeupVM();
+        // Only trigger the VM interrupt if the latch wasn't already set
+        if (pendingFinalizationsLatch.compareAndSet(false, true)) {
+            hasPendingFinalizations = true;
+            SHOULD_TRIGGER.setOpaque(this, true);
+            wakeupVM();
+        }
     }
 
     /* Semaphore interrupts */
@@ -269,6 +278,7 @@ public final class CheckForInterruptsState {
         nextWakeupTick = 0;
         interruptPending = false;
         hasPendingFinalizations = false;
+        pendingFinalizationsLatch.set(false);
         clearWeakPointersQueue();
         semaphoresToSignal.clear();
         clearShouldTrigger();

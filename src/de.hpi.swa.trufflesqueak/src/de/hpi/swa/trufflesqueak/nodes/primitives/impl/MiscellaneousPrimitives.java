@@ -600,7 +600,10 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     protected static final class PrimFetchMournerNode extends AbstractSingletonPrimitiveNode implements Primitive0 {
         @Override
         public Object execute(final VirtualFrame frame, final Object receiver) {
-            return NilObject.nullToNil(getContext().ephemeronsQueue.pollFirst());
+            // Reset the latch because the Smalltalk image is actively processing the queue
+            final SqueakImageContext image = getContext();
+            image.interrupt.resetPendingFinalizationsLatch();
+            return NilObject.nullToNil(image.ephemeronsQueue.pollFirst());
         }
     }
 
