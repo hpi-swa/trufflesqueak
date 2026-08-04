@@ -6,6 +6,7 @@
  */
 package de.hpi.swa.trufflesqueak.image;
 
+import java.io.IOException;
 import java.lang.foreign.SymbolLookup;
 import java.lang.ref.ReferenceQueue;
 import java.util.HashMap;
@@ -717,10 +718,17 @@ public final class SqueakImageContext {
     private void ensureResourcesDirectoryAndPathInitialized() {
         if (resourcesDirectoryBytes == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            final String languageHome = getLanguage().getTruffleLanguageHome();
             final TruffleFile path;
-            if (languageHome != null) {
+            if (getLanguage().getTruffleLanguageHome() != null) {
+                assert getHomePath().exists();
                 path = getHomePath().resolve("resources");
+                if (!path.exists()) {
+                    try {
+                        path.createDirectories();
+                    } catch (IOException e) {
+                        throw SqueakException.create("Failed to create resources directory", e);
+                    }
+                }
             } else { /* Fallback to image directory. */
                 path = env.getInternalTruffleFile(getImagePath()).getParent();
                 if (path == null) {
