@@ -9,7 +9,6 @@ package de.hpi.swa.trufflesqueak.nodes.interrupts;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.LockSupport;
 
 import com.oracle.truffle.api.CompilerAsserts;
@@ -77,6 +76,9 @@ public final class CheckForInterruptsState {
     }
 
     final class CheckForInterruptsThread extends Thread {
+        private static final long PENDING_FINALIZATIONS_THRESHOLD_MILLIS = 500;
+        private long lastTimeMillis;
+
         CheckForInterruptsThread() {
             super(CHECK_FOR_INTERRUPTS_THREAD_NAME);
             setDaemon(true);
@@ -92,8 +94,9 @@ public final class CheckForInterruptsState {
                     if (nextWakeUpTickTrigger()) {
                         SHOULD_TRIGGER.setOpaque(CheckForInterruptsState.this, true);
                         wakeupVM();
-                    } else {
+                    } else if ((System.currentTimeMillis() - lastTimeMillis) > PENDING_FINALIZATIONS_THRESHOLD_MILLIS) {
                         image.checkForPendingFinalizations();
+                        lastTimeMillis = System.currentTimeMillis();
                     }
                     LockSupport.parkNanos(interruptCheckNanos);
                 }
