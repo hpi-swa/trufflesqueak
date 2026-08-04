@@ -85,12 +85,12 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             return handle.getHiddenObject();
         }
 
-        protected final TruffleFile asPublicTruffleFile(final NativeObject obj) {
-            return asPublicTruffleFile(obj.asStringUnsafe());
+        protected static final TruffleFile asPublicTruffleFile(final SqueakImageContext image, final NativeObject obj) {
+            return asPublicTruffleFile(image, obj.asStringUnsafe());
         }
 
-        protected final TruffleFile asPublicTruffleFile(final String obj) {
-            return getContext().env.getPublicTruffleFile(obj);
+        protected static final TruffleFile asPublicTruffleFile(final SqueakImageContext image, final String obj) {
+            return image.env.getPublicTruffleFile(obj);
         }
 
         protected static final boolean inBounds(final long startIndex, final long count, final int slotSize) {
@@ -163,8 +163,9 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimDirectoryCreateNode extends AbstractFilePluginPrimitiveNode implements Primitive1WithFallback {
 
         @Specialization(guards = "fullPath.isByteType()")
-        protected final Object doCreate(final Object receiver, final NativeObject fullPath) {
-            final TruffleFile file = asPublicTruffleFile(fullPath);
+        protected static final Object doCreate(final Object receiver, final NativeObject fullPath,
+                        @Bind final SqueakImageContext image) {
+            final TruffleFile file = asPublicTruffleFile(image, fullPath);
             if (file.exists()) {
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
@@ -187,9 +188,10 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimDirectoryDeleteNode extends AbstractFilePluginPrimitiveNode implements Primitive1WithFallback {
 
         @Specialization(guards = "fullPath.isByteType()")
-        protected final Object doDelete(final Object receiver, final NativeObject fullPath) {
+        protected static final Object doDelete(final Object receiver, final NativeObject fullPath,
+                        @Bind final SqueakImageContext image) {
             try {
-                asPublicTruffleFile(fullPath).delete();
+                asPublicTruffleFile(image, fullPath).delete();
             } catch (IOException | UnsupportedOperationException | SecurityException e) {
                 log("Failed to delete directory", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
@@ -203,8 +205,9 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimDirectoryDelimitorNode extends AbstractPrimitiveNode implements Primitive0 {
 
         @Specialization
-        protected final char doDelimitor(@SuppressWarnings("unused") final Object receiver) {
-            return getContext().env.getFileNameSeparator().charAt(0);
+        protected static final char doDelimitor(@SuppressWarnings("unused") final Object receiver,
+                        @Bind final SqueakImageContext image) {
+            return image.env.getFileNameSeparator().charAt(0);
         }
     }
 
@@ -214,7 +217,8 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
         @TruffleBoundary(transferToInterpreterOnException = false)
         @Specialization(guards = {"fullPath.isByteType()", "fName.isByteType()"})
-        protected final Object doEntry(@SuppressWarnings("unused") final Object receiver, final NativeObject fullPath, final NativeObject fName) {
+        protected static final Object doEntry(@SuppressWarnings("unused") final Object receiver, final NativeObject fullPath, final NativeObject fName,
+                        @Bind final SqueakImageContext image) {
             final String pathName = fullPath.asStringUnsafe();
             final String fileName = fName.asStringUnsafe();
             final String path;
@@ -223,16 +227,16 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             } else if (OS.isWindows() && pathName.isEmpty() && fileName.endsWith(":")) {
                 path = fileName + "\\";
             } else {
-                path = pathName + getContext().env.getFileNameSeparator() + fileName;
+                path = pathName + image.env.getFileNameSeparator() + fileName;
             }
             final TruffleFile file;
             try {
-                file = asPublicTruffleFile(path);
+                file = asPublicTruffleFile(image, path);
             } catch (final InvalidPathException e) {
                 return NilObject.SINGLETON;
             }
             if (file.exists()) {
-                return newFileEntry(getContext(), file, fileName);
+                return newFileEntry(image, file, fileName);
             } else {
                 return NilObject.SINGLETON;
             }
@@ -245,19 +249,20 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"longIndex > 0", "nativePathName.isByteType()", "nativePathName.getByteLength() == 0"})
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doLookupEmptyString(@SuppressWarnings("unused") final Object receiver, @SuppressWarnings("unused") final NativeObject nativePathName, final long longIndex) {
+        protected static final Object doLookupEmptyString(@SuppressWarnings("unused") final Object receiver, @SuppressWarnings("unused") final NativeObject nativePathName, final long longIndex,
+                        @Bind final SqueakImageContext image) {
             assert OS.isWindows() : "Unexpected empty path on a non-Windows system.";
             final ArrayList<TruffleFile> fileList = new ArrayList<>();
             // TODO: avoid to use Path and FileSystems here.
             for (final Path path : FileSystems.getDefault().getRootDirectories()) {
-                fileList.add(getContext().env.getPublicTruffleFile(path.toUri()));
+                fileList.add(image.env.getPublicTruffleFile(path.toUri()));
             }
             final int index = (int) longIndex - 1;
             if (index < fileList.size()) {
                 final TruffleFile file = fileList.get(index);
                 // Use getPath here, getName returns empty string on root path.
                 // Squeak strips the trailing backslash from C:\ on Windows.
-                return newFileEntry(getContext(), file, file.getPath().replace("\\", ""));
+                return newFileEntry(image, file, file.getPath().replace("\\", ""));
             } else {
                 return NilObject.SINGLETON;
             }
@@ -265,12 +270,13 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"index > 0", "nativePathName.isByteType()", "nativePathName.getByteLength() > 0"})
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doLookup(@SuppressWarnings("unused") final Object receiver, final NativeObject nativePathName, final long index) {
+        protected static final Object doLookup(@SuppressWarnings("unused") final Object receiver, final NativeObject nativePathName, final long index,
+                        @Bind final SqueakImageContext image) {
             String pathName = nativePathName.asStringUnsafe();
             if (OS.isWindows() && !pathName.endsWith("\\")) {
                 pathName += "\\"; // new File("C:") will fail, we need to add a trailing backslash.
             }
-            final TruffleFile directory = asPublicTruffleFile(pathName);
+            final TruffleFile directory = asPublicTruffleFile(image, pathName);
             if (!(directory.isDirectory() && directory.isReadable())) {
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
@@ -278,7 +284,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             try (DirectoryStream<TruffleFile> stream = directory.newDirectoryStream()) {
                 for (final TruffleFile file : stream) {
                     if (count-- <= 1 && file.exists()) {
-                        return newFileEntry(getContext(), file);
+                        return newFileEntry(image, file);
                     }
                 }
             } catch (final IOException e) {
@@ -387,8 +393,9 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimFileDeleteNode extends AbstractFilePluginPrimitiveNode implements Primitive1WithFallback {
 
         @Specialization(guards = "nativeFileName.isByteType()")
-        protected final Object doDelete(final Object receiver, final NativeObject nativeFileName) {
-            final TruffleFile file = asPublicTruffleFile(nativeFileName);
+        protected static final Object doDelete(final Object receiver, final NativeObject nativeFileName,
+                        @Bind final SqueakImageContext image) {
+            final TruffleFile file = asPublicTruffleFile(image, nativeFileName);
             if (!file.exists()) {
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
@@ -408,15 +415,17 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"isStdoutFileDescriptor(fd)"})
-        protected final Object doFlushStdout(final Object receiver, final PointersObject fd) {
-            flushStdioOrFail(getContext().env.out());
+        protected static final Object doFlushStdout(final Object receiver, final PointersObject fd,
+                        @Bind final SqueakImageContext image) {
+            flushStdioOrFail(image.env.out());
             return receiver;
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"isStderrFileDescriptor(fd)"})
-        protected final Object doFlushStderr(final Object receiver, final PointersObject fd) {
-            flushStdioOrFail(getContext().env.err());
+        protected static final Object doFlushStderr(final Object receiver, final PointersObject fd,
+                        @Bind final SqueakImageContext image) {
+            flushStdioOrFail(image.env.err());
             return receiver;
         }
 
@@ -463,8 +472,9 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimFileOpenNode extends AbstractFilePluginPrimitiveNode implements Primitive2WithFallback {
 
         @Specialization(guards = "nativeFileName.isByteType()")
-        protected final Object doOpen(@SuppressWarnings("unused") final Object receiver, final NativeObject nativeFileName, final boolean writableFlag) {
-            return createFileHandleOrPrimFail(getContext(), asPublicTruffleFile(nativeFileName), writableFlag);
+        protected static final Object doOpen(@SuppressWarnings("unused") final Object receiver, final NativeObject nativeFileName, final boolean writableFlag,
+                        @Bind final SqueakImageContext image) {
+            return createFileHandleOrPrimFail(image, asPublicTruffleFile(image, nativeFileName), writableFlag);
         }
     }
 
@@ -534,9 +544,10 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimFileRenameNode extends AbstractFilePluginPrimitiveNode implements Primitive2WithFallback {
 
         @Specialization(guards = {"oldName.isByteType()", "newName.isByteType()"})
-        protected final Object doRename(final Object receiver, final NativeObject oldName, final NativeObject newName) {
+        protected static final Object doRename(final Object receiver, final NativeObject oldName, final NativeObject newName,
+                        @Bind final SqueakImageContext image) {
             try {
-                asPublicTruffleFile(oldName).move(asPublicTruffleFile(newName));
+                asPublicTruffleFile(image, oldName).move(asPublicTruffleFile(image, newName));
             } catch (final IOException e) {
                 log("Failed to move file", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
@@ -605,8 +616,8 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveFileStdioHandles")
     protected abstract static class PrimFileStdioHandlesNode extends AbstractFilePluginPrimitiveNode implements Primitive0 {
         @Specialization
-        protected final Object getHandles(@SuppressWarnings("unused") final Object receiver) {
-            final SqueakImageContext image = getContext();
+        protected static final Object getHandles(@SuppressWarnings("unused") final Object receiver,
+                        @Bind final SqueakImageContext image) {
             return image.asArrayOfObjects(createStdioFileHandle(image, STDIO_HANDLES.IN),
                             createStdioFileHandle(image, STDIO_HANDLES.OUT),
                             createStdioFileHandle(image, STDIO_HANDLES.ERROR));
@@ -651,15 +662,17 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"isStdoutFileDescriptor(fd)", "content.isByteType()", "inBounds(startIndex, count, content.getByteLength())"})
-        protected final long doWriteByteToStdout(final Object receiver, final PointersObject fd, final NativeObject content, final long startIndex, final long count) {
-            writeToOutputStream(getContext().env.out(), content.getByteStorage(), (int) (startIndex - 1), (int) count);
+        protected static final long doWriteByteToStdout(final Object receiver, final PointersObject fd, final NativeObject content, final long startIndex, final long count,
+                        @Bind final SqueakImageContext image) {
+            writeToOutputStream(image.env.out(), content.getByteStorage(), (int) (startIndex - 1), (int) count);
             return count;
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"isStderrFileDescriptor(fd)", "content.isByteType()", "inBounds(startIndex, count, content.getByteLength())"})
-        protected final long doWriteByteToStderr(final Object receiver, final PointersObject fd, final NativeObject content, final long startIndex, final long count) {
-            writeToOutputStream(getContext().env.err(), content.getByteStorage(), (int) (startIndex - 1), (int) count);
+        protected static final long doWriteByteToStderr(final Object receiver, final PointersObject fd, final NativeObject content, final long startIndex, final long count,
+                        @Bind final SqueakImageContext image) {
+            writeToOutputStream(image.env.err(), content.getByteStorage(), (int) (startIndex - 1), (int) count);
             return count;
         }
 
