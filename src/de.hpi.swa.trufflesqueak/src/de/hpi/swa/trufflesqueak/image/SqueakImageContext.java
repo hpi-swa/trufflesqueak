@@ -209,6 +209,7 @@ public final class SqueakImageContext {
 
     /* Ephemeron support */
     public boolean containsEphemerons;
+    public final ConcurrentLinkedDeque<EphemeronObject> pendingEphemeronsQueue = new ConcurrentLinkedDeque<>();
     public final ConcurrentLinkedDeque<EphemeronObject> ephemeronsQueue = new ConcurrentLinkedDeque<>();
 
     /* Context stack depth */
@@ -929,9 +930,35 @@ public final class SqueakImageContext {
         }
     }
 
-    public void checkForPendingFinalizations() {
-        if (weakPointersQueue.poll() != null /* has pending finalizations? */ ||
-                        (containsEphemerons && !ephemeronsQueue.isEmpty()) /* has pending ephemerons? */) {
+    /**
+     * Drains pending finalization queues and signals the VM if necessary.
+     * <p>
+     * This method is synchronized because it is called concurrently by two different threads:
+     * 1. The background CheckForInterruptsThread (polling continuously).
+     * 2. The main interpreter thread (via GCHelper.doGC() after manual GC primitives).
+     * <p>
+     * Synchronization prevents race conditions when transferring elements between the
+     * lock-free queues and ensuring the interrupt trigger is only fired once per batch.
+     */
+    public synchronized void checkForPendingFinalizations() {
+        boolean triggerInterrupt = false;
+
+        // Drain pending ephemerons into the main queue
+        if (containsEphemerons) {
+            EphemeronObject ephemeron;
+            while ((ephemeron = pendingEphemeronsQueue.pollFirst()) != null) {
+                ephemeronsQueue.addLast(ephemeron);
+                triggerInterrupt = true;
+            }
+        }
+
+        // ToDo: This assumes image.flags.enqueueWeakArrays() is false
+        // Drop weak pointers and trigger if any existed
+        if (weakPointersQueue.poll() != null) {
+            triggerInterrupt = true;
+        }
+
+        if (triggerInterrupt) {
             interrupt.setPendingFinalizations();
         }
     }

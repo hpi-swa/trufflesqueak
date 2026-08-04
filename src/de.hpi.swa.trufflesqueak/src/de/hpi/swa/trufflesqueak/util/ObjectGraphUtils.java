@@ -417,10 +417,10 @@ public final class ObjectGraphUtils {
         traceRemainingEphemerons(ephemeronsToBeTraced, roots);
 
         // Make sure that they do not signal more than once.
-        image.ephemeronsQueue.addAll(ephemeronsToBeTraced);
         for (EphemeronObject ephemeronObject : ephemeronsToBeTraced) {
             ephemeronObject.setHasBeenSignaled();
         }
+        image.pendingEphemeronsQueue.addAll(ephemeronsToBeTraced);
         if (trackOperations) {
             ObjectGraphOperations.CHECK_EPHEMERONS.addNanos(System.nanoTime() - startTime);
         }
@@ -526,6 +526,9 @@ public final class ObjectGraphUtils {
              * disk, but by tracing them we avoid an expensive reachability test in the
              * fetch-next-mourner primitive.
              */
+            for (final AbstractSqueakObjectWithHash object : image.pendingEphemeronsQueue) {
+                addIfUnmarked(object);
+            }
             for (final AbstractSqueakObjectWithHash object : image.ephemeronsQueue) {
                 addIfUnmarked(object);
             }

@@ -78,6 +78,7 @@ public final class SqueakImageReader {
             throw SqueakException.create("Failed to read Smalltalk image:", e.getMessage());
         }
         initObjects();
+        assert !image.flags.enqueueWeakArrays() : "WeakArray enqueuing into finalization queue not yet supported";
         LogUtils.IMAGE.fine(() -> "Image loaded in " + (MiscUtils.currentTimeMillis() - start) + "ms.");
         LogUtils.IMAGE.fine(() -> "Image screen size is " + image.flags.getScreenWidth() + "x" + image.flags.getScreenHeight() + ", HighDPI is " + (image.flags.upscaleDisplayIfHighDPI() ? "enabled"
                         : "disabled"));

@@ -55,7 +55,6 @@ public final class CheckForInterruptsState {
     private volatile long nextWakeupTick;
     private volatile boolean interruptPending;
     private volatile boolean hasPendingFinalizations;
-    private final AtomicBoolean pendingFinalizationsLatch = new AtomicBoolean(false);
     @SuppressWarnings("unused") private boolean shouldTrigger;
 
     private Thread thread;
@@ -231,17 +230,13 @@ public final class CheckForInterruptsState {
         }
     }
 
-    public void resetPendingFinalizationsLatch() {
-        pendingFinalizationsLatch.set(false);
-    }
-
     public void setPendingFinalizations() {
-        // Only trigger the VM interrupt if the latch wasn't already set
-        if (pendingFinalizationsLatch.compareAndSet(false, true)) {
-            hasPendingFinalizations = true;
-            SHOULD_TRIGGER.setOpaque(this, true);
-            wakeupVM();
-        }
+        // ToDo: This assumes image.flags.enqueueWeakArrays() is false
+        // We need to signal only once for all pending WeakPointers finalizations.
+        clearWeakPointersQueue();
+        hasPendingFinalizations = true;
+        SHOULD_TRIGGER.setOpaque(this, true);
+        wakeupVM();
     }
 
     /* Semaphore interrupts */
@@ -278,7 +273,6 @@ public final class CheckForInterruptsState {
         nextWakeupTick = 0;
         interruptPending = false;
         hasPendingFinalizations = false;
-        pendingFinalizationsLatch.set(false);
         clearWeakPointersQueue();
         semaphoresToSignal.clear();
         clearShouldTrigger();

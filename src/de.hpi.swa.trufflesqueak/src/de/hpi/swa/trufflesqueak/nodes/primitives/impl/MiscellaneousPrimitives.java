@@ -600,9 +600,12 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     protected static final class PrimFetchMournerNode extends AbstractSingletonPrimitiveNode implements Primitive0 {
         @Override
         public Object execute(final VirtualFrame frame, final Object receiver) {
-            // Reset the latch because the Smalltalk image is actively processing the queue
+            /* OSVM: "Answer the top mourner (ephemeron or weak array) from the queue or
+             * nil if the queue is empty. We don't care about order; ephemerons are
+             * fired in an arbitrary order based on where they are in the heap."
+             */
+            // ToDo: This assumes image.flags.enqueueWeakArrays() is false
             final SqueakImageContext image = getContext();
-            image.interrupt.resetPendingFinalizationsLatch();
             return NilObject.nullToNil(image.ephemeronsQueue.pollFirst());
         }
     }

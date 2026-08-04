@@ -32,6 +32,7 @@ import com.oracle.truffle.api.dsl.Idempotent;
 public final class SqueakImageFlags {
 
     private static final int PREEMPTION_DOES_NOT_YIELD = 0x010;
+    private static final int ENQUEUE_WEAKARRAYS_ON_FINALIZATION = 0x040;
     private static final int NUMERIC_PRIMS_MIX_ARITHMETIC = 0x100;
     private static final int NUMERIC_PRIMS_MIX_COMPARISON = 0x800;
     private static final int UPSCALE_DISPLAY_IF_HIGH_DPI = 0x400;
@@ -46,6 +47,7 @@ public final class SqueakImageFlags {
     @CompilationFinal private boolean numericPrimsMixArithmetic;
     @CompilationFinal private boolean numericPrimsMixComparison;
     @CompilationFinal private boolean preemptionYields;
+    @CompilationFinal private boolean enqueueWeakArrays;
 
     public void initialize(final long oldBaseAddressValue, final long flags, final long snapshotScreenSize, final int lastMaxExternalSemaphoreTableSize) {
         CompilerAsserts.neverPartOfCompilation();
@@ -90,6 +92,7 @@ public final class SqueakImageFlags {
             numericPrimsUpdateNewBehavior();
         }
         preemptionYields = (headerFlags & PREEMPTION_DOES_NOT_YIELD) == 0;
+        enqueueWeakArrays = (headerFlags & ENQUEUE_WEAKARRAYS_ON_FINALIZATION) != 0;
     }
 
     // For some reason, header flags appear to be shifted by 2 (see #getImageHeaderFlagsParameter).
@@ -154,6 +157,15 @@ public final class SqueakImageFlags {
             CompilerDirectives.transferToInterpreterAndInvalidate();
         }
         return preemptionYields;
+    }
+
+    @Idempotent
+    public boolean enqueueWeakArrays() {
+        // When true, a terminated entry in a WeakArray causes the WeakArray to be enqueued.
+        if (!headerFlagsAssumption.isValid()) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+        }
+        return enqueueWeakArrays;
     }
 
     @Idempotent
