@@ -340,8 +340,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     if (isDirected) {
                         node = DispatchDirectedSuperNaryNodeGen.create(selector);
                     } else {
-                        final ClassObject methodClass = code.getMethod().getMethodClassSlow();
-                        node = DispatchSuperNaryNodeGen.create(methodClass, selector);
+                        node = DispatchSuperNaryNodeGen.create(code, selector);
                     }
                     setData(currentPC, insert(node));
                     vstate.resetExtAB();

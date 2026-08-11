@@ -17,6 +17,9 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class Returns {
+    private Returns() {
+    }
+
     private abstract static class AbstractReturn extends ControlFlowException {
         @Serial private static final long serialVersionUID = 1L;
         protected final transient Object returnValue;
@@ -118,8 +121,5 @@ public final class Returns {
             CompilerAsserts.neverPartOfCompilation();
             return "TLR (value: " + returnValue + ")";
         }
-    }
-
-    private Returns() {
     }
 }

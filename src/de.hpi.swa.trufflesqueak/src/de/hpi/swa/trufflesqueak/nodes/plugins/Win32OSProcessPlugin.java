@@ -14,14 +14,11 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.library.CachedLibrary;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 
 public final class Win32OSProcessPlugin extends AbstractOSProcessPlugin {
@@ -56,11 +53,10 @@ public final class Win32OSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetMainThreadID")
-    protected abstract static class PrimGetMainThreadIDNode extends AbstractSysCallPrimitiveNode implements Primitive0WithFallback {
-        @Specialization(guards = "supportsNFI")
-        protected final long doGetMainThreadID(@SuppressWarnings("unused") final Object receiver,
-                        @CachedLibrary("getSysCallObject()") final InteropLibrary lib) {
-            return getValue(lib);
+    protected abstract static class PrimGetMainThreadIDNode extends AbstractSysCallPrimitiveNode implements Primitive0 {
+        @Specialization
+        protected final long doGetMainThreadID(@SuppressWarnings("unused") final Object receiver) {
+            return getValue();
         }
 
         @Override

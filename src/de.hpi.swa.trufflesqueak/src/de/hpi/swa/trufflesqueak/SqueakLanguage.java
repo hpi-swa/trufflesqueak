@@ -24,7 +24,6 @@ import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 @TruffleLanguage.Registration(//
                 characterMimeTypes = {SqueakLanguageConfig.MIME_TYPE, SqueakLanguageConfig.ST_MIME_TYPE}, //
                 defaultMimeType = SqueakLanguageConfig.ST_MIME_TYPE, //
-                dependentLanguages = {"nfi"}, //
                 fileTypeDetectors = SqueakFileDetector.class, //
                 id = SqueakLanguageConfig.ID, //
                 implementationName = SqueakLanguageConfig.IMPLEMENTATION_NAME, //

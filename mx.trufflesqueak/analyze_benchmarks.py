@@ -149,7 +149,7 @@ config:
 ---
 xychart-beta
     title "{'First ' if IS_PEAK else ''}{WARMUP_ITERATIONS} Iterations"
-    y-axis "Time (in ms)" {min([min(r[bench_name].warmup_iterations()) for bench_name in BENCHMARKS])} --> {max([max(r[bench_name].warmup_iterations()) for bench_name in BENCHMARKS])}
+    y-axis "Time (in ms)" {min(min(r[bench_name].warmup_iterations()) for bench_name in BENCHMARKS)} --> {max(max(r[bench_name].warmup_iterations()) for bench_name in BENCHMARKS)}
     """
     )
     for bench_name in BENCHMARKS:
@@ -163,7 +163,7 @@ xychart-beta
 
 
 def print_steady(r):
-    print(f"## Steady")
+    print("## Steady")
 
     for bench_name in BENCHMARKS:
         peak_values = r[bench_name].peak_iterations()
@@ -212,9 +212,7 @@ class Result:
         return max(self.values)
 
     def time_s(self):
-        return round(
-            sum([v / 1000 for v in self.values]), 2  # pylint: disable=not-an-iterable
-        )
+        return round(sum(v / 1000 for v in self.values), 2)
 
     def warmup_iterations(self):
         return self.values[:WARMUP_ITERATIONS]
@@ -224,12 +222,12 @@ class Result:
 
 
 class Phase(Enum):
-    run_time = 1
-    truffle_runtime_stats = 2
-    truffle_ast_stats = 3
-    truffle_tier_1 = 4
-    truffle_tier_2 = 5
-    time_verbose = 6
+    RUN_TIME = 1
+    TRUFFLE_RUNTIME_STATS = 2
+    TRUFFLE_AST_STATS = 3
+    TRUFFLE_TIER_1 = 4
+    TRUFFLE_TIER_2 = 5
+    TIME_VERBOSE = 6
 
 
 def get_result(bench_name):
@@ -246,15 +244,18 @@ def get_result(bench_name):
     t2_code_size = -1
     peak_rss = -1
 
-    with open(log_name) as file:
+    with open(log_name, encoding="utf-8") as file:
         iteration = 0
-        phase = Phase.run_time
+        phase = Phase.RUN_TIME
         for line in file:
-            if phase == Phase.run_time:
+            if phase == Phase.RUN_TIME:
                 match = RE_LOG_LINE.match(line)
                 if match:
                     iteration += 1
-                    assert bench_name == match.group(1)
+                    if bench_name != match.group(1):
+                        raise AssertionError(
+                            f"Unexpected bench_name (got {bench_name}; expected {match.group(1)})"
+                        )
                     time = float(match.group("runtime"))
                     if match.group("unit") == "u":
                         time /= 1000
@@ -262,10 +263,10 @@ def get_result(bench_name):
                 elif line.startswith("[engine] opt done"):
                     first_stable_iteration = iteration
                 elif line.startswith("[engine] Truffle runtime statistics"):
-                    phase = Phase.truffle_runtime_stats
+                    phase = Phase.TRUFFLE_RUNTIME_STATS
                 elif "Command being timed" in line:
-                    phase = Phase.time_verbose
-            elif phase == Phase.truffle_runtime_stats:
+                    phase = Phase.TIME_VERBOSE
+            elif phase == Phase.TRUFFLE_RUNTIME_STATS:
                 if "Compilations" in line:
                     compilations = int(line.split(":")[1].strip())
                 if "Invalidated" in line:
@@ -273,26 +274,26 @@ def get_result(bench_name):
                 elif "Splits" in line:
                     splits = int(line.split(":")[1].strip())
                 elif "AST node statistics" in line:
-                    phase = Phase.truffle_ast_stats
-            elif phase == Phase.truffle_ast_stats:
+                    phase = Phase.TRUFFLE_AST_STATS
+            elif phase == Phase.TRUFFLE_AST_STATS:
                 if "Truffle node count" in line:
                     match = RE_COMPILATION_SUMMARY_LINE.match(line)
                     node_count = int(match.group(3))
                 elif "Compilation Tier 1" in line:
-                    phase = Phase.truffle_tier_1
-            elif phase == Phase.truffle_tier_1:
+                    phase = Phase.TRUFFLE_TIER_1
+            elif phase == Phase.TRUFFLE_TIER_1:
                 if "Code size" in line:
                     match = RE_COMPILATION_SUMMARY_LINE.match(line)
                     t1_code_size = int(match.group(3))
                 elif "Data references" in line:
-                    phase = Phase.truffle_tier_2
-            elif phase == Phase.truffle_tier_2:
+                    phase = Phase.TRUFFLE_TIER_2
+            elif phase == Phase.TRUFFLE_TIER_2:
                 if "Code size" in line:
                     match = RE_COMPILATION_SUMMARY_LINE.match(line)
                     t2_code_size = int(match.group(3))
                 elif "Data references" in line:
-                    phase = Phase.time_verbose
-            elif phase == Phase.time_verbose:
+                    phase = Phase.TIME_VERBOSE
+            elif phase == Phase.TIME_VERBOSE:
                 if "Maximum resident set size (kbytes): " in line:
                     peak_rss = math.ceil(float(line.split(": ")[1]) / 1000)
             else:

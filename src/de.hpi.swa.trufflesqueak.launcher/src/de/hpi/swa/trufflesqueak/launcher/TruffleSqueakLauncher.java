@@ -6,6 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.launcher;
 
+import static de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig.DEFAULT_CONTEXT_STACK_DEPTH;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -50,6 +52,7 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
     private boolean addDisableDynamicCompilationThresholds = true;
     private int sdlPollTimeoutMilliseconds;
     private int watchdogTimeoutMinutes;
+    private int contextStackDepth = DEFAULT_CONTEXT_STACK_DEPTH;
 
     public static void main(final String[] arguments) throws RuntimeException {
         new TruffleSqueakLauncher().launch(arguments);
@@ -91,6 +94,8 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
                 i = handleIntOption(arguments, i, arg, SqueakLanguageOptions.WATCHDOG_TIMEOUT_FLAG, val -> watchdogTimeoutMinutes = val, unrecognized);
             } else if (arg.startsWith(SqueakLanguageOptions.SDL_POLL_TIMEOUT_FLAG)) {
                 i = handleIntOption(arguments, i, arg, SqueakLanguageOptions.SDL_POLL_TIMEOUT_FLAG, val -> sdlPollTimeoutMilliseconds = val, unrecognized);
+            } else if (arg.startsWith(SqueakLanguageOptions.CONTEXT_STACK_DEPTH_FLAG)) {
+                i = handleIntOption(arguments, i, arg, SqueakLanguageOptions.CONTEXT_STACK_DEPTH_FLAG, val -> contextStackDepth = Math.max(1, val), unrecognized);
             } else if (SqueakLanguageOptions.DOWNLOAD_IMAGE_FLAG.equals(arg)) {
                 downloadImageKey = getRequiredDownloadImageKey(arguments, ++i);
             } else {
@@ -161,11 +166,41 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
 
     @Override
     protected void launch(final Context.Builder contextBuilder) {
+        final int[] vmExitCode = {-1};
+
+        final Runnable vmRunnable = () -> {
+            try {
+                vmExitCode[0] = execute(contextBuilder);
+            } catch (Throwable t) {
+                throw abort(t);
+            } finally {
+                // Only stop the event loop if we actually started it
+                if (!headless) {
+                    PlatformEventLoop.stop();
+                }
+            }
+        };
+
+        // Calculate thread stack size based on context depth
+        final long threadStackSizeBytes = (contextStackDepth + 512L) * 1024L;
+
+        final Thread vmThread = new Thread(null, vmRunnable, "TruffleSqueakVM-Thread", threadStackSizeBytes);
+        vmThread.start();
+
         if (headless) {
-            System.exit(execute(contextBuilder));
+            // Headless mode: Main thread just waits for the VM thread to finish
+            try {
+                vmThread.join();
+            } catch (final InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw abort(e);
+            }
         } else {
-            executeInVMThread(contextBuilder);
+            // UI mode: Main thread runs the SDL event loop
+            PlatformEventLoop.run(sdlPollTimeoutMilliseconds);
         }
+
+        System.exit(vmExitCode[0]);
     }
 
     private int execute(final Context.Builder contextBuilder) {
@@ -177,6 +212,7 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
         contextBuilder.option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.IMAGE_PATH, imagePath);
         contextBuilder.option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.HEADLESS, Boolean.toString(headless));
         contextBuilder.option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.QUIET, Boolean.toString(quiet));
+        contextBuilder.option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.CONTEXT_STACK_DEPTH, Integer.toString(contextStackDepth));
         contextBuilder.arguments(getLanguageId(), imageArguments);
         final String runtimeName = getRuntimeName();
         final boolean hasGraalCompiler = runtimeName.contains("Graal");
@@ -253,22 +289,6 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
         }
     }
 
-    private void executeInVMThread(final Context.Builder contextBuilder) {
-        final int[] vmExitCode = {-1};
-        final Thread vmThread = new Thread(() -> {
-            try {
-                vmExitCode[0] = execute(contextBuilder);
-            } catch (Throwable t) {
-                throw abort(t);
-            } finally {
-                PlatformEventLoop.stop();
-            }
-        }, "TruffleSqueakVM-Thread");
-        vmThread.start();
-        PlatformEventLoop.run(sdlPollTimeoutMilliseconds);
-        System.exit(vmExitCode[0]);
-    }
-
     @Override
     protected String getLanguageId() {
         return SqueakLanguageConfig.ID;
@@ -291,13 +311,14 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
         launcherOption(SqueakLanguageOptions.QUIET_FLAG, SqueakLanguageOptions.QUIET_HELP);
         launcherOption(SqueakLanguageOptions.SDL_POLL_TIMEOUT_FLAG + " <milliseconds>", SqueakLanguageOptions.SDL_POLL_TIMEOUT_HELP);
         launcherOption(SqueakLanguageOptions.WATCHDOG_TIMEOUT_FLAG + " <minutes>", SqueakLanguageOptions.WATCHDOG_TIMEOUT_HELP);
+        launcherOption(SqueakLanguageOptions.CONTEXT_STACK_DEPTH_FLAG + " <number>", SqueakLanguageOptions.CONTEXT_STACK_DEPTH_HELP);
     }
 
     @Override
     protected void collectArguments(final Set<String> options) {
         options.addAll(List.of(SqueakLanguageOptions.WATCHDOG_TIMEOUT_FLAG, SqueakLanguageOptions.CODE_FLAG, SqueakLanguageOptions.CODE_FLAG_SHORT, SqueakLanguageOptions.HEADLESS_FLAG,
                         SqueakLanguageOptions.QUIET_FLAG, SqueakLanguageOptions.PRINT_IMAGE_PATH_FLAG, SqueakLanguageOptions.DOWNLOAD_IMAGE_FLAG, SqueakLanguageOptions.RESOURCE_SUMMARY_FLAG,
-                        SqueakLanguageOptions.TRANSCRIPT_FORWARDING_FLAG));
+                        SqueakLanguageOptions.TRANSCRIPT_FORWARDING_FLAG, SqueakLanguageOptions.CONTEXT_STACK_DEPTH_FLAG));
     }
 
     private static boolean isExistingImageFile(final String fileName) {

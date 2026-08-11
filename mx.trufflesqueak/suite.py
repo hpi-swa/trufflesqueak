@@ -10,9 +10,9 @@ suite = {
     #  METADATA
     # ==========================================================================
     "name": "trufflesqueak",
-    "mxversion": "7.82.0",
+    "mxversion": "7.83.0",
     "versionConflictResolution": "latest",
-    "version": "25.0.2",
+    "version": "25.1.3",
     "release": False,
     "groupId": "de.hpi.swa.trufflesqueak",
     "url": "https://github.com/hpi-swa/trufflesqueak",
@@ -41,7 +41,7 @@ suite = {
             {
                 "name": "truffle",
                 "subdir": True,
-                "version": "8b6dc600f5d545c5249a9a53df9c2646f4763094",
+                "version": "vm-25.1.3",
                 "urls": [{"url": "https://github.com/oracle/graal", "kind": "git"}],
             }
         ],
@@ -51,32 +51,28 @@ suite = {
     # ==========================================================================
     "libraries": {
         "OSVM_PLUGINS": {
-            "baseurl": "https://github.com/hpi-swa/trufflesqueak/releases/download/24.2.2/osvm-plugins-202509110624",
+            "baseurl": "https://github.com/fniephaus/opensmalltalk-vm/releases/download/202607030734",
             "os_arch": {
                 "linux": {
                     "aarch64": {
-                        "urls": ["{baseurl}-linux-aarch64.zip"],
-                        "digest": "sha512:cec920765eae6dca8b95e5a24b34333fdaf5b2b9d634ff4cb42fd1a73fec24ab6fafcde7a5c27bc06441fa1c381bd05c8d48f09e3b56d8e61c590fe37d17076f",
+                        "urls": ["{baseurl}/squeak.cog.spur_linux64ARMv8.tar.gz"],
+                        "digest": "sha512:94a548dafa36843518759f37c8c118b4bb770f8707a9722cc40dbde661699ea755fbc6248a0b380a75a2d272f6b19512484c27b22abac0124b220f048dcf4690",
                     },
                     "amd64": {
-                        "urls": ["{baseurl}-linux-amd64.zip"],
-                        "digest": "sha512:ef7e6bcebb0b544908a68439685ac5ddfd60cfff13d0fcf77e0433e3a65d4185fc079907144a593e3667466fdafa2c38fbca94ba52adc7227c4a59829c5aa375",
+                        "urls": ["{baseurl}/squeak.cog.spur_linux64x64.tar.gz"],
+                        "digest": "sha512:669100d86a56ce64bde5b9dda981b8f4e1f675cc9b72ee4cb728f1156602fe474ea5f2c75cfa0fcae600f7dfe4c8a72248e373e3fb7d194aa865d3c895c390f0",
                     },
                 },
                 "darwin": {
                     "aarch64": {
-                        "urls": ["{baseurl}-darwin-aarch64.zip"],
-                        "digest": "sha512:662239e86d9a50344d23b0ff20571059f0218569455855b80f29b1f356af9fa476dfc863d86dfddf896aa48732023bf9c1132c3c9cc365feed9340f1de55d8cb",
-                    },
-                    "amd64": {
-                        "urls": ["{baseurl}-darwin-amd64.zip"],
-                        "digest": "sha512:21e1ddf84e34b228af8a352f77d810591143010c1ea0fd95b02c96822cbc1c2bdbf754de08333259cd7101d14f0ce2d19b035c7366176e07634438b968091ed7",
+                        "urls": ["{baseurl}/squeak.cog.spur_macos64ARMv8.tar.gz"],
+                        "digest": "sha512:8fde0da8c4c42900d943867b3531b546f21462d32ae57965f6a67ef8dae4041b924209e0edcff4c3f69b4b3789d401d578a7a4a3d330c54574173f53c346a7bc",
                     },
                 },
                 "windows": {
                     "amd64": {
-                        "urls": ["{baseurl}-windows-amd64.zip"],
-                        "digest": "sha512:92dd38360192b6623dac6452791b6caa0c3108a9d31d3453895b5d63dff35e8ec0aa48660fdcf3a0d10c4782101447fb6afda420ff6dd056d506b02df0c0f9f5",
+                        "urls": ["{baseurl}/squeak.cog.spur_win64x64.zip"],
+                        "digest": "sha512:a96afc9f28384f07539b85bf400cfdab28b6c05c08510ae5153040ec92d8365d01f1a7158f9e2cca4080c7451f8c870e518f04670f38c567b793e8793a9d0806",
                     },
                 },
                 "<others>": {"<others>": {"optional": True}},
@@ -90,18 +86,18 @@ suite = {
                             "groupId": "org.lwjgl",
                             "artifactId": "lwjgl-sdl",
                             "classifier": "natives-linux",
-                            "version": "3.4.1",
+                            "version": "3.4.2",
                         },
-                        "digest": "sha256:740fdd20b4ad78a0604ffdf17a9f6fd1f926373a6f01db3a4a01e4b8de60f41a",
+                        "digest": "sha256:027e3d8a25fc26c9fe14ed805b75a1cf8263350eb1e6db70ca98827e0ba16b05",
                     },
                     "aarch64": {
                         "maven": {
                             "groupId": "org.lwjgl",
                             "artifactId": "lwjgl-sdl",
                             "classifier": "natives-linux-arm64",
-                            "version": "3.4.1",
+                            "version": "3.4.2",
                         },
-                        "digest": "sha256:8aa7ce580ea64fea11d4a5edf49d7ba885d43a6b424e53b22c43534f82331734",
+                        "digest": "sha256:df567065f76f73061303d99b9cd9091991223aa92519fbd429cd1032cef9f28c",
                     },
                 },
                 "darwin": {
@@ -110,9 +106,9 @@ suite = {
                             "groupId": "org.lwjgl",
                             "artifactId": "lwjgl-sdl",
                             "classifier": "natives-macos-arm64",
-                            "version": "3.4.1",
+                            "version": "3.4.2",
                         },
-                        "digest": "sha256:ae26260771e5e7ff1ed7cc37fefa3e84cbee98f0831e02eff0eb353481d18322",
+                        "digest": "sha256:bae5634007b3e84e80549a2105f36e072efca18080f47fb7a7d146df4110e3a7",
                     },
                 },
                 "windows": {
@@ -121,9 +117,9 @@ suite = {
                             "groupId": "org.lwjgl",
                             "artifactId": "lwjgl-sdl",
                             "classifier": "natives-windows",
-                            "version": "3.4.1",
+                            "version": "3.4.2",
                         },
-                        "digest": "sha256:1441c37843555f9c90297148a0abbd674d838ad22202e174a00d83c624b19c06",
+                        "digest": "sha256:2a93346f7b3bfac86cf036e8db0c829042fb88f79fb0ce47dc243ea3b0e17494",
                     },
                 },
             },
@@ -140,9 +136,9 @@ suite = {
                 "resources",
             ],
             "dependencies": [
+                "de.hpi.swa.trufflesqueak.interpreterproxy.bindings",
                 "TRUFFLESQUEAK_SHARED",
                 "truffle:TRUFFLE_API",
-                "truffle:TRUFFLE_NFI",
             ],
             "requires": [
                 "java.datatransfer",
@@ -178,22 +174,15 @@ suite = {
             "javaCompliance": "24+",
             "workingSets": "TruffleSqueak",
         },
-        "de.hpi.swa.trufflesqueak.ffi.native": {
+        "de.hpi.swa.trufflesqueak.interpreterproxy.bindings": {
             "subDir": "src",
-            "class": "CMakeNinjaProject",
-            "vpath": True,
-            "ninja_targets": ["all"],
-            "os_arch": {
-                "<others>": {
-                    "<others>": {
-                        "cmakeConfig": {},
-                        "results": [
-                            "<lib:SqueakFFIPrims>",
-                            "<lib:InterpreterProxy>",
-                        ],
-                    },
-                },
-            },
+            "sourceDirs": ["src"],
+            "eclipseformat": False,
+            "forceJavac": True,
+            "javac.lint.overrides": "-restricted",
+            "jacoco": "exclude",
+            "javaCompliance": "24+",
+            "workingSets": "TruffleSqueak",
         },
         "de.hpi.swa.trufflesqueak.sdl3": {
             "subDir": "src",
@@ -257,7 +246,6 @@ suite = {
             "relative_module_path": "../modules",
             "relative_extracted_lib_paths": {
                 "truffle.attach.library": "../jvmlibs/<lib:truffleattach>",
-                "truffle.nfi.library": "../jvmlibs/<lib:trufflenfi>",
                 "java.library.path": "../lib",
             },
             "liblang_relpath": "../lib/<lib:smalltalkvm>",
@@ -306,12 +294,9 @@ suite = {
                 "TRUFFLESQUEAK_SDL3",
                 "TRUFFLESQUEAK_SHARED",
                 "truffle:TRUFFLE_API",
-                "truffle:TRUFFLE_NFI",
-                "truffle:TRUFFLE_NFI_LIBFFI",  # runtime dependency
-                "truffle:TRUFFLE_NFI_PANAMA",  # runtime dependency
             ],
             "javaProperties": {
-                "org.graalvm.language.smalltalk.home": "<path:TRUFFLESQUEAK_HOME>",
+                "org.graalvm.language.smalltalk.home": "<path:TRUFFLESQUEAK_GRAALVM_SUPPORT_PLATFORM_SPECIFIC>",
             },
             "maven": {
                 "artifactId": "smalltalk-language",
@@ -357,24 +342,6 @@ suite = {
                 "tag": ["default", "public"],
             },
             "license": ["MIT"],
-        },
-        "TRUFFLESQUEAK_HOME": {
-            "native": True,
-            "platformDependent": True,
-            "description": "TruffleSqueak home distribution",
-            "layout": {
-                "LICENSE_TRUFFLESQUEAK.txt": "file:LICENSE",
-                "README_TRUFFLESQUEAK.md": "file:README.md",
-                "lib/": [
-                    "dependency:de.hpi.swa.trufflesqueak.ffi.native/*",
-                    {
-                        "source_type": "extracted-dependency",
-                        "dependency": "OSVM_PLUGINS",
-                        "path": "*",
-                    },
-                ],
-            },
-            "maven": False,
         },
         "TRUFFLESQUEAK_LAUNCHER": {
             "description": "TruffleSqueak launcher",
@@ -500,12 +467,9 @@ suite = {
                     "amd64": {
                         "layout": {
                             "lib/": [
-                                "dependency:de.hpi.swa.trufflesqueak.ffi.native/*",
-                                {
-                                    "source_type": "extracted-dependency",
-                                    "dependency": "OSVM_PLUGINS",
-                                    "path": "*",
-                                },
+                                "extracted-dependency:OSVM_PLUGINS/sqcogspur64linuxht/lib/squeak/*/JPEGReadWriter2Plugin.so",
+                                "extracted-dependency:OSVM_PLUGINS/sqcogspur64linuxht/lib/squeak/*/LocalePlugin.so",
+                                "extracted-dependency:OSVM_PLUGINS/sqcogspur64linuxht/lib/squeak/*/SqueakSSL.so",
                                 "extracted-dependency:LWJGL_SDL_PLATFORM/linux/x64/org/lwjgl/sdl/libSDL3.so",
                             ],
                         },
@@ -513,12 +477,9 @@ suite = {
                     "aarch64": {
                         "layout": {
                             "lib/": [
-                                "dependency:de.hpi.swa.trufflesqueak.ffi.native/*",
-                                {
-                                    "source_type": "extracted-dependency",
-                                    "dependency": "OSVM_PLUGINS",
-                                    "path": "*",
-                                },
+                                "extracted-dependency:OSVM_PLUGINS/sqcogspur64ARMv8linuxht/lib/squeak/*/JPEGReadWriter2Plugin.so",
+                                "extracted-dependency:OSVM_PLUGINS/sqcogspur64ARMv8linuxht/lib/squeak/*/LocalePlugin.so",
+                                "extracted-dependency:OSVM_PLUGINS/sqcogspur64ARMv8linuxht/lib/squeak/*/SqueakSSL.so",
                                 "extracted-dependency:LWJGL_SDL_PLATFORM/linux/arm64/org/lwjgl/sdl/libSDL3.so",
                             ],
                         },
@@ -528,12 +489,9 @@ suite = {
                     "aarch64": {
                         "layout": {
                             "lib/": [
-                                "dependency:de.hpi.swa.trufflesqueak.ffi.native/*",
-                                {
-                                    "source_type": "extracted-dependency",
-                                    "dependency": "OSVM_PLUGINS",
-                                    "path": "*",
-                                },
+                                "extracted-dependency:OSVM_PLUGINS/Squeak.app/Contents/Resources/JPEGReadWriter2Plugin.bundle",
+                                "extracted-dependency:OSVM_PLUGINS/Squeak.app/Contents/Resources/LocalePlugin.bundle",
+                                "extracted-dependency:OSVM_PLUGINS/Squeak.app/Contents/Resources/SqueakSSL.bundle",
                                 "extracted-dependency:LWJGL_SDL_PLATFORM/macos/arm64/org/lwjgl/sdl/libSDL3.dylib",
                             ],
                         },
@@ -543,12 +501,9 @@ suite = {
                     "amd64": {
                         "layout": {
                             "lib/": [
-                                "dependency:de.hpi.swa.trufflesqueak.ffi.native/*",
-                                {
-                                    "source_type": "extracted-dependency",
-                                    "dependency": "OSVM_PLUGINS",
-                                    "path": "*",
-                                },
+                                "extracted-dependency:OSVM_PLUGINS/JPEGReadWriter2Plugin.dll",
+                                "extracted-dependency:OSVM_PLUGINS/LocalePlugin.dll",
+                                "extracted-dependency:OSVM_PLUGINS/SqueakSSL.dll",
                                 "extracted-dependency:LWJGL_SDL_PLATFORM/windows/x64/org/lwjgl/sdl/SDL3.dll",
                             ],
                         },
@@ -567,6 +522,7 @@ suite = {
                     "file:LICENSE",
                     "file:README.md",
                 ],
+                "./resources/README.md": "string:Directory for Smalltalk image, changes, and sources files.\n",
             },
             "maven": False,
         },
@@ -635,7 +591,6 @@ suite = {
                 },
                 "jvmlibs/": [
                     "extracted-dependency:truffle:TRUFFLE_ATTACH_GRAALVM_SUPPORT",
-                    "extracted-dependency:truffle:TRUFFLE_NFI_NATIVE_GRAALVM_SUPPORT",
                 ],
                 "modules/": [
                     "classpath-dependencies:TRUFFLESQUEAK_STANDALONE_DEPENDENCIES",

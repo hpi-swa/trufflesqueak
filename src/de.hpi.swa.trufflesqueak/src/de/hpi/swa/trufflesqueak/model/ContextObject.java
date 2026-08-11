@@ -361,22 +361,23 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         return FrameAccess.getCodeObject(getTruffleFrame());
     }
 
-    public void setCodeObject(final CompiledCodeObject value) {
-        senderOrFrameOrSize = createTruffleFrame(this, getTruffleFrame(), value);
-        setMarkedCodeFlags();
-    }
-
     public void overwriteCodeObject(final CompiledCodeObject value) {
         resetMarkedCodeFlags();
         setCodeObject(value);
     }
 
+    public void setCodeObject(final CompiledCodeObject value) {
+        senderOrFrameOrSize = createTruffleFrame(value);
+        setMarkedCodeFlags();
+    }
+
     @TruffleBoundary
-    private static MaterializedFrame createTruffleFrame(final ContextObject context, final MaterializedFrame currentFrame, final CompiledCodeObject method) {
+    private MaterializedFrame createTruffleFrame(final CompiledCodeObject method) {
         final Object[] frameArguments;
         final int instructionPointer;
         final int stackPointer;
-        if (currentFrame != null) {
+        if (hasTruffleFrame()) {
+            final MaterializedFrame currentFrame = getTruffleFrame();
             FrameAccess.assertSenderNotNull(currentFrame);
             FrameAccess.assertReceiverNotNull(currentFrame);
 
@@ -397,7 +398,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
             stackPointer = method.getNumTemps();
         }
         final MaterializedFrame truffleFrame = Truffle.getRuntime().createMaterializedFrame(frameArguments, method.getFrameDescriptor());
-        FrameAccess.setContext(truffleFrame, context);
+        FrameAccess.setContext(truffleFrame, this);
         FrameAccess.setInstructionPointer(truffleFrame, instructionPointer);
         FrameAccess.setStackPointer(truffleFrame, stackPointer);
         return truffleFrame;

@@ -2332,7 +2332,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         return lang.contains("/");
     }
 
-    private static com.oracle.truffle.api.instrumentation.TruffleInstrument.Env getInstrumentEnv() {
+    private static TruffleInstrument.Env getInstrumentEnv() {
         if (instrumentEnv == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             final TruffleLanguage.Env env = SqueakImageContext.getSlow().env;

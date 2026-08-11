@@ -43,7 +43,6 @@ import de.hpi.swa.trufflesqueak.nodes.plugins.UUIDPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.UnixOSProcessPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.Win32OSProcessPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.ZipPlugin;
-import de.hpi.swa.trufflesqueak.nodes.plugins.ffi.PrimExternalCallNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.network.SocketPlugin;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArrayStreamPrimitives;
@@ -52,6 +51,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ContextPrimitives;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitives;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.IOPrimitives;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitives;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimExternalCallNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.StoragePrimitives;
 import de.hpi.swa.trufflesqueak.util.OS;
 

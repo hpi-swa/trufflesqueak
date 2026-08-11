@@ -23,7 +23,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Abst
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 
 /**
- * Returns the new active Context or null if the current active Context has not been preempted.
+ * Returns true if the current active Context has been preempted.
  */
 @GenerateInline(false)
 @GenerateCached

@@ -534,7 +534,7 @@ public final class ObjectGraphUtils {
 
             /* Trace the special objects to give separate roots to the threads. */
             addIfUnmarked(image.specialObjectsArray);
-            tracePointers(image.specialObjectsArray);
+            tracePointers(image.specialObjectsArray.resolveForwardingPointer());
         }
 
         private void addObjectsFromFrames() {

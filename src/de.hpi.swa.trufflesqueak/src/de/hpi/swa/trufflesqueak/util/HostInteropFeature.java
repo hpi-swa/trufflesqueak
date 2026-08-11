@@ -73,6 +73,6 @@ public class HostInteropFeature implements Feature {
          * System class needs special handling. In particular, its fields hold user-specific data
          * that should never be in the image heap.
          */
-        reflection.register(AccessCondition.unconditional(), java.lang.System.class.getMethods());
+        reflection.register(AccessCondition.unconditional(), System.class.getMethods());
     }
 }

@@ -119,12 +119,26 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         CompilerAsserts.neverPartOfCompilation();
         if (isByteType()) {
             return getNumSlots(getByteLength(), BYTE_TO_WORD);
-        } else if (isShortType()) {
-            return getNumSlots(getShortLength(), SHORT_TO_WORD);
         } else if (isIntType()) {
             return getNumSlots(getIntLength(), INTEGER_TO_WORD);
         } else if (isLongType()) {
             return getLongLength();
+        } else if (isShortType()) {
+            return getNumSlots(getShortLength(), SHORT_TO_WORD);
+        } else {
+            throw SqueakException.create("Unexpected NativeObject");
+        }
+    }
+
+    public int byteSize() {
+        if (isByteType()) {
+            return getByteLength() * Byte.BYTES;
+        } else if (isIntType()) {
+            return getIntLength() * Integer.BYTES;
+        } else if (isLongType()) {
+            return getLongLength() * Long.BYTES;
+        } else if (isShortType()) {
+            return getShortLength() * Short.BYTES;
         } else {
             throw SqueakException.create("Unexpected NativeObject");
         }

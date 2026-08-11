@@ -6,21 +6,20 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.plugins;
 
+import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.Linker;
+import java.lang.foreign.SymbolLookup;
+import java.lang.foreign.ValueLayout;
+import java.lang.invoke.MethodHandle;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.TruffleLanguage.Env;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.ArityException;
-import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.interop.UnknownIdentifierException;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedBranchProfile;
-import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.nfi.api.SignatureLibrary;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -38,12 +37,7 @@ import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHolder {
 
     protected abstract static class AbstractSysCallPrimitiveNode extends AbstractPrimitiveNode {
-        protected final boolean supportsNFI;
-        @CompilationFinal protected Object sysCallObject;
-
-        public AbstractSysCallPrimitiveNode() {
-            supportsNFI = SqueakImageContext.getSlow().supportsNFI();
-        }
+        private final MethodHandle handle = findHandle();
 
         protected static final long failIfMinusOne(final long result, final InlinedBranchProfile errorProfile, final Node node) {
             if (result == -1) {
@@ -56,51 +50,45 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
 
         protected abstract String getFunctionName();
 
-        protected String getFunctionSignature() {
-            return "():SINT32";
+        protected FunctionDescriptor getFunctionSignature() {
+            return FunctionDescriptor.of(ValueLayout.JAVA_INT);
         }
 
-        protected final Object getSysCallObject() {
-            assert supportsNFI;
-            if (sysCallObject == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                final Env env = SqueakImageContext.getSlow().env;
-                final Object defaultLibrary = env.parseInternal(Source.newBuilder("nfi", "default", "native").build()).call();
-                try {
-                    final Object symbol = InteropLibrary.getUncached().readMember(defaultLibrary, getFunctionName());
-                    sysCallObject = SignatureLibrary.getUncached().bind(createNFISignature(env, getFunctionSignature()), symbol);
-                } catch (UnsupportedMessageException | UnknownIdentifierException e) {
-                    throw PrimitiveFailed.andTransferToInterpreterWithError(e);
-                }
-            }
-            return sysCallObject;
+        protected final MethodHandle getHandle() {
+            return handle;
         }
 
-        private static Object createNFISignature(final Env env, final String functionSignature) {
-            final Source source = Source.newBuilder("nfi", functionSignature, "signature").build();
-            return env.parseInternal(source).call();
+        @SuppressWarnings("restricted")
+        private MethodHandle findHandle() {
+            final Linker linker = Linker.nativeLinker();
+            final SymbolLookup stdlib = linker.defaultLookup();
+            return stdlib.find(getFunctionName()).map(memorySegment -> linker.downcallHandle(memorySegment, getFunctionSignature())).orElseThrow(
+                            () -> new RuntimeException("Could not find '" + getFunctionName() + "' in the standard library. Are you on a POSIX system?"));
         }
 
-        protected final long getValue(final InteropLibrary lib) {
+        @TruffleBoundary
+        protected final long getValue() {
             try {
-                return (int) lib.execute(sysCallObject);
-            } catch (final UnsupportedMessageException | UnsupportedTypeException | ArityException e) {
+                return (int) handle.invokeExact();
+            } catch (final Throwable e) {
                 throw PrimitiveFailed.andTransferToInterpreterWithError(e);
             }
         }
 
-        protected final long getValue(final InteropLibrary lib, final long id) {
+        @TruffleBoundary
+        protected final long getValue(final long id) {
             try {
-                return (int) lib.execute(sysCallObject, (int) id);
-            } catch (final UnsupportedMessageException | UnsupportedTypeException | ArityException e) {
+                return (int) handle.invokeExact((int) id);
+            } catch (final Throwable e) {
                 throw PrimitiveFailed.andTransferToInterpreterWithError(e);
             }
         }
 
-        protected final long setValue(final InteropLibrary lib, final long id, final long value) {
+        @TruffleBoundary
+        protected final long setValue(final long id, final long value) {
             try {
-                return (int) lib.execute(sysCallObject, (int) id, (int) value);
-            } catch (final UnsupportedMessageException | UnsupportedTypeException | ArityException e) {
+                return (int) handle.invokeExact((int) id, (int) value);
+            } catch (final Throwable e) {
                 throw PrimitiveFailed.andTransferToInterpreterWithError(e);
             }
         }

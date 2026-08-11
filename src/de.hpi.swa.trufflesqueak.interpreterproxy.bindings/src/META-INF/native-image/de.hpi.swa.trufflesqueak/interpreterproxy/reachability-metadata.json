@@ -1,0 +1,738 @@
+{
+  "reflection": [
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$activeProcess$Function"
+    },
+    {
+      "methods": [
+        { "name": "apply", "parameterTypes": ["java.lang.foreign.MemorySegment", "int"] }
+      ],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$addHighPriorityTickee$Function"
+    },
+    {
+      "methods": [
+        {
+          "name": "apply",
+          "parameterTypes": ["java.lang.foreign.MemorySegment", "int", "int"]
+        }
+      ],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$addSynchronousTickee$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$argumentCountOf$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$arrayValueOf$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long", "long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$becomewith$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$booleanValueOf$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$byteSizeOf$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$byteSwapped$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$bytesPerElement$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$cStringOrNullFor$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["java.lang.foreign.MemorySegment"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$callbackEnter$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["int"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$characterObjectOf$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$characterTable$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$characterValueOf$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$checkedIntegerValueOf$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$classAlien$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$classArray$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$classBitmap$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$classByteArray$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$classCharacter$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$classDoubleByteArray$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$classDoubleWordArray$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$classExternalAddress$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$classExternalData$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$classExternalFunction$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$classExternalLibrary$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$classExternalStructure$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$classFloat$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$classFloat32Array$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$classFloat64Array$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$classLargeNegativeInteger$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$classLargePositiveInteger$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$classPoint$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$classSemaphore$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$classSmallInteger$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$classString$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$classUnsafeAlien$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$classWordArray$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$cloneObject$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$copyBits$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long", "long", "long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$copyBitsFromtoat$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$disownVM$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$failed$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$falseObject$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long", "long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$fetchArrayofObject$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$fetchClassOf$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long", "long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$fetchFloatofObject$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long", "long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$fetchIntegerofObject$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long", "long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$fetchLong32ofObject$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long", "long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$fetchPointerofObject$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$fileTimesInUTC$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$firstFixedField$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$firstIndexableField$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["double"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$floatObjectOf$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$floatValueOf$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$forceInterruptCheck$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$fullDisplayUpdate$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$fullGC$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$getInterruptPending$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$getStackPointer$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$getThisSessionID$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$identityHashOf$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long", "long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$includesBehaviorThatOf$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$incrementalGC$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$instanceSizeOf$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long", "long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$instantiateClassindexableSize$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$integerObjectOf$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$integerValueOf$Function"
+    },
+    {
+      "methods": [
+        {
+          "name": "apply",
+          "parameterTypes": [
+            "java.lang.foreign.MemorySegment",
+            "java.lang.foreign.MemorySegment",
+            "long",
+            "long"
+          ]
+        }
+      ],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$ioFilenamefromStringofLengthresolveAliases$Function"
+    },
+    {
+      "methods": [
+        {
+          "name": "apply",
+          "parameterTypes": ["java.lang.foreign.MemorySegment", "java.lang.foreign.MemorySegment"]
+        }
+      ],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$ioLoadFunctionFrom$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long", "long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$ioLoadModuleOfLength$Function"
+    },
+    {
+      "methods": [
+        {
+          "name": "apply",
+          "parameterTypes": ["long", "long", "java.lang.foreign.MemorySegment"]
+        }
+      ],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$ioLoadSymbolOfLengthFromModule$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$ioMicroMSecs$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$isArray$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$isBooleanObject$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$isBytes$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$isCharacterObject$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["int"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$isCharacterValue$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$isFloatObject$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$isImmediate$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$isInMemory$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$isIndexable$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$isIntegerObject$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$isIntegerValue$Function"
+    },
+    {
+      "methods": [
+        { "name": "apply", "parameterTypes": ["long", "java.lang.foreign.MemorySegment"] }
+      ],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$isKindOf$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long", "long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$isKindOfClass$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$isLong64s$Function"
+    },
+    {
+      "methods": [
+        { "name": "apply", "parameterTypes": ["long", "java.lang.foreign.MemorySegment"] }
+      ],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$isMemberOf$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$isOopImmutable$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$isOopMutable$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$isPinned$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$isPointers$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$isPositiveMachineIntegerObject$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$isShorts$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$isWeak$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$isWords$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$isWordsOrBytes$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$isWordsOrShorts$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$isYoung$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$literalCountOf$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long", "long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$literalofMethod$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$loadBitBltFrom$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$majorVersion$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long", "long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$makePointwithxValueyValue$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$methodArgumentCount$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$methodPrimitiveIndex$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$methodReturnBool$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["double"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$methodReturnFloat$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$methodReturnInteger$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$methodReturnReceiver$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["java.lang.foreign.MemorySegment"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$methodReturnString$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$methodReturnValue$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$minorVersion$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$nilObject$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$ownVM$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$pinObject$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$pop$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long", "long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$popthenPush$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["int"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$positive32BitIntegerFor$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$positive32BitValueOf$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$positive64BitIntegerFor$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$positive64BitValueOf$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$positiveMachineIntegerValueOf$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$primitiveErrorTable$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$primitiveFail$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$primitiveFailFor$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long", "long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$primitiveFailForFFIExceptionat$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$primitiveFailForOSError$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$primitiveFailureCode$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$primitiveIndexOf$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$primitiveMethod$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$processOSErrInstVarOffset$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$push$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$pushBool$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$pushInteger$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$reestablishContextPriorToCallback$Function"
+    },
+    {
+      "methods": [
+        {
+          "name": "apply",
+          "parameterTypes": ["long", "java.lang.foreign.MemorySegment", "long"]
+        }
+      ],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$returnAsThroughCallbackContext$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["java.lang.foreign.MemorySegment"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$sendInvokeCallbackContext$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["java.lang.foreign.MemorySegment"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$setInterruptCheckChain$Function"
+    },
+    {
+      "methods": [
+        { "name": "apply", "parameterTypes": ["long", "long", "long", "long", "long"] }
+      ],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$showDisplayBitsLeftTopRightBottom$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$signalNoResume$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$signalSemaphoreWithIndex$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$signed32BitIntegerFor$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$signed32BitValueOf$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$signed64BitIntegerFor$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$signed64BitValueOf$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$signedMachineIntegerValueOf$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$sizeOfAlienData$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["java.lang.foreign.MemorySegment"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$sizeOfSTArrayFromCPrimitive$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$slotSizeOf$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long", "long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$stObjectat$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long", "long", "long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$stObjectatput$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$stSizeOf$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$stackFloatValue$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$stackIntegerValue$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$stackObjectValue$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$stackPositiveMachineIntegerValue$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$stackSignedMachineIntegerValue$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$stackValue$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$startOfAlienData$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$statNumGCs$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long", "long", "long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$storeIntegerofObjectwithValue$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long", "long", "long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$storeLong32ofObjectwithValue$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long", "long", "long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$storePointerofObjectwithValue$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["java.lang.foreign.MemorySegment"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$stringForCString$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$success$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$superclassOf$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$tenuringIncrementalGC$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$topRemappableOop$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$trueObject$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": ["long"] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$unpinObject$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$utcMicroseconds$Function"
+    },
+    {
+      "methods": [{ "name": "apply", "parameterTypes": [ ] }],
+      "type": "de.hpi.swa.trufflesqueak.interpreterproxy.bindings.VirtualMachine$vmEndianness$Function"
+    }
+  ]
+}

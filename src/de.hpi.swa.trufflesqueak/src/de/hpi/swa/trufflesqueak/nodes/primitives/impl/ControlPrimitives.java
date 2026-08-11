@@ -1287,24 +1287,46 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    /**
+     * Because this primitive is called within a loop that contains a message send, interrupts are
+     * not checked on the backwards jump to the loop head. Here, we perform the check to make sure
+     * that interrupts are processed.
+     * <p>
+     * In OSVM, this primitive returns immediately if there are pending interrupts. Also, it waits
+     * until the minimum of the duration given by the argument and the time left on the current
+     * Delay. If it does wait, the wait terminates early when an interrupt event is received.
+     * <p>
+     * Here, we emulate this behavior by checking for interrupts before the park. By registering the
+     * current thread, newly arriving interrupts will force the park to exit early, allowing the
+     * next iteration of the Smalltalk idle loop to catch them.
+     */
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 230)
     protected abstract static class PrimRelinquishProcessorNode extends AbstractPrimitiveWithFrameNode implements Primitive1WithFallback {
         @Specialization
         protected static final Object doRelinquish(final VirtualFrame frame, final Object receiver, final long timeMicroseconds,
+                        @Bind final SqueakImageContext image,
                         @Cached final CheckForInterruptsFullNode interruptNode,
                         @Cached final PushToStackNode pushNode) {
-            MiscUtils.park(timeMicroseconds * 1000);
-            /*
-             * Perform interrupt check (even if interrupt handler is not active), otherwise
-             * idleProcess gets stuck.
-             */
             try {
-                interruptNode.execute(frame);
-            } catch (final ProcessSwitch ps) {
-                pushNode.execute(frame, receiver);
-                throw ps;
+                // Register this thread to be notified if an interrupt occurs.
+                image.interrupt.setVMThread(Thread.currentThread());
+
+                // Check for interrupts enqueued before primitive send.
+                try {
+                    interruptNode.execute(frame);
+                } catch (final ProcessSwitch ps) {
+                    pushNode.execute(frame, receiver);
+                    throw ps;
+                }
+
+                // Sleep for duration or until interrupt, whichever comes first.
+                MiscUtils.parkNanos(timeMicroseconds * 1000);
+            } finally {
+                // Unregister this thread.
+                image.interrupt.setVMThread(null);
             }
+            // If an interrupt terminates the park, it will be handled on the next idle loop.
             return receiver;
         }
     }

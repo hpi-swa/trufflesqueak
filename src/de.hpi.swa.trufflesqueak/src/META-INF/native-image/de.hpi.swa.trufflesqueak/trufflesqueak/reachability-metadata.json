@@ -1,21 +1,16 @@
 {
   "reflection": [
     {
-      "type": "de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_MainThreadCallback$Function",
-      "methods": [{ "name": "apply", "parameterTypes": ["java.lang.foreign.MemorySegment"] }]
-    },
-    {
-      "type": "com.oracle.svm.enterprise.truffle.SubstrateEnterpriseOptimizedCallTarget",
       "methods": [
         { "name": "getCallCount", "parameterTypes": [ ] },
         { "name": "getCallAndLoopCount", "parameterTypes": [ ] },
         { "name": "getKnownCallSiteCount", "parameterTypes": [ ] },
         { "name": "getNonTrivialNodeCount", "parameterTypes": [ ] },
         { "name": "toString", "parameterTypes": [ ] }
-      ]
+      ],
+      "type": "com.oracle.svm.enterprise.truffle.SubstrateEnterpriseOptimizedCallTarget"
     },
     {
-      "type": "com.oracle.svm.truffle.api.SubstrateOptimizedCallTarget",
       "allDeclaredFields": true,
       "methods": [
         { "name": "getCallCount", "parameterTypes": [ ] },
@@ -23,27 +18,27 @@
         { "name": "getKnownCallSiteCount", "parameterTypes": [ ] },
         { "name": "getNonTrivialNodeCount", "parameterTypes": [ ] },
         { "name": "toString", "parameterTypes": [ ] }
-      ]
+      ],
+      "type": "com.oracle.svm.truffle.api.SubstrateOptimizedCallTarget"
     },
     {
-      "type": "com.oracle.svm.truffle.api.SubstrateTruffleRuntime",
       "methods": [
         { "name": "getCompileQueue", "parameterTypes": [ ] },
         { "name": "getCompilationQueueSize", "parameterTypes": [ ] },
         { "name": "getName", "parameterTypes": [ ] },
         { "name": "toString", "parameterTypes": [ ] }
-      ]
+      ],
+      "type": "com.oracle.svm.truffle.api.SubstrateTruffleRuntime"
     },
     {
-      "type": "com.oracle.truffle.runtime.BackgroundCompileQueue",
       "allDeclaredFields": true,
       "methods": [
         { "name": "getQueueSize", "parameterTypes": [ ] },
         { "name": "toString", "parameterTypes": [ ] }
-      ]
+      ],
+      "type": "com.oracle.truffle.runtime.BackgroundCompileQueue"
     },
     {
-      "type": "com.oracle.truffle.runtime.OptimizedCallTarget",
       "allDeclaredFields": true,
       "methods": [
         { "name": "getCallCount", "parameterTypes": [ ] },
@@ -54,186 +49,43 @@
         { "name": "getRootNode", "parameterTypes": [ ] },
         { "name": "highestCompiledTier", "parameterTypes": [ ] },
         { "name": "toString", "parameterTypes": [ ] }
-      ]
+      ],
+      "type": "com.oracle.truffle.runtime.OptimizedCallTarget"
     },
     {
-      "type": "com.oracle.truffle.runtime.OptimizedCallTarget$ArgumentsProfile",
       "methods": [
         { "name": "getSimpleName", "parameterTypes": [ ] },
         { "name": "getTypes", "parameterTypes": [ ] }
-      ]
+      ],
+      "type": "com.oracle.truffle.runtime.OptimizedCallTarget$ArgumentsProfile"
     },
     {
-      "type": "com.oracle.truffle.runtime.OptimizedCallTarget$ReturnProfile",
       "methods": [
         { "name": "getSimpleName", "parameterTypes": [ ] },
         { "name": "getType", "parameterTypes": [ ] }
-      ]
+      ],
+      "type": "com.oracle.truffle.runtime.OptimizedCallTarget$ReturnProfile"
     },
     {
-      "type": "com.oracle.truffle.api.nodes.DirectCallNode",
       "methods": [
         { "name": "getCallCount", "parameterTypes": [ ] },
         { "name": "getCurrentCallTarget", "parameterTypes": [ ] },
         { "name": "isInliningForced", "parameterTypes": [ ] }
-      ]
+      ],
+      "type": "com.oracle.truffle.api.nodes.DirectCallNode"
     },
     {
-      "type": "com.oracle.truffle.runtime.OptimizedDirectCallNode",
       "methods": [
         { "name": "getCallCount", "parameterTypes": [ ] },
         { "name": "getCurrentCallTarget", "parameterTypes": [ ] },
         { "name": "isInliningForced", "parameterTypes": [ ] }
-      ]
+      ],
+      "type": "com.oracle.truffle.runtime.OptimizedDirectCallNode"
     },
     {
-      "type": "com.oracle.truffle.runtime.OptimizedTruffleRuntime",
-      "methods": [{ "name": "getCompileQueue", "parameterTypes": [ ] }]
+      "methods": [{ "name": "getCompileQueue", "parameterTypes": [ ] }],
+      "type": "com.oracle.truffle.runtime.OptimizedTruffleRuntime"
     }
   ],
-  "resources": [{ "module": "de.hpi.swa.trufflesqueak", "glob": "trufflesqueak-icon.png" }],
-  "foreign": {
-    "upcalls": [{ "returnType": "void", "parameterTypes": ["void*"] }],
-    "downcalls": [
-      { "returnType": "void", "parameterTypes": ["void*", "void*"] },
-      { "returnType": "void", "parameterTypes": ["jlong", "jlong"] },
-      { "returnType": "jboolean", "parameterTypes": [ ] },
-      {
-        "returnType": "jboolean",
-        "parameterTypes": ["void*", "void*", "void*", "jint"]
-      },
-      { "returnType": "void*", "parameterTypes": [ ] },
-      {
-        "returnType": "void*",
-        "parameterTypes": ["void*", "jint", "jint", "jint", "jint"]
-      },
-      { "returnType": "void*", "parameterTypes": ["void*", "void*"] },
-      { "returnType": "void", "parameterTypes": ["jint", "jboolean"] },
-      {
-        "returnType": "jint",
-        "parameterTypes": ["void*", "jint", "jint", "jint", "jint"]
-      },
-      { "returnType": "void", "parameterTypes": [ ] },
-      { "returnType": "jboolean", "parameterTypes": ["void*", "void*"] },
-      { "returnType": "jlong", "parameterTypes": ["jlong", "jlong"] },
-      {
-        "returnType": "jlong",
-        "parameterTypes": [
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong",
-          "jlong"
-        ]
-      },
-      { "returnType": "void*", "parameterTypes": ["void*", "jlong"] },
-      {
-        "returnType": "void*",
-        "parameterTypes": ["void*", "void*", "jint", "jint", "jint", "jint"]
-      },
-      { "returnType": "jlong", "parameterTypes": ["jdouble"] },
-      { "returnType": "void*", "parameterTypes": ["void*", "jint", "jint", "jlong"] },
-      { "returnType": "jlong", "parameterTypes": [ ] },
-      { "returnType": "jboolean", "parameterTypes": ["void*"] },
-      { "returnType": "void*", "parameterTypes": ["void*", "jboolean"] },
-      { "returnType": "jfloat", "parameterTypes": ["void*"] },
-      { "returnType": "void", "parameterTypes": ["void*"] },
-      { "returnType": "jboolean", "parameterTypes": ["void*", "jint"] },
-      { "returnType": "jboolean", "parameterTypes": ["void*", "void*", "jboolean"] },
-      { "returnType": "jdouble", "parameterTypes": ["jlong"] },
-      {
-        "returnType": "jlong",
-        "parameterTypes": ["jlong", "jlong", "jlong", "jlong", "jlong"]
-      },
-      { "returnType": "jlong", "parameterTypes": ["jlong"] },
-      { "returnType": "jlong", "parameterTypes": ["jlong", "jlong", "jlong"] },
-      { "returnType": "jboolean", "parameterTypes": ["jint"] },
-      {
-        "returnType": "jboolean",
-        "parameterTypes": ["void*", "void*", "void*", "void*"]
-      },
-      { "returnType": "void*", "parameterTypes": ["jint", "jint", "jint"] },
-      { "returnType": "void*", "parameterTypes": ["void*", "jint", "jint"] },
-      { "returnType": "jboolean", "parameterTypes": ["void*", "jint", "jint"] },
-      { "returnType": "jboolean", "parameterTypes": ["void*", "jboolean"] },
-      { "returnType": "jint", "parameterTypes": [ ] },
-      { "returnType": "void*", "parameterTypes": ["jint"] }
-    ]
-  }
+  "resources": [{ "glob": "trufflesqueak-icon.png", "module": "de.hpi.swa.trufflesqueak" }]
 }

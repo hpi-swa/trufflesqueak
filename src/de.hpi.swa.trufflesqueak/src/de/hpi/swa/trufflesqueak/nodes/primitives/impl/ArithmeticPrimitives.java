@@ -6,7 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
-import static de.hpi.swa.trufflesqueak.nodes.SqueakGuards.isOverflowDivision;
 import static de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers.isZero;
 
 import java.util.List;
@@ -418,7 +417,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Exclusive @Cached final InlinedConditionProfile sameSignProfile) {
             if (isZeroProfile.profile(node, rhs == 0)) {
                 throw PrimitiveFailed.BAD_ARGUMENT;
-            } else if (isOverflowDivisionProfile.profile(node, isOverflowDivision(lhs, rhs))) {
+            } else if (isOverflowDivisionProfile.profile(node, SqueakGuards.isOverflowDivision(lhs, rhs))) {
                 return LargeIntegers.createLongMinOverflowResult(getContext(node));
             } else {
                 final long q = lhs / rhs;
@@ -454,7 +453,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Exclusive @Cached final InlinedConditionProfile isOverflowDivisionProfile) {
             if (isZeroProfile.profile(node, rhs == 0)) {
                 throw PrimitiveFailed.BAD_ARGUMENT;
-            } else if (isOverflowDivisionProfile.profile(node, isOverflowDivision(lhs, rhs))) {
+            } else if (isOverflowDivisionProfile.profile(node, SqueakGuards.isOverflowDivision(lhs, rhs))) {
                 return LargeIntegers.createLongMinOverflowResult(getContext(node));
             } else {
                 return lhs / rhs;

@@ -1,0 +1,8 @@
+--output
+src/de.hpi.swa.trufflesqueak.interpreterproxy.bindings/src
+--target-package
+de.hpi.swa.trufflesqueak.interpreterproxy.bindings
+-DVM_PROXY_MAJOR=1
+-DVM_PROXY_MINOR=17
+src/de.hpi.swa.trufflesqueak.interpreterproxy.bindings/include/sqVirtualMachine.h
+--include-struct VirtualMachine

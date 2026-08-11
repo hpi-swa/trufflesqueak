@@ -51,14 +51,15 @@ public final class SDL_MainThreadCallback {
         return Linker.nativeLinker().upcallStub(UP$MH.bindTo(fi), $DESC, arena);
     }
 
-    private static final MethodHandle DOWN$MH = Linker.nativeLinker().downcallHandle($DESC);
+    private static final MethodHandle DOWN$MH = MethodHandles.filterArguments(
+            Linker.nativeLinker().downcallHandle($DESC), 0, SDL_h.OF_ADDRESS);
 
     /**
      * Invoke the upcall stub {@code funcPtr}, with given parameters
      */
     public static void invoke(MemorySegment funcPtr, MemorySegment userdata) {
         try {
-             DOWN$MH.invokeExact(funcPtr, userdata);
+             DOWN$MH.invokeExact(funcPtr.address(), userdata);
         } catch (Error | RuntimeException ex) {
             throw ex;
         } catch (Throwable ex$) {

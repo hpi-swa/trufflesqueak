@@ -1,3 +1,6 @@
+src/de.hpi.swa.trufflesqueak.interpreterproxy.bindings/src/de/hpi/swa/trufflesqueak/interpreterproxy/bindings/sqVirtualMachine_h$shared.java,jextract.copyright
+src/de.hpi.swa.trufflesqueak.interpreterproxy.bindings/src/de/hpi/swa/trufflesqueak/interpreterproxy/bindings/sqVirtualMachine_h.java,jextract.copyright
+src/de.hpi.swa.trufflesqueak.interpreterproxy.bindings/src/de/hpi/swa/trufflesqueak/interpreterproxy/bindings/VirtualMachine.java,jextract.copyright
 src/de.hpi.swa.trufflesqueak.sdl3/src/de/hpi/swa/trufflesqueak/sdl3/bindings/SDL_AudioDeviceEvent.java,jextract.copyright
 src/de.hpi.swa.trufflesqueak.sdl3/src/de/hpi/swa/trufflesqueak/sdl3/bindings/SDL_ClipboardEvent.java,jextract.copyright
 src/de.hpi.swa.trufflesqueak.sdl3/src/de/hpi/swa/trufflesqueak/sdl3/bindings/SDL_CommonEvent.java,jextract.copyright
@@ -36,6 +39,7 @@ src/de.hpi.swa.trufflesqueak.sdl3/src/de/hpi/swa/trufflesqueak/sdl3/bindings/SDL
 src/de.hpi.swa.trufflesqueak.sdl3/src/de/hpi/swa/trufflesqueak/sdl3/bindings/SDL_Surface.java,jextract.copyright
 src/de.hpi.swa.trufflesqueak.sdl3/src/de/hpi/swa/trufflesqueak/sdl3/bindings/SDL_TextEditingCandidatesEvent.java,jextract.copyright
 src/de.hpi.swa.trufflesqueak.sdl3/src/de/hpi/swa/trufflesqueak/sdl3/bindings/SDL_Rect.java,jextract.copyright
+src/de.hpi.swa.trufflesqueak.sdl3/src/de/hpi/swa/trufflesqueak/sdl3/bindings/SDL_RunOnMainThread$callback.java,jextract.copyright
 src/de.hpi.swa.trufflesqueak.sdl3/src/de/hpi/swa/trufflesqueak/sdl3/bindings/SDL_TextEditingEvent.java,jextract.copyright
 src/de.hpi.swa.trufflesqueak.sdl3/src/de/hpi/swa/trufflesqueak/sdl3/bindings/SDL_TextInputEvent.java,jextract.copyright
 src/de.hpi.swa.trufflesqueak.sdl3/src/de/hpi/swa/trufflesqueak/sdl3/bindings/SDL_TouchFingerEvent.java,jextract.copyright

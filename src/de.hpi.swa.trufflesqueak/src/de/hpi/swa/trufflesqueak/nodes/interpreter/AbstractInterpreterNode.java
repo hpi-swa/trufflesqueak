@@ -32,6 +32,7 @@ import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -114,7 +115,15 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         private final SqueakObjectAt0NodeGen at0Node = insert((SqueakObjectAt0NodeGen) SqueakObjectAt0NodeGen.create());
 
         Object execute(final Node node, final Object literal) {
-            return at0Node.execute(node, literal, ASSOCIATION.VALUE);
+            final Object value = at0Node.execute(node, literal, ASSOCIATION.VALUE);
+
+            if (value instanceof final AbstractSqueakObjectWithClassAndHash obj && !obj.isNotForwarded()) {
+                CompilerDirectives.transferToInterpreter();
+                final Object resolved = obj.resolveForwardingPointer();
+                AbstractPointersObjectWriteNode.executeUncached((AbstractPointersObject) literal, ASSOCIATION.VALUE, resolved);
+                return resolved;
+            }
+            return value;
         }
     }
 
@@ -257,6 +266,12 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         if (literalVariableOrNode instanceof final ReadLiteralVariableNode node) {
             return node.execute(this, code.getAndResolveLiteral(index));
         } else {
+            if (literalVariableOrNode instanceof final AbstractSqueakObjectWithClassAndHash obj && !obj.isNotForwarded()) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                final Object resolved = obj.resolveForwardingPointer();
+                setData(currentPC, resolved);
+                return resolved;
+            }
             return literalVariableOrNode;
         }
     }

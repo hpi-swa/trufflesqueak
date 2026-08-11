@@ -66,6 +66,10 @@
         CogMIPSELCompilerTests.
         CogX64CompilerTests.
         FFIAllocateExternalTests.
+        FFIAllocateTests.
+        FFIPluginConstructedTests.
+        FFIPluginLibraryTests.
+        FFIPluginTests.
         FileSystemGitRepositoryRemoteTests.
         FileSystemGitTests.
         FloatMathPluginTests.
@@ -124,10 +128,6 @@
         CompiledCodeInspectorTest -> #(#testDebugConstruction). "broken"
         ContextInspectorTest -> #(#testDebugConstruction). "broken"
         DebuggerTests -> #(#test01UserInterrupt #test17HandleBlockCannotReturn #test18HandleNestedBlockCannotReturn #test20TerminateProcess #test23TerminateDoubleErrorInEnsure #test24TerminateTripleErrorInEnsure). "fail, and can lock up or crash image sometimes"
-        FFIAllocateTests -> #(#test22ArrayForVoidPointers).
-        FFIPluginConstructedTests -> #(#testArrayResultWithPoint #testArrayResultWithString #testBoolsToInts #testChars #testIntAliasCall #testIntAliasCallReturnIntAlias #testMixedDoublesIntAndStruct #testMixedIntAndStruct #testMixedIntAndStruct2 #testMixedIntAndStruct3 #testPoint2 #testPoint4 #testPoint4Bigger #testPointers #testPrintString #testPrintWideString #testReturnPointerAlias #testReturnStructPassingUnionUfdUdSi2 #testReturnStructPassingUnionUfdUfi #testReturnStructSd2 #testReturnStructSdi #testReturnStructSf2 #testReturnStructSf2d #testReturnStructSf4 #testReturnStructSfdf #testReturnStructSfi #testReturnStructSi2 #testReturnStructSl2 #testReturnStructSs2 #testReturnStructSs2i #testReturnStructSs4 #testReturnStructSSdi5 #testReturnStructSsf #testReturnStructSsi #testReturnStructSsis #testReturnStructSsisPassingValues #testReturnStructSslf #testReturnStructSslfPassingValues #testReturnStructSsls #testReturnStructSslsPassingValues #testReturnStructSsSsf #testReturnStructSsSsi #testReturnUnionUdSi2 #testReturnUnionUfd #testReturnUnionUfi #testSmallStructureReturn #testSumdiWithStructSdi4 #testSumdWithStructSdi4 #testSumfWithStructSfd4 #testSumiWithStructSdi4 #testSumStructSdi #testSumStructSdi2 #testSumStructSdi4 #testSumStructSfd #testSumStructSfd2 #testSumStructSfd4 #testSumStructSSdi5 #testSumStructSslf #testSumStructSslf2 #testSumStructSslf4 #testSumStructSUfdUdsi2 #testSumStructSUfdUfi).
-        FFIPluginLibraryTests -> #(#testArrayResultWithPoint #testArrayResultWithString #testBoolsToInts #testChars #testDoubles14 #testFloats13 #testFloats14 #testIntAliasCall #testIntAliasCallReturnIntAlias #testLongLong8a2 #testMixedDoublesAndLongsSum #testMixedDoublesIntAndStruct #testMixedIntAndStruct #testMixedIntAndStruct2 #testMixedIntAndStruct3 #testPoint2 #testPoint4 #testPoint4Bigger #testPointers #testPrintString #testPrintWideString #testReturnPointerAlias #testReturnStructPassingUnionUfdUdSi2 #testReturnStructPassingUnionUfdUfi #testReturnStructSd2 #testReturnStructSdi #testReturnStructSf2 #testReturnStructSf2d #testReturnStructSf4 #testReturnStructSfdf #testReturnStructSfi #testReturnStructSi2 #testReturnStructSl2 #testReturnStructSs2 #testReturnStructSs2i #testReturnStructSs4 #testReturnStructSSdi5 #testReturnStructSsf #testReturnStructSsi #testReturnStructSsis #testReturnStructSsisPassingValues #testReturnStructSslf #testReturnStructSslfPassingValues #testReturnStructSsls #testReturnStructSslsPassingValues #testReturnStructSsSsf #testReturnStructSsSsi #testReturnUnionUdSi2 #testReturnUnionUfd #testReturnUnionUfi #testSmallStructureReturn #testSumdiWithStructSdi4 #testSumdWithStructSdi4 #testSumfWithStructSfd4 #testSumiWithStructSdi4 #testSumStructSdi #testSumStructSdi2 #testSumStructSdi4 #testSumStructSfd #testSumStructSfd2 #testSumStructSfd4 #testSumStructSSdi5 #testSumStructSslf #testSumStructSslf2 #testSumStructSslf4 #testSumStructSUfdUdsi2 #testSumStructSUfdUfi).
-        FFIPluginTests -> #(#testArrayResultWithPoint #testArrayResultWithString #testBoolsToInts #testChars #testDoubles14 #testFloats13 #testFloats14 #testIntAliasCall #testIntAliasCallReturnIntAlias #testIntCallReturnIntAlias #testLongLong8a2 #testMixedDoublesAndLongsSum #testMixedDoublesIntAndStruct #testMixedIntAndStruct #testMixedIntAndStruct2 #testMixedIntAndStruct3 #testPoint2 #testPoint4 #testPoint4Bigger #testPointers #testPrintString #testPrintWideString #testReturnPointerAlias #testReturnStructPassingUnionUfdUdSi2 #testReturnStructPassingUnionUfdUfi #testReturnStructSd2 #testReturnStructSdi #testReturnStructSf2 #testReturnStructSf2d #testReturnStructSf4 #testReturnStructSfdf #testReturnStructSfi #testReturnStructSi2 #testReturnStructSl2 #testReturnStructSs2 #testReturnStructSs2i #testReturnStructSs4 #testReturnStructSSdi5 #testReturnStructSsf #testReturnStructSsi #testReturnStructSsis #testReturnStructSsisPassingValues #testReturnStructSslf #testReturnStructSslfPassingValues #testReturnStructSsls #testReturnStructSslsPassingValues #testReturnStructSsSsf #testReturnStructSsSsi #testReturnUnionUdSi2 #testReturnUnionUfd #testReturnUnionUfi #testSmallStructureReturn #testSumdiWithStructSdi4 #testSumdWithStructSdi4 #testSumfWithStructSfd4 #testSumiWithStructSdi4 #testSumStructSdi #testSumStructSdi2 #testSumStructSdi4 #testSumStructSfd #testSumStructSfd2 #testSumStructSfd4 #testSumStructSSdi5 #testSumStructSslf #testSumStructSslf2 #testSumStructSslf4 #testSumStructSUfdUdsi2 #testSumStructSUfdUfi).
         HtmlReadWriterTest -> #(#test16ImgTag).
         MemoryTests -> #(#testFrameActivationLeak).
         SlangTests -> #(#testSimpleMethod). "broken"
@@ -139,16 +139,6 @@
     } collect: [:assoc | | testCase |
         testCase := assoc key.
         assoc value do: [:sel | ignoredTests add: (testCase selector: sel) ]].
-
-    Java isAOT ifTrue: [
-        {
-            FFIPluginConstructedTests -> FFIPluginConstructedTests allTestSelectors.
-            FFIPluginLibraryTests -> FFIPluginLibraryTests allTestSelectors.
-            FFIPluginTests -> FFIPluginTests allTestSelectors.
-        } collect: [:assoc | | testCase |
-            testCase := assoc key.
-            assoc value do: [:sel | ignoredTests add: (testCase selector: sel) ]].
-    ].
 
     failingTests := OrderedCollection new.
     {
@@ -184,39 +174,19 @@
 
     flakyTests := OrderedCollection new.
     {
-        BasicInspectorTest -> #(#testExpressions).
         BitBltSimulationTest -> #(#testAlphaCompositing2Simulated #testAlphaCompositingSimulated).
-        ClassInspectorTest -> #(#testExpressions).
-        CollectionInspectorTest -> #(#testExpressions).
-        CompiledCodeInspectorTest -> #(#testExpressions).
-        ContextInspectorTest -> #(#testExpressions).
-        ContextVariablesInspectorTest -> #(#testExpressions).
         DebuggerTests -> #(#test02UnhandledException #test19Abandon).
-        DictionaryInspectorTest -> #(#testExpressions).
-        FileList2ModalDialogsTest -> #(#testModalFolderSelector #testModalFolderSelectorForProjectLoad).
-        FSFileHandleTest -> #(#testCloseWhenGarbageCollected).
-        InspectorTest -> #(#testExpressions).
-        IntegerTest -> #(#testReciprocalModulo).
-        MCDictionaryRepositoryTest -> #(#testIncludesName #testStoreAndLoad).
         MCSnapshotTest -> #(#testInstanceReuse).
-        MethodHighlightingTests -> #(#testMethodHighlighting).
         MorphicToolBuilderTests -> #(#testGetButtonColor).
-        PCCByCompilationTest -> #(#testSwitchPrimCallOffOn).
         PCCByLiteralsTest -> #(#testSwitchPrimCallOffOn).
-        SequenceableCollectionTest -> #(#testCollectWithIndexDeprecation).
-        SetInspectorTest -> #(#testExpressions).
         SHParserST80Test -> #(#testNumbers).
         StringTest ->#(#testFindSelector).
-        TestValueWithinFix -> #(#testValueWithinTimingBasic #testValueWithinTimingNestedInner #testValueWithinTimingNestedOuter #testValueWithinTimingRepeat).
-        WeakIdentityDictionaryTest -> #(#testIsEmpty).
-        WeakKeyDictionaryTest -> #(#testIsEmpty).
+        TestValueWithinFix -> #(#testValueWithinTimingRepeat).
         WeakSetInspectorTest -> #(#testSymbolTableM6812 #testUninitialized).
-        WeakSetTest -> #(#testIsEmpty).
         WideStringTest -> #(#testAsIntegerSignedUsingRandomNumbers). "sometimes hitting timeout due to slow becomeForward:"
 
         "failing on some platforms"
         GIFReadWriterTest -> #(#testAnimatedColorsOutIn).
-        MCPackageTest -> #(#testUnload).
     } collect: [:assoc | | testCase |
         testCase := assoc key.
         assoc value do: [:sel | flakyTests add: (testCase selector: sel) ]].
@@ -224,8 +194,6 @@
     isWin ifTrue: [
         {
             DurationTest -> #(#testBusyWait #testBusyWaitMicro). "Fails on Windows native"
-            FSFileHandleTest -> #("May fail with 'FileDoesNotExist: plonk' on Windows" #testAt #testAtPut #testAtPutBinaryAscii #testAtWriteBinaryAscii #testClose #testCreatedOpen #testIO #testReadBufferTooLarge #testReadOnly #testReference #testSizeAfterGrow #testSizeNoGrow #testTruncate #testTruncateEmpty #testWriteStream).
-            PNGReadWriterTest -> #("May fail with FileDoesNotExistException on Windows" #testBlue16 #testBlue32 #testBlue8).
         } collect: [:assoc | | testCase |
             testCase := assoc key.
             assoc value do: [:sel | flakyTests add: (testCase selector: sel) ]].

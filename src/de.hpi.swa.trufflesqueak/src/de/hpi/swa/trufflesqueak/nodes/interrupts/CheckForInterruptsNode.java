@@ -17,10 +17,15 @@ import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.AbstractDispatchNode;
-import de.hpi.swa.trufflesqueak.nodes.process.SignalSemaphoreNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodesFactory.AbstractPointersObjectReadNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.process.SignalSemaphoreForInterruptNode;
+import de.hpi.swa.trufflesqueak.nodes.process.TransferToNode;
+import de.hpi.swa.trufflesqueak.nodes.process.TransferToNodeGen;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public abstract class CheckForInterruptsNode extends AbstractNode {
@@ -28,17 +33,31 @@ public abstract class CheckForInterruptsNode extends AbstractNode {
     /**
      * Shared signaling logic used by all Nodes.
      */
-    protected static boolean signalSemaphoresCached(final VirtualFrame frame, final CheckForInterruptsState istate, final Object[] specialObjects, final SignalSemaphoreNode signalNode) {
-        boolean switchToNewProcess = false;
+    protected static PointersObject signalSemaphoresCached(final CheckForInterruptsState istate, final Object[] specialObjects, final SignalSemaphoreForInterruptNode signalNode,
+                    final PointersObject activeProcess, final boolean activeProcessYields) {
+        PointersObject nextActiveProcess = activeProcess;
+        boolean nextActiveProcessYields = activeProcessYields;
 
         if (istate.tryInterruptPending()) {
-            switchToNewProcess |= signalNode.executeSignal(frame, specialObjects[SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE]);
+            final PointersObject result = signalNode.executeSignal(specialObjects[SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE], nextActiveProcess, nextActiveProcessYields);
+            if (result != nextActiveProcess) {
+                nextActiveProcessYields = true;
+                nextActiveProcess = result;
+            }
         }
         if (istate.tryWakeUpTickTrigger()) {
-            switchToNewProcess |= signalNode.executeSignal(frame, specialObjects[SPECIAL_OBJECT.THE_TIMER_SEMAPHORE]);
+            final PointersObject result = signalNode.executeSignal(specialObjects[SPECIAL_OBJECT.THE_TIMER_SEMAPHORE], nextActiveProcess, nextActiveProcessYields);
+            if (result != nextActiveProcess) {
+                nextActiveProcessYields = true;
+                nextActiveProcess = result;
+            }
         }
         if (istate.tryPendingFinalizations()) {
-            switchToNewProcess |= signalNode.executeSignal(frame, specialObjects[SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE]);
+            final PointersObject result = signalNode.executeSignal(specialObjects[SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE], nextActiveProcess, nextActiveProcessYields);
+            if (result != nextActiveProcess) {
+                nextActiveProcessYields = true;
+                nextActiveProcess = result;
+            }
         }
         if (istate.trySemaphoresToSignal()) {
             final ArrayObject externalObjects = (ArrayObject) specialObjects[SPECIAL_OBJECT.EXTERNAL_OBJECTS_ARRAY];
@@ -46,24 +65,42 @@ public abstract class CheckForInterruptsNode extends AbstractNode {
                 final Object[] semaphores = externalObjects.getObjectStorage();
                 Integer semaIndex;
                 while ((semaIndex = istate.nextSemaphoreToSignal()) != null) {
-                    switchToNewProcess |= signalNode.executeSignal(frame, semaphores[semaIndex - 1]);
+                    final PointersObject result = signalNode.executeSignal(semaphores[semaIndex - 1], nextActiveProcess, nextActiveProcessYields);
+                    if (result != nextActiveProcess) {
+                        nextActiveProcessYields = true;
+                        nextActiveProcess = result;
+                    }
                 }
             }
         }
-        return switchToNewProcess;
+        return nextActiveProcess;
     }
 
-    protected static boolean signalSemaphoresUncached(final VirtualFrame frame, final SqueakImageContext image, final CheckForInterruptsState istate, final Object[] specialObjects) {
-        boolean switchToNewProcess = false;
+    protected static PointersObject signalSemaphoresUncached(final SqueakImageContext image, final CheckForInterruptsState istate, final Object[] specialObjects, final PointersObject activeProcess,
+                    final boolean activeProcessYields) {
+        PointersObject nextActiveProcess = activeProcess;
+        boolean nextActiveProcessYields = activeProcessYields;
 
         if (istate.tryInterruptPending()) {
-            switchToNewProcess |= SignalSemaphoreNode.executeUncached(frame, image, specialObjects[SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE]);
+            final PointersObject result = SignalSemaphoreForInterruptNode.executeUncached(image, specialObjects[SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE], nextActiveProcess, nextActiveProcessYields);
+            if (result != nextActiveProcess) {
+                nextActiveProcessYields = true;
+                nextActiveProcess = result;
+            }
         }
         if (istate.tryWakeUpTickTrigger()) {
-            switchToNewProcess |= SignalSemaphoreNode.executeUncached(frame, image, specialObjects[SPECIAL_OBJECT.THE_TIMER_SEMAPHORE]);
+            final PointersObject result = SignalSemaphoreForInterruptNode.executeUncached(image, specialObjects[SPECIAL_OBJECT.THE_TIMER_SEMAPHORE], nextActiveProcess, nextActiveProcessYields);
+            if (result != nextActiveProcess) {
+                nextActiveProcessYields = true;
+                nextActiveProcess = result;
+            }
         }
         if (istate.tryPendingFinalizations()) {
-            switchToNewProcess |= SignalSemaphoreNode.executeUncached(frame, image, specialObjects[SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE]);
+            final PointersObject result = SignalSemaphoreForInterruptNode.executeUncached(image, specialObjects[SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE], nextActiveProcess, nextActiveProcessYields);
+            if (result != nextActiveProcess) {
+                nextActiveProcessYields = true;
+                nextActiveProcess = result;
+            }
         }
         if (istate.trySemaphoresToSignal()) {
             final ArrayObject externalObjects = (ArrayObject) specialObjects[SPECIAL_OBJECT.EXTERNAL_OBJECTS_ARRAY];
@@ -71,11 +108,15 @@ public abstract class CheckForInterruptsNode extends AbstractNode {
                 final Object[] semaphores = externalObjects.getObjectStorage();
                 Integer semaIndex;
                 while ((semaIndex = istate.nextSemaphoreToSignal()) != null) {
-                    switchToNewProcess |= SignalSemaphoreNode.executeUncached(frame, image, semaphores[semaIndex - 1]);
+                    final PointersObject result = SignalSemaphoreForInterruptNode.executeUncached(image, semaphores[semaIndex - 1], nextActiveProcess, nextActiveProcessYields);
+                    if (result != nextActiveProcess) {
+                        nextActiveProcessYields = true;
+                        nextActiveProcess = result;
+                    }
                 }
             }
         }
-        return switchToNewProcess;
+        return nextActiveProcess;
     }
 
     @DenyReplace
@@ -102,7 +143,12 @@ public abstract class CheckForInterruptsNode extends AbstractNode {
             CompilerDirectives.transferToInterpreter();
             FrameAccess.externalizePCAndSP(frame, pc, sp);
             final Object[] specialObjects = image.specialObjectsArray.getObjectStorage();
-            if (signalSemaphoresUncached(frame, image, image.interrupt, specialObjects)) {
+
+            final PointersObject originalActiveProcess = image.getActiveProcessSlow();
+            final PointersObject nextActiveProcess = signalSemaphoresUncached(image, image.interrupt, specialObjects, originalActiveProcess, image.flags.preemptionYields());
+
+            if (nextActiveProcess != originalActiveProcess) {
+                TransferToNode.executeUncached(frame, nextActiveProcess);
                 throw ProcessSwitch.SINGLETON;
             }
         }
@@ -191,7 +237,12 @@ public abstract class CheckForInterruptsNode extends AbstractNode {
                 /* Exclude interrupts case from compilation. */
                 CompilerDirectives.transferToInterpreter();
                 final Object[] specialObjects = image.specialObjectsArray.getObjectStorage();
-                if (signalSemaphoresUncached(frame, image, istate, specialObjects)) {
+
+                final PointersObject originalActiveProcess = image.getActiveProcessSlow();
+                final PointersObject nextActiveProcess = signalSemaphoresUncached(image, istate, specialObjects, originalActiveProcess, image.flags.preemptionYields());
+
+                if (nextActiveProcess != originalActiveProcess) {
+                    TransferToNode.executeUncached(frame, nextActiveProcess);
                     throw ProcessSwitch.SINGLETON;
                 }
             }
@@ -214,15 +265,21 @@ public abstract class CheckForInterruptsNode extends AbstractNode {
     }
 
     public static final class CheckForInterruptsFullNode extends Node {
-        @Child private SignalSemaphoreNode signalSemaphoreNode;
+        @Child private SignalSemaphoreForInterruptNode signalSemaphoreNode;
+        @Child private AbstractPointersObjectReadNode readNode;
+        @Child private TransferToNode transferToNode;
 
+        private final SqueakImageContext image;
         private final CheckForInterruptsState istate;
         private final Object[] specialObjects;
 
         private CheckForInterruptsFullNode(final SqueakImageContext image) {
+            this.image = image;
             istate = image.interrupt;
             specialObjects = image.specialObjectsArray.getObjectStorage();
-            signalSemaphoreNode = SignalSemaphoreNode.create();
+            signalSemaphoreNode = SignalSemaphoreForInterruptNode.create();
+            readNode = AbstractPointersObjectReadNodeGen.create();
+            transferToNode = TransferToNodeGen.create();
         }
 
         @NeverDefault
@@ -234,7 +291,11 @@ public abstract class CheckForInterruptsNode extends AbstractNode {
             if (istate.shouldSkip()) {
                 return;
             }
-            if (signalSemaphoresCached(frame, istate, specialObjects, signalSemaphoreNode)) {
+            final PointersObject originalActiveProcess = readNode.executePointers(image.getScheduler(), PROCESS_SCHEDULER.ACTIVE_PROCESS);
+            final PointersObject nextActiveProcess = signalSemaphoresCached(istate, specialObjects, signalSemaphoreNode, originalActiveProcess, image.flags.preemptionYields());
+
+            if (nextActiveProcess != originalActiveProcess) {
+                transferToNode.execute(frame, nextActiveProcess);
                 throw ProcessSwitch.SINGLETON;
             }
         }

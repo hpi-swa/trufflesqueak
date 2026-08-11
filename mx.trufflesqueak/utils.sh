@@ -41,12 +41,12 @@ readonly OS_NAME OS_ARCH JAVA_HOME_SUFFIX
 
 
 add-path() {
-  echo "$(resolve-path "$1")" >> $GITHUB_PATH
+  echo "$(resolve-path "$1")" >> "$GITHUB_PATH"
 }
 
 build-standalone() {
   local type=$1
-  local component_name="TRUFFLESQUEAK_$(echo $type | tr a-z A-Z)_STANDALONE"
+  local component_name="TRUFFLESQUEAK_$(echo "$type" | tr a-z A-Z)_STANDALONE"
 
   mx --env "${type}" --no-download-progress build
   local standalone_home="$(mx --env "${type}" paths --output "${component_name}")"
@@ -72,7 +72,7 @@ conditional-deploy() {
 }
 
 archive-standalone() {
-  local standalone_name="$(standalone-dirname $1)"
+  local standalone_name="$(standalone-dirname "$1")"
   local standalone_archive="$(pwd)/${standalone_name}"
   local standalone_home_name=$(basename "${STANDALONE_HOME}")
 
@@ -166,7 +166,7 @@ resolve-path() {
 }
 
 set-env() {
-  echo "$1=$2" >> $GITHUB_ENV
+  echo "$1=$2" >> "$GITHUB_ENV"
   echo "export $1=\"$2\"" >> "${RUNNER_TEMP}/all_env_vars"
 }
 

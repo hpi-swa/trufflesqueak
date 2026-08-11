@@ -20,7 +20,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Idempotent;
-import com.oracle.truffle.api.dsl.NonIdempotent;
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
@@ -323,10 +323,8 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     private void invalidateCallTargetStable(final String reason) {
-        if (hasExecutionData()) {
-            if (executionData.callTargetStable != null) {
-                executionData.callTargetStable.invalidate(reason);
-            }
+        if (hasExecutionData() && executionData.callTargetStable != null) {
+            executionData.callTargetStable.invalidate(reason);
         }
     }
 
@@ -565,7 +563,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         } else {
             String className = "UnknownClass";
             String selector = "unknownSelector";
-            final ClassObject methodClass = getMethodClassSlow();
+            final ClassObject methodClass = getMethodClassOrNullSlow();
             if (methodClass != null) {
                 className = methodClass.getClassName();
             }
@@ -679,7 +677,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     /** CompiledMethod>>#methodClassAssociation. */
-    private Object getMethodClassAssociation() {
+    private AbstractPointersObject getMethodClassAssociation() {
         /*
          * From the CompiledMethod class description:
          *
@@ -689,7 +687,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
          * may be nil (as would be the case for example of methods providing a pool of inst var
          * accessors).
          */
-        return literals[getNumLiterals() - 1];
+        return (AbstractPointersObject) literals[getNumLiterals() - 1];
     }
 
     public boolean hasMethodClass(final AbstractPointersObjectReadNode readNode) {
@@ -701,7 +699,17 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         }
     }
 
+    @NeverDefault
     public ClassObject getMethodClassSlow() {
+        final ClassObject methodClass = getMethodClassOrNullSlow();
+        if (methodClass != null) {
+            return methodClass;
+        } else {
+            throw CompilerDirectives.shouldNotReachHere();
+        }
+    }
+
+    public ClassObject getMethodClassOrNullSlow() {
         CompilerAsserts.neverPartOfCompilation();
         final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
         if (hasMethodClass(readNode)) {
@@ -710,7 +718,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
                 return methodClass;
             } else {
                 final ClassObject forwardedMethodClass = (ClassObject) methodClass.getForwardingPointer();
-                AbstractPointersObjectWriteNode.executeUncached((AbstractPointersObject) getMethodClassAssociation(), CLASS_BINDING.VALUE, forwardedMethodClass);
+                AbstractPointersObjectWriteNode.executeUncached(getMethodClassAssociation(), CLASS_BINDING.VALUE, forwardedMethodClass);
                 return forwardedMethodClass;
             }
         }
@@ -718,9 +726,8 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     /** CompiledMethod>>#methodClass. */
-    @NonIdempotent
-    public ClassObject getMethodClass(final AbstractPointersObjectReadNode readNode) {
-        return (ClassObject) readNode.execute((AbstractPointersObject) getMethodClassAssociation(), CLASS_BINDING.VALUE);
+    private ClassObject getMethodClass(final AbstractPointersObjectReadNode readNode) {
+        return (ClassObject) readNode.execute(getMethodClassAssociation(), CLASS_BINDING.VALUE);
     }
 
     public long getHeader() {

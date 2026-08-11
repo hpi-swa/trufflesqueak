@@ -92,16 +92,17 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
     }
 
     public abstract static class DispatchSuperNaryNode extends AbstractDispatchNaryNode {
-        protected final ClassObject methodClass;
+        protected final CompiledCodeObject method;
 
-        DispatchSuperNaryNode(final ClassObject methodClass, final NativeObject selector) {
+        DispatchSuperNaryNode(final CompiledCodeObject codeObject, final NativeObject selector) {
             super(selector);
-            this.methodClass = methodClass;
+            method = codeObject.getMethod();
         }
 
-        @Specialization(assumptions = {"methodClass.getClassHierarchyAndMethodDictStable()", "dispatchDirectNode.getAssumptions()"})
+        @Specialization(assumptions = {"cachedMethodClass.getClassHierarchyAndMethodDictStable()", "dispatchDirectNode.getAssumptions()"})
         protected static final Object doCached(final VirtualFrame frame, final Object receiver, final Object[] arguments,
-                        @Cached("create(selector, methodClass.getResolvedSuperclass())") final DispatchDirectNaryNode dispatchDirectNode) {
+                        @SuppressWarnings("unused") @Cached("method.getMethodClassSlow()") final ClassObject cachedMethodClass,
+                        @Cached("create(selector, cachedMethodClass.getResolvedSuperclass())") final DispatchDirectNaryNode dispatchDirectNode) {
             return dispatchDirectNode.execute(frame, receiver, arguments);
         }
     }

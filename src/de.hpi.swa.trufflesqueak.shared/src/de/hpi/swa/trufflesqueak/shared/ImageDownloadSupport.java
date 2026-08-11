@@ -46,14 +46,17 @@ public final class ImageDownloadSupport {
     public record ProxyConfiguration(ProxyMode mode, String host, int port, String username, String password) {
     }
 
+    public record DownloadStream(BufferedInputStream stream, long contentLength) {
+    }
+
     private ImageDownloadSupport() {
     }
 
-    public static BufferedInputStream openStream(final URI uri) throws IOException {
+    public static DownloadStream openStream(final URI uri) throws IOException {
         return openStream(uri, System.getenv());
     }
 
-    static BufferedInputStream openStream(final URI uri, final Map<String, String> environment) throws IOException {
+    static DownloadStream openStream(final URI uri, final Map<String, String> environment) throws IOException {
         final HttpClient.Builder builder = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL);
         final ProxyConfiguration proxyConfiguration = proxyConfigurationFor(uri, environment);
         switch (proxyConfiguration.mode()) {
@@ -85,7 +88,11 @@ public final class ImageDownloadSupport {
                 response.body().close();
                 throw new IOException("Failed to download " + uri + " (HTTP " + response.statusCode() + ")");
             }
-            return new BufferedInputStream(response.body());
+
+            // Extract the content length (defaults to -1 if the server uses chunked encoding)
+            final long contentLength = response.headers().firstValueAsLong("Content-Length").orElse(-1L);
+
+            return new DownloadStream(new BufferedInputStream(response.body()), contentLength);
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IOException("Interrupted while downloading " + uri, e);

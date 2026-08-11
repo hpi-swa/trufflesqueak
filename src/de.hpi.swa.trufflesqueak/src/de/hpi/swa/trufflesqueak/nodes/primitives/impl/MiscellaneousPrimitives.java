@@ -9,7 +9,6 @@ package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 import java.util.Arrays;
 import java.util.List;
 
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -53,24 +52,14 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectShallowCopyNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
 import de.hpi.swa.trufflesqueak.nodes.plugins.MiscPrimitivePlugin.AbstractPrimCompareStringNode;
-import de.hpi.swa.trufflesqueak.nodes.plugins.SqueakFFIPrims.AbstractFFIPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractSingletonPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive10WithFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive11WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3WithFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive4WithFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive5WithFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive6WithFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive7WithFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive8WithFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive9WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
@@ -114,139 +103,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
     }
 
-    public abstract static class AbstractPrimCalloutToFFINode extends AbstractFFIPrimitiveNode {
-        @CompilationFinal private PointersObject externalFunction;
-
-        @Override
-        public final boolean acceptsMethod(final CompiledCodeObject method) {
-            CompilerAsserts.neverPartOfCompilation();
-            if (method.getNumLiterals() > 0) {
-                final Object firstLiteral = method.getLiteral(0);
-                if (firstLiteral instanceof final PointersObject l1 && l1.getSqueakClass().includesExternalFunctionBehavior(getContext())) {
-                    externalFunction = l1;
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        protected final Object doCallout(final AbstractSqueakObject receiver, final Object... arguments) {
-            return doCallout(externalFunction, receiver, arguments);
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 120)
-    protected abstract static class PrimCalloutToFFI1Node extends AbstractPrimCalloutToFFINode implements Primitive0WithFallback {
-        @Specialization
-        protected final Object doArg0(final AbstractSqueakObject receiver) {
-            return doCallout(receiver);
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 120)
-    protected abstract static class PrimCalloutToFFI2Node extends AbstractPrimCalloutToFFINode implements Primitive1WithFallback {
-        @Specialization
-        protected final Object doArg1(final AbstractSqueakObject receiver, final Object arg1) {
-            return doCallout(receiver, arg1);
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 120)
-    protected abstract static class PrimCalloutToFFI3Node extends AbstractPrimCalloutToFFINode implements Primitive2WithFallback {
-        @Specialization
-        protected final Object doArg2(final AbstractSqueakObject receiver, final Object arg1, final Object arg2) {
-            return doCallout(receiver, arg1, arg2);
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 120)
-    protected abstract static class PrimCalloutToFFI4Node extends AbstractPrimCalloutToFFINode implements Primitive3WithFallback {
-        @Specialization
-        protected final Object doArg3(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3) {
-            return doCallout(receiver, arg1, arg2, arg3);
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 120)
-    protected abstract static class PrimCalloutToFFI5Node extends AbstractPrimCalloutToFFINode implements Primitive4WithFallback {
-        @Specialization
-        protected final Object doArg3(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4) {
-            return doCallout(receiver, arg1, arg2, arg3, arg4);
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 120)
-    protected abstract static class PrimCalloutToFFI6Node extends AbstractPrimCalloutToFFINode implements Primitive5WithFallback {
-        @Specialization
-        protected final Object doArg5(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5) {
-            return doCallout(receiver, arg1, arg2, arg3, arg4, arg5);
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 120)
-    protected abstract static class PrimCalloutToFFI7Node extends AbstractPrimCalloutToFFINode implements Primitive6WithFallback {
-        @Specialization
-        protected final Object doArg6(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6) {
-            return doCallout(receiver, arg1, arg2, arg3, arg4, arg5, arg6);
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 120)
-    protected abstract static class PrimCalloutToFFI8Node extends AbstractPrimCalloutToFFINode implements Primitive7WithFallback {
-        @Specialization
-        protected final Object doArg7(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
-                        final Object arg7) {
-            return doCallout(receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 120)
-    protected abstract static class PrimCalloutToFFI9Node extends AbstractPrimCalloutToFFINode implements Primitive8WithFallback {
-        @Specialization
-        protected final Object doArg8(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
-                        final Object arg7, final Object arg8) {
-            return doCallout(receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 120)
-    protected abstract static class PrimCalloutToFFI10Node extends AbstractPrimCalloutToFFINode implements Primitive9WithFallback {
-        @Specialization
-        protected final Object doArg9(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
-                        final Object arg7, final Object arg8, final Object arg9) {
-            return doCallout(receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 120)
-    protected abstract static class PrimCalloutToFFI11Node extends AbstractPrimCalloutToFFINode implements Primitive10WithFallback {
-        @Specialization
-        protected final Object doArg10(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
-                        final Object arg7, final Object arg8, final Object arg9, final Object arg10) {
-            return doCallout(receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 120)
-    protected abstract static class PrimCalloutToFFI12Node extends AbstractPrimCalloutToFFINode implements Primitive11WithFallback {
-        @Specialization
-        protected final Object doArg11(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
-                        final Object arg7, final Object arg8, final Object arg9, final Object arg10, final Object arg11) {
-            return doCallout(receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
-        }
-    }
+    // TODO: implement #120 (primitiveCallout)
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 121)

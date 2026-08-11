@@ -7,6 +7,8 @@
 package de.hpi.swa.trufflesqueak.util;
 
 import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.management.LockInfo;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MonitorInfo;
@@ -290,6 +292,12 @@ public final class DebugUtils {
                 current = (ContextObject) sender;
             }
         }
+    }
+
+    public static String toString(final Throwable throwable) {
+        final StringWriter sw = new StringWriter();
+        throwable.printStackTrace(new PrintWriter(sw));
+        return sw.toString();
     }
 
     private static void println(final Object object) {

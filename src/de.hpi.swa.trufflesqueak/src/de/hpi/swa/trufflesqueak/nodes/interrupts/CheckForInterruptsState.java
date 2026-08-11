@@ -10,7 +10,6 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.locks.LockSupport;
-import java.util.logging.Level;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -58,6 +57,7 @@ public final class CheckForInterruptsState {
     @SuppressWarnings("unused") private boolean shouldTrigger;
 
     private Thread thread;
+    private volatile Thread vmThread;
 
     public CheckForInterruptsState(final SqueakImageContext image) {
         this.image = image;
@@ -90,11 +90,12 @@ public final class CheckForInterruptsState {
                      */
                     if (nextWakeUpTickTrigger()) {
                         SHOULD_TRIGGER.setOpaque(CheckForInterruptsState.this, true);
+                        wakeupVM();
                     }
                     LockSupport.parkNanos(interruptCheckNanos);
                 }
             } catch (Throwable t) {
-                LogUtils.INTERRUPTS.log(Level.SEVERE, "CheckForInterruptsThread FATAL CRASH", t);
+                LogUtils.severe("CheckForInterruptsThread FATAL CRASH", t);
                 System.exit(1);
             }
         }
@@ -106,6 +107,19 @@ public final class CheckForInterruptsState {
             thread.interrupt();
             thread = null;
         }
+    }
+
+    /* Relinquish Processor Primitive Helper */
+
+    public void setVMThread(final Thread thread) {
+        this.vmThread = thread;
+    }
+
+    private void wakeupVM() {
+        // If vmThread is null, this is a no-op. If vmThread is parked, this will unpark it.
+        // If vmThread is not parked, this simply sets a bit in vmThread for examination.
+        // All execution overhead is paid by the caller and not vmThread.
+        LockSupport.unpark(vmThread);
     }
 
     /* Interrupt check interval */
@@ -164,6 +178,7 @@ public final class CheckForInterruptsState {
     public void setInterruptPending() {
         interruptPending = true;
         SHOULD_TRIGGER.setOpaque(this, true);
+        wakeupVM();
     }
 
     /* Timer interrupt */
@@ -215,6 +230,7 @@ public final class CheckForInterruptsState {
     public void setPendingFinalizations() {
         hasPendingFinalizations = true;
         SHOULD_TRIGGER.setOpaque(this, true);
+        wakeupVM();
     }
 
     /* Semaphore interrupts */
@@ -240,6 +256,7 @@ public final class CheckForInterruptsState {
     public void signalSemaphoreWithIndex(final int index) {
         semaphoresToSignal.addLast(index);
         SHOULD_TRIGGER.setOpaque(this, true);
+        wakeupVM();
     }
 
     /*
