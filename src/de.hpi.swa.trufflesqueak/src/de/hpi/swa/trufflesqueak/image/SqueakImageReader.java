@@ -29,6 +29,7 @@ import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS_DESCRIPTION;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.METACLASS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
@@ -332,85 +333,117 @@ public final class SqueakImageReader {
      * Fill in classes and ensure instances of Behavior and its subclasses use {@link ClassObject}.
      */
     private void fillInClassObjects() {
-        /* Instantiate all class table entries as ClassObjects. */
+        /*
+         * Locate Metaclass and its superclasses on chunk level (Metaclass is the class of the class
+         * of the class of the specialObjectsArray), which works before any object is materialized.
+         */
+        final SqueakImageChunk specialObjectsChunk = chunkMap.get(specialObjectsPointer);
+        final SqueakImageChunk sqArray = specialObjectsChunk.getClassChunk();
+        final SqueakImageChunk sqArrayClass = sqArray.getClassChunk();
+        final SqueakImageChunk sqMetaclass = sqArrayClass.getClassChunk();
+        final SqueakImageChunk sqClassDescription = getSuperclassChunk(sqMetaclass);
+        final SqueakImageChunk sqBehavior = getSuperclassChunk(sqClassDescription);
+
+        /* Pass 1: Instantiate ClassObjects for all metaclasses and their sole instance (thisClass). */
         for (int p = 0; p < SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS; p++) {
             final SqueakImageChunk classTablePage = chunkMap.get(hiddenRootsChunk.getWord(p));
-            if (classTablePage.isNil()) {
+            if (classTablePage == null || classTablePage.isNil()) {
                 break; /* End of classTable reached (pages are consecutive). */
             }
             for (int i = 0; i < SqueakImageConstants.CLASS_TABLE_PAGE_SIZE; i++) {
                 final long potentialClassPtr = classTablePage.getWord(i);
                 assert potentialClassPtr != 0;
-                chunkMap.get(potentialClassPtr).asClassObject();
+                final SqueakImageChunk classChunk = chunkMap.get(potentialClassPtr);
+                if (classChunk == null || classChunk.isNil()) {
+                    continue;
+                }
+
+                if (isMetaclassChunk(classChunk, sqMetaclass)) {
+                    assert classChunk.getWordSize() == METACLASS.INST_SIZE;
+                    final ClassObject metaClassObject = classChunk.asClassObject();
+                    assert metaClassObject != null;
+                    metaClassObject.setInstancesAreClasses();
+                    final SqueakImageChunk classInstance = getThisClassChunk(classChunk);
+                    classInstance.asClassObject();
+                }
             }
         }
 
-        /* Fill in metaClass. */
-        final SqueakImageChunk specialObjectsChunk = chunkMap.get(specialObjectsPointer);
-        final SqueakImageChunk sqArray = specialObjectsChunk.getClassChunk();
-        final SqueakImageChunk sqArrayClass = sqArray.getClassChunk();
-        final SqueakImageChunk sqMetaclass = sqArrayClass.getClassChunk();
-        image.metaClass.fillin(sqMetaclass);
+        final HashSet<ClassObject> behaviorClasses = new HashSet<>(32);
+        final ClassObject classDescriptionClass = sqClassDescription.asClassObject();
+        final ClassObject behaviorClass = sqBehavior.asClassObject();
+        if (classDescriptionClass != null) {
+            classDescriptionClass.setInstancesAreClasses();
+            behaviorClasses.add(classDescriptionClass);
+        }
+        if (behaviorClass != null) {
+            behaviorClass.setInstancesAreClasses();
+            behaviorClasses.add(behaviorClass);
+        }
 
-        /* Fill in all classes. */
+        /* Pass 2: Fill in all classes and propagate instancesAreClasses down the ClassDescription hierarchy. */
         for (int p = 0; p < SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS; p++) {
             final SqueakImageChunk classTablePage = chunkMap.get(hiddenRootsChunk.getWord(p));
-            if (classTablePage.isNil()) {
+            if (classTablePage == null || classTablePage.isNil()) {
                 break;
             }
             for (int i = 0; i < SqueakImageConstants.CLASS_TABLE_PAGE_SIZE; i++) {
                 final long potentialClassPtr = classTablePage.getWord(i);
                 assert potentialClassPtr != 0;
                 final SqueakImageChunk classChunk = chunkMap.get(potentialClassPtr);
-                final ClassObject classObject = classChunk.asClassObject();
-                if (classObject != null) {
-                    classObject.fillin(classChunk);
+                if (classChunk == null || classChunk.isNil()) {
+                    continue;
+                }
+
+                if (isMetaclassChunk(classChunk, sqMetaclass)) {
+                    final SqueakImageChunk classInstanceChunk = getThisClassChunk(classChunk);
+                    if (classInstanceChunk != null) {
+                        final ClassObject classObject = classInstanceChunk.asClassObject();
+                        if (classObject != null) {
+                            classObject.fillin(classInstanceChunk);
+                            if (behaviorClasses.contains(classObject.getSuperclassOrNull())) {
+                                behaviorClasses.add(classObject);
+                                classObject.setInstancesAreClasses();
+                            }
+                        }
+                    }
                 }
             }
         }
 
-        /*
-         * Propagate instancesAreClasses to all subclasses of ClassDescription
-         */
-        final ClassObject classDescriptionClass = image.metaClass.getSuperclassOrNull();
-        final ClassObject behaviorClass = classDescriptionClass.getSuperclassOrNull();
-        classDescriptionClass.setInstancesAreClasses();
-        behaviorClass.setInstancesAreClasses();
-
-        for (int p = 0; p < SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS; p++) {
-            final SqueakImageChunk classTablePage = chunkMap.get(hiddenRootsChunk.getWord(p));
-            if (classTablePage.isNil()) {
-                break;
-            }
-            for (int i = 0; i < SqueakImageConstants.CLASS_TABLE_PAGE_SIZE; i++) {
-                final long potentialClassPtr = classTablePage.getWord(i);
-                final SqueakImageChunk classChunk = chunkMap.get(potentialClassPtr);
-                final ClassObject classObject = classChunk.asClassObject();
-                if (classObject != null) {
-                    markInstancesAreClassesIfDescendantOf(classObject, classDescriptionClass);
-                }
-            }
-        }
         assert image.metaClass.instancesAreClasses();
         image.setByteSymbolClass(((NativeObject) image.metaClass.getOtherPointers()[CLASS.NAME]).getSqueakClass());
     }
 
-    private static void markInstancesAreClassesIfDescendantOf(final ClassObject classObject, final ClassObject ancestor) {
-        if (classObject.instancesAreClasses()) {
-            return; /* Already marked (memoized). */
+    /**
+     * Unbounded hierarchy walk to determine if classChunk's class is kind of Metaclass.
+     */
+    private boolean isMetaclassChunk(final SqueakImageChunk classChunk, final SqueakImageChunk sqMetaclass) {
+        if (classChunk == null || classChunk.isNil()) {
+            return false;
         }
-        final ClassObject superclass = classObject.getSuperclassOrNull();
-        if (superclass == null) {
-            return;
-        }
-        if (superclass == ancestor || superclass.instancesAreClasses()) {
-            classObject.setInstancesAreClasses();
-        } else {
-            markInstancesAreClassesIfDescendantOf(superclass, ancestor);
-            if (superclass.instancesAreClasses()) {
-                classObject.setInstancesAreClasses();
+        SqueakImageChunk current = classChunk.getClassChunk();
+        while (current != null && !current.isNil()) {
+            if (current == sqMetaclass) {
+                return true;
             }
+            current = getSuperclassChunk(current);
         }
+        return false;
+    }
+
+    private SqueakImageChunk getSuperclassChunk(final SqueakImageChunk classChunk) {
+        return getClassChunkAt(classChunk, CLASS_DESCRIPTION.SUPERCLASS);
+    }
+
+    private SqueakImageChunk getThisClassChunk(final SqueakImageChunk metaclassChunk) {
+        return getClassChunkAt(metaclassChunk, METACLASS.THIS_CLASS);
+    }
+
+    private SqueakImageChunk getClassChunkAt(final SqueakImageChunk classChunk, final int index) {
+        final long pointer = classChunk.getWord(index);
+        final SqueakImageChunk chunk = chunkMap.get(pointer);
+        return chunk == null || chunk.isNil() ? null : chunk;
     }
 
     private void fillInObjects() {
