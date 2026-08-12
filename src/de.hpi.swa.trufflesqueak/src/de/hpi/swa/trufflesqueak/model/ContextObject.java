@@ -124,7 +124,9 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         } else {
             setInstructionPointer(MiscUtils.toIntExact((long) pc) - methodOrBlock.getInitialPC());
         }
-        final int stackPointer = MiscUtils.toIntExact((long) chunk.getPointer(CONTEXT.STACKPOINTER));
+        // OSVM interprets non-integers as zero: see Interpreter>>fetchStackPointerOf:
+        final Object sp = chunk.getPointer(CONTEXT.STACKPOINTER);
+        final int stackPointer = sp instanceof Long spLong ? MiscUtils.toIntExact(spLong) : 0;
         setStackPointer(stackPointer);
         for (int i = 0; i < stackPointer; i++) {
             atTempPut(i, chunk.getPointer(CONTEXT.TEMP_FRAME_START + i));
