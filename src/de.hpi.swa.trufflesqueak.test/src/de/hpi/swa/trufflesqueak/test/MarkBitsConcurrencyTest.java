@@ -28,6 +28,7 @@ public final class MarkBitsConcurrencyTest extends AbstractSqueakTestCaseWithDum
     private static final long FLAG_ITERATIONS = 10_000_000;
     private static final int MARK_OBJECT_COUNT = 20_000;
     private static final int MARK_THREAD_COUNT = 4;
+    private static final int HASH = 0x2A2A2A;
 
     /**
      * Verifies that concurrent bit-field updates (boolean flags vs. GC mark bits) are thread-safe.
@@ -37,63 +38,19 @@ public final class MarkBitsConcurrencyTest extends AbstractSqueakTestCaseWithDum
     @Test
     public void testFlagAndMarkingBitsDoNotLoseUpdates() throws InterruptedException {
         final PointersObject object = instantiate(createFreshTestClass());
-        final int hash = 0x2A2A2A;
-        object.setSqueakHash(hash);
+        object.setSqueakHash(HASH);
         object.setBooleanDBit(); /* Set once, must never be observed unset again. */
 
         final Queue<String> failures = new ConcurrentLinkedQueue<>();
         final CountDownLatch start = new CountDownLatch(1);
 
-        final Thread booleanBitsThread = new Thread(() -> {
-            try {
-                start.await();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            for (long i = 0; i < FLAG_ITERATIONS; i++) {
-                object.setBooleanABit();
-                if (!object.isBooleanASet()) {
-                    failures.add("Lost setBooleanABit in iteration " + i);
-                    return;
-                }
-                object.clearBooleanABit();
-                if (object.isBooleanASet()) {
-                    failures.add("Lost clearBooleanABit in iteration " + i);
-                    return;
-                }
-                if (!object.isBooleanDSet()) {
-                    failures.add("Lost the untouched boolean D bit in iteration " + i);
-                    return;
-                }
-                if (object.getSqueakHashInt() != hash) {
-                    failures.add("Hash changed to " + object.getSqueakHashInt() + " in iteration " + i);
-                    return;
-                }
-            }
-        }, "booleanBitsThread");
+        final Thread booleanBitsThread = new Thread(
+                        () -> runBooleanBitsWorker(object, failures, start),
+                        "booleanBitsThread");
 
-        final Thread markingBitsThread = new Thread(() -> {
-            try {
-                start.await();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            for (long i = 0; i < FLAG_ITERATIONS; i++) {
-                if (!object.tryToMarkWith(true)) {
-                    failures.add("Could not mark in iteration " + i);
-                    return;
-                }
-                if (!object.isMarkedWith(true)) {
-                    failures.add("Lost the mark in iteration " + i);
-                    return;
-                }
-                object.unmarkWith(true);
-                if (object.isMarkedWith(true)) {
-                    failures.add("Lost the unmark in iteration " + i);
-                    return;
-                }
-            }
-        }, "markingBitsThread");
+        final Thread markingBitsThread = new Thread(
+                        () -> runMarkingBitsWorker(object, failures, start),
+                        "markingBitsThread");
 
         booleanBitsThread.start();
         markingBitsThread.start();
@@ -102,7 +59,7 @@ public final class MarkBitsConcurrencyTest extends AbstractSqueakTestCaseWithDum
         markingBitsThread.join();
 
         assertEquals("Lost updates: " + failures, 0, failures.size());
-        assertEquals("Hash survived", hash, object.getSqueakHashInt());
+        assertEquals("Hash survived", HASH, object.getSqueakHashInt());
         assertTrue("Boolean D bit survived", object.isBooleanDSet());
     }
 
@@ -126,21 +83,9 @@ public final class MarkBitsConcurrencyTest extends AbstractSqueakTestCaseWithDum
         for (int t = 0; t < threads.length; t++) {
             /* Walk in opposite directions to widen the window in which two threads meet. */
             final boolean forwards = t % 2 == 0;
-            threads[t] = new Thread(() -> {
-                try {
-                    start.await();
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-                long count = 0;
-                for (int i = 0; i < MARK_OBJECT_COUNT; i++) {
-                    final AbstractSqueakObjectWithHash object = objects.get(forwards ? i : MARK_OBJECT_COUNT - 1 - i);
-                    if (object.tryToMarkWith(true)) {
-                        count++;
-                    }
-                }
-                marked.addAndGet(count);
-            }, "graphWalkerThread" + t);
+            threads[t] = new Thread(
+                            () -> runGraphWalkerWorker(objects, forwards, marked, start),
+                            "graphWalkerThread" + t);
         }
         for (final Thread thread : threads) {
             thread.start();
@@ -155,6 +100,70 @@ public final class MarkBitsConcurrencyTest extends AbstractSqueakTestCaseWithDum
             assertTrue(object.isMarkedWith(true));
             object.unmarkWith(true);
             assertFalse(object.isMarkedWith(true));
+        }
+    }
+
+    private static void runBooleanBitsWorker(final PointersObject object, final Queue<String> failures, final CountDownLatch start) {
+        awaitLatch(start);
+        for (long i = 0; i < FLAG_ITERATIONS; i++) {
+            object.setBooleanABit();
+            if (!object.isBooleanASet()) {
+                failures.add("Lost setBooleanABit in iteration " + i);
+                return;
+            }
+            object.clearBooleanABit();
+            if (object.isBooleanASet()) {
+                failures.add("Lost clearBooleanABit in iteration " + i);
+                return;
+            }
+            if (!object.isBooleanDSet()) {
+                failures.add("Lost the untouched boolean D bit in iteration " + i);
+                return;
+            }
+            if (object.getSqueakHashInt() != HASH) {
+                failures.add("Hash changed to " + object.getSqueakHashInt() + " in iteration " + i);
+                return;
+            }
+        }
+    }
+
+    private static void runMarkingBitsWorker(final PointersObject object, final Queue<String> failures, final CountDownLatch start) {
+        awaitLatch(start);
+        for (long i = 0; i < FLAG_ITERATIONS; i++) {
+            if (!object.tryToMarkWith(true)) {
+                failures.add("Could not mark in iteration " + i);
+                return;
+            }
+            if (!object.isMarkedWith(true)) {
+                failures.add("Lost the mark in iteration " + i);
+                return;
+            }
+            object.unmarkWith(true);
+            if (object.isMarkedWith(true)) {
+                failures.add("Lost the unmark in iteration " + i);
+                return;
+            }
+        }
+    }
+
+    private static void runGraphWalkerWorker(final List<AbstractSqueakObjectWithHash> objects, final boolean forwards, final AtomicLong marked, final CountDownLatch start) {
+        awaitLatch(start);
+        long count = 0;
+        for (int i = 0; i < MARK_OBJECT_COUNT; i++) {
+            final AbstractSqueakObjectWithHash object = objects.get(forwards ? i : MARK_OBJECT_COUNT - 1 - i);
+            if (object.tryToMarkWith(true)) {
+                count++;
+            }
+        }
+        marked.addAndGet(count);
+    }
+
+    private static void awaitLatch(final CountDownLatch latch) {
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new AssertionError("Thread interrupted while awaiting latch", e);
         }
     }
 }
