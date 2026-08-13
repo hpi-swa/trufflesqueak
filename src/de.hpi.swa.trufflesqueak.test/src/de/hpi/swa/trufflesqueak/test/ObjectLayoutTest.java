@@ -22,8 +22,6 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.SlotLocation;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
-import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectNewNode;
-import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 
 @SuppressWarnings("static-method")
 public final class ObjectLayoutTest extends AbstractSqueakTestCaseWithDummyImage {
@@ -177,17 +175,6 @@ public final class ObjectLayoutTest extends AbstractSqueakTestCaseWithDummyImage
         assertSame(NilObject.SINGLETON, obj.object1);
         assertSame(NilObject.SINGLETON, obj.object2);
         assertNull(obj.objectExtension);
-    }
-
-    private static ClassObject createFreshTestClass() {
-        final ClassObject dummyClass = new ClassObject(image);
-        dummyClass.setFormat(65542L /* `Morph format` */ | 24 /* + 24 slot = 30 slots in total. */);
-        dummyClass.setOtherPointers(ArrayUtils.EMPTY_ARRAY);
-        return dummyClass;
-    }
-
-    private static PointersObject instantiate(final ClassObject dummyClass) {
-        return (PointersObject) SqueakObjectNewNode.executeUncached(dummyClass);
     }
 
     private static void writeAndValidate(final AbstractPointersObject obj, final int index, final Object value) {

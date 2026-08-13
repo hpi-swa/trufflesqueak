@@ -6,6 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.test;
 
+import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectNewNode;
+import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -135,6 +137,17 @@ public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSquea
 
     private static NativeObject asByteSymbol(final String value) {
         return NativeObject.newNativeBytes(image.getByteSymbolClass(), MiscUtils.stringToBytes(value));
+    }
+
+    protected static ClassObject createFreshTestClass() {
+        final ClassObject dummyClass = new ClassObject(image);
+        dummyClass.setFormat(65542L /* `Morph format` */ | 24 /* + 24 slot = 30 slots in total. */);
+        dummyClass.setOtherPointers(ArrayUtils.EMPTY_ARRAY);
+        return dummyClass;
+    }
+
+    protected static PointersObject instantiate(final ClassObject dummyClass) {
+        return (PointersObject) SqueakObjectNewNode.executeUncached(dummyClass);
     }
 
     @AfterClass
