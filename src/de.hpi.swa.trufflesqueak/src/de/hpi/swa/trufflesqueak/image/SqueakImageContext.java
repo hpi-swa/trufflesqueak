@@ -428,8 +428,8 @@ public final class SqueakImageContext {
         final CompiledCodeObject doItMethod = (CompiledCodeObject) methodNode.send(this, "generate");
 
         final ContextObject doItContext = new ContextObject(doItMethod.getSqueakContextSize());
-        doItContext.setReceiver(NilObject.SINGLETON);
         doItContext.setCodeObject(doItMethod);
+        doItContext.setReceiver(NilObject.SINGLETON);
         doItContext.setInstructionPointer(0);
         doItContext.setStackPointer(doItMethod.getNumTemps());
         doItContext.setSenderUnsafe(NilObject.SINGLETON);
