@@ -1,0 +1,249 @@
+/*
+ * Copyright (c) 2026 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2026 Oracle and/or its affiliates
+ *
+ * Licensed under the MIT License.
+ */
+package de.hpi.swa.trufflesqueak.test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+import org.junit.Test;
+
+import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.NilObject;
+
+@SuppressWarnings("static-method")
+public final class ContextProxyTest extends AbstractSqueakTestCaseWithImage {
+
+    @Test
+    public void testProxyToFrameToProxyRoundTrip() {
+        final ContextObject fresh = (ContextObject) evaluate("Context newForMethod: CompiledMethod toReturnSelf");
+        assertTrue(fresh.hasContextProxy());
+        assertFalse(fresh.hasTruffleFrame());
+
+        final ContextObject materialized = (ContextObject) evaluate("""
+                        | ctx method |
+                        method := Object >> #yourself.
+                        ctx := Context newForMethod: CompiledMethod toReturnSelf.
+                        ctx instVarAt: 1 put: nil.
+                        ctx instVarAt: 2 put: method initialPC.
+                        ctx instVarAt: 4 put: method.
+                        ctx instVarAt: 3 put: 1.
+                        ctx instVarAt: 6 put: #myReceiver.
+                        ctx tempAt: 1 put: #myTemp.
+                        ctx
+                        """);
+        assertTrue(materialized.hasTruffleFrame());
+        assertFalse(materialized.hasContextProxy());
+        assertEquals(1, materialized.getStackPointer());
+        assertEquals("#myTemp", materialized.atTemp(0).toString());
+
+        final ContextObject dematerialized = (ContextObject) evaluate("""
+                        | ctx method |
+                        method := Object >> #yourself.
+                        ctx := Context newForMethod: CompiledMethod toReturnSelf.
+                        ctx instVarAt: 1 put: nil.
+                        ctx instVarAt: 2 put: method initialPC.
+                        ctx instVarAt: 4 put: method.
+                        ctx instVarAt: 3 put: 1.
+                        ctx instVarAt: 6 put: #myReceiver.
+                        ctx tempAt: 1 put: #myTemp.
+                        ctx instVarAt: 4 put: 'not a method'.
+                        ctx
+                        """);
+        assertTrue(dematerialized.hasContextProxy());
+        assertFalse(dematerialized.hasTruffleFrame());
+        assertSame(NilObject.SINGLETON, dematerialized.getProxySender());
+        assertEquals(1L, dematerialized.getProxyStackPointer());
+        assertEquals("'not a method'", dematerialized.getProxyMethod().toString());
+        assertEquals("#myReceiver", dematerialized.getProxyReceiver().toString());
+        assertEquals("#myTemp", dematerialized.getProxyTemp(0).toString());
+
+        final ContextObject rematerialized = (ContextObject) evaluate("""
+                        | ctx method |
+                        method := Object >> #yourself.
+                        ctx := Context newForMethod: CompiledMethod toReturnSelf.
+                        ctx instVarAt: 1 put: nil.
+                        ctx instVarAt: 2 put: method initialPC.
+                        ctx instVarAt: 4 put: method.
+                        ctx instVarAt: 3 put: 1.
+                        ctx instVarAt: 4 put: 'not a method'.
+                        ctx instVarAt: 4 put: method.
+                        ctx
+                        """);
+        assertTrue(rematerialized.hasTruffleFrame());
+        assertFalse(rematerialized.hasContextProxy());
+    }
+
+    @Test
+    public void testMethodThenStackPointerThenClosureSequence() {
+        final ContextObject ctx = (ContextObject) evaluate("""
+                        | block outerMethod ctx |
+                        block := [ :x | x + 1 ].
+                        outerMethod := block outerContext method.
+                        ctx := Context newForMethod: outerMethod.
+                        ctx instVarAt: 1 put: nil.
+                        ctx instVarAt: 2 put: outerMethod initialPC.
+                        ctx instVarAt: 4 put: outerMethod.
+                        ctx instVarAt: 3 put: 1.
+                        ctx tempAt: 1 put: 41.
+                        ctx instVarAt: 5 put: block.
+                        ctx
+                        """);
+        assertTrue(ctx.hasTruffleFrame());
+        assertFalse(ctx.hasContextProxy());
+        assertTrue(ctx.hasClosure());
+        assertEquals(41L, ctx.atTemp(0));
+    }
+
+    @Test
+    public void testSenderChainWithProxyContext() {
+        final ContextObject top = (ContextObject) evaluate("""
+                        | bottom proxy top method |
+                        method := Object >> #yourself.
+                        bottom := Context newForMethod: CompiledMethod toReturnSelf.
+                        proxy := Context newForMethod: CompiledMethod toReturnSelf.
+                        proxy instVarAt: 1 put: bottom.
+                        top := Context newForMethod: CompiledMethod toReturnSelf.
+                        top instVarAt: 1 put: proxy.
+                        top instVarAt: 2 put: method initialPC.
+                        top instVarAt: 4 put: method.
+                        top instVarAt: 3 put: 0.
+                        top
+                        """);
+        assertTrue(top.hasTruffleFrame());
+        final ContextObject proxy = (ContextObject) top.getSender();
+        assertTrue(proxy.hasContextProxy());
+        assertFalse(proxy.hasTruffleFrame());
+        final ContextObject bottom = (ContextObject) proxy.getSender();
+        assertTrue(bottom.hasContextProxy());
+    }
+
+    @Test
+    public void testOutOfBoundsWritesAndStackPointerValidation() {
+        final ContextObject ctx = (ContextObject) evaluate("""
+                        | ctx method |
+                        ctx := Context newForMethod: CompiledMethod toReturnSelf.
+                        (ctx instVarAt: 3) isNil ifFalse: [ self error: 'initial stackp should be nil' ].
+
+                        ([ ctx tempAt: 0 put: #bad. false ] on: Error do: [ :ex | true ]) ifFalse: [ self error: 'tempAt: 0 put: should fail' ].
+                        ([ ctx tempAt: 100 put: #bad. false ] on: Error do: [ :ex | true ]) ifFalse: [ self error: 'tempAt: 100 put: should fail' ].
+
+                        "Invalid stackp: and reflective stackp writes fail with Error and leave stackp nil"
+                        ([ ctx stackp: -1. false ] on: Error do: [ :ex | true ]) ifFalse: [ self error: 'stackp: -1 should fail' ].
+                        (ctx instVarAt: 3) isNil ifFalse: [ self error: 'stackp should remain nil after stackp: -1' ].
+                        ([ ctx stackp: 100. false ] on: Error do: [ :ex | true ]) ifFalse: [ self error: 'stackp: 100 should fail' ].
+                        (ctx instVarAt: 3) isNil ifFalse: [ self error: 'stackp should remain nil after stackp: 100' ].
+                        ([ ctx stackp: 'notAnInt'. false ] on: Error do: [ :ex | true ]) ifFalse: [ self error: 'stackp: non-integer should fail' ].
+                        (ctx instVarAt: 3) isNil ifFalse: [ self error: 'stackp should remain nil after invalid stackp:' ].
+                        ([ ctx instVarAt: 3 put: -5. false ] on: Error do: [ :ex | true ]) ifFalse: [ self error: 'instVarAt: 3 put: -5 should fail' ].
+                        (ctx instVarAt: 3) isNil ifFalse: [ self error: 'stackp should remain nil after instVarAt: 3 put: -5' ].
+                        ([ thisContext object: ctx instVarAt: 3 put: -5. false ] on: Error do: [ :ex | true ]) ifFalse: [ self error: 'mirror stackp -5 should fail' ].
+                        (ctx instVarAt: 3) isNil ifFalse: [ self error: 'stackp should remain nil after mirror stackp -5' ].
+                        ([ thisContext object: ctx instVarAt: 3 put: 16r100000000. false ] on: Error do: [ :ex | true ]) ifFalse: [ self error: 'mirror stackp >2^31 should fail' ].
+                        (ctx instVarAt: 3) isNil ifFalse: [ self error: 'stackp should remain nil after mirror stackp >2^31' ].
+                        ([ thisContext object: ctx instVarAt: 3 put: 'notAnInt'. false ] on: Error do: [ :ex | true ]) ifFalse: [ self error: 'mirror non-integer stackp should fail' ].
+                        (ctx instVarAt: 3) isNil ifFalse: [ self error: 'stackp should remain nil after mirror non-integer stackp' ].
+
+                        "Valid stackp: from nil initializes new slots to nil"
+                        ctx stackp: 2.
+                        (ctx instVarAt: 3) = 2 ifFalse: [ self error: 'expected stackp 2' ].
+                        (ctx tempAt: 1) isNil ifFalse: [ self error: 'expected temp 1 nil' ].
+                        (ctx tempAt: 2) isNil ifFalse: [ self error: 'expected temp 2 nil' ].
+
+                        "Reading back a non-object sender from a proxy returns the raw stored value"
+                        ctx instVarAt: 1 put: 42.
+                        (ctx instVarAt: 1) = 42 ifFalse: [ self error: 'expected raw sender 42' ].
+
+                        "Bare-sender thisContext materializes cleanly on reflective access"
+                        (thisContext instVarAt: 4) == thisContext method ifFalse: [ self error: 'expected bare-sender method match' ].
+
+                        method := Object >> #yourself.
+                        ctx instVarAt: 1 put: nil.
+                        ctx instVarAt: 2 put: method initialPC.
+                        ctx instVarAt: 4 put: method.
+                        ctx instVarAt: 3 put: 0.
+
+                        "Invalid reflective stackp writes on a materialized frame fail without dematerializing"
+                        ([ thisContext object: ctx instVarAt: 3 put: -1. false ] on: Error do: [ :ex | true ]) ifFalse: [ self error: 'frame mirror stackp -1 should fail' ].
+                        ([ thisContext object: ctx instVarAt: 3 put: 100. false ] on: Error do: [ :ex | true ]) ifFalse: [ self error: 'frame mirror stackp 100 should fail' ].
+                        ([ thisContext object: ctx instVarAt: 3 put: 'notAnInt'. false ] on: Error do: [ :ex | true ]) ifFalse: [ self error: 'frame mirror non-integer stackp should fail' ].
+                        (ctx instVarAt: 3) = 0 ifFalse: [ self error: 'frame stackp should remain 0' ].
+
+                        "instVarAt: 7 (0-based slot 6 = TEMP_FRAME_START) is in [numStackSlots, size) and is a silent no-op"
+                        ctx instVarAt: 7 put: #ignored.
+                        (ctx instVarAt: 7) isNil ifFalse: [ self error: 'expected dead-space write ignored' ].
+                        ([ ctx tempAt: 0 put: #bad. false ] on: Error do: [ :ex | true ]) ifFalse: [ self error: 'frame tempAt: 0 put: should fail' ].
+                        ([ ctx tempAt: 100 put: #bad. false ] on: Error do: [ :ex | true ]) ifFalse: [ self error: 'frame tempAt: 100 put: should fail' ].
+                        ctx
+                        """);
+        assertTrue(ctx.hasTruffleFrame());
+        assertFalse(ctx.hasContextProxy());
+    }
+
+    @Test
+    public void testActiveContextInvalidReflectiveWritesFailCleanly() {
+        final Object failedAll = evaluate("""
+                        | f1 f2 f3 f4 |
+                        f1 := [ thisContext instVarAt: 4 put: 'bad'. false ] on: Error do: [ :ex | true ].
+                        f2 := [ thisContext instVarAt: 2 put: -1. false ] on: Error do: [ :ex | true ].
+                        f3 := [ thisContext slotAt: 4 put: 'bad'. false ] on: Error do: [ :ex | true ].
+                        f4 := [ thisContext object: thisContext instVarAt: 4 put: 'bad'. false ] on: Error do: [ :ex | true ].
+                        f1 and: [ f2 and: [ f3 and: [ f4 ] ] ]
+                        """);
+        assertEquals(true, failedAll);
+    }
+
+    @Test
+    public void testProxyAndBareSenderImageSerialization() throws Exception {
+        final Path tempImage = Files.createTempFile("trufflesqueak-proxy-test", ".image");
+        final String originalImagePath = image.getImagePath();
+        try {
+            image.setImagePath(tempImage.toAbsolutePath().toString());
+            final Object result = evaluate("""
+                            | proxy err snapResult |
+                            proxy := Context newForMethod: CompiledMethod toReturnSelf.
+                            proxy instVarAt: 3 put: 1.
+                            proxy instVarAt: 4 put: 'unmaterializable'.
+                            proxy instVarAt: 6 put: #receiverMarker.
+                            proxy tempAt: 1 put: #tempMarker.
+                            [ snapResult := Smalltalk snapshotPrimitive ] on: Exception do: [ :ex | err := ex printString ].
+                            err ifNotNil: [ ^ err ].
+                            snapResult == false ifFalse: [ ^ 'snapshotPrimitive returned: ', snapResult printString ].
+                            proxy
+                            """);
+            assertTrue("Snapshot failed: " + result, result instanceof ContextObject);
+            assertTrue(((ContextObject) result).hasContextProxy());
+            assertTrue(Files.size(tempImage) > 0);
+        } finally {
+            image.setImagePath(originalImagePath);
+            Files.deleteIfExists(tempImage);
+        }
+    }
+
+    @Test
+    public void testRecursiveBareSenderMaterialization() {
+        final Object result = evaluate("""
+                        | recurse |
+                        recurse := [ :n |
+                            n = 0
+                                ifTrue: [
+                                    | c1 c2 |
+                                    c1 := thisContext sender.
+                                    c2 := c1 instVarAt: 1.
+                                    c1 ~~ c2
+                                        and: [ (c1 instVarAt: 4) == c1 method
+                                        and: [ (c2 instVarAt: 4) == c2 method ] ] ]
+                                ifFalse: [ recurse value: n - 1 ] ].
+                        recurse value: 2
+                        """);
+        assertEquals(true, result);
+    }
+}
