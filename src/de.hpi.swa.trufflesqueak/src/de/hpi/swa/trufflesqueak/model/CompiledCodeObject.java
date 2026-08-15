@@ -677,7 +677,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     /** CompiledMethod>>#methodClassAssociation. */
-    private AbstractPointersObject getMethodClassAssociation() {
+    private Object getMethodClassAssociation() {
         /*
          * From the CompiledMethod class description:
          *
@@ -687,7 +687,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
          * may be nil (as would be the case for example of methods providing a pool of inst var
          * accessors).
          */
-        return (AbstractPointersObject) literals[getNumLiterals() - 1];
+        return literals[getNumLiterals() - 1];
     }
 
     public boolean hasMethodClass(final AbstractPointersObjectReadNode readNode) {
@@ -718,7 +718,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
                 return methodClass;
             } else {
                 final ClassObject forwardedMethodClass = (ClassObject) methodClass.getForwardingPointer();
-                AbstractPointersObjectWriteNode.executeUncached(getMethodClassAssociation(), CLASS_BINDING.VALUE, forwardedMethodClass);
+                AbstractPointersObjectWriteNode.executeUncached((AbstractPointersObject) getMethodClassAssociation(), CLASS_BINDING.VALUE, forwardedMethodClass);
                 return forwardedMethodClass;
             }
         }
@@ -727,7 +727,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     /** CompiledMethod>>#methodClass. */
     private ClassObject getMethodClass(final AbstractPointersObjectReadNode readNode) {
-        return (ClassObject) readNode.execute(getMethodClassAssociation(), CLASS_BINDING.VALUE);
+        return (ClassObject) readNode.execute((AbstractPointersObject) getMethodClassAssociation(), CLASS_BINDING.VALUE);
     }
 
     public long getHeader() {

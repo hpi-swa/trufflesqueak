@@ -24,9 +24,11 @@ import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0NodeGen;
@@ -70,9 +72,10 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
     }
 
     @Override
-    protected void processBytecode(final int startPC, final int endPC) {
+    protected boolean processBytecode(final int startPC, final int endPC) {
         final byte[] bc = code.getBytes();
         final SqueakImageContext image = SqueakImageContext.getSlow();
+        boolean hasPotentialContextIVStore = false;
 
         int pc = startPC;
 
@@ -106,6 +109,9 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                 }
                 case BC.POP_INTO_RCVR_VAR_0, BC.POP_INTO_RCVR_VAR_1, BC.POP_INTO_RCVR_VAR_2, BC.POP_INTO_RCVR_VAR_3, BC.POP_INTO_RCVR_VAR_4, BC.POP_INTO_RCVR_VAR_5, BC.POP_INTO_RCVR_VAR_6, BC.POP_INTO_RCVR_VAR_7: {
                     setData(currentPC, insert(SqueakObjectAtPut0NodeGen.create()));
+                    if (b - BC.POP_INTO_RCVR_VAR_0 < CONTEXT.INST_SIZE) {
+                        hasPotentialContextIVStore = true;
+                    }
                     break;
                 }
                 case BC.EXTENDED_PUSH: {
@@ -114,6 +120,9 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     switch (variableType(descriptor)) {
                         case 0: {
                             setData(currentPC, insert(SqueakObjectAt0NodeGen.create()));
+                            if (variableIndex < CONTEXT.INST_SIZE) {
+                                hasPotentialContextIVStore = true;
+                            }
                             break;
                         }
                         case 1, 2: {
@@ -132,8 +141,11 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                 case BC.EXTENDED_STORE, BC.EXTENDED_POP: {
                     final byte descriptor = getByte(bc, pc++);
                     switch (variableType(descriptor)) {
-                        case 0, 3: {
+                        case 0: {
                             setData(currentPC, insert(SqueakObjectAtPut0NodeGen.create()));
+                            if (variableIndex(descriptor) < CONTEXT.INST_SIZE) {
+                                hasPotentialContextIVStore = true;
+                            }
                             break;
                         }
                         case 1: {
@@ -141,6 +153,10 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         }
                         case 2: {
                             throw unknownBytecode();
+                        }
+                        case 3: {
+                            setData(currentPC, insert(SqueakObjectAtPut0NodeGen.create()));
+                            break;
                         }
                     }
                     break;
@@ -175,7 +191,14 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                             setData(currentPC, getLiteralVariableOrCreateLiteralNode(code.getAndResolveLiteral(byte3)));
                             break;
                         }
-                        case 5, 6, 7: {
+                        case 5, 6: {
+                            setData(currentPC, insert(SqueakObjectAtPut0NodeGen.create()));
+                            if (byte3 < CONTEXT.INST_SIZE) {
+                                hasPotentialContextIVStore = true;
+                            }
+                            break;
+                        }
+                        case 7: {
                             setData(currentPC, insert(SqueakObjectAtPut0NodeGen.create()));
                             break;
                         }
@@ -300,6 +323,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                 }
             }
         }
+        return hasPotentialContextIVStore;
     }
 
     @Override
@@ -307,6 +331,13 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.MERGE_EXPLODE)
     public Object execute(final VirtualFrame frame, final int startPC, final int startSP) {
         assert isBlock == FrameAccess.hasClosure(frame);
+
+        if (modifiesContext) {
+            final Object receiver = FrameAccess.getReceiver(frame);
+            if (receiver instanceof ContextObject context) {
+                ensureContextIsNotActive(frame, context, startPC, startSP);
+            }
+        }
 
         final SqueakImageContext image = getContext();
         final byte[] bc = ACCESS.uncheckedCast(code.getBytes(), byte[].class);
@@ -328,7 +359,6 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                 switch (HostCompilerDirectives.markThreadedSwitch(b)) {
                     case BC.PUSH_RCVR_VAR_0, BC.PUSH_RCVR_VAR_1, BC.PUSH_RCVR_VAR_2, BC.PUSH_RCVR_VAR_3, BC.PUSH_RCVR_VAR_4, BC.PUSH_RCVR_VAR_5, BC.PUSH_RCVR_VAR_6, BC.PUSH_RCVR_VAR_7, //
                         BC.PUSH_RCVR_VAR_8, BC.PUSH_RCVR_VAR_9, BC.PUSH_RCVR_VAR_A, BC.PUSH_RCVR_VAR_B, BC.PUSH_RCVR_VAR_C, BC.PUSH_RCVR_VAR_D, BC.PUSH_RCVR_VAR_E, BC.PUSH_RCVR_VAR_F: {
-                        FrameAccess.externalizePCAndSP(frame, pc, sp); // for ContextObject access
                         pushFollowed(frame, currentPC, sp++, ACCESS.uncheckedCast(getData(currentPC), SqueakObjectAt0NodeGen.class).execute(this, FrameAccess.getReceiver(frame), b & 0xF));
                         break;
                     }
@@ -351,12 +381,8 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         push(frame, sp++, readLiteralVariable(currentPC, b & 0x1F));
                         break;
                     }
-                    case BC.POP_INTO_RCVR_VAR_0, BC.POP_INTO_RCVR_VAR_2, BC.POP_INTO_RCVR_VAR_3, BC.POP_INTO_RCVR_VAR_4, BC.POP_INTO_RCVR_VAR_5, BC.POP_INTO_RCVR_VAR_6, BC.POP_INTO_RCVR_VAR_7: {
+                    case BC.POP_INTO_RCVR_VAR_0, BC.POP_INTO_RCVR_VAR_1, BC.POP_INTO_RCVR_VAR_2, BC.POP_INTO_RCVR_VAR_3, BC.POP_INTO_RCVR_VAR_4, BC.POP_INTO_RCVR_VAR_5, BC.POP_INTO_RCVR_VAR_6, BC.POP_INTO_RCVR_VAR_7: {
                         ACCESS.uncheckedCast(getData(currentPC), SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), b & 7, pop(frame, --sp));
-                        break;
-                    }
-                    case BC.POP_INTO_RCVR_VAR_1: {
-                        doStoreIntoReceiverVariable(frame, currentPC, pc, sp, 1, pop(frame, --sp));
                         break;
                     }
                     case BC.POP_INTO_TEMP_VAR_0, BC.POP_INTO_TEMP_VAR_1, BC.POP_INTO_TEMP_VAR_2, BC.POP_INTO_TEMP_VAR_3, BC.POP_INTO_TEMP_VAR_4, BC.POP_INTO_TEMP_VAR_5, BC.POP_INTO_TEMP_VAR_6, BC.POP_INTO_TEMP_VAR_7: {
@@ -438,8 +464,6 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         CompilerAsserts.partialEvaluationConstant(variableType);
                         switch (variableType) {
                             case 0: {
-                                // for ContextObject access
-                                FrameAccess.externalizePCAndSP(frame, pc, sp);
                                 pushFollowed(frame, currentPC, sp++,
                                                 ACCESS.uncheckedCast(getData(currentPC), SqueakObjectAt0NodeGen.class).execute(this, FrameAccess.getReceiver(frame), variableIndex));
                                 break;
@@ -470,7 +494,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         CompilerAsserts.partialEvaluationConstant(variableType);
                         switch (variableType) {
                             case 0: {
-                                doStoreIntoReceiverVariable(frame, currentPC, pc, sp, variableIndex, stackTop);
+                                doStoreIntoReceiverVariable(frame, currentPC, variableIndex, stackTop);
                                 break;
                             }
                             case 1: {
@@ -495,7 +519,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         CompilerAsserts.partialEvaluationConstant(variableType);
                         switch (variableType) {
                             case 0: {
-                                doStoreIntoReceiverVariable(frame, currentPC, pc, sp, variableIndex, stackValue);
+                                doStoreIntoReceiverVariable(frame, currentPC, variableIndex, stackValue);
                                 break;
                             }
                             case 1: {
@@ -546,8 +570,6 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 break;
                             }
                             case 2: {
-                                // for ContextObject access
-                                FrameAccess.externalizePCAndSP(frame, pc, sp);
                                 pushFollowed(frame, currentPC, sp++, ACCESS.uncheckedCast(getData(currentPC), SqueakObjectAt0NodeGen.class).execute(this, FrameAccess.getReceiver(frame), byte3));
                                 break;
                             }
@@ -560,11 +582,11 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 break;
                             }
                             case 5: {
-                                doStoreIntoReceiverVariable(frame, currentPC, pc, sp, byte3, top(frame, sp));
+                                doStoreIntoReceiverVariable(frame, currentPC, byte3, top(frame, sp));
                                 break;
                             }
                             case 6: {
-                                doStoreIntoReceiverVariable(frame, currentPC, pc, sp, byte3, pop(frame, --sp));
+                                doStoreIntoReceiverVariable(frame, currentPC, byte3, pop(frame, --sp));
                                 break;
                             }
                             case 7: {
@@ -1017,10 +1039,9 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
     }
 
     @EarlyInline
-    private void doStoreIntoReceiverVariable(final VirtualFrame frame, final int pc, final int nextPC, final int sp, final int index, final Object value) {
+    private void doStoreIntoReceiverVariable(final VirtualFrame frame, final int pc, final int index, final Object value) {
         final Object receiver = FrameAccess.getReceiver(frame);
         ACCESS.uncheckedCast(getData(pc), SqueakObjectAtPut0Node.class).execute(this, receiver, index, value);
-        checkForAndHandlePCModification(frame, pc, sp, index, receiver, nextPC);
     }
 
     static int longJump(final int b, final int nextByte) {

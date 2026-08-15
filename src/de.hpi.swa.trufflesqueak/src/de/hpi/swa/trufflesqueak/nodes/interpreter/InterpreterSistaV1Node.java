@@ -42,6 +42,7 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0NodeGen;
@@ -178,9 +179,10 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     }
 
     @Override
-    protected void processBytecode(final int startPC, final int endPC) {
+    protected boolean processBytecode(final int startPC, final int endPC) {
         final byte[] bc = code.getBytes();
         final SqueakImageContext image = SqueakImageContext.getSlow();
+        boolean hasPotentialContextIVStore = false;
 
         int pc = startPC;
         assert pc < endPC;
@@ -286,6 +288,9 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                 }
                 case BC.POP_INTO_RCVR_VAR_0, BC.POP_INTO_RCVR_VAR_1, BC.POP_INTO_RCVR_VAR_2, BC.POP_INTO_RCVR_VAR_3, BC.POP_INTO_RCVR_VAR_4, BC.POP_INTO_RCVR_VAR_5, BC.POP_INTO_RCVR_VAR_6, BC.POP_INTO_RCVR_VAR_7: {
                     setData(currentPC, insert(SqueakObjectAtPut0NodeGen.create()));
+                    if (b - BC.POP_INTO_RCVR_VAR_0 < CONTEXT.INST_SIZE) {
+                        hasPotentialContextIVStore = true;
+                    }
                     break;
                 }
                 /* 2 byte bytecodes */
@@ -360,7 +365,16 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     vstate.resetExtAB();
                     break;
                 }
-                case BC.EXT_STORE_AND_POP_RECEIVER_VARIABLE, BC.EXT_STORE_AND_POP_LITERAL_VARIABLE, BC.EXT_STORE_RECEIVER_VARIABLE, BC.EXT_STORE_LITERAL_VARIABLE: {
+                case BC.EXT_STORE_AND_POP_RECEIVER_VARIABLE, BC.EXT_STORE_RECEIVER_VARIABLE: {
+                    setData(currentPC, insert(SqueakObjectAtPut0NodeGen.create()));
+                    final int index = getByteExtended(bc, pc++, vstate.getExtA());
+                    if (index < CONTEXT.INST_SIZE) {
+                        hasPotentialContextIVStore = true;
+                    }
+                    vstate.resetExtAB();
+                    break;
+                }
+                case BC.EXT_STORE_AND_POP_LITERAL_VARIABLE, BC.EXT_STORE_LITERAL_VARIABLE: {
                     setData(currentPC, insert(SqueakObjectAtPut0NodeGen.create()));
                     pc++;
                     vstate.resetExtAB();
@@ -402,6 +416,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                 }
             }
         }
+        return hasPotentialContextIVStore;
     }
 
     @Override
@@ -423,6 +438,13 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final FrameWithoutBoxing frame = ACCESS.uncheckedCast(frame_, FrameWithoutBoxing.class);
         final byte[] bc = ACCESS.uncheckedCast(code.getBytes(), byte[].class);
         assert isBlock == FrameAccess.hasClosure(frame);
+
+        if (modifiesContext) {
+            final Object receiver = FrameAccess.getReceiver(frame);
+            if (receiver instanceof ContextObject context) {
+                ensureContextIsNotActive(frame, context, startPC, startSP);
+            }
+        }
 
         final LoopCounter loopCounter = CompilerDirectives.inCompiledCode() && CompilerDirectives.hasNextTier() ? new LoopCounter() : null;
         int pc = startPC;
@@ -1891,7 +1913,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @BytecodeInterpreterHandler(value = BC.POP_INTO_RCVR_VAR_1, safepoint = false)
     private int handlePopIntoReceiverVariable1(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
         // assert CONTEXT.INSTRUCTION_POINTER == 1;
-        return doStoreIntoReceiverVariable(frame, pc, vstate, 1, pop(frame, --vstate.sp), pc + 1);
+        return handlePopIntoReceiverVariable(frame, pc, vstate, 1);
     }
 
     @EarlyInline
@@ -1937,10 +1959,9 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     }
 
     @EarlyInline
-    private int doStoreIntoReceiverVariable(final VirtualFrame frame, final int pc, final VirtualState vstate, final int index, final Object value, final int nextPC) {
+    private int doStoreIntoReceiverVariable(final VirtualFrame frame, final int pc, final int index, final Object value, final int nextPC) {
         final Object receiver = FrameAccess.getReceiver(frame);
         ACCESS.uncheckedCast(getData(pc), SqueakObjectAtPut0Node.class).execute(this, receiver, index, value);
-        checkForAndHandlePCModification(frame, pc, vstate.sp, index, receiver, nextPC);
         return nextPC;
     }
 
@@ -2015,7 +2036,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @BytecodeInterpreterHandler(value = BC.EXT_STORE_AND_POP_RECEIVER_VARIABLE, safepoint = false)
     private int handleExtendedStoreAndPopReceiverVariable(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
         final int index = getByteExtendedWithExtA(pc, vstate, state);
-        return doStoreIntoReceiverVariable(frame, pc, vstate, index, pop(frame, --vstate.sp), pc + 2);
+        return doStoreIntoReceiverVariable(frame, pc, index, pop(frame, --vstate.sp), pc + 2);
     }
 
     @EarlyInline
@@ -2038,7 +2059,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @BytecodeInterpreterHandler(value = BC.EXT_STORE_RECEIVER_VARIABLE, safepoint = false)
     private int handleExtendedStoreReceiverVariable(final VirtualFrame frame, final int pc, final VirtualState vstate, final State state) {
         final int index = getByteExtendedWithExtA(pc, vstate, state);
-        return doStoreIntoReceiverVariable(frame, pc, vstate, index, top(frame, vstate.sp), pc + 2);
+        return doStoreIntoReceiverVariable(frame, pc, index, top(frame, vstate.sp), pc + 2);
     }
 
     @EarlyInline

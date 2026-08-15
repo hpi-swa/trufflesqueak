@@ -37,6 +37,7 @@ import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
+import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
@@ -76,6 +77,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
 
     protected final CompiledCodeObject code;
     protected final boolean isBlock;
+    protected final boolean modifiesContext;
 
     @CompilationFinal(dimensions = 1) private final Object[] data;
     @CompilationFinal(dimensions = 1) private final byte[] profiles;
@@ -89,7 +91,8 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         final int endPC = code.getMaxPCZeroBased();
         data = new Object[endPC];
         profiles = new byte[endPC];
-        processBytecode(startPC, endPC);
+        final boolean hasPotentialContextIVStore = processBytecode(startPC, endPC);
+        modifiesContext = couldMutateContextVariables(hasPotentialContextIVStore);
     }
 
     @SuppressWarnings("this-escape")
@@ -102,14 +105,55 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         final int endPC = code.getMaxPCZeroBased();
         data = new Object[endPC];
         profiles = new byte[endPC];
-        processBytecode(startPC, endPC);
+        final boolean hasPotentialContextIVStore = processBytecode(startPC, endPC);
+        modifiesContext = couldMutateContextVariables(hasPotentialContextIVStore);
         osrMetadata = null;
     }
 
-    protected abstract void processBytecode(int startPC, int endPC);
+    protected abstract boolean processBytecode(int startPC, int endPC);
 
     @Override
     public abstract Object execute(VirtualFrame frame, int startPC, int startSP);
+
+    /**
+     * The following Smalltalk snippet evaluates to true, proving that all methods
+     * possess a valid methodClass. This allows us to reliably use
+     * getMethodClassOrNullSlow() for hierarchy checks, falling back to true only
+     * for edge cases like interop or polyglot messages.
+     * <p>
+     *  | methods |
+     *  methods := OrderedCollection new.
+     *  Behavior allInstances do: [ :cls |
+     *      cls methodsDo: [ :meth |
+     *          meth methodClass == cls ifFalse: [
+     *              methods add: meth]]].
+     *  methods isEmpty
+     */
+    private boolean couldMutateContextVariables(final boolean hasPotentialContextIVStore) {
+        if (hasPotentialContextIVStore) {
+            final ClassObject methodClass = code.getMethod().getMethodClassOrNullSlow();
+            if (methodClass == null) {
+                // Cannot prove the receiver is not a Context method.
+                return true;
+            }
+
+            // Fast-path rejection: must have between 1 and Context's number of instance variables
+            final ClassObject contextClass = getContext().methodContextClass;
+            final int methodClassInstSize = methodClass.getBasicInstanceSize();
+
+            if (methodClassInstSize > 0 && methodClassInstSize <= contextClass.getBasicInstanceSize()) {
+                // Walk the superclass chain until we hit a class with 0 instance variables (e.g., Object)
+                ClassObject current = contextClass;
+                do {
+                    if (methodClass == current) {
+                        return true;
+                    }
+                    current = current.getSuperclassOrNull();
+                } while (current != null && current.getBasicInstanceSize() > 0);
+            }
+        }
+        return false;
+    }
 
     static final class ReadLiteralVariableNode extends AbstractNode {
         private final SqueakObjectAt0NodeGen at0Node = insert((SqueakObjectAt0NodeGen) SqueakObjectAt0NodeGen.create());
@@ -397,24 +441,18 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         throw new CannotReturnToTarget(returnValue, GetOrCreateContextWithFrameNode.executeUncached(frame));
     }
 
-    protected final void checkForAndHandlePCModification(final VirtualFrame frame, final int pc, final int sp, final int index, final Object receiver, final int nextPC) {
-        if (index == CONTEXT.INSTRUCTION_POINTER && receiver instanceof ContextObject context) {
-            enter(pc, getProfile(pc), BRANCH1);
-            if (context.isPotentiallyActiveOnTruffleStack()) {
-                // Fast-path optimization: Preemptively mark the Context as inactive.
-                // If the PC is modified multiple times while suspended, we avoid paying
-                // the expensive cost of iterateFrames() on subsequent modifications.
-                context.markAsInactiveOnTruffleStack();
-                if (context.isActiveOnTruffleStackSlow()) {
-                    // The context was actually active. Throwing ProcessSwitch will unwind the
-                    // Truffle stack and force all contexts to the heap. This renders our
-                    // preemptive "inactive" mark factually correct.
-                    CompilerDirectives.transferToInterpreter();
-                    FrameAccess.externalizePCAndSP(frame, nextPC, sp);
-                    final ContextObject activeContext = GetOrCreateContextWithFrameNode.executeUncached(frame);
-                    AbstractPointersObjectWriteNode.executeUncached(getContext().getActiveProcessSlow(), PROCESS.SUSPENDED_CONTEXT, activeContext);
-                    throw ProcessSwitch.SINGLETON;
-                }
+    protected final void ensureContextIsNotActive(final VirtualFrame frame, final ContextObject context, final int pc, final int sp) {
+        if (context.isPotentiallyActiveOnTruffleStack()) {
+            // Fast-path optimization: Preemptively mark the Context as inactive.
+            context.markAsInactiveOnTruffleStack();
+            if (context.isActuallyActiveOnTruffleStackSlow()) {
+                // The context was actually active. Throwing ProcessSwitch will unwind the
+                // Truffle stack and force all contexts to the heap.
+                CompilerDirectives.transferToInterpreter();
+                FrameAccess.externalizePCAndSP(frame, pc, sp);
+                final ContextObject activeContext = GetOrCreateContextWithFrameNode.executeUncached(frame);
+                AbstractPointersObjectWriteNode.executeUncached(getContext().getActiveProcessSlow(), PROCESS.SUSPENDED_CONTEXT, activeContext);
+                throw ProcessSwitch.SINGLETON;
             }
         }
     }
