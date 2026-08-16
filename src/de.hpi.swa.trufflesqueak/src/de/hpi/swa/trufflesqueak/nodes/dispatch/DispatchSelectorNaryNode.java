@@ -82,10 +82,11 @@ public final class DispatchSelectorNaryNode extends AbstractDispatchSelectorNode
             return DispatchSelectorNaryNodeFactory.DispatchNaryNodeGen.create(selector);
         }
 
-        @Specialization(guards = "guard.check(receiver)", assumptions = "dispatchDirectNode.getAssumptions()", limit = "INLINE_METHOD_CACHE_LIMIT")
+        @Specialization(guards = {"guard.check(receiver)", "arguments.length == cachedArity"}, assumptions = "dispatchDirectNode.getAssumptions()", limit = "INLINE_METHOD_CACHE_LIMIT")
         protected static final Object doDirect(final VirtualFrame frame, final Object receiver, final Object[] arguments,
                         @SuppressWarnings("unused") @Cached("create(receiver)") final LookupClassGuard guard,
-                        @Cached("create(selector, guard, arguments.length)") final DispatchDirectNaryNode dispatchDirectNode) {
+                        @SuppressWarnings("unused") @Cached("arguments.length") final int cachedArity,
+                        @Cached("create(selector, guard, cachedArity)") final DispatchDirectNaryNode dispatchDirectNode) {
             return dispatchDirectNode.execute(frame, receiver, arguments);
         }
 
@@ -109,10 +110,11 @@ public final class DispatchSelectorNaryNode extends AbstractDispatchSelectorNode
             return DispatchSelectorNaryNodeFactory.DispatchPerformNaryNodeGen.create(selector);
         }
 
-        @Specialization(guards = "guard.check(receiver)", assumptions = "dispatchDirectNode.getAssumptions()", limit = "INLINE_METHOD_CACHE_LIMIT")
+        @Specialization(guards = {"guard.check(receiver)", "arguments.length == cachedArity"}, assumptions = "dispatchDirectNode.getAssumptions()", limit = "INLINE_METHOD_CACHE_LIMIT")
         protected static final Object doDirect(final VirtualFrame frame, final Object receiver, final Object[] arguments,
                         @SuppressWarnings("unused") @Cached("create(receiver)") final LookupClassGuard guard,
-                        @Cached("create(selector, guard, arguments.length)") final DispatchDirectNaryNode dispatchDirectNode) {
+                        @SuppressWarnings("unused") @Cached("arguments.length") final int cachedArity,
+                        @Cached("create(selector, guard, cachedArity)") final DispatchDirectNaryNode dispatchDirectNode) {
             return dispatchDirectNode.executeWithCheckedArguments(frame, receiver, arguments);
         }
 
@@ -122,7 +124,7 @@ public final class DispatchSelectorNaryNode extends AbstractDispatchSelectorNode
         @SuppressWarnings("truffle-static-method")
         protected final Object doIndirect(final VirtualFrame frame, final Object receiver, final Object[] arguments,
                         @Cached final DispatchIndirectNaryNode dispatchNode) {
-            return dispatchNode.execute(frame, false, selector, receiver, arguments);
+            return dispatchNode.execute(frame, true, selector, receiver, arguments);
         }
     }
 
@@ -597,18 +599,17 @@ public final class DispatchSelectorNaryNode extends AbstractDispatchSelectorNode
         }
 
         @Override
-        @ExplodeLoop
         public Object execute(final VirtualFrame frame, final Object receiver, final Object[] arguments) {
             assert arguments.length == arity : "Shortcut arity mismatch!";
+            final AbstractSqueakObject sender = senderNode.execute(frame);
 
-            // Build the shortcut arguments: [arg0, arg1, ..., argN, selector]
-            final Object[] shortcutArgs = new Object[arity + 1];
-            for (int i = 0; i < arity; i++) {
-                shortcutArgs[i] = arguments[i];
-            }
-            shortcutArgs[arity] = selector;
-
-            return callNode.call(FrameAccess.newWith(senderNode.execute(frame), null, receiver, shortcutArgs));
+            return switch (arity) {
+                case 0 -> callNode.call(FrameAccess.newWith(sender, null, receiver, selector));
+                case 1 -> callNode.call(FrameAccess.newWith(sender, null, receiver, arguments[0], selector));
+                case 2 -> callNode.call(FrameAccess.newWith(sender, null, receiver, arguments[0], arguments[1], selector));
+                case 3 -> callNode.call(FrameAccess.newWith(sender, null, receiver, arguments[0], arguments[1], arguments[2], selector));
+                default -> throw CompilerDirectives.shouldNotReachHere("Shortcuts have a maximum arity of 3");
+            };
         }
     }
 
@@ -802,14 +803,13 @@ public final class DispatchSelectorNaryNode extends AbstractDispatchSelectorNode
                             final CreateMessageNode createMessageNode) {
                 final ClassObject.DispatchFailureResult result = image.findMethodCacheEntry(receiverClass, selector).getOrCreateDispatchFailureResult(arity);
                 if (isShortcutProfile.profile(node, result.convention() == ClassObject.FallbackConvention.SHORTCUT_DNU)) {
-                    final Object[] shortcutArgs = new Object[arity + 1];
-                    if (CompilerDirectives.isPartialEvaluationConstant(arity)) {
-                        ArrayUtils.copyExploded(arguments, shortcutArgs, arity);
-                    } else {
-                        ArrayUtils.arraycopy(arguments, 0, shortcutArgs, 0, arity);
-                    }
-                    shortcutArgs[arity] = selector;
-                    return FrameAccess.newWith(sender, null, receiver, shortcutArgs);
+                    return switch (arity) {
+                        case 0 -> FrameAccess.newWith(sender, null, receiver, selector);
+                        case 1 -> FrameAccess.newWith(sender, null, receiver, arguments[0], selector);
+                        case 2 -> FrameAccess.newWith(sender, null, receiver, arguments[0], arguments[1], selector);
+                        case 3 -> FrameAccess.newWith(sender, null, receiver, arguments[0], arguments[1], arguments[2], selector);
+                        default -> throw CompilerDirectives.shouldNotReachHere("Shortcuts have a maximum arity of 3");
+                    };
                 } else {
                     return newMessage(node, sender, receiver, arguments, receiverClass, selector, result, image, isCannotInterpretProfile, writeNode, createMessageNode);
                 }

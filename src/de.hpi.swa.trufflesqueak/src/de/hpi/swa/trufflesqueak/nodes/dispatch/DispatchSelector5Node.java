@@ -48,13 +48,21 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class DispatchSelector5Node extends AbstractDispatchSelectorNode {
     public abstract static class Dispatch5Node extends AbstractDispatchNode {
-        Dispatch5Node(final NativeObject selector) {
+        protected final boolean canPrimFail;
+
+        Dispatch5Node(final NativeObject selector, final boolean canPrimFail) {
             super(selector);
+            this.canPrimFail = canPrimFail;
         }
 
         @NeverDefault
         public static Dispatch5Node create(final NativeObject selector) {
-            return DispatchSelector5NodeFactory.Dispatch5NodeGen.create(selector);
+            return DispatchSelector5NodeFactory.Dispatch5NodeGen.create(selector, false);
+        }
+
+        @NeverDefault
+        public static Dispatch5Node create(final NativeObject selector, final boolean canPrimFail) {
+            return DispatchSelector5NodeFactory.Dispatch5NodeGen.create(selector, canPrimFail);
         }
 
         public abstract Object execute(VirtualFrame frame, Object receiver, Object arg1, Object arg2, Object arg3, Object arg4, Object arg5);
@@ -72,7 +80,7 @@ public final class DispatchSelector5Node extends AbstractDispatchSelectorNode {
         @SuppressWarnings("truffle-static-method")
         protected final Object doIndirect(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5,
                         @Cached final DispatchIndirect5Node dispatchNode) {
-            return dispatchNode.execute(frame, false, selector, receiver, arg1, arg2, arg3, arg4, arg5);
+            return dispatchNode.execute(frame, canPrimFail, selector, receiver, arg1, arg2, arg3, arg4, arg5);
         }
     }
 

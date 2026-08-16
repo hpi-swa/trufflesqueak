@@ -140,7 +140,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "selector == cachedSelector", limit = "PERFORM_SELECTOR_CACHE_LIMIT")
         protected static final Object perform0Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector,
                         @Cached("selector") final NativeObject cachedSelector,
-                        @Cached("create(cachedSelector)") final Dispatch0Node dispatchNode) {
+                        @Cached("create(cachedSelector, true)") final Dispatch0Node dispatchNode) {
             return dispatchNode.execute(frame, receiver);
         }
 
@@ -160,7 +160,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "selector == cachedSelector", limit = "PERFORM_SELECTOR_CACHE_LIMIT")
         protected static final Object perform1Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object arg1,
                         @Cached("selector") final NativeObject cachedSelector,
-                        @Cached("create(cachedSelector)") final Dispatch1Node dispatchNode) {
+                        @Cached("create(cachedSelector, true)") final Dispatch1Node dispatchNode) {
             return dispatchNode.execute(frame, receiver, arg1);
         }
 
@@ -180,7 +180,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "selector == cachedSelector", limit = "PERFORM_SELECTOR_CACHE_LIMIT")
         protected static final Object perform2Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object arg1, final Object arg2,
                         @Cached("selector") final NativeObject cachedSelector,
-                        @Cached("create(cachedSelector)") final Dispatch2Node dispatchNode) {
+                        @Cached("create(cachedSelector, true)") final Dispatch2Node dispatchNode) {
             return dispatchNode.execute(frame, receiver, arg1, arg2);
         }
 
@@ -200,7 +200,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "selector == cachedSelector", limit = "PERFORM_SELECTOR_CACHE_LIMIT")
         protected static final Object perform3Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object arg1, final Object arg2, final Object arg3,
                         @Cached("selector") final NativeObject cachedSelector,
-                        @Cached("create(cachedSelector)") final Dispatch3Node dispatchNode) {
+                        @Cached("create(cachedSelector, true)") final Dispatch3Node dispatchNode) {
             return dispatchNode.execute(frame, receiver, arg1, arg2, arg3);
         }
 
@@ -221,7 +221,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final Object perform4Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object arg1, final Object arg2, final Object arg3,
                         final Object arg4,
                         @Cached("selector") final NativeObject cachedSelector,
-                        @Cached("create(cachedSelector)") final Dispatch4Node dispatchNode) {
+                        @Cached("create(cachedSelector, true)") final Dispatch4Node dispatchNode) {
             return dispatchNode.execute(frame, receiver, arg1, arg2, arg3, arg4);
         }
 
@@ -243,7 +243,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final Object perform5Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object arg1, final Object arg2, final Object arg3,
                         final Object arg4, final Object arg5,
                         @Cached("selector") final NativeObject cachedSelector,
-                        @Cached("create(cachedSelector)") final Dispatch5Node dispatchNode) {
+                        @Cached("create(cachedSelector, true)") final Dispatch5Node dispatchNode) {
             return dispatchNode.execute(frame, receiver, arg1, arg2, arg3, arg4, arg5);
         }
 
