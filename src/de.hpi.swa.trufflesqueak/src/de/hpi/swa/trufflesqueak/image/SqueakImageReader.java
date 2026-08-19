@@ -12,8 +12,10 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 
@@ -344,6 +346,8 @@ public final class SqueakImageReader {
         final SqueakImageChunk sqClassDescription = getSuperclassChunk(sqMetaclass);
         final SqueakImageChunk sqBehavior = getSuperclassChunk(sqClassDescription);
 
+        final List<SqueakImageChunk> metaclassChunks = new ArrayList<>();
+
         /* Pass 1: Instantiate ClassObjects for all metaclasses and their sole instance (thisClass). */
         for (int p = 0; p < SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS; p++) {
             final SqueakImageChunk classTablePage = chunkMap.get(hiddenRootsChunk.getWord(p));
@@ -359,7 +363,8 @@ public final class SqueakImageReader {
                 }
 
                 if (isMetaclassChunk(classChunk, sqMetaclass)) {
-                    assert classChunk.getWordSize() == METACLASS.INST_SIZE;
+                    metaclassChunks.add(classChunk);
+                    assert classChunk.getWordSize() >= METACLASS.INST_SIZE;
                     final ClassObject metaClassObject = classChunk.asClassObject();
                     assert metaClassObject != null;
                     metaClassObject.setInstancesAreClasses();
@@ -381,34 +386,23 @@ public final class SqueakImageReader {
             behaviorClasses.add(behaviorClass);
         }
 
-        /* Pass 2: Fill in all classes and propagate instancesAreClasses down the ClassDescription hierarchy. */
-        for (int p = 0; p < SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS; p++) {
-            final SqueakImageChunk classTablePage = chunkMap.get(hiddenRootsChunk.getWord(p));
-            if (classTablePage == null || classTablePage.isNil()) {
-                break;
-            }
-            for (int i = 0; i < SqueakImageConstants.CLASS_TABLE_PAGE_SIZE; i++) {
-                final long potentialClassPtr = classTablePage.getWord(i);
-                assert potentialClassPtr != 0;
-                final SqueakImageChunk classChunk = chunkMap.get(potentialClassPtr);
-                if (classChunk == null || classChunk.isNil()) {
-                    continue;
-                }
+        final List<ClassObject> classInstances = new ArrayList<>(metaclassChunks.size());
 
-                if (isMetaclassChunk(classChunk, sqMetaclass)) {
-                    final SqueakImageChunk classInstanceChunk = getThisClassChunk(classChunk);
-                    if (classInstanceChunk != null) {
-                        final ClassObject classObject = classInstanceChunk.asClassObject();
-                        if (classObject != null) {
-                            classObject.fillin(classInstanceChunk);
-                            if (behaviorClasses.contains(classObject.getSuperclassOrNull())) {
-                                behaviorClasses.add(classObject);
-                                classObject.setInstancesAreClasses();
-                            }
-                        }
-                    }
+        /* Pass 2: Fill in all classes. */
+        for (final SqueakImageChunk metaclassChunk : metaclassChunks) {
+            final SqueakImageChunk classInstanceChunk = getThisClassChunk(metaclassChunk);
+            if (classInstanceChunk != null) {
+                final ClassObject classObject = classInstanceChunk.asClassObject();
+                if (classObject != null) {
+                    classObject.fillin(classInstanceChunk);
+                    classInstances.add(classObject);
                 }
             }
+        }
+
+        /* Pass 3: Propagate instancesAreClasses down the hierarchy. */
+        for (final ClassObject classObject : classInstances) {
+            checkAndMarkBehaviorClass(classObject, behaviorClasses);
         }
 
         assert image.metaClass.instancesAreClasses();
@@ -428,6 +422,26 @@ public final class SqueakImageReader {
                 return true;
             }
             current = getSuperclassChunk(current);
+        }
+        return false;
+    }
+
+    /**
+     * Recursively walks up the class hierarchy to determine if a class inherits from Behavior.
+     * Memoizes results in the provided behaviorClasses set.
+     */
+    private boolean checkAndMarkBehaviorClass(final ClassObject classObject, final HashSet<ClassObject> behaviorClasses) {
+        if (classObject == null) {
+            return false;
+        }
+        if (behaviorClasses.contains(classObject)) {
+            return true;
+        }
+
+        if (checkAndMarkBehaviorClass(classObject.getSuperclassOrNull(), behaviorClasses)) {
+            behaviorClasses.add(classObject);
+            classObject.setInstancesAreClasses();
+            return true;
         }
         return false;
     }
