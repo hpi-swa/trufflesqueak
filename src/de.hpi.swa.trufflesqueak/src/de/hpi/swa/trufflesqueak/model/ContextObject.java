@@ -40,6 +40,25 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
 
     private static final Class<?> CONCRETE_MATERIALIZED_FRAME_CLASS = Truffle.getRuntime().createMaterializedFrame(new Object[0]).getClass();
 
+    /**
+     * To maximize GraalVM performance, this field acts as a union type transitioning between four
+     * distinct states:
+     * <p>
+     * 1. {@link AbstractSqueakObject} (Sender): The lightweight wrapper state. When a context is
+     *    actively executing in a {@link VirtualFrame}, we avoid allocating a MaterializedFrame.
+     *    Instead, we simply store its sender here until materialization is forced.
+     * <p>
+     * 2. {@link MaterializedFrame}: The fast-path execution state. Used for valid, suspended
+     *    contexts on the heap. This allows GraalVM to execute and resume them.
+     * <p>
+     * 3. {@link ContextProxy}: The slow-path fallback state. Used for newly allocated empty
+     *    contexts or contexts that have been reflectively mutated with incompatible values,
+     *    making them invalid Truffle frames.
+     * <p>
+     * 4. {@link SqueakImageChunk}: A transient bootstrap state used exclusively during image load.
+     */
+    private Object senderOrFrameOrProxy;
+
     public enum FrameHandling {
         /** Enumerate live objects in Truffle frames (Read-Only). */
         SCAN,
@@ -77,25 +96,6 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
             return (Object[]) stackOrSize;
         }
     }
-
-    /**
-     * To maximize GraalVM performance, this field acts as a union type transitioning between four
-     * distinct states:
-     * <p>
-     * 1. {@link AbstractSqueakObject} (Sender): The lightweight wrapper state. When a context is
-     *    actively executing in a {@link VirtualFrame}, we avoid allocating a MaterializedFrame.
-     *    Instead, we simply store its sender here until materialization is forced.
-     * <p>
-     * 2. {@link MaterializedFrame}: The fast-path execution state. Used for valid, suspended
-     *    contexts on the heap. This allows GraalVM to execute and resume them.
-     * <p>
-     * 3. {@link ContextProxy}: The slow-path fallback state. Used for newly allocated empty
-     *    contexts or contexts that have been reflectively mutated with incompatible values,
-     *    making them invalid Truffle frames.
-     * <p>
-     * 4. {@link SqueakImageChunk}: A transient bootstrap state used exclusively during image load.
-     */
-    private Object senderOrFrameOrProxy;
 
     public ContextObject(final SqueakImageChunk chunk) {
         super(chunk);
@@ -142,10 +142,10 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         // During image load, the closure shell must be explicitly filled in
         // before materialization so we can access its CompiledBlock.
         final ContextProxy proxy = getProxy();
-        if (proxy.closureOrNil instanceof BlockClosureObject closure) {
-            if (proxy.method instanceof CompiledCodeObject code && code.isCompiledMethod()) {
-                closure.fillin(chunk.getChunk(CONTEXT.CLOSURE_OR_NIL));
-            }
+        if (proxy.closureOrNil instanceof BlockClosureObject closure &&
+                        proxy.method instanceof CompiledCodeObject code &&
+                        code.isCompiledMethod()) {
+            closure.fillin(chunk.getChunk(CONTEXT.CLOSURE_OR_NIL));
         }
 
         // ToDo: A Context that was a proxy because its stack pointer was not an integer,
@@ -747,29 +747,18 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     @TruffleBoundary
     private boolean materializeFromProxy(final boolean forced) {
         final ContextProxy proxy = (ContextProxy) senderOrFrameOrProxy;
-        if (!(proxy.method instanceof CompiledCodeObject code)) {
-            return false; // Cannot materialize without a structurally valid method
+
+        if (!hasValidProxyStructure(proxy)) {
+            return false;
         }
 
+        final CompiledCodeObject code = (CompiledCodeObject) proxy.method;
         final Object closureOrNil = NilObject.nullToNil(proxy.closureOrNil);
-        if (closureOrNil != NilObject.SINGLETON && !(closureOrNil instanceof BlockClosureObject)) {
-            return false; // Structurally invalid closure
-        }
-
-        final Object pc = NilObject.nullToNil(proxy.instructionPointer);
-        if (pc != NilObject.SINGLETON && !(pc instanceof Long)) {
-            return false; // Structurally invalid instruction pointer
-        }
-
-        final Object sender = NilObject.nullToNil(proxy.sender);
-        if (!(sender instanceof AbstractSqueakObject)) {
-            return false; // Structurally invalid sender (e.g., primitive Long)
-        }
 
         // Resolve method and closure
         final BlockClosureObject closure;
-        final int numArgs;
         final CompiledCodeObject methodOrBlock;
+        final int numArgs;
 
         if (closureOrNil == NilObject.SINGLETON) {
             closure = null;
@@ -777,51 +766,88 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
             numArgs = code.getNumArgs();
         } else {
             closure = (BlockClosureObject) closureOrNil;
-            numArgs = closure.getNumArgs() + closure.getNumCopied();
             methodOrBlock = closure.isAFullBlockClosure() ? code : closure.getCompiledBlock();
+            numArgs = closure.getNumArgs() + closure.getNumCopied();
         }
 
-        final Object receiver = NilObject.nullToNil(proxy.receiver);
-
-        // Gather receiver and arguments for FrameAccess
+        // Gather receiver and arguments
         final Object[] proxyStack = proxy.getOrCreateStack();
-        final Object[] receiverAndArgs = new Object[1 + numArgs];
-        receiverAndArgs[0] = receiver;
-        for (int i = 0; i < numArgs; i++) {
-            final Object stackVal = i < proxyStack.length ? proxyStack[i] : null;
-            receiverAndArgs[1 + i] = NilObject.nullToNil(stackVal);
-        }
+        final Object[] receiverAndArgs = gatherReceiverAndArgs(proxy, numArgs, proxyStack);
 
-        // Allocate the Truffle Frame first to query its physical bounds
-        final Object[] frameArguments = FrameAccess.newWith((AbstractSqueakObject) sender, closure, receiverAndArgs);
+        // Allocate Truffle Frame
+        final AbstractSqueakObject sender = (AbstractSqueakObject) NilObject.nullToNil(proxy.sender);
+        final Object[] frameArguments = FrameAccess.newWith(sender, closure, receiverAndArgs);
         final MaterializedFrame frame = Truffle.getRuntime().createMaterializedFrame(frameArguments, methodOrBlock.getFrameDescriptor());
 
-        // Now evaluate the true physical SP bounds against the allocated frame
-        final int numStackSlots = FrameAccess.getNumStackSlots(frame);
-        final int sp;
-
-        if (proxy.stackPointer instanceof Long l) {
-            final int requestedSp = MiscUtils.toIntExact(l);
-            if (requestedSp < 0 || requestedSp > numStackSlots) {
-                // Refuse to materialize if SP out of bounds. If forced,
-                // this naturally falls through to getOrCreateTruffleFrame()
-                // which will throw the fatal SqueakException upon resumption.
-                // ToDo: Alternatively, we could force SP to zero when forced
-                return false;
-            } else {
-                sp = requestedSp;
-            }
-        } else if (forced) {
-            sp = 0; // OSVM interprets non-integers as zero for execution/loading
-        } else {
-            return false; // Stay a proxy
+        // Evaluate bounds
+        final int sp = determineStackPointer(proxy, forced, FrameAccess.getNumStackSlots(frame));
+        if (sp < 0) {
+            return false;
         }
 
+        // Apply state
         senderOrFrameOrProxy = frame;
         setMarkedCodeFlags();
         FrameAccess.setContext(frame, this);
+        restorePointersAndStack(proxy, methodOrBlock, sp, proxyStack);
 
-        // Restore pointers
+        return true;
+    }
+
+    private static boolean hasValidProxyStructure(final ContextProxy proxy) {
+        if (!(proxy.method instanceof CompiledCodeObject)) {
+            return false; // Cannot materialize without a structurally valid method
+        }
+        final Object closureOrNil = NilObject.nullToNil(proxy.closureOrNil);
+        if (closureOrNil != NilObject.SINGLETON && !(closureOrNil instanceof BlockClosureObject)) {
+            return false; // Structurally invalid closure
+        }
+        final Object pc = NilObject.nullToNil(proxy.instructionPointer);
+        if (pc != NilObject.SINGLETON && !(pc instanceof Long)) {
+            return false; // Structurally invalid instruction pointer
+        }
+        final Object sender = NilObject.nullToNil(proxy.sender);
+        if (!(sender instanceof AbstractSqueakObject)) {
+            return false; // Structurally invalid sender (e.g., primitive Long)
+        }
+        return true;
+    }
+
+    private static Object[] gatherReceiverAndArgs(final ContextProxy proxy, final int numArgs, final Object[] proxyStack) {
+        final Object[] receiverAndArgs = new Object[1 + numArgs];
+        receiverAndArgs[0] = NilObject.nullToNil(proxy.receiver);
+
+        final int limit = Math.min(numArgs, proxyStack.length);
+
+        // Map values that exist within the proxyStack bounds
+        for (int i = 0; i < limit; i++) {
+            receiverAndArgs[1 + i] = NilObject.nullToNil(proxyStack[i]);
+        }
+
+        // Pad any remaining arguments with NilObject
+        for (int i = limit; i < numArgs; i++) {
+            receiverAndArgs[1 + i] = NilObject.SINGLETON;
+        }
+
+        return receiverAndArgs;
+    }
+
+    private static int determineStackPointer(final ContextProxy proxy, final boolean forced, final int numStackSlots) {
+        if (proxy.stackPointer instanceof Long l) {
+            final int sp = MiscUtils.toIntExact(l);
+            if (sp < 0 || sp > numStackSlots) {
+                // ToDo: Alternatively, we could force SP to zero when forced
+                return -1; // Refuse to materialize if SP out of bounds
+            }
+            return sp;
+        } else if (forced) {
+            return 0; // OSVM interprets non-integers as zero for execution/loading
+        }
+        return -1; // Stay a proxy
+    }
+
+    private void restorePointersAndStack(final ContextProxy proxy, final CompiledCodeObject methodOrBlock, final int sp, final Object[] proxyStack) {
+        final Object pc = NilObject.nullToNil(proxy.instructionPointer);
         if (pc == NilObject.SINGLETON) {
             removeInstructionPointer();
         } else if (pc instanceof Long l) {
@@ -830,12 +856,17 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
 
         setStackPointer(sp);
 
-        // Restore stack temps and arguments
-        for (int i = 0; i < sp; i++) {
-            final Object stackVal = i < proxyStack.length ? proxyStack[i] : null;
-            atTempPut(i, NilObject.nullToNil(stackVal));
+        final int limit = Math.min(sp, proxyStack.length);
+
+        // Restore stack temps that exist within the proxyStack bounds
+        for (int i = 0; i < limit; i++) {
+            atTempPut(i, NilObject.nullToNil(proxyStack[i]));
         }
-        return true;
+
+        // Pad any remaining stack pointers with NilObject
+        for (int i = limit; i < sp; i++) {
+            atTempPut(i, NilObject.SINGLETON);
+        }
     }
 
     /**
