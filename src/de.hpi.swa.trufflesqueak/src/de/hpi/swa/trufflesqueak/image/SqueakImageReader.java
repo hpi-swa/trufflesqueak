@@ -12,8 +12,10 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 
@@ -29,6 +31,7 @@ import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS_DESCRIPTION;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.METACLASS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
@@ -332,77 +335,129 @@ public final class SqueakImageReader {
      * Fill in classes and ensure instances of Behavior and its subclasses use {@link ClassObject}.
      */
     private void fillInClassObjects() {
-        /* Find all metaclasses and instantiate their singleton instances as class objects. */
-        int highestKnownClassIndex = -1;
-        for (int p = 0; p < SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS; p++) {
-            final SqueakImageChunk classTablePage = chunkMap.get(hiddenRootsChunk.getWord(p));
-            if (classTablePage.isNil()) {
-                break; /* End of classTable reached (pages are consecutive). */
-            }
-            for (int i = 0; i < SqueakImageConstants.CLASS_TABLE_PAGE_SIZE; i++) {
-                final long potentialClassPtr = classTablePage.getWord(i);
-                assert potentialClassPtr != 0;
-                final SqueakImageChunk classChunk = chunkMap.get(potentialClassPtr);
-                if (classChunk.getSqueakClass() == image.metaClass) {
-                    /* Derive classIndex from current position in class table. */
-                    highestKnownClassIndex = p << SqueakImageConstants.CLASS_TABLE_MAJOR_INDEX_SHIFT | i;
-                    assert classChunk.getWordSize() == METACLASS.INST_SIZE;
-                    final SqueakImageChunk classInstance = chunkMap.get(classChunk.getWord(METACLASS.THIS_CLASS));
-                    final ClassObject metaClassObject = classChunk.asClassObject();
-                    assert metaClassObject != null;
-                    metaClassObject.setInstancesAreClasses();
-                    classInstance.asClassObject();
-                }
-            }
-        }
-        assert highestKnownClassIndex > 0 : "Failed to find highestKnownClassIndex";
-        // ToDo: why is this set here? setHiddenRoots() initializes it properly
-        image.classTableIndex = highestKnownClassIndex;
-
-        /* Fill in metaClass. */
+        /*
+         * Locate Metaclass and its superclasses on chunk level (Metaclass is the class of the class
+         * of the class of the specialObjectsArray), which works before any object is materialized.
+         */
         final SqueakImageChunk specialObjectsChunk = chunkMap.get(specialObjectsPointer);
         final SqueakImageChunk sqArray = specialObjectsChunk.getClassChunk();
         final SqueakImageChunk sqArrayClass = sqArray.getClassChunk();
         final SqueakImageChunk sqMetaclass = sqArrayClass.getClassChunk();
-        image.metaClass.fillin(sqMetaclass);
+        final SqueakImageChunk sqClassDescription = getSuperclassChunk(sqMetaclass);
+        final SqueakImageChunk sqBehavior = getSuperclassChunk(sqClassDescription);
 
-        /*
-         * Walk over all classes again and ensure instances of all subclasses of ClassDescriptions
-         * are {@link ClassObject}s.
-         */
-        final HashSet<ClassObject> inst = new HashSet<>();
-        final ClassObject classDescriptionClass = image.metaClass.getSuperclassOrNull();
-        classDescriptionClass.setInstancesAreClasses();
-        inst.add(classDescriptionClass);
+        final List<SqueakImageChunk> metaclassChunks = new ArrayList<>();
 
+        /* Pass 1: Instantiate ClassObjects for all metaclasses and their sole instance (thisClass). */
         for (int p = 0; p < SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS; p++) {
             final SqueakImageChunk classTablePage = chunkMap.get(hiddenRootsChunk.getWord(p));
-            if (classTablePage.isNil()) {
+            if (classTablePage == null || classTablePage.isNil()) {
                 break; /* End of classTable reached (pages are consecutive). */
             }
             for (int i = 0; i < SqueakImageConstants.CLASS_TABLE_PAGE_SIZE; i++) {
                 final long potentialClassPtr = classTablePage.getWord(i);
                 assert potentialClassPtr != 0;
                 final SqueakImageChunk classChunk = chunkMap.get(potentialClassPtr);
-                if (classChunk.getSqueakClass() == image.metaClass) {
-                    assert classChunk.getWordSize() == METACLASS.INST_SIZE;
-                    final SqueakImageChunk classInstance = chunkMap.get(classChunk.getWord(METACLASS.THIS_CLASS));
-                    final ClassObject classObject = classInstance.asClassObject();
-                    assert classObject != null;
-                    classObject.fillin(classInstance);
-                    if (inst.contains(classObject.getSuperclassOrNull())) {
-                        inst.add(classObject);
-                        classObject.setInstancesAreClasses();
-                    }
+                if (classChunk == null || classChunk.isNil()) {
+                    continue;
+                }
+
+                if (isMetaclassChunk(classChunk, sqMetaclass)) {
+                    metaclassChunks.add(classChunk);
+                    assert classChunk.getWordSize() >= METACLASS.INST_SIZE;
+                    final ClassObject metaClassObject = classChunk.asClassObject();
+                    assert metaClassObject != null;
+                    metaClassObject.setInstancesAreClasses();
+                    final SqueakImageChunk classInstance = getThisClassChunk(classChunk);
+                    classInstance.asClassObject();
                 }
             }
         }
+
+        final HashSet<ClassObject> behaviorClasses = new HashSet<>(32);
+        final ClassObject classDescriptionClass = sqClassDescription.asClassObject();
+        final ClassObject behaviorClass = sqBehavior.asClassObject();
+        if (classDescriptionClass != null) {
+            classDescriptionClass.setInstancesAreClasses();
+            behaviorClasses.add(classDescriptionClass);
+        }
+        if (behaviorClass != null) {
+            behaviorClass.setInstancesAreClasses();
+            behaviorClasses.add(behaviorClass);
+        }
+
+        final List<ClassObject> classInstances = new ArrayList<>(metaclassChunks.size());
+
+        /* Pass 2: Fill in all classes. */
+        for (final SqueakImageChunk metaclassChunk : metaclassChunks) {
+            final SqueakImageChunk classInstanceChunk = getThisClassChunk(metaclassChunk);
+            if (classInstanceChunk != null) {
+                final ClassObject classObject = classInstanceChunk.asClassObject();
+                if (classObject != null) {
+                    classObject.fillin(classInstanceChunk);
+                    classInstances.add(classObject);
+                }
+            }
+        }
+
+        /* Pass 3: Propagate instancesAreClasses down the hierarchy. */
+        for (final ClassObject classObject : classInstances) {
+            checkAndMarkBehaviorClass(classObject, behaviorClasses);
+        }
+
         assert image.metaClass.instancesAreClasses();
         image.setByteSymbolClass(((NativeObject) image.metaClass.getOtherPointers()[CLASS.NAME]).getSqueakClass());
+    }
 
-        /* Finally, ensure instances of Behavior are {@link ClassObject}s. */
-        final ClassObject behaviorClass = classDescriptionClass.getSuperclassOrNull();
-        behaviorClass.setInstancesAreClasses();
+    /**
+     * Unbounded hierarchy walk to determine if classChunk's class is kind of Metaclass.
+     */
+    private boolean isMetaclassChunk(final SqueakImageChunk classChunk, final SqueakImageChunk sqMetaclass) {
+        if (classChunk == null || classChunk.isNil()) {
+            return false;
+        }
+        SqueakImageChunk current = classChunk.getClassChunk();
+        while (current != null && !current.isNil()) {
+            if (current == sqMetaclass) {
+                return true;
+            }
+            current = getSuperclassChunk(current);
+        }
+        return false;
+    }
+
+    /**
+     * Recursively walks up the class hierarchy to determine if a class inherits from Behavior.
+     * Memoizes results in the provided behaviorClasses set.
+     */
+    private boolean checkAndMarkBehaviorClass(final ClassObject classObject, final HashSet<ClassObject> behaviorClasses) {
+        if (classObject == null) {
+            return false;
+        }
+        if (behaviorClasses.contains(classObject)) {
+            return true;
+        }
+
+        if (checkAndMarkBehaviorClass(classObject.getSuperclassOrNull(), behaviorClasses)) {
+            behaviorClasses.add(classObject);
+            classObject.setInstancesAreClasses();
+            return true;
+        }
+        return false;
+    }
+
+    private SqueakImageChunk getSuperclassChunk(final SqueakImageChunk classChunk) {
+        return getClassChunkAt(classChunk, CLASS_DESCRIPTION.SUPERCLASS);
+    }
+
+    private SqueakImageChunk getThisClassChunk(final SqueakImageChunk metaclassChunk) {
+        return getClassChunkAt(metaclassChunk, METACLASS.THIS_CLASS);
+    }
+
+    private SqueakImageChunk getClassChunkAt(final SqueakImageChunk classChunk, final int index) {
+        final long pointer = classChunk.getWord(index);
+        final SqueakImageChunk chunk = chunkMap.get(pointer);
+        return chunk == null || chunk.isNil() ? null : chunk;
     }
 
     private void fillInObjects() {
