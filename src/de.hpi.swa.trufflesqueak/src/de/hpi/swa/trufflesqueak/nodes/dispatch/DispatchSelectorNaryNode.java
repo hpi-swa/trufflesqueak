@@ -117,9 +117,13 @@ public final class DispatchSelectorNaryNode extends AbstractDispatchSelectorNode
                         }
                     }
                 }
+
+                // Wide Cache Miss: Delegate to Manager for Specialization
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                return executeAndSpecialize(frame, receiverClass, lookupResult, receiver, arguments);
             }
 
-            // Cache Miss: Delegate to Manager for Specialization
+            // Fast Cache Miss: Delegate to Manager for Specialization
             CompilerDirectives.transferToInterpreterAndInvalidate();
             return executeAndSpecialize(frame, receiver, arguments);
         }
@@ -137,6 +141,14 @@ public final class DispatchSelectorNaryNode extends AbstractDispatchSelectorNode
 
             final ClassObject receiverClass = cache.classNode.executeLookup(cache, receiver);
             final Object lookupResult = getContext().lookup(receiverClass, selector);
+            return executeAndSpecialize(frame, receiverClass, lookupResult, receiver, arguments);
+        }
+
+        private Object executeAndSpecialize(final VirtualFrame frame, final ClassObject receiverClass, final Object lookupResult, final Object receiver, final Object[] arguments) {
+            // Guard against lagging recursive frames.
+            if (indirectNode != null) {
+                return indirectNode.execute(frame, true, selector, receiver, arguments);
+            }
 
             // Node creation handles method resolution, including DNU and OAM fallbacks.
             final DispatchDirectNaryNode newDirectNode = DispatchDirectNaryNode.create(selector, receiverClass, arguments.length);
@@ -198,9 +210,13 @@ public final class DispatchSelectorNaryNode extends AbstractDispatchSelectorNode
                         }
                     }
                 }
+
+                // Wide Cache Miss: Delegate to Manager for Specialization
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                return executeAndSpecialize(frame, receiverClass, lookupResult, receiver, arguments);
             }
 
-            // Cache Miss: Delegate to Manager for Specialization
+            // Fast Cache Miss: Delegate to Manager for Specialization
             CompilerDirectives.transferToInterpreterAndInvalidate();
             return executeAndSpecialize(frame, receiver, arguments);
         }
@@ -218,6 +234,15 @@ public final class DispatchSelectorNaryNode extends AbstractDispatchSelectorNode
 
             final ClassObject receiverClass = cache.classNode.executeLookup(cache, receiver);
             final Object lookupResult = getContext().lookup(receiverClass, selector);
+            return executeAndSpecialize(frame, receiverClass, lookupResult, receiver, arguments);
+
+        }
+
+        private Object executeAndSpecialize(final VirtualFrame frame, final ClassObject receiverClass, final Object lookupResult, final Object receiver, final Object[] arguments) {
+            // Guard against lagging recursive frames.
+            if (indirectNode != null) {
+                return indirectNode.execute(frame, true, selector, receiver, arguments);
+            }
 
             // Node creation handles method resolution, including DNU and OAM fallbacks.
             final DispatchDirectNaryNode newDirectNode = DispatchDirectNaryNode.create(selector, receiverClass, arguments.length);

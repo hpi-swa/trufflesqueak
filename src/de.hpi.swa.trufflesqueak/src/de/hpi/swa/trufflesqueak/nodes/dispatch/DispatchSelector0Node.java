@@ -102,9 +102,14 @@ public final class DispatchSelector0Node extends AbstractDispatchSelectorNode {
                         }
                     }
                 }
+
+                // Wide Cache Miss: Delegate to Manager for Specialization
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                return executeAndSpecialize(frame, receiverClass, lookupResult, receiver);
+
             }
 
-            // Cache Miss: Delegate to Manager for Specialization
+            // Fast Cache Miss: Delegate to Manager for Specialization
             CompilerDirectives.transferToInterpreterAndInvalidate();
             return executeAndSpecialize(frame, receiver);
         }
@@ -122,6 +127,14 @@ public final class DispatchSelector0Node extends AbstractDispatchSelectorNode {
 
             final ClassObject receiverClass = cache.classNode.executeLookup(cache, receiver);
             final Object lookupResult = getContext().lookup(receiverClass, selector);
+            return executeAndSpecialize(frame, receiverClass, lookupResult, receiver);
+        }
+
+        private Object executeAndSpecialize(final VirtualFrame frame, final ClassObject receiverClass, final Object lookupResult, final Object receiver) {
+            // Guard against lagging recursive frames.
+            if (indirectNode != null) {
+                return indirectNode.execute(frame, canPrimFail, selector, receiver);
+            }
 
             // Node creation handles method resolution, including DNU and OAM fallbacks.
             final DispatchDirect0Node newDirectNode = DispatchDirect0Node.create(selector, receiverClass, canPrimFail);
