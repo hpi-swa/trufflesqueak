@@ -15,6 +15,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
@@ -78,7 +79,7 @@ public abstract class AbstractDispatchNode extends AbstractNode {
 
         @SuppressWarnings("unchecked")
         @TruffleBoundary
-        protected T specialize(final Object receiver, final Object lookupResult, final T newDispatchNode) {
+        protected T specialize(final Object receiver, final ClassObject receiverClass, final Object lookupResult, final java.util.function.Supplier<T> nodeSupplier) {
             final DispatchEntry<T>[] newFastEntries = (DispatchEntry<T>[]) new DispatchEntry<?>[CacheLimits.DISPATCH_CACHE_LIMIT];
             final DispatchEntry<T>[] newWideEntries = (DispatchEntry<T>[]) new DispatchEntry<?>[CacheLimits.DISPATCH_CACHE_LIMIT];
 
@@ -94,11 +95,10 @@ public abstract class AbstractDispatchNode extends AbstractNode {
 
                 // Only coalesce standard methods. Fallbacks (null) and OAMs are isolated by class.
                 if (targetEntry == null && lookupResult instanceof CompiledCodeObject targetMethod &&
-                                current.methodOrNull == targetMethod &&
-                                current.executor.getClass() == newDispatchNode.getClass()) {
+                                current.methodOrNull == targetMethod) {
 
                     // Method matches fast entry: append new guard or transition to wide, if needed.
-                    if (current.guardChainNode.append(receiver, newDispatchNode.getAssumptions())) {
+                    if (current.guardChainNode.append(receiver, receiverClass, targetMethod)) {
                         newFastEntries[fastEntriesNeeded++] = current;
                         targetEntry = current;
                     } else {
@@ -144,6 +144,8 @@ public abstract class AbstractDispatchNode extends AbstractNode {
 
             // 5. Append new Fast entry, if cache has space
             if (fastEntriesNeeded + wideEntriesNeeded < CacheLimits.DISPATCH_CACHE_LIMIT) {
+                // Dispatch Node is only built when we need a new entry
+                final T newDispatchNode = nodeSupplier.get();
                 final DispatchEntry<T> newEntry = new DispatchEntry<>(receiver, lookupResult, newDispatchNode);
                 newFastEntries[fastEntriesNeeded++] = newEntry;
                 this.fastEntries = insert(Arrays.copyOf(newFastEntries, fastEntriesNeeded));
@@ -157,15 +159,15 @@ public abstract class AbstractDispatchNode extends AbstractNode {
 
     public static final class DispatchEntry<T extends AbstractDispatchDirectNode> extends Node {
         public final CompiledCodeObject methodOrNull;
-        @CompilationFinal(dimensions = 1) public final Assumption[] assumptions;
+        @CompilationFinal public final Assumption callTargetStable;
 
         @Child public GuardChainNode guardChainNode;
         @Child public T executor;
 
         public DispatchEntry(final Object receiver, final Object lookupResult, final T executor) {
             this.methodOrNull = lookupResult instanceof CompiledCodeObject m ? m : null;
-            this.assumptions = executor.getAssumptions();
-            this.guardChainNode = insert(new GuardChainNode(receiver, this.assumptions));
+            this.callTargetStable = methodOrNull != null ? methodOrNull.getCallTargetStable() : null;
+            this.guardChainNode = insert(new GuardChainNode(receiver, executor.getAssumptions()));
             this.executor = insert(executor);
         }
 
@@ -178,16 +180,16 @@ public abstract class AbstractDispatchNode extends AbstractNode {
         }
 
         public boolean isWideCacheHit(final CompiledCodeObject targetMethod) {
-            return methodOrNull == targetMethod && Assumption.isValidAssumption(assumptions);
+            return methodOrNull == targetMethod && Assumption.isValidAssumption(callTargetStable);
         }
 
         public boolean isFastValid() {
-            final GuardChainNode chain = this.guardChainNode;
-            return chain != null && !chain.isEmpty();
+            final GuardChainNode chain = guardChainNode;
+            return chain != null && chain.hasValidGuards();
         }
 
         public boolean isWideValid() {
-            return Assumption.isValidAssumption(assumptions);
+            return methodOrNull != null && Assumption.isValidAssumption(callTargetStable);
         }
 
         public void promoteToWide() {
@@ -196,28 +198,40 @@ public abstract class AbstractDispatchNode extends AbstractNode {
     }
 
     public static final class GuardChainNode extends AbstractNode {
-        @Children private GuardChainDataNode[] guards;
+        @CompilationFinal(dimensions = 1) private LookupClassGuard[] guards;
+        @CompilationFinal(dimensions = 2) private Assumption[][] assumptions;
 
-        public GuardChainNode(final Object receiver, final Assumption[] assumptions) {
-            this.guards = insert(new GuardChainDataNode[]{new GuardChainDataNode(receiver, assumptions)});
+        public GuardChainNode(final Object receiver, final Assumption[] initialAssumptions) {
+            this.guards = new LookupClassGuard[]{LookupClassGuard.create(receiver)};
+            this.assumptions = new Assumption[][]{initialAssumptions};
         }
 
         public boolean isEmpty() {
             return guards.length == 0;
         }
 
+        public boolean hasValidGuards() {
+            final Assumption[][] currentAssumptions = assumptions;
+            for (int i = 0; i < currentAssumptions.length; i++) {
+                if (Assumption.isValidAssumption(currentAssumptions[i])) {
+                    return true; // At least one guard is still alive
+                }
+            }
+            return false;
+        }
+
         @ExplodeLoop
         public boolean execute(final Object receiver) {
-            final GuardChainDataNode[] currentGuards = this.guards;
-            for (int i = 0; i < currentGuards.length; i++) {
-                final GuardChainDataNode current = currentGuards[i];
+            final LookupClassGuard[] currentGuards = guards;
+            final Assumption[][] currentAssumptions = assumptions;
 
-                if (current.guard.check(receiver)) {
-                    if (Assumption.isValidAssumption(current.assumptions)) {
+            for (int i = 0; i < currentGuards.length; i++) {
+                if (currentGuards[i].check(receiver)) {
+                    if (Assumption.isValidAssumption(currentAssumptions[i])) {
                         return true;
                     } else {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
-                        removeInvalid(currentGuards);
+                        removeInvalid(currentGuards, currentAssumptions);
                         return false;
                     }
                 }
@@ -225,10 +239,12 @@ public abstract class AbstractDispatchNode extends AbstractNode {
             return false;
         }
 
-        public boolean append(final Object receiver, final Assumption[] assumptions) {
+        public boolean append(final Object receiver, final ClassObject receiverClass, final CompiledCodeObject targetMethod) {
+            final Assumption[][] currentAssumptions = assumptions;
             int validCount = 0;
-            for (final GuardChainDataNode guard : guards) {
-                if (Assumption.isValidAssumption(guard.assumptions)) {
+
+            for (int i = 0; i < currentAssumptions.length; i++) {
+                if (Assumption.isValidAssumption(currentAssumptions[i])) {
                     validCount++;
                 }
             }
@@ -237,52 +253,52 @@ public abstract class AbstractDispatchNode extends AbstractNode {
                 return false;
             }
 
-            final GuardChainDataNode[] newGuards = new GuardChainDataNode[validCount + 1];
+            // Generate and add the new assumptions
+            final Assumption[] newAssumptions = DispatchUtils.createAssumptions(receiverClass, targetMethod);
+
+            final LookupClassGuard[] newGuards = new LookupClassGuard[validCount + 1];
+            final Assumption[][] newAssumptionsArray = new Assumption[validCount + 1][];
+
             int index = 0;
-            for (final GuardChainDataNode guard : guards) {
-                if (Assumption.isValidAssumption(guard.assumptions)) {
-                    newGuards[index++] = guard;
+            for (int i = 0; i < currentAssumptions.length; i++) {
+                if (Assumption.isValidAssumption(currentAssumptions[i])) {
+                    newGuards[index] = guards[i];
+                    newAssumptionsArray[index] = currentAssumptions[i];
+                    index++;
                 }
             }
 
-            newGuards[index] = new GuardChainDataNode(receiver, assumptions);
-            this.guards = insert(newGuards);
+            newGuards[index] = LookupClassGuard.create(receiver);
+            newAssumptionsArray[index] = newAssumptions;
+
+            this.guards = newGuards;
+            this.assumptions = newAssumptionsArray;
             return true;
         }
 
         @TruffleBoundary
-        private void removeInvalid(final GuardChainDataNode[] currentGuards) {
+        private void removeInvalid(final LookupClassGuard[] currentGuards, final Assumption[][] currentAssumptions) {
             int validCount = 0;
-            for (final GuardChainDataNode node : currentGuards) {
-                if (Assumption.isValidAssumption(node.assumptions)) {
+            for (int i = 0; i < currentAssumptions.length; i++) {
+                if (Assumption.isValidAssumption(currentAssumptions[i])) {
                     validCount++;
                 }
             }
 
-            final GuardChainDataNode[] newGuards = new GuardChainDataNode[validCount];
+            final LookupClassGuard[] newGuards = new LookupClassGuard[validCount];
+            final Assumption[][] newAssumptionsArray = new Assumption[validCount][];
+
             int index = 0;
-            for (final GuardChainDataNode node : currentGuards) {
-                if (Assumption.isValidAssumption(node.assumptions)) {
-                    newGuards[index++] = node;
+            for (int i = 0; i < currentAssumptions.length; i++) {
+                if (Assumption.isValidAssumption(currentAssumptions[i])) {
+                    newGuards[index] = currentGuards[i];
+                    newAssumptionsArray[index] = currentAssumptions[i];
+                    index++;
                 }
             }
 
-            this.guards = insert(newGuards);
+            this.guards = newGuards;
+            this.assumptions = newAssumptionsArray;
         }
-    }
-
-    public static final class GuardChainDataNode extends Node {
-        public final LookupClassGuard guard;
-        @CompilationFinal(dimensions = 1) public final Assumption[] assumptions;
-
-        public GuardChainDataNode(final Object receiver, final Assumption[] assumptions) {
-            this.guard = LookupClassGuard.create(receiver);
-            this.assumptions = assumptions;
-        }
-    }
-
-    @Override
-    public final String toString() {
-        return "send: " + selector.toString();
     }
 }

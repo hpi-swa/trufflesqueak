@@ -6,8 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
-import java.util.ArrayList;
-
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
@@ -48,23 +46,34 @@ public final class DispatchUtils {
                 return new Assumption[]{startClass.getClassHierarchyAndMethodDictStable(), callTargetStable};
             }
         } else {
-            final ArrayList<Assumption> list = new ArrayList<>();
-            if (callTargetStable != null) {
-                list.add(callTargetStable);
-            }
+            // Count the required array size
+            int depth = (callTargetStable != null) ? 1 : 0;
             ClassObject currentClass = startClass;
             while (currentClass != null) {
-                list.add(currentClass.getClassHierarchyAndMethodDictStable());
+                depth++;
                 if (currentClass == targetClass) {
                     break;
-                } else {
-                    currentClass = currentClass.getSuperclassOrNull();
                 }
+                currentClass = currentClass.getSuperclassOrNull();
             }
-            // TODO: the receiverClass can be an outdated version of methodClass. In this case, a
-            // list of assumptions for the entire class hierarchy is returned. Maybe this can/should
-            // be avoided.
-            return list.toArray(new Assumption[0]);
+
+            // Allocate exactly sized array and populate
+            final Assumption[] assumptions = new Assumption[depth];
+            int index = 0;
+            if (callTargetStable != null) {
+                assumptions[index++] = callTargetStable;
+            }
+
+            currentClass = startClass;
+            while (currentClass != null) {
+                assumptions[index++] = currentClass.getClassHierarchyAndMethodDictStable();
+                if (currentClass == targetClass) {
+                    break;
+                }
+                currentClass = currentClass.getSuperclassOrNull();
+            }
+
+            return assumptions;
         }
     }
 

@@ -127,16 +127,16 @@ public final class DispatchSelector5Node extends AbstractDispatchSelectorNode {
             return executeAndSpecialize(frame, receiverClass, lookupResult, receiver, arg1, arg2, arg3, arg4, arg5);
         }
 
-        private Object executeAndSpecialize(final VirtualFrame frame, final ClassObject receiverClass, final Object lookupResult, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5) {
+        private Object executeAndSpecialize(final VirtualFrame frame, final ClassObject receiverClass, final Object lookupResult, final Object receiver, final Object arg1, final Object arg2,
+                        final Object arg3, final Object arg4, final Object arg5) {
             // Guard against lagging recursive frames.
             if (indirectNode != null) {
                 return indirectNode.execute(frame, canPrimFail, selector, receiver, arg1, arg2, arg3, arg4, arg5);
             }
 
             // Node creation handles method resolution, including DNU and OAM fallbacks.
-            final DispatchDirect5Node newDirectNode = DispatchDirect5Node.create(selector, receiverClass, canPrimFail);
-
-            final DispatchDirect5Node executor = cache.specialize(receiver, lookupResult, newDirectNode);
+            final DispatchDirect5Node executor = cache.specialize(receiver, receiverClass, lookupResult,
+                            () -> DispatchDirect5Node.create(selector, receiverClass, canPrimFail));
 
             if (executor != null) {
                 return executor.execute(frame, receiver, arg1, arg2, arg3, arg4, arg5);
