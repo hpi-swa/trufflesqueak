@@ -172,11 +172,7 @@ public abstract class AbstractDispatchNode extends AbstractNode {
         }
 
         public boolean isFastCacheHit(final Object receiver) {
-            final GuardChainNode chain = this.guardChainNode;
-            if (chain == null) {
-                return false;
-            }
-            return chain.execute(receiver);
+            return guardChainNode.execute(receiver);
         }
 
         public boolean isWideCacheHit(final CompiledCodeObject targetMethod) {
