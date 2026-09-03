@@ -49,14 +49,11 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class DispatchSelector1Node extends AbstractDispatchSelectorNode {
-    public static final class Dispatch1Node extends AbstractDispatchNode {
-        protected final boolean canPrimFail;
-        @Child private DispatchCacheManager<DispatchDirect1Node> cache;
+    public static final class Dispatch1Node extends AbstractDispatchNode<DispatchDirect1Node> {
         @Child private DispatchIndirect1Node indirectNode;
 
         private Dispatch1Node(final NativeObject selector, final boolean canPrimFail) {
-            super(selector);
-            this.canPrimFail = canPrimFail;
+            super(selector, canPrimFail);
         }
 
         @NeverDefault
@@ -72,30 +69,29 @@ public final class DispatchSelector1Node extends AbstractDispatchSelectorNode {
         @ExplodeLoop
         @InliningCutoff
         public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1) {
-            // TIER 3: Megamorphic Fallback (Indirect Execution)
-            if (indirectNode != null) {
-                return indirectNode.execute(frame, canPrimFail, selector, receiver, arg1);
-            }
+            final byte currentState = state;
 
-            if (cache == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                cache = insert(new DispatchCacheManager<>());
+            // TIER 3: Megamorphic Fallback (Indirect Execution)
+            if ((currentState & HAS_INDIRECT) != 0) {
+                return indirectNode.execute(frame, (currentState & FLAG_PRIM_FAIL) != 0, selector, receiver, arg1);
             }
 
             // TIER 1: Direct Execution Fast Path
-            for (final DispatchEntry<DispatchDirect1Node> entry : cache.fastEntries) {
-                if (entry.isFastCacheHit(receiver)) {
-                    return entry.executor.execute(frame, receiver, arg1);
+            if ((currentState & HAS_FAST) != 0) {
+                for (final DispatchEntry<DispatchDirect1Node> entry : fastEntries) {
+                    if (entry.isFastCacheHit(receiver)) {
+                        return entry.executor.execute(frame, receiver, arg1);
+                    }
                 }
             }
 
             // TIER 2: Wide Execution (Class Polymorphism)
-            if (cache.wideEntries.length > 0) {
-                final ClassObject receiverClass = cache.classNode.executeLookup(cache, receiver);
+            if ((currentState & HAS_WIDE) != 0) {
+                final ClassObject receiverClass = classNode.executeLookup(this, receiver);
                 final Object lookupResult = getContext().lookup(receiverClass, selector);
 
                 if (lookupResult instanceof CompiledCodeObject targetMethod) {
-                    for (final DispatchEntry<DispatchDirect1Node> entry : cache.wideEntries) {
+                    for (final DispatchEntry<DispatchDirect1Node> entry : wideEntries) {
                         if (entry.isWideCacheHit(targetMethod)) {
                             return entry.executor.execute(frame, receiver, arg1);
                         }
@@ -103,35 +99,33 @@ public final class DispatchSelector1Node extends AbstractDispatchSelectorNode {
                 }
             }
 
-            // Cache Miss: Delegate to Manager for Specialization
+            // Cache Miss: Delegate to superclass for Specialization
             CompilerDirectives.transferToInterpreterAndInvalidate();
             return executeAndSpecialize(frame, receiver, arg1);
         }
 
         private Object executeAndSpecialize(final VirtualFrame frame, final Object receiver, final Object arg1) {
             /*
-             * Guard against lagging recursive frames. If multiple frames of this method are on the
-             * stack executing compiled code, a deeper frame may have already deoptimized and
-             * transitioned this node to the indirect tier. This intercepts older deoptimized frames
-             * to prevent redundant specialization.
+             * Guard against lagging recursive frames.
              */
-            if (indirectNode != null) {
-                return indirectNode.execute(frame, canPrimFail, selector, receiver, arg1);
+            if ((state & HAS_INDIRECT) != 0) {
+                return indirectNode.execute(frame, canPrimFail(), selector, receiver, arg1);
             }
 
-            final ClassObject receiverClass = cache.classNode.executeLookup(cache, receiver);
+            ensureClassNode();
+            final ClassObject receiverClass = classNode.executeLookup(this, receiver);
             final Object lookupResult = getContext().lookup(receiverClass, selector);
 
             // Node creation handles method resolution, including DNU and OAM fallbacks.
-            final DispatchDirect1Node executor = cache.specialize(receiver, receiverClass, lookupResult,
-                            () -> DispatchDirect1Node.create(selector, receiverClass, canPrimFail));
+            final DispatchDirect1Node executor = specialize(receiver, receiverClass, lookupResult,
+                            () -> DispatchDirect1Node.create(selector, receiverClass, canPrimFail()));
 
             if (executor != null) {
                 return executor.execute(frame, receiver, arg1);
             } else {
                 reportPolymorphicSpecialize();
                 indirectNode = insert(DispatchIndirect1NodeGen.create());
-                return indirectNode.execute(frame, canPrimFail, selector, receiver, arg1);
+                return indirectNode.execute(frame, canPrimFail(), selector, receiver, arg1);
             }
         }
     }

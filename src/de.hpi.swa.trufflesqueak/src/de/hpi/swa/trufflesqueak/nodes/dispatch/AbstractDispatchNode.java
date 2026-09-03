@@ -7,6 +7,7 @@
 package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
 import java.util.Arrays;
+import java.util.function.Supplier;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -23,156 +24,166 @@ import de.hpi.swa.trufflesqueak.nodes.CacheLimits;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNodeGen;
 
-public abstract class AbstractDispatchNode extends AbstractNode {
+public abstract class AbstractDispatchNode<T extends AbstractDispatchDirectNode> extends AbstractNode {
+    protected static final byte HAS_FAST = 1 << 0;
+    protected static final byte HAS_WIDE = 1 << 1;
+    protected static final byte HAS_INDIRECT = 1 << 2;
+    protected static final byte FLAG_PRIM_FAIL = 1 << 3;
+
     protected final NativeObject selector;
 
-    AbstractDispatchNode(final NativeObject selector) {
+    @CompilationFinal protected byte state;
+
+    @SuppressWarnings("rawtypes")
+    private static final DispatchEntry[] EMPTY_ENTRIES = new DispatchEntry[0];
+
+    @Children protected DispatchEntry<T>[] fastEntries;
+    @Children protected DispatchEntry<T>[] wideEntries;
+    @Child protected SqueakObjectClassNode classNode;
+
+    @SuppressWarnings("unchecked")
+    AbstractDispatchNode(final NativeObject selector, final boolean canPrimFail) {
         this.selector = selector;
+        this.fastEntries = (DispatchEntry<T>[]) EMPTY_ENTRIES;
+        this.wideEntries = (DispatchEntry<T>[]) EMPTY_ENTRIES;
+        this.state = canPrimFail ? FLAG_PRIM_FAIL : 0;
     }
 
-    // --- Cache Manager and Data Nodes ---
+    protected final boolean canPrimFail() {
+        return (state & FLAG_PRIM_FAIL) != 0;
+    }
 
-    /**
-     * This manager organizes dispatch caching into two distinct tiers to balance compilation size
-     * and execution efficiency, using a parallel array architecture to preserve JIT profiling data.
-     * <p>
-     * 1. Fast Tier ({@code fastEntries}): Caches standard methods and unique fallback scenarios up to a
-     * configured limit ({@code DISPATCH_CACHE_LIMIT}). Each entry maintains a chain of class guards.
-     * <br>
-     * 2. Wide Tier ({@code wideEntries}): Handles class polymorphism. When a standard method exceeds its
-     * allotted class guard limit ({@code LOOKUP_CACHE_LIMIT}) in the fast tier, it is promoted here.
-     * <p>
-     * <b>Unified Entry Architecture:</b><br>
-     * To bypass Truffle's strict tree-parenting constraints during fast-to-wide promotion, the execution
-     * nodes are wrapped in a generic {@code DispatchEntry}. When promoted, the entry drops its fast-tier
-     * AST guards to free memory and is directly moved from the {@code fastEntries} array to the
-     * {@code wideEntries} array within the same parent node.
-     * <p>
-     * The manager is responsible for evaluating lookup results, transitioning nodes between tiers,
-     * pruning invalidated cache entries, and signaling a transition to indirect execution when
-     * the cache capacity is exhausted. Fallback mechanisms (e.g., #doesNotUnderstand) are strictly
-     * isolated in the fast tier and are ineligible for wide tier promotion.
-     *
-     * @param <T> The type of direct dispatch node managed by this cache.
-     */
-    public static final class DispatchCacheManager<T extends AbstractDispatchDirectNode> extends Node {
-        @Children public DispatchEntry<T>[] fastEntries;
-        @Children public DispatchEntry<T>[] wideEntries;
-        @Child public SqueakObjectClassNode classNode;
-
-        @SuppressWarnings("unchecked")
-        public DispatchCacheManager() {
-            this.fastEntries = (DispatchEntry<T>[]) new DispatchEntry<?>[0];
-            this.wideEntries = (DispatchEntry<T>[]) new DispatchEntry<?>[0];
-            this.classNode = insert(SqueakObjectClassNodeGen.create());
+    protected final void ensureClassNode() {
+        if (classNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            classNode = insert(SqueakObjectClassNodeGen.create());
         }
+    }
 
-        @SuppressWarnings("unchecked")
-        @TruffleBoundary
-        protected T convertToIndirect() {
-            // Safely drop the fast and wide tiers to free memory.
-            this.fastEntries = insert((DispatchEntry<T>[]) new DispatchEntry<?>[0]);
-            this.wideEntries = insert((DispatchEntry<T>[]) new DispatchEntry<?>[0]);
-            this.classNode = null;
-            return null;
-        }
+    @SuppressWarnings("unchecked")
+    @TruffleBoundary
+    protected final T convertToIndirect() {
+        this.fastEntries = (DispatchEntry<T>[]) EMPTY_ENTRIES;
+        this.wideEntries = (DispatchEntry<T>[]) EMPTY_ENTRIES;
+        this.classNode = null;
+        this.state = (byte) ((state & FLAG_PRIM_FAIL) | HAS_INDIRECT);
+        return null;
+    }
 
-        @SuppressWarnings("unchecked")
-        @TruffleBoundary
-        protected T specialize(final Object receiver, final ClassObject receiverClass, final Object lookupResult, final java.util.function.Supplier<T> nodeSupplier) {
-            final DispatchEntry<T>[] newFastEntries = (DispatchEntry<T>[]) new DispatchEntry<?>[CacheLimits.DISPATCH_CACHE_LIMIT];
-            final DispatchEntry<T>[] newWideEntries = (DispatchEntry<T>[]) new DispatchEntry<?>[CacheLimits.DISPATCH_CACHE_LIMIT];
+    @SuppressWarnings("unchecked")
+    @TruffleBoundary
+    protected final T specialize(final Object receiver, final ClassObject receiverClass, final Object lookupResult, final Supplier<T> nodeSupplier) {
+        /*
+         * THREAD SAFETY NOTE:
+         * TruffleSqueak executes Smalltalk strictly on a single thread. Therefore, AST mutations
+         * (like array cloning and Node insertion here) do not require getLock().lock() synchronization.
+         *
+         * If the VM architecture ever transitions to multithreaded execution, this method MUST be
+         * wrapped in the node's intrinsic lock to prevent AST corruption and lost updates.
+         */
 
-            int fastEntriesNeeded = 0;
-            CompiledCodeObject targetMethodToWiden = null;
-            DispatchEntry<T> targetEntry = null;
+        final DispatchEntry<T>[] newFastEntries = (DispatchEntry<T>[]) new DispatchEntry<?>[CacheLimits.DISPATCH_CACHE_LIMIT];
+        final DispatchEntry<T>[] newWideEntries = (DispatchEntry<T>[]) new DispatchEntry<?>[CacheLimits.DISPATCH_CACHE_LIMIT];
 
-            // 1. Prune dead Fast entries and search for coalescing/promotion
-            for (final DispatchEntry<T> current : fastEntries) {
-                if (!current.isFastValid()) {
-                    continue;
-                }
+        int fastEntriesNeeded = 0;
+        CompiledCodeObject targetMethodToWiden = null;
+        DispatchEntry<T> targetEntry = null;
 
-                // Only coalesce standard methods. Fallbacks (null) and OAMs are isolated by class.
-                if (targetEntry == null && lookupResult instanceof CompiledCodeObject targetMethod &&
-                                current.methodOrNull == targetMethod) {
+        for (final DispatchEntry<T> current : fastEntries) {
+            if (!current.isFastValid()) {
+                continue;
+            }
 
-                    // Method matches fast entry: append new guard or transition to wide, if needed.
-                    if (current.guardChainNode.append(receiver, receiverClass, targetMethod)) {
-                        newFastEntries[fastEntriesNeeded++] = current;
-                        targetEntry = current;
-                    } else {
-                        targetMethodToWiden = targetMethod;
-                        targetEntry = current;
-                    }
-                } else {
-                    // Node survives unchanged
+            if (targetEntry == null && lookupResult instanceof CompiledCodeObject targetMethod && current.methodOrNull == targetMethod) {
+                if (current.append(receiver, receiverClass, targetMethod)) {
                     newFastEntries[fastEntriesNeeded++] = current;
+                    targetEntry = current;
+                } else {
+                    targetMethodToWiden = targetMethod;
+                    targetEntry = current;
                 }
+            } else {
+                newFastEntries[fastEntriesNeeded++] = current;
             }
-
-            // 2. Prune dead Wide entries
-            int wideEntriesNeeded = 0;
-            for (final DispatchEntry<T> current : wideEntries) {
-                if (current.isWideValid()) {
-                    newWideEntries[wideEntriesNeeded++] = current;
-                }
-            }
-
-            // 3. Handle Wide transition by mutating and moving the entry
-            if (targetMethodToWiden != null) {
-                targetEntry.promoteToWide();
-                newWideEntries[wideEntriesNeeded++] = targetEntry;
-                this.fastEntries = insert(Arrays.copyOf(newFastEntries, fastEntriesNeeded));
-                this.wideEntries = insert(Arrays.copyOf(newWideEntries, wideEntriesNeeded));
-                return targetEntry.executor;
-            }
-
-            // Make sure Wide entries are up to date (used by Step 4 and 5)
-            if (wideEntriesNeeded != wideEntries.length) {
-                this.wideEntries = insert(Arrays.copyOf(newWideEntries, wideEntriesNeeded));
-            }
-
-            // 4. Return existing appended executor, if found
-            if (targetEntry != null) {
-                // Update AST only if dead fast entries were pruned
-                if (fastEntriesNeeded != fastEntries.length) {
-                    this.fastEntries = insert(Arrays.copyOf(newFastEntries, fastEntriesNeeded));
-                }
-                return targetEntry.executor;
-            }
-
-            // 5. Append new Fast entry, if cache has space
-            if (fastEntriesNeeded + wideEntriesNeeded < CacheLimits.DISPATCH_CACHE_LIMIT) {
-                // Dispatch Node is only built when we need a new entry
-                final T newDispatchNode = nodeSupplier.get();
-                final DispatchEntry<T> newEntry = new DispatchEntry<>(receiver, lookupResult, newDispatchNode);
-                newFastEntries[fastEntriesNeeded++] = newEntry;
-                this.fastEntries = insert(Arrays.copyOf(newFastEntries, fastEntriesNeeded));
-                return newDispatchNode;
-            }
-
-            // Capacity exhausted
-            return convertToIndirect();
         }
+
+        int wideEntriesNeeded = 0;
+        for (final DispatchEntry<T> current : wideEntries) {
+            if (current.isWideValid()) {
+                newWideEntries[wideEntriesNeeded++] = current;
+            }
+        }
+
+        if (targetMethodToWiden != null) {
+            targetEntry.promoteToWide();
+            newWideEntries[wideEntriesNeeded++] = targetEntry;
+            this.fastEntries = insert(Arrays.copyOf(newFastEntries, fastEntriesNeeded));
+            this.wideEntries = insert(Arrays.copyOf(newWideEntries, wideEntriesNeeded));
+            this.state |= HAS_WIDE;
+            if (fastEntriesNeeded > 0) {
+                this.state |= HAS_FAST;
+            } else {
+                this.state &= ~HAS_FAST;
+            }
+            return targetEntry.executor;
+        }
+
+        if (wideEntriesNeeded != wideEntries.length) {
+            this.wideEntries = insert(Arrays.copyOf(newWideEntries, wideEntriesNeeded));
+        }
+
+        if (targetEntry != null) {
+            if (fastEntriesNeeded != fastEntries.length) {
+                this.fastEntries = insert(Arrays.copyOf(newFastEntries, fastEntriesNeeded));
+            }
+            return targetEntry.executor;
+        }
+
+        if (fastEntriesNeeded + wideEntriesNeeded < CacheLimits.DISPATCH_CACHE_LIMIT) {
+            final T newDispatchNode = nodeSupplier.get();
+            final DispatchEntry<T> newEntry = new DispatchEntry<>(receiver, lookupResult, newDispatchNode);
+            newFastEntries[fastEntriesNeeded++] = newEntry;
+            this.fastEntries = insert(Arrays.copyOf(newFastEntries, fastEntriesNeeded));
+            this.state |= HAS_FAST;
+            return newDispatchNode;
+        }
+
+        return convertToIndirect();
     }
 
     public static final class DispatchEntry<T extends AbstractDispatchDirectNode> extends Node {
         public final CompiledCodeObject methodOrNull;
         @CompilationFinal public final Assumption callTargetStable;
 
-        @Child public GuardChainNode guardChainNode;
+        @CompilationFinal(dimensions = 1) private LookupClassGuard[] guards;
+        @CompilationFinal(dimensions = 1) private Assumption[] unifiedAssumptions;
+
         @Child public T executor;
 
         public DispatchEntry(final Object receiver, final Object lookupResult, final T executor) {
             this.methodOrNull = lookupResult instanceof CompiledCodeObject m ? m : null;
             this.callTargetStable = methodOrNull != null ? methodOrNull.getCallTargetStable() : null;
-            this.guardChainNode = insert(new GuardChainNode(receiver, executor.getAssumptions()));
+            this.guards = new LookupClassGuard[]{LookupClassGuard.create(receiver)};
+            this.unifiedAssumptions = executor.getAssumptions();
             this.executor = insert(executor);
         }
 
+        @ExplodeLoop
         public boolean isFastCacheHit(final Object receiver) {
-            return guardChainNode.execute(receiver);
+            if (!Assumption.isValidAssumption(unifiedAssumptions)) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                return false;
+            }
+
+            final LookupClassGuard[] currentGuards = guards;
+            if (currentGuards != null) {
+                for (int i = 0; i < currentGuards.length; i++) {
+                    if (currentGuards[i].check(receiver)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
 
         public boolean isWideCacheHit(final CompiledCodeObject targetMethod) {
@@ -180,8 +191,7 @@ public abstract class AbstractDispatchNode extends AbstractNode {
         }
 
         public boolean isFastValid() {
-            final GuardChainNode chain = guardChainNode;
-            return chain != null && chain.hasValidGuards();
+            return guards != null && Assumption.isValidAssumption(unifiedAssumptions);
         }
 
         public boolean isWideValid() {
@@ -189,112 +199,42 @@ public abstract class AbstractDispatchNode extends AbstractNode {
         }
 
         public void promoteToWide() {
-            this.guardChainNode = null; // Drop fast-tier receiver checking to free memory
-        }
-    }
-
-    public static final class GuardChainNode extends AbstractNode {
-        @CompilationFinal(dimensions = 1) private LookupClassGuard[] guards;
-        @CompilationFinal(dimensions = 2) private Assumption[][] assumptions;
-
-        public GuardChainNode(final Object receiver, final Assumption[] initialAssumptions) {
-            this.guards = new LookupClassGuard[]{LookupClassGuard.create(receiver)};
-            this.assumptions = new Assumption[][]{initialAssumptions};
-        }
-
-        public boolean isEmpty() {
-            return guards.length == 0;
-        }
-
-        public boolean hasValidGuards() {
-            final Assumption[][] currentAssumptions = assumptions;
-            for (int i = 0; i < currentAssumptions.length; i++) {
-                if (Assumption.isValidAssumption(currentAssumptions[i])) {
-                    return true; // At least one guard is still alive
-                }
-            }
-            return false;
-        }
-
-        @ExplodeLoop
-        public boolean execute(final Object receiver) {
-            final LookupClassGuard[] currentGuards = guards;
-            final Assumption[][] currentAssumptions = assumptions;
-
-            for (int i = 0; i < currentGuards.length; i++) {
-                if (currentGuards[i].check(receiver)) {
-                    if (Assumption.isValidAssumption(currentAssumptions[i])) {
-                        return true;
-                    } else {
-                        CompilerDirectives.transferToInterpreterAndInvalidate();
-                        removeInvalid(currentGuards, currentAssumptions);
-                        return false;
-                    }
-                }
-            }
-            return false;
+            this.guards = null; // Drop fast-tier receiver checking to free memory
         }
 
         public boolean append(final Object receiver, final ClassObject receiverClass, final CompiledCodeObject targetMethod) {
-            final Assumption[][] currentAssumptions = assumptions;
-            int validCount = 0;
-
-            for (int i = 0; i < currentAssumptions.length; i++) {
-                if (Assumption.isValidAssumption(currentAssumptions[i])) {
-                    validCount++;
-                }
+            if (!Assumption.isValidAssumption(unifiedAssumptions)) {
+                return false;
             }
-
-            if (validCount >= CacheLimits.LOOKUP_CACHE_LIMIT) {
+            if (guards.length >= CacheLimits.LOOKUP_CACHE_LIMIT) {
                 return false;
             }
 
-            // Generate and add the new assumptions
-            final Assumption[] newAssumptions = DispatchUtils.createAssumptions(receiverClass, targetMethod);
-
-            final LookupClassGuard[] newGuards = new LookupClassGuard[validCount + 1];
-            final Assumption[][] newAssumptionsArray = new Assumption[validCount + 1][];
-
-            int index = 0;
-            for (int i = 0; i < currentAssumptions.length; i++) {
-                if (Assumption.isValidAssumption(currentAssumptions[i])) {
-                    newGuards[index] = guards[i];
-                    newAssumptionsArray[index] = currentAssumptions[i];
-                    index++;
-                }
-            }
-
-            newGuards[index] = LookupClassGuard.create(receiver);
-            newAssumptionsArray[index] = newAssumptions;
-
+            // Append Guard
+            final LookupClassGuard[] newGuards = Arrays.copyOf(guards, guards.length + 1);
+            newGuards[guards.length] = LookupClassGuard.create(receiver);
             this.guards = newGuards;
-            this.assumptions = newAssumptionsArray;
+
+            // Union Assumptions
+            Assumption[] newAssumptions = DispatchUtils.createAssumptions(receiverClass, targetMethod);
+            if (newAssumptions.length > 0) {
+                Assumption[] merged = Arrays.copyOf(unifiedAssumptions, unifiedAssumptions.length + newAssumptions.length);
+                int count = unifiedAssumptions.length;
+                for (Assumption newA : newAssumptions) {
+                    boolean exists = false;
+                    for (int i = 0; i < count; i++) {
+                        if (merged[i] == newA) {
+                            exists = true;
+                            break;
+                        }
+                    }
+                    if (!exists) {
+                        merged[count++] = newA;
+                    }
+                }
+                this.unifiedAssumptions = Arrays.copyOf(merged, count);
+            }
             return true;
-        }
-
-        @TruffleBoundary
-        private void removeInvalid(final LookupClassGuard[] currentGuards, final Assumption[][] currentAssumptions) {
-            int validCount = 0;
-            for (int i = 0; i < currentAssumptions.length; i++) {
-                if (Assumption.isValidAssumption(currentAssumptions[i])) {
-                    validCount++;
-                }
-            }
-
-            final LookupClassGuard[] newGuards = new LookupClassGuard[validCount];
-            final Assumption[][] newAssumptionsArray = new Assumption[validCount][];
-
-            int index = 0;
-            for (int i = 0; i < currentAssumptions.length; i++) {
-                if (Assumption.isValidAssumption(currentAssumptions[i])) {
-                    newGuards[index] = currentGuards[i];
-                    newAssumptionsArray[index] = currentAssumptions[i];
-                    index++;
-                }
-            }
-
-            this.guards = newGuards;
-            this.assumptions = newAssumptionsArray;
         }
     }
 }

@@ -182,7 +182,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         return new BlockClosureObject(true, block, block.getShadowBlockNumArgs(), copiedValues, FrameAccess.getReceiver(frame), outerContext);
     }
 
-    protected static final AbstractDispatchNode createDispatchNode(final int numArgs, final NativeObject selector) {
+    protected static final AbstractDispatchNode<?> createDispatchNode(final int numArgs, final NativeObject selector) {
         return switch (numArgs) {
             case 0 -> Dispatch0Node.create(selector);
             case 1 -> Dispatch1Node.create(selector);

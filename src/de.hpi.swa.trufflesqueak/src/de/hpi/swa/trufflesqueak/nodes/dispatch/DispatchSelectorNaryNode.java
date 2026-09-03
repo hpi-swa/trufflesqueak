@@ -63,20 +63,19 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 public final class DispatchSelectorNaryNode extends AbstractDispatchSelectorNode {
-    protected abstract static class AbstractDispatchNaryNode extends AbstractDispatchNode {
-        AbstractDispatchNaryNode(final NativeObject selector) {
-            super(selector);
+    protected abstract static class AbstractDispatchNaryNode<T extends AbstractDispatchDirectNode> extends AbstractDispatchNode<T> {
+        AbstractDispatchNaryNode(final NativeObject selector, final boolean canPrimFail) {
+            super(selector, canPrimFail);
         }
 
         public abstract Object execute(VirtualFrame frame, Object receiver, Object[] arguments);
     }
 
-    public static final class DispatchNaryNode extends AbstractDispatchNaryNode {
-        @Child private DispatchCacheManager<DispatchDirectNaryNode> cache;
+    public static final class DispatchNaryNode extends AbstractDispatchNaryNode<DispatchDirectNaryNode> {
         @Child private DispatchIndirectNaryNode indirectNode;
 
         private DispatchNaryNode(final NativeObject selector) {
-            super(selector);
+            super(selector, false);
         }
 
         @NeverDefault
@@ -88,30 +87,29 @@ public final class DispatchSelectorNaryNode extends AbstractDispatchSelectorNode
         @ExplodeLoop
         @InliningCutoff
         public Object execute(final VirtualFrame frame, final Object receiver, final Object[] arguments) {
-            // TIER 3: Megamorphic Fallback (Indirect Execution)
-            if (indirectNode != null) {
-                return indirectNode.execute(frame, false, selector, receiver, arguments);
-            }
+            final byte currentState = state;
 
-            if (cache == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                cache = insert(new DispatchCacheManager<>());
+            // TIER 3: Megamorphic Fallback (Indirect Execution)
+            if ((currentState & HAS_INDIRECT) != 0) {
+                return indirectNode.execute(frame, canPrimFail(), selector, receiver, arguments);
             }
 
             // TIER 1: Direct Execution Fast Path
-            for (final DispatchEntry<DispatchDirectNaryNode> entry : cache.fastEntries) {
-                if (entry.isFastCacheHit(receiver)) {
-                    return entry.executor.execute(frame, receiver, arguments);
+            if ((currentState & HAS_FAST) != 0) {
+                for (final DispatchEntry<DispatchDirectNaryNode> entry : fastEntries) {
+                    if (entry.isFastCacheHit(receiver)) {
+                        return entry.executor.execute(frame, receiver, arguments);
+                    }
                 }
             }
 
             // TIER 2: Wide Execution (Class Polymorphism)
-            if (cache.wideEntries.length > 0) {
-                final ClassObject receiverClass = cache.classNode.executeLookup(cache, receiver);
+            if ((currentState & HAS_WIDE) != 0) {
+                final ClassObject receiverClass = classNode.executeLookup(this, receiver);
                 final Object lookupResult = getContext().lookup(receiverClass, selector);
 
                 if (lookupResult instanceof CompiledCodeObject targetMethod) {
-                    for (final DispatchEntry<DispatchDirectNaryNode> entry : cache.wideEntries) {
+                    for (final DispatchEntry<DispatchDirectNaryNode> entry : wideEntries) {
                         if (entry.isWideCacheHit(targetMethod)) {
                             return entry.executor.execute(frame, receiver, arguments);
                         }
@@ -119,27 +117,24 @@ public final class DispatchSelectorNaryNode extends AbstractDispatchSelectorNode
                 }
             }
 
-            // Cache Miss: Delegate to Manager for Specialization
+            // Cache Miss: Delegate to superclass for Specialization
             CompilerDirectives.transferToInterpreterAndInvalidate();
             return executeAndSpecialize(frame, receiver, arguments);
         }
 
         private Object executeAndSpecialize(final VirtualFrame frame, final Object receiver, final Object[] arguments) {
             /*
-             * Guard against lagging recursive frames. If multiple frames of this method are on the
-             * stack executing compiled code, a deeper frame may have already deoptimized and
-             * transitioned this node to the indirect tier. This intercepts older deoptimized frames
-             * to prevent redundant specialization.
+             * Guard against lagging recursive frames.
              */
-            if (indirectNode != null) {
-                return indirectNode.execute(frame, true, selector, receiver, arguments);
+            if ((state & HAS_INDIRECT) != 0) {
+                return indirectNode.execute(frame, canPrimFail(), selector, receiver, arguments);
             }
 
-            final ClassObject receiverClass = cache.classNode.executeLookup(cache, receiver);
+            ensureClassNode();
+            final ClassObject receiverClass = classNode.executeLookup(this, receiver);
             final Object lookupResult = getContext().lookup(receiverClass, selector);
 
-            // Node creation handles method resolution, including DNU and OAM fallbacks.
-            final DispatchDirectNaryNode executor = cache.specialize(receiver, receiverClass, lookupResult,
+            final DispatchDirectNaryNode executor = specialize(receiver, receiverClass, lookupResult,
                             () -> DispatchDirectNaryNode.create(selector, receiverClass, arguments.length));
 
             if (executor != null) {
@@ -147,17 +142,16 @@ public final class DispatchSelectorNaryNode extends AbstractDispatchSelectorNode
             } else {
                 reportPolymorphicSpecialize();
                 indirectNode = insert(DispatchIndirectNaryNodeGen.create());
-                return indirectNode.execute(frame, false, selector, receiver, arguments);
+                return indirectNode.execute(frame, canPrimFail(), selector, receiver, arguments);
             }
         }
     }
 
-    public static final class DispatchPerformNaryNode extends AbstractDispatchNaryNode {
-        @Child private DispatchCacheManager<DispatchDirectNaryNode> cache;
+    public static final class DispatchPerformNaryNode extends AbstractDispatchNaryNode<DispatchDirectNaryNode> {
         @Child private DispatchIndirectNaryNode indirectNode;
 
         private DispatchPerformNaryNode(final NativeObject selector) {
-            super(selector);
+            super(selector, true);
         }
 
         @NeverDefault
@@ -168,58 +162,54 @@ public final class DispatchSelectorNaryNode extends AbstractDispatchSelectorNode
         @Override
         @ExplodeLoop
         public Object execute(final VirtualFrame frame, final Object receiver, final Object[] arguments) {
-            // TIER 3: Megamorphic Fallback (Indirect Execution)
-            if (indirectNode != null) {
-                return indirectNode.execute(frame, true, selector, receiver, arguments);
-            }
+            final byte currentState = state;
 
-            if (cache == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                cache = insert(new DispatchCacheManager<>());
+            // TIER 3: Megamorphic Fallback (Indirect Execution)
+            if ((currentState & HAS_INDIRECT) != 0) {
+                return indirectNode.execute(frame, canPrimFail(), selector, receiver, arguments);
             }
 
             // TIER 1: Direct Execution Fast Path
-            for (final DispatchEntry<DispatchDirectNaryNode> entry : cache.fastEntries) {
-                if (entry.isFastCacheHit(receiver)) {
-                    return entry.executor.executeWithCheckedArguments(frame, receiver, arguments);
+            if ((currentState & HAS_FAST) != 0) {
+                for (final DispatchEntry<DispatchDirectNaryNode> entry : fastEntries) {
+                    if (entry.isFastCacheHit(receiver)) {
+                        return entry.executor.executeWithCheckedArguments(frame, receiver, arguments); // Checked Execution
+                    }
                 }
             }
 
             // TIER 2: Wide Execution (Class Polymorphism)
-            if (cache.wideEntries.length > 0) {
-                final ClassObject receiverClass = cache.classNode.executeLookup(cache, receiver);
+            if ((currentState & HAS_WIDE) != 0) {
+                final ClassObject receiverClass = classNode.executeLookup(this, receiver);
                 final Object lookupResult = getContext().lookup(receiverClass, selector);
 
                 if (lookupResult instanceof CompiledCodeObject targetMethod) {
-                    for (final DispatchEntry<DispatchDirectNaryNode> entry : cache.wideEntries) {
+                    for (final DispatchEntry<DispatchDirectNaryNode> entry : wideEntries) {
                         if (entry.isWideCacheHit(targetMethod)) {
-                            return entry.executor.executeWithCheckedArguments(frame, receiver, arguments);
+                            return entry.executor.executeWithCheckedArguments(frame, receiver, arguments); // Checked Execution
                         }
                     }
                 }
             }
 
-            // Cache Miss: Delegate to Manager for Specialization
+            // Cache Miss: Delegate to superclass for Specialization
             CompilerDirectives.transferToInterpreterAndInvalidate();
             return executeAndSpecialize(frame, receiver, arguments);
         }
 
         private Object executeAndSpecialize(final VirtualFrame frame, final Object receiver, final Object[] arguments) {
             /*
-             * Guard against lagging recursive frames. If multiple frames of this method are on the
-             * stack executing compiled code, a deeper frame may have already deoptimized and
-             * transitioned this node to the indirect tier. This intercepts older deoptimized frames
-             * to prevent redundant specialization.
+             * Guard against lagging recursive frames.
              */
-            if (indirectNode != null) {
-                return indirectNode.execute(frame, true, selector, receiver, arguments);
+            if ((state & HAS_INDIRECT) != 0) {
+                return indirectNode.execute(frame, canPrimFail(), selector, receiver, arguments);
             }
 
-            final ClassObject receiverClass = cache.classNode.executeLookup(cache, receiver);
+            ensureClassNode();
+            final ClassObject receiverClass = classNode.executeLookup(this, receiver);
             final Object lookupResult = getContext().lookup(receiverClass, selector);
 
-            // Node creation handles method resolution, including DNU and OAM fallbacks.
-            final DispatchDirectNaryNode executor = cache.specialize(receiver, receiverClass, lookupResult,
+            final DispatchDirectNaryNode executor = specialize(receiver, receiverClass, lookupResult,
                             () -> DispatchDirectNaryNode.create(selector, receiverClass, arguments.length));
 
             if (executor != null) {
@@ -227,16 +217,16 @@ public final class DispatchSelectorNaryNode extends AbstractDispatchSelectorNode
             } else {
                 reportPolymorphicSpecialize();
                 indirectNode = insert(DispatchIndirectNaryNodeGen.create());
-                return indirectNode.execute(frame, true, selector, receiver, arguments);
+                return indirectNode.execute(frame, canPrimFail(), selector, receiver, arguments);
             }
         }
     }
 
-    public abstract static class DispatchSuperNaryNode extends AbstractDispatchNaryNode {
+    public abstract static class DispatchSuperNaryNode extends AbstractDispatchNaryNode<DispatchDirectNaryNode> {
         protected final CompiledCodeObject method;
 
         DispatchSuperNaryNode(final CompiledCodeObject codeObject, final NativeObject selector) {
-            super(selector);
+            super(selector, false);
             method = codeObject.getMethod();
         }
 
@@ -248,9 +238,9 @@ public final class DispatchSelectorNaryNode extends AbstractDispatchSelectorNode
         }
     }
 
-    public abstract static class DispatchDirectedSuperNaryNode extends AbstractDispatchNode {
+    public abstract static class DispatchDirectedSuperNaryNode extends AbstractDispatchNode<DispatchDirectNaryNode> {
         DispatchDirectedSuperNaryNode(final NativeObject selector) {
-            super(selector);
+            super(selector, false);
         }
 
         public abstract Object execute(VirtualFrame frame, ClassObject lookupClass, Object receiver, Object[] arguments);
