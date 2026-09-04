@@ -70,6 +70,13 @@ public final class DispatchSelector5Node extends AbstractDispatchSelectorNode {
         public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5) {
             final byte currentState = state;
 
+            // TIER 0: Pure Monomorphic Fast Path
+            if ((currentState & HAS_MONO) != 0) {
+                if (Assumption.isValidAssumption(monoExecutor.getAssumptions()) && monoGuard.check(receiver)) {
+                    return monoExecutor.execute(frame, receiver, arg1, arg2, arg3, arg4, arg5);
+                }
+            }
+
             // TIER 3: Megamorphic Fallback (Indirect Execution)
             if ((currentState & HAS_INDIRECT) != 0) {
                 return indirectNode.execute(frame, (currentState & FLAG_PRIM_FAIL) != 0, selector, receiver, arg1, arg2, arg3, arg4, arg5);
@@ -86,13 +93,17 @@ public final class DispatchSelector5Node extends AbstractDispatchSelectorNode {
 
             // TIER 2: Wide Execution (Class Polymorphism)
             if ((currentState & HAS_WIDE) != 0) {
-                final ClassObject receiverClass = classNode.executeLookup(this, receiver);
-                final Object lookupResult = getContext().lookup(receiverClass, selector);
+                /* Local snapshot guards against stale compiled code during invalidation. */
+                final SqueakObjectClassNode node = classNode;
+                if (node != null) {
+                    final ClassObject receiverClass = node.executeLookup(this, receiver);
+                    final Object lookupResult = getContext().lookup(receiverClass, selector);
 
-                if (lookupResult instanceof CompiledCodeObject targetMethod) {
-                    for (final DispatchEntry<DispatchDirect5Node> entry : wideEntries) {
-                        if (entry.isWideCacheHit(targetMethod)) {
-                            return entry.executor.execute(frame, receiver, arg1, arg2, arg3, arg4, arg5);
+                    if (lookupResult instanceof CompiledCodeObject targetMethod) {
+                        for (final DispatchEntry<DispatchDirect5Node> entry : wideEntries) {
+                            if (entry.isWideCacheHit(targetMethod)) {
+                                return entry.executor.execute(frame, receiver, arg1, arg2, arg3, arg4, arg5);
+                            }
                         }
                     }
                 }
@@ -117,13 +128,14 @@ public final class DispatchSelector5Node extends AbstractDispatchSelectorNode {
 
             // Node creation handles method resolution, including DNU and OAM fallbacks.
             final DispatchDirect5Node executor = specialize(receiver, receiverClass, lookupResult,
-                    () -> DispatchDirect5Node.create(selector, receiverClass, canPrimFail()));
+                            () -> DispatchDirect5Node.create(selector, receiverClass, canPrimFail()));
 
             if (executor != null) {
                 return executor.execute(frame, receiver, arg1, arg2, arg3, arg4, arg5);
             } else {
                 reportPolymorphicSpecialize();
                 indirectNode = insert(DispatchIndirect5NodeGen.create());
+                convertToIndirect();
                 return indirectNode.execute(frame, canPrimFail(), selector, receiver, arg1, arg2, arg3, arg4, arg5);
             }
         }

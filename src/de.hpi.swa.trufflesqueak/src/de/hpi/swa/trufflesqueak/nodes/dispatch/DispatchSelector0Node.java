@@ -72,6 +72,13 @@ public final class DispatchSelector0Node extends AbstractDispatchSelectorNode {
         public Object execute(final VirtualFrame frame, final Object receiver) {
             final byte currentState = state;
 
+            // TIER 0: Pure Monomorphic Fast Path
+            if ((currentState & HAS_MONO) != 0) {
+                if (Assumption.isValidAssumption(monoExecutor.getAssumptions()) && monoGuard.check(receiver)) {
+                    return monoExecutor.execute(frame, receiver);
+                }
+            }
+
             // TIER 3: Megamorphic Fallback (Indirect Execution)
             if ((currentState & HAS_INDIRECT) != 0) {
                 return indirectNode.execute(frame, (currentState & FLAG_PRIM_FAIL) != 0, selector, receiver);
@@ -88,13 +95,17 @@ public final class DispatchSelector0Node extends AbstractDispatchSelectorNode {
 
             // TIER 2: Wide Execution (Class Polymorphism)
             if ((currentState & HAS_WIDE) != 0) {
-                final ClassObject receiverClass = classNode.executeLookup(this, receiver);
-                final Object lookupResult = getContext().lookup(receiverClass, selector);
+                /* Local snapshot guards against stale compiled code during invalidation. */
+                final SqueakObjectClassNode node = classNode;
+                if (node != null) {
+                    final ClassObject receiverClass = node.executeLookup(this, receiver);
+                    final Object lookupResult = getContext().lookup(receiverClass, selector);
 
-                if (lookupResult instanceof CompiledCodeObject targetMethod) {
-                    for (final DispatchEntry<DispatchDirect0Node> entry : wideEntries) {
-                        if (entry.isWideCacheHit(targetMethod)) {
-                            return entry.executor.execute(frame, receiver);
+                    if (lookupResult instanceof CompiledCodeObject targetMethod) {
+                        for (final DispatchEntry<DispatchDirect0Node> entry : wideEntries) {
+                            if (entry.isWideCacheHit(targetMethod)) {
+                                return entry.executor.execute(frame, receiver);
+                            }
                         }
                     }
                 }
@@ -119,13 +130,14 @@ public final class DispatchSelector0Node extends AbstractDispatchSelectorNode {
 
             // Node creation handles method resolution, including DNU and OAM fallbacks.
             final DispatchDirect0Node executor = specialize(receiver, receiverClass, lookupResult,
-                    () -> DispatchDirect0Node.create(selector, receiverClass, canPrimFail()));
+                            () -> DispatchDirect0Node.create(selector, receiverClass, canPrimFail()));
 
             if (executor != null) {
                 return executor.execute(frame, receiver);
             } else {
                 reportPolymorphicSpecialize();
                 indirectNode = insert(DispatchIndirect0NodeGen.create());
+                convertToIndirect();
                 return indirectNode.execute(frame, canPrimFail(), selector, receiver);
             }
         }
