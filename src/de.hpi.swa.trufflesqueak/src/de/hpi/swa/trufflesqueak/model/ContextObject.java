@@ -807,10 +807,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
             return false; // Structurally invalid instruction pointer
         }
         final Object sender = NilObject.nullToNil(proxy.sender);
-        if (!(sender instanceof AbstractSqueakObject)) {
-            return false; // Structurally invalid sender (e.g., primitive Long)
-        }
-        return true;
+        return sender instanceof AbstractSqueakObject; // Structurally invalid sender (e.g., primitive Long)
     }
 
     private static Object[] gatherReceiverAndArgs(final ContextProxy proxy, final int numArgs, final Object[] proxyStack) {
