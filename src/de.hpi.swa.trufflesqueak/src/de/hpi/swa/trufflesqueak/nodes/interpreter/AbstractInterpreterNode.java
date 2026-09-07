@@ -41,7 +41,6 @@ import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
-import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
@@ -77,7 +76,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
 
     protected final CompiledCodeObject code;
     protected final boolean isBlock;
-    protected final boolean modifiesContext;
+    private final boolean modifiesContext;
 
     @CompilationFinal(dimensions = 1) private final Object[] data;
     @CompilationFinal(dimensions = 1) private final byte[] profiles;
@@ -441,11 +440,11 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         throw new CannotReturnToTarget(returnValue, GetOrCreateContextWithFrameNode.executeUncached(frame));
     }
 
-    protected final void ensureContextIsNotActive(final VirtualFrame frame, final ContextObject context, final int pc, final int sp) {
-        if (context.isPotentiallyActiveOnTruffleStack()) {
+    protected final void ensureContextReceiverIsNotActive(final VirtualFrame frame, final int pc, final int sp) {
+        if (modifiesContext && FrameAccess.getReceiver(frame) instanceof final ContextObject context && context.isPotentiallyActiveOnTruffleStack()) {
             // Fast-path optimization: Preemptively mark the Context as inactive.
             context.markAsInactiveOnTruffleStack();
-            if (context.isActuallyActiveOnTruffleStackSlow()) {
+            if (context.isActuallyActiveOnTruffleStack()) {
                 // The context was actually active. Throwing ProcessSwitch will unwind the
                 // Truffle stack and force all contexts to the heap.
                 CompilerDirectives.transferToInterpreter();
