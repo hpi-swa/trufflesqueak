@@ -176,38 +176,42 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
                 values[i] = oldValue;
             }
         }
-        if (oldLayout.getNumPrimitiveExtension() != newLayout.getNumPrimitiveExtension()) {
+        final int oldLayoutNumPrimitiveExtension = oldLayout.getNumPrimitiveExtension();
+        final int newLayoutNumPrimitiveExtension = newLayout.getNumPrimitiveExtension();
+        if (oldLayoutNumPrimitiveExtension != newLayoutNumPrimitiveExtension) {
             // primitiveExtension has grown ...
             if (primitiveExtension == null) {
-                assert oldLayout.getNumPrimitiveExtension() == 0;
+                assert oldLayoutNumPrimitiveExtension == 0;
                 // ... primitiveExtension now needed
                 primitiveExtension = newLayout.getFreshPrimitiveExtension();
             } else {
-                if (newLayout.getNumPrimitiveExtension() == 0) {
+                if (newLayoutNumPrimitiveExtension == 0) {
                     // ... primitiveExtension no longer needed
                     primitiveExtension = null;
                 } else {
                     // ... resize primitiveExtension
-                    primitiveExtension = Arrays.copyOf(primitiveExtension, newLayout.getNumPrimitiveExtension());
+                    primitiveExtension = Arrays.copyOf(primitiveExtension, newLayoutNumPrimitiveExtension);
                 }
             }
         }
-        if (oldLayout.getNumObjectExtension() != newLayout.getNumObjectExtension()) {
+        final int oldLayoutNumObjectExtension = oldLayout.getNumObjectExtension();
+        final int newLayoutNumObjectExtension = newLayout.getNumObjectExtension();
+        if (oldLayoutNumObjectExtension != newLayoutNumObjectExtension) {
             // objectExtension has grown ...
             if (objectExtension == null) {
-                assert oldLayout.getNumObjectExtension() == 0;
+                assert oldLayoutNumObjectExtension == 0;
                 // ... objectExtension now needed
                 objectExtension = newLayout.getFreshObjectExtension();
             } else {
                 // ... resize objectExtension
-                objectExtension = Arrays.copyOf(objectExtension, newLayout.getNumObjectExtension());
-                for (int i = oldLayout.getNumObjectExtension(); i < newLayout.getNumObjectExtension(); i++) {
+                objectExtension = Arrays.copyOf(objectExtension, newLayoutNumObjectExtension);
+                for (int i = oldLayoutNumObjectExtension; i < newLayoutNumObjectExtension; i++) {
                     objectExtension[i] = NilObject.SINGLETON;
                 }
             }
         }
-        assert newLayout.getNumPrimitiveExtension() == 0 || newLayout.getNumPrimitiveExtension() == primitiveExtension.length;
-        assert newLayout.getNumObjectExtension() == 0 || newLayout.getNumObjectExtension() == objectExtension.length;
+        assert newLayoutNumPrimitiveExtension == 0 || newLayoutNumPrimitiveExtension == primitiveExtension.length;
+        assert newLayoutNumObjectExtension == 0 || newLayoutNumObjectExtension == objectExtension.length;
 
         for (int i = 0; i < instSize; i++) {
             final Object value = values[i];
@@ -364,7 +368,8 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
     public final void write(final SqueakImageWriter writer) {
         if (writeHeader(writer)) {
             final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
-            for (int i = 0; i < instsize(); i++) {
+            final int instsize = instsize();
+            for (int i = 0; i < instsize; i++) {
                 writer.writeObject(readNode.execute(this, i));
             }
             writeVariablePart(writer);

@@ -22,7 +22,7 @@ public final class ArrayUtils {
     private ArrayUtils() {
     }
 
-    public static void arraycopy(final Object src, final int srcPos, final Object dest, final int destPos, final int length) {
+    public static void arraycopy(final Object[] src, final int srcPos, final Object[] dest, final int destPos, final int length) {
         try {
             System.arraycopy(src, srcPos, dest, destPos, length);
         } catch (final Throwable t) {

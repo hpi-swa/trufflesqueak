@@ -311,10 +311,11 @@ public final class SqueakDisplay {
 
                 if (data.depth == 32) {
                     /* Case 1: 32-bit ARGB (Direct Copy) */
+                    final MemorySegment srcPixels = MemorySegment.ofArray(sqPixels);
                     for (int y = 0; y < h; y++) {
                         final long srcOffset = (long) y * w * Integer.BYTES;
                         final long dstOffset = (long) y * pitch;
-                        MemorySegment.copy(MemorySegment.ofArray(sqPixels), srcOffset, pixels, dstOffset, (long) w * Integer.BYTES);
+                        MemorySegment.copy(srcPixels, srcOffset, pixels, dstOffset, (long) w * Integer.BYTES);
                     }
                 } else if (sqMask != null && w == SqueakIOConstants.CURSOR_WIDTH && h == SqueakIOConstants.CURSOR_HEIGHT) {
                     /* Case 2: Legacy 16x16 Masked Cursor */

@@ -11,9 +11,9 @@ import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.nio.file.attribute.PosixFilePermission;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
@@ -682,9 +682,6 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @Override
     public List<? extends NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
-        final List<NodeFactory<? extends AbstractPrimitiveNode>> factories = new ArrayList<>();
-        factories.addAll(UnixOSProcessPluginFactory.getFactories());
-        factories.addAll(AbstractOSProcessPluginFactory.getFactories());
-        return factories;
+        return Stream.concat(UnixOSProcessPluginFactory.getFactories().stream(), AbstractOSProcessPluginFactory.getFactories().stream()).toList();
     }
 }

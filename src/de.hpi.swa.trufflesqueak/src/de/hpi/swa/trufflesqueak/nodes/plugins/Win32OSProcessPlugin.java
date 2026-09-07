@@ -9,6 +9,7 @@ package de.hpi.swa.trufflesqueak.nodes.plugins;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
@@ -25,10 +26,7 @@ public final class Win32OSProcessPlugin extends AbstractOSProcessPlugin {
 
     @Override
     public List<? extends NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
-        final List<NodeFactory<? extends AbstractPrimitiveNode>> factories = new ArrayList<>();
-        factories.addAll(Win32OSProcessPluginFactory.getFactories());
-        factories.addAll(AbstractOSProcessPluginFactory.getFactories());
-        return factories;
+        return Stream.concat(Win32OSProcessPluginFactory.getFactories().stream(), AbstractOSProcessPluginFactory.getFactories().stream()).toList();
     }
 
     @GenerateNodeFactory
@@ -43,7 +41,7 @@ public final class Win32OSProcessPlugin extends AbstractOSProcessPlugin {
         @TruffleBoundary
         private static String getEnvironmentString(final SqueakImageContext image) {
             final Map<String, String> envMap = image.env.getEnvironment();
-            final List<String> strings = new ArrayList<>();
+            final List<String> strings = new ArrayList<>(envMap.size());
             for (final Map.Entry<String, String> entry : envMap.entrySet()) {
                 strings.add(entry.getKey() + "=" + entry.getValue());
             }

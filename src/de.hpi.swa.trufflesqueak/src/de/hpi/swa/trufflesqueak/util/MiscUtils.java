@@ -202,12 +202,12 @@ public final class MiscUtils {
         } catch (final IOException e) {
             return String.format("\n%s (%s; %s)\n", System.getProperty("java.vm.name"), System.getProperty("java.vm.version"), System.getProperty("java.vm.info"));
         }
-        final String source = properties.getProperty("SOURCE", "unknown source").replaceAll("\"", "");
-        final String graalVMVersion = properties.getProperty("GRAALVM_VERSION", "unknown GraalVM version").replaceAll("\"", "");
-        final String javaVersion = properties.getProperty("JAVA_VERSION", "unknown Java version").replaceAll("\"", "");
-        final String osName = properties.getProperty("OS_NAME", "unknown os name").replaceAll("\"", "");
-        final String osArch = properties.getProperty("OS_ARCH", "unknown os arch").replaceAll("\"", "");
-        final String commitInfo = properties.getProperty("COMMIT_INFO", "unknown commit").replaceAll("\"", "");
+        final String source = properties.getProperty("SOURCE", "unknown source").replace("\"", "");
+        final String graalVMVersion = properties.getProperty("GRAALVM_VERSION", "unknown GraalVM version").replace("\"", "");
+        final String javaVersion = properties.getProperty("JAVA_VERSION", "unknown Java version").replace("\"", "");
+        final String osName = properties.getProperty("OS_NAME", "unknown os name").replace("\"", "");
+        final String osArch = properties.getProperty("OS_ARCH", "unknown os arch").replace("\"", "");
+        final String commitInfo = properties.getProperty("COMMIT_INFO", "unknown commit").replace("\"", "");
         return String.format("%s\nbuilt for GraalVM %s (Java %s, %s, %s)\n%s", source, graalVMVersion, javaVersion, osName, osArch, commitInfo);
     }
 
