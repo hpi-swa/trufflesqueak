@@ -878,7 +878,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         assert hasTruffleFrame();
 
         // ToDo: Ensure primitives only operate on heap-based Contexts.
-        if (isPotentiallyActiveOnTruffleStack() && isActuallyActiveOnTruffleStackSlow()) {
+        if (isPotentiallyActiveOnTruffleStack() && isActuallyActiveOnTruffleStack()) {
             CompilerDirectives.transferToInterpreter();
             throw SqueakException.create("Fatal: Cannot structurally degrade a Context that is currently active on the Truffle execution stack.");
         }
