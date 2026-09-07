@@ -45,7 +45,7 @@ public final class ResumeContextRootNode extends AbstractRootNode {
         /*
          * Reset the fast-path flag to indicate this Context has resumed execution. Future external
          * modifications to this Context's instruction pointer will now trigger a proper stack
-         * check. See AbstractInterpreterNode#checkForAndHandlePCModification
+         * check. See AbstractInterpreterNode#ensureContextReceiverIsNotActive
          */
         activeContext.markAsPotentiallyActiveOnTruffleStack();
         activeContext.clearModifiedSender();

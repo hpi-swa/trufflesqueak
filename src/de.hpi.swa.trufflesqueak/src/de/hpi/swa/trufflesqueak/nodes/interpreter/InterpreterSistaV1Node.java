@@ -439,12 +439,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final byte[] bc = ACCESS.uncheckedCast(code.getBytes(), byte[].class);
         assert isBlock == FrameAccess.hasClosure(frame);
 
-        if (modifiesContext) {
-            final Object receiver = FrameAccess.getReceiver(frame);
-            if (receiver instanceof ContextObject context) {
-                ensureContextIsNotActive(frame, context, startPC, startSP);
-            }
-        }
+        ensureContextReceiverIsNotActive(frame, startPC, startSP);
 
         final LoopCounter loopCounter = CompilerDirectives.inCompiledCode() && CompilerDirectives.hasNextTier() ? new LoopCounter() : null;
         int pc = startPC;
