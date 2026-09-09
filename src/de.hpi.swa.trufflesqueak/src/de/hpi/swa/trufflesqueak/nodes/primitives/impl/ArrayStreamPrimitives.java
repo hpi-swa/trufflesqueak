@@ -22,6 +22,7 @@ import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 import de.hpi.swa.trufflesqueak.nodes.accessing.FloatObjectNodes.FloatObjectNormalizeNode;
@@ -136,6 +137,11 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @SqueakPrimitive(indices = 62)
     protected abstract static class PrimSize1Node extends AbstractPrimitiveNode implements Primitive0WithFallback {
         @Specialization
+        protected static final long doContext(final ContextObject receiver) {
+            return Math.min(receiver.size(), receiver.getStackPointerOrZero());
+        }
+
+        @Specialization
         protected static final long doSqueakObject(final AbstractSqueakObject receiver,
                         @Bind final Node node,
                         @Cached final SqueakObjectSizeNode sizeNode,
@@ -147,6 +153,11 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 62)
     protected abstract static class PrimSize2Node extends AbstractPrimitiveNode implements Primitive1WithFallback {
+        @Specialization
+        protected static final long doContext(@SuppressWarnings("unused") final Object receiver, final ContextObject target) {
+            return Math.min(target.size(), target.getStackPointerOrZero());
+        }
+
         @Specialization
         protected static final long doSqueakObject(@SuppressWarnings("unused") final Object receiver, final AbstractSqueakObject target,
                         @Bind final Node node,
