@@ -428,6 +428,8 @@ public final class SqueakImageContext {
         final CompiledCodeObject doItMethod = (CompiledCodeObject) methodNode.send(this, "generate");
 
         final ContextObject doItContext = new ContextObject(doItMethod.getSqueakContextSize());
+        // Code object must be set before any other field in a new Context to ensure the Truffle frame
+        // descriptor and initial frame state are allocated.
         doItContext.setCodeObject(doItMethod);
         doItContext.setReceiver(NilObject.SINGLETON);
         doItContext.setInstructionPointer(0);
