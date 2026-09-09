@@ -8,7 +8,6 @@ package de.hpi.swa.trufflesqueak.model;
 
 import java.util.Arrays;
 
-import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import org.graalvm.collections.UnmodifiableEconomicMap;
 
 import com.oracle.truffle.api.CallTarget;
@@ -29,6 +28,7 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
+import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
@@ -882,17 +882,18 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         }
 
         // Extract all state from the Truffle frame using the existing slow-path getters
+        final int sp = getStackPointer();
         final ContextProxy proxy = new ContextProxy(getCodeObject().getSqueakContextSize());
         proxy.sender = getSender();
         proxy.instructionPointer = getInstructionPointer(InlinedConditionProfile.getUncached(), null);
-        proxy.stackPointer = (long) getStackPointer();
+        proxy.stackPointer = (long) sp;
         proxy.method = getCodeObject();
         proxy.closureOrNil = getClosure();
         proxy.receiver = getReceiver();
 
         // Populate the proxy's array with the Truffle frame's stack
         final Object[] stack = proxy.getOrCreateStack();
-        for (int i = 0; i < stack.length; i++) {
+        for (int i = 0; i < sp; i++) {
             stack[i] = atTemp(i);
         }
 
@@ -925,8 +926,9 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     }
 
     public Object getProxyTemp(final int index) {
+        assert index >= 0 : "Temp index cannot be negative: " + index;
         final Object[] stack = getProxy().getOrCreateStack();
-        return index >= 0 && index < stack.length ? NilObject.nullToNil(stack[index]) : NilObject.SINGLETON;
+        return index < stack.length ? NilObject.nullToNil(stack[index]) : NilObject.SINGLETON;
     }
 
     public void setProxySender(final Object value) {
@@ -959,8 +961,9 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     }
 
     public void setProxyTemp(final int index, final Object value) {
+        assert index >= 0 : "Temp index cannot be negative: " + index;
         final Object[] stack = getProxy().getOrCreateStack();
-        if (index >= 0 && index < stack.length) {
+        if (index < stack.length) {
             stack[index] = value;
         }
     }
