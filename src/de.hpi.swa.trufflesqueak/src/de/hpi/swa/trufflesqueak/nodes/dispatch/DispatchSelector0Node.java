@@ -10,18 +10,19 @@ import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.HostCompilerDirectives;
+import com.oracle.truffle.api.HostCompilerDirectives.InliningCutoff;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NeverDefault;
-import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedBranchProfile;
@@ -40,6 +41,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Abst
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.GetOrCreateContextWithoutFrameNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0NodeFactory.DispatchDirectPrimitiveFallback0NodeGen;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0NodeFactory.DispatchIndirect0NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
@@ -47,28 +49,97 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
-public final class DispatchSelector0Node extends DispatchSelectorNode {
-    public abstract static class Dispatch0Node extends AbstractDispatchNode {
-        Dispatch0Node(final NativeObject selector) {
-            super(selector);
+public final class DispatchSelector0Node extends AbstractDispatchSelectorNode {
+    public static final class Dispatch0Node extends AbstractDispatchNode<DispatchDirect0Node> {
+        @Child private DispatchIndirect0Node indirectNode;
+
+        private Dispatch0Node(final NativeObject selector, final boolean canPrimFail) {
+            super(selector, canPrimFail);
         }
 
-        public abstract Object execute(VirtualFrame frame, Object receiver);
-
-        @Specialization(guards = "guard.check(receiver)", assumptions = "dispatchDirectNode.getAssumptions()", limit = "INLINE_METHOD_CACHE_LIMIT")
-        protected static final Object doDirect(final VirtualFrame frame, final Object receiver,
-                        @SuppressWarnings("unused") @Cached("create(receiver)") final LookupClassGuard guard,
-                        @Cached("create(selector, guard)") final DispatchDirect0Node dispatchDirectNode) {
-            return dispatchDirectNode.execute(frame, receiver);
+        @NeverDefault
+        public static Dispatch0Node create(final NativeObject selector) {
+            return new Dispatch0Node(selector, false);
         }
 
-        @ReportPolymorphism.Megamorphic
-        @Specialization(replaces = "doDirect")
-        @HostCompilerDirectives.InliningCutoff
-        @SuppressWarnings("truffle-static-method")
-        protected final Object doIndirect(final VirtualFrame frame, final Object receiver,
-                        @Cached final DispatchIndirect0Node dispatchNode) {
-            return dispatchNode.execute(frame, false, selector, receiver);
+        @NeverDefault
+        public static Dispatch0Node create(final NativeObject selector, final boolean canPrimFail) {
+            return new Dispatch0Node(selector, canPrimFail);
+        }
+
+        @ExplodeLoop
+        @InliningCutoff
+        public Object execute(final VirtualFrame frame, final Object receiver) {
+            final byte currentState = state;
+
+            // TIER 0: Pure Monomorphic Fast Path
+            if ((currentState & HAS_MONO) != 0) {
+                if (Assumption.isValidAssumption(monoExecutor.getAssumptions()) && monoGuard.check(receiver)) {
+                    return monoExecutor.execute(frame, receiver);
+                }
+            }
+
+            // TIER 3: Megamorphic Fallback (Indirect Execution)
+            if ((currentState & HAS_INDIRECT) != 0) {
+                return indirectNode.execute(frame, (currentState & FLAG_PRIM_FAIL) != 0, selector, receiver);
+            }
+
+            // TIER 1: Direct Execution Fast Path
+            if ((currentState & HAS_FAST) != 0) {
+                for (final DispatchEntry<DispatchDirect0Node> entry : fastEntries) {
+                    if (entry.isFastCacheHit(receiver)) {
+                        return entry.executor.execute(frame, receiver);
+                    }
+                }
+            }
+
+            // TIER 2: Wide Execution (Class Polymorphism)
+            if ((currentState & HAS_WIDE) != 0) {
+                /* Local snapshot guards against stale compiled code during invalidation. */
+                final SqueakObjectClassNode node = classNode;
+                if (node != null) {
+                    final ClassObject receiverClass = node.executeLookup(this, receiver);
+                    final Object lookupResult = getContext().lookup(receiverClass, selector);
+
+                    if (lookupResult instanceof CompiledCodeObject targetMethod) {
+                        for (final DispatchEntry<DispatchDirect0Node> entry : wideEntries) {
+                            if (entry.isWideCacheHit(targetMethod)) {
+                                return entry.executor.execute(frame, receiver);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Cache Miss: Delegate to superclass for Specialization
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            return executeAndSpecialize(frame, receiver);
+        }
+
+        private Object executeAndSpecialize(final VirtualFrame frame, final Object receiver) {
+            /*
+             * Guard against lagging recursive frames.
+             */
+            if ((state & HAS_INDIRECT) != 0) {
+                return indirectNode.execute(frame, canPrimFail(), selector, receiver);
+            }
+
+            ensureClassNode();
+            final ClassObject receiverClass = classNode.executeLookup(this, receiver);
+            final Object lookupResult = getContext().lookup(receiverClass, selector);
+
+            // Node creation handles method resolution, including DNU and OAM fallbacks.
+            final DispatchDirect0Node executor = specialize(receiver, receiverClass, lookupResult,
+                            () -> DispatchDirect0Node.create(selector, receiverClass, canPrimFail()));
+
+            if (executor != null) {
+                return executor.execute(frame, receiver);
+            } else {
+                reportPolymorphicSpecialize();
+                indirectNode = insert(DispatchIndirect0NodeGen.create());
+                convertToIndirect();
+                return indirectNode.execute(frame, canPrimFail(), selector, receiver);
+            }
         }
     }
 
@@ -138,9 +209,15 @@ public final class DispatchSelector0Node extends DispatchSelectorNode {
             return new DispatchDirectMethod0Node(assumptions, method);
         }
 
-        private static DispatchDirectMessageFallback0Node createMessageFallbackNode(final NativeObject selector, final Assumption[] assumptions, final ClassObject receiverClass) {
-            final CompiledCodeObject fallbackMethod = receiverClass.resolveDispatchFailure(selector);
-            return new DispatchDirectMessageFallback0Node(assumptions, selector, fallbackMethod);
+        private static DispatchDirect0Node createMessageFallbackNode(final NativeObject selector, final Assumption[] assumptions, final ClassObject receiverClass) {
+            final ClassObject.DispatchFailureResult result = receiverClass.resolveDispatchFailure(selector, 0);
+            final Assumption[] finalAssumptions = DispatchUtils.getAssumptionsForMessageFallback(assumptions, selector, result.fallbackMethod());
+
+            return switch (result.convention()) {
+                case SHORTCUT_DNU -> new DispatchDirectShortcutFallback0Node(finalAssumptions, selector, result.fallbackMethod());
+                case STANDARD_DNU -> new DispatchDirectDNUFallback0Node(finalAssumptions, selector, result.fallbackMethod());
+                case CANNOT_INTERPRET -> new DispatchDirectCannotInterpretFallback0Node(finalAssumptions, selector, result.fallbackMethod(), result.fallbackDepth(), result.fallbackSelector());
+            };
         }
     }
 
@@ -219,21 +296,68 @@ public final class DispatchSelector0Node extends DispatchSelectorNode {
         }
     }
 
-    static final class DispatchDirectMessageFallback0Node extends DispatchDirectWithSender0Node {
-        private final NativeObject selector;
-        @Child private DirectCallNode callNode;
-        @Child private CreateMessageNode createMessageNode = CreateMessageNodeGen.create();
+    abstract static class AbstractDispatchDirectFallback0Node extends DispatchDirectWithSender0Node {
+        protected final NativeObject selector;
+        @Child protected DirectCallNode callNode;
 
-        DispatchDirectMessageFallback0Node(final Assumption[] assumptions, final NativeObject selector, final CompiledCodeObject dnuMethod) {
+        AbstractDispatchDirectFallback0Node(final Assumption[] assumptions, final NativeObject selector, final CompiledCodeObject targetMethod) {
             super(assumptions);
             this.selector = selector;
-            callNode = DirectCallNode.create(dnuMethod.getCallTarget());
+            this.callNode = DirectCallNode.create(targetMethod.getCallTarget());
+        }
+
+        @Override
+        public abstract Object execute(VirtualFrame frame, Object receiver);
+    }
+
+    static final class DispatchDirectDNUFallback0Node extends AbstractDispatchDirectFallback0Node {
+        @Child private CreateMessageNode createMessageNode = CreateMessageNodeGen.create();
+
+        DispatchDirectDNUFallback0Node(final Assumption[] assumptions, final NativeObject selector, final CompiledCodeObject dnuMethod) {
+            super(assumptions, selector, dnuMethod);
         }
 
         @Override
         public Object execute(final VirtualFrame frame, final Object receiver) {
             final PointersObject message = createMessageNode.execute(selector, receiver, ArrayUtils.EMPTY_ARRAY);
             return callNode.call(FrameAccess.newMessageFallbackWith(senderNode.execute(frame), receiver, message));
+        }
+    }
+
+    static final class DispatchDirectCannotInterpretFallback0Node extends AbstractDispatchDirectFallback0Node {
+        private final int fallbackDepth;
+        private final NativeObject ciSelector;
+        @Child private CreateMessageNode createMessageNode = CreateMessageNodeGen.create();
+
+        DispatchDirectCannotInterpretFallback0Node(final Assumption[] assumptions, final NativeObject selector, final CompiledCodeObject ciMethod, final int fallbackDepth,
+                        final NativeObject ciSelector) {
+            super(assumptions, selector, ciMethod);
+            this.fallbackDepth = fallbackDepth;
+            this.ciSelector = ciSelector;
+        }
+
+        @Override
+        public Object execute(final VirtualFrame frame, final Object receiver) {
+            final PointersObject message = DispatchUtils.buildNestedMessage(
+                            createMessageNode,
+                            selector,
+                            ciSelector,
+                            receiver,
+                            ArrayUtils.EMPTY_ARRAY,
+                            fallbackDepth);
+            return callNode.call(FrameAccess.newMessageFallbackWith(senderNode.execute(frame), receiver, message));
+        }
+    }
+
+    static final class DispatchDirectShortcutFallback0Node extends AbstractDispatchDirectFallback0Node {
+
+        DispatchDirectShortcutFallback0Node(final Assumption[] assumptions, final NativeObject selector, final CompiledCodeObject shortcutMethod) {
+            super(assumptions, selector, shortcutMethod);
+        }
+
+        @Override
+        public Object execute(final VirtualFrame frame, final Object receiver) {
+            return callNode.call(FrameAccess.newWith(senderNode.execute(frame), null, receiver, selector));
         }
     }
 
@@ -272,7 +396,14 @@ public final class DispatchSelector0Node extends DispatchSelectorNode {
             final ClassObject receiverClass = classNode.executeLookup(node, receiver);
             final Object lookupResult = getContext(node).lookup(receiverClass, selector);
             final CompiledCodeObject method = methodNode.execute(node, getContext(node), 0, canPrimFail, selector, receiverClass, lookupResult);
-            final Object result = tryPrimitiveNode.execute(frame, method, receiver);
+
+            final Object result;
+            if (lookupResult instanceof CompiledCodeObject) {
+                result = tryPrimitiveNode.execute(frame, method, receiver);
+            } else {
+                result = null;
+            }
+
             if (result != null) {
                 return result;
             } else {
@@ -332,7 +463,7 @@ public final class DispatchSelector0Node extends DispatchSelectorNode {
 
         @GenerateInline
         @GenerateCached(false)
-        protected abstract static class CreateFrameArgumentsForIndirectCall0Node extends AbstractNode {
+        protected abstract static class CreateFrameArgumentsForIndirectCall0Node extends AbstractCreateFrameArgumentsForIndirectCallNode {
             abstract Object[] execute(Node node, AbstractSqueakObject sender, Object receiver, ClassObject receiverClass, Object lookupResult, NativeObject selector);
 
             @Specialization
@@ -342,13 +473,33 @@ public final class DispatchSelector0Node extends DispatchSelectorNode {
                 return FrameAccess.newWith(sender, null, receiver);
             }
 
-            @Specialization(guards = "lookupResult == null")
+            @Specialization(guards = "lookupResult == null", assumptions = {"image.getDnuShortcutsAbsent()"})
             protected static final Object[] doMessageFallback(final Node node, final AbstractSqueakObject sender, final Object receiver, final ClassObject receiverClass,
                             @SuppressWarnings("unused") final Object lookupResult, final NativeObject selector,
-                            @Cached(inline = false) final AbstractPointersObjectWriteNode writeNode) {
+                            @Bind final SqueakImageContext image,
+                            @Exclusive @Cached final InlinedConditionProfile isCannotInterpretProfile,
+                            @Exclusive @Cached(inline = false) final AbstractPointersObjectWriteNode writeNode,
+                            @Exclusive @Cached(inline = false) final CreateMessageNode createMessageNode) {
+                final ClassObject.DispatchFailureResult result = image.findMethodCacheEntry(receiverClass, selector).getOrCreateDispatchFailureResult(0);
                 final Object[] arguments = ArrayUtils.EMPTY_ARRAY;
-                final PointersObject message = getContext(node).newMessage(writeNode, selector, receiverClass, arguments);
-                return FrameAccess.newMessageFallbackWith(sender, receiver, message);
+                return newMessage(node, sender, receiver, arguments, receiverClass, selector, result, image, isCannotInterpretProfile, writeNode, createMessageNode);
+            }
+
+            @Specialization(guards = "lookupResult == null", replaces = "doMessageFallback")
+            protected static final Object[] doMessageFallbackWithShortcuts(final Node node, final AbstractSqueakObject sender, final Object receiver, final ClassObject receiverClass,
+                            @SuppressWarnings("unused") final Object lookupResult, final NativeObject selector,
+                            @Bind final SqueakImageContext image,
+                            @Exclusive @Cached final InlinedConditionProfile isShortcutProfile,
+                            @Exclusive @Cached final InlinedConditionProfile isCannotInterpretProfile,
+                            @Exclusive @Cached(inline = false) final AbstractPointersObjectWriteNode writeNode,
+                            @Exclusive @Cached(inline = false) final CreateMessageNode createMessageNode) {
+                final ClassObject.DispatchFailureResult result = image.findMethodCacheEntry(receiverClass, selector).getOrCreateDispatchFailureResult(0);
+                if (isShortcutProfile.profile(node, result.convention() == ClassObject.FallbackConvention.SHORTCUT_DNU)) {
+                    return FrameAccess.newWith(sender, null, receiver, selector);
+                } else {
+                    final Object[] arguments = ArrayUtils.EMPTY_ARRAY;
+                    return newMessage(node, sender, receiver, arguments, receiverClass, selector, result, image, isCannotInterpretProfile, writeNode, createMessageNode);
+                }
             }
 
             @Specialization(guards = {"targetObject != null", "!isCompiledCodeObject(targetObject)"})
