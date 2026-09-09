@@ -131,19 +131,6 @@ public abstract class AbstractDispatchNode<T extends AbstractDispatchDirectNode>
         return specialize(receiver, receiverClass, lookupResult, nodeSupplier);
     }
 
-    @SuppressWarnings("unchecked")
-    @TruffleBoundary
-    protected final void convertToIndirect() {
-        this.state = (byte) ((state & FLAG_PRIM_FAIL) | HAS_INDIRECT);
-
-        /* Clear child nodes and arrays to release memory. */
-        this.monoGuard = null;
-        this.monoExecutor = null;
-        this.classNode = null;
-        this.fastEntries = EMPTY_ENTRIES;
-        this.wideEntries = EMPTY_ENTRIES;
-    }
-
     private DispatchEntry<T> findTargetFastEntry(final Object lookupResult) {
         if (lookupResult instanceof CompiledCodeObject targetMethod) {
             for (final DispatchEntry<T> current : fastEntries) {
@@ -175,34 +162,47 @@ public abstract class AbstractDispatchNode<T extends AbstractDispatchDirectNode>
         return count;
     }
 
-    /*
-     * Note on concurrency: Smalltalk execution is strictly single-threaded.
-     * If multiple OS threads of execution are ever permitted in the VM,
-     * the non-atomic state bit transitions and cache array mutations in
-     * this implementation will require synchronization and revision.
-     */
+    private T performWidePromotion(final DispatchEntry<T> targetEntry, final DispatchEntry<T>[] newFastEntries, final int fastCount, final DispatchEntry<T>[] newWideEntries, final int wideCount) {
+        newWideEntries[wideCount] = targetEntry;
+        this.fastEntries = insert(Arrays.copyOf(newFastEntries, fastCount));
+        this.wideEntries = insert(Arrays.copyOf(newWideEntries, wideCount + 1));
+        this.state |= HAS_WIDE;
+        if (fastCount > 0) {
+            this.state |= HAS_FAST;
+        } else {
+            this.state &= ~HAS_FAST;
+        }
+        return targetEntry.executor;
+    }
+
+    private T appendNewFastEntry(final Object receiver, final Object lookupResult, final Supplier<T> nodeSupplier, final DispatchEntry<T>[] newFastEntries, final int fastCount) {
+        final T newDispatchNode = nodeSupplier.get();
+        final DispatchEntry<T> newEntry = new DispatchEntry<>(receiver, lookupResult, newDispatchNode);
+        newFastEntries[fastCount] = newEntry;
+        this.fastEntries = insert(Arrays.copyOf(newFastEntries, fastCount + 1));
+        this.state |= HAS_FAST;
+        return newDispatchNode;
+    }
+
     @SuppressWarnings("unchecked")
     @TruffleBoundary
-    protected final T specialize(final Object receiver, final ClassObject receiverClass, final Object lookupResult, final Supplier<T> nodeSupplier) {
+    protected final void convertToIndirect() {
+        this.state = (byte) ((state & FLAG_PRIM_FAIL) | HAS_INDIRECT);
 
-        // 0. Base Case: Uninitialized Node -> Enter Tier 0 (Mono)
-        if ((state & (HAS_MONO | HAS_FAST | HAS_WIDE | HAS_INDIRECT)) == 0) {
-            return initializeMono(receiver, nodeSupplier);
-        }
+        /* Clear child nodes and arrays to release memory. */
+        this.monoGuard = null;
+        this.monoExecutor = null;
+        this.classNode = null;
+        this.fastEntries = EMPTY_ENTRIES;
+        this.wideEntries = EMPTY_ENTRIES;
+    }
 
-        // 1. Transition Tier 0 (Mono) to Tier 1 (Fast) via Recursion
-        if ((state & HAS_MONO) != 0) {
-            return transitionMonoToFast(receiver, receiverClass, lookupResult, nodeSupplier);
-        }
-
-        // ------------------------------------------------------------------
-        // Standard Fast/Wide Tier Processing (Tier 1 & Tier 2)
-        // ------------------------------------------------------------------
-
+    @SuppressWarnings("unchecked")
+    private T specializePolymorphic(final Object receiver, final ClassObject receiverClass, final Object lookupResult, final Supplier<T> nodeSupplier) {
         final DispatchEntry<T>[] newFastEntries = (DispatchEntry<T>[]) new DispatchEntry<?>[CacheLimits.DISPATCH_CACHE_LIMIT];
         final DispatchEntry<T>[] newWideEntries = (DispatchEntry<T>[]) new DispatchEntry<?>[CacheLimits.DISPATCH_CACHE_LIMIT];
 
-        // 2. Find target and determine if we need to promote to Wide
+        // Find target and determine if we need to promote to Wide
         final DispatchEntry<T> targetEntry = findTargetFastEntry(lookupResult);
         boolean needsWidening = false;
 
@@ -214,25 +214,16 @@ public abstract class AbstractDispatchNode<T extends AbstractDispatchDirectNode>
             }
         }
 
-        // 3. Filter valid entries.
-        int fastCount = filterFastEntries(newFastEntries);
-        int wideCount = filterWideEntries(newWideEntries);
+        // Filter valid entries.
+        final int fastCount = filterFastEntries(newFastEntries);
+        final int wideCount = filterWideEntries(newWideEntries);
 
-        // 4. Reassign Fast entry to Wide list, if needed.
+        // Reassign Fast entry to Wide list, if needed.
         if (needsWidening) {
-            newWideEntries[wideCount++] = targetEntry;
-            this.fastEntries = insert(Arrays.copyOf(newFastEntries, fastCount));
-            this.wideEntries = insert(Arrays.copyOf(newWideEntries, wideCount));
-            this.state |= HAS_WIDE;
-            if (fastCount > 0) {
-                this.state |= HAS_FAST;
-            } else {
-                this.state &= ~HAS_FAST;
-            }
-            return targetEntry.executor;
+            return performWidePromotion(targetEntry, newFastEntries, fastCount, newWideEntries, wideCount);
         }
 
-        // 5. Update arrays for successful Fast append or invalid entry cleanup.
+        // Update arrays for successful Fast append or invalid entry cleanup.
         if (wideCount != wideEntries.length) {
             this.wideEntries = insert(Arrays.copyOf(newWideEntries, wideCount));
         }
@@ -244,18 +235,37 @@ public abstract class AbstractDispatchNode<T extends AbstractDispatchDirectNode>
             return targetEntry.executor;
         }
 
-        // 6. Append New Fast Entry
+        // Append New Fast Entry, if possible.
         if (fastCount + wideCount < CacheLimits.DISPATCH_CACHE_LIMIT) {
-            final T newDispatchNode = nodeSupplier.get();
-            final DispatchEntry<T> newEntry = new DispatchEntry<>(receiver, lookupResult, newDispatchNode);
-            newFastEntries[fastCount++] = newEntry;
-            this.fastEntries = insert(Arrays.copyOf(newFastEntries, fastCount));
-            this.state |= HAS_FAST;
-            return newDispatchNode;
+            return appendNewFastEntry(receiver, lookupResult, nodeSupplier, newFastEntries, fastCount);
         }
 
         // Cache exhausted: convert to indirect
         return null;
+    }
+
+    /*
+     * Note on concurrency: Smalltalk execution is strictly single-threaded.
+     * If multiple OS threads of execution are ever permitted in the VM,
+     * the non-atomic state bit transitions and cache array mutations in
+     * this implementation will require synchronization and revision.
+     */
+    @SuppressWarnings("unchecked")
+    @TruffleBoundary
+    protected final T specialize(final Object receiver, final ClassObject receiverClass, final Object lookupResult, final Supplier<T> nodeSupplier) {
+
+        // Base Case: Uninitialized Node -> Enter Tier 0 (Mono)
+        if ((state & (HAS_MONO | HAS_FAST | HAS_WIDE | HAS_INDIRECT)) == 0) {
+            return initializeMono(receiver, nodeSupplier);
+        }
+
+        // Transition Tier 0 (Mono) to Tier 1 (Fast) via Recursion
+        if ((state & HAS_MONO) != 0) {
+            return transitionMonoToFast(receiver, receiverClass, lookupResult, nodeSupplier);
+        }
+
+        // Standard Fast/Wide Tier Processing
+        return specializePolymorphic(receiver, receiverClass, lookupResult, nodeSupplier);
     }
 
     public static final class DispatchEntry<T extends AbstractDispatchDirectNode> extends Node {
