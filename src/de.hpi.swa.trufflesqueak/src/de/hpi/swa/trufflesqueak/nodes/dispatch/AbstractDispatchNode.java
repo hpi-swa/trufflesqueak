@@ -98,6 +98,39 @@ public abstract class AbstractDispatchNode<T extends AbstractDispatchDirectNode>
         return Arrays.copyOf(merged, count);
     }
 
+    private T initializeMono(final Object receiver, final Supplier<T> nodeSupplier) {
+        this.monoExecutor = insert(nodeSupplier.get());
+        this.monoGuard = LookupClassGuard.create(receiver);
+        this.state |= HAS_MONO;
+        return monoExecutor;
+    }
+
+    @SuppressWarnings("unchecked")
+    private T transitionMonoToFast(final Object receiver, final ClassObject receiverClass, final Object lookupResult, final Supplier<T> nodeSupplier) {
+        final Assumption[] originalAssumptions = monoExecutor.getAssumptions();
+
+        if (Assumption.isValidAssumption(originalAssumptions)) {
+            // Convert the existing mono cache entry into a fast cache entry
+            final ClassObject originalClass = monoGuard.getSqueakClassInternal(null);
+            final Object originalLookupResult = getContext().lookup(originalClass, selector);
+            final CompiledCodeObject originalMethod = originalLookupResult instanceof CompiledCodeObject m ? m : null;
+            final Assumption originalCallTargetStable = originalMethod != null ? originalMethod.getCallTargetStable() : null;
+
+            final DispatchEntry<T> monoEntry = new DispatchEntry<>(originalMethod, originalCallTargetStable,
+                            new LookupClassGuard[]{monoGuard}, originalAssumptions);
+
+            // Avoid reparenting issues: add new cache entry as our child first, then add monoEntry as its child
+            this.fastEntries = insert((DispatchEntry<T>[]) new DispatchEntry<?>[]{monoEntry});
+            monoEntry.executor = monoEntry.insert(monoExecutor);
+
+            this.state |= HAS_FAST;
+        }
+
+        // RE-ENTER: Process the new class insertion
+        this.state &= ~HAS_MONO;
+        return specialize(receiver, receiverClass, lookupResult, nodeSupplier);
+    }
+
     @SuppressWarnings("unchecked")
     @TruffleBoundary
     protected final void convertToIndirect() {
@@ -123,36 +156,12 @@ public abstract class AbstractDispatchNode<T extends AbstractDispatchDirectNode>
 
         // 0. Base Case: Uninitialized Node -> Enter Tier 0 (Mono)
         if ((state & (HAS_MONO | HAS_FAST | HAS_WIDE | HAS_INDIRECT)) == 0) {
-            this.monoExecutor = insert(nodeSupplier.get());
-            this.monoGuard = LookupClassGuard.create(receiver);
-            this.state |= HAS_MONO;
-            return monoExecutor;
+            return initializeMono(receiver, nodeSupplier);
         }
 
         // 1. Transition Tier 0 (Mono) to Tier 1 (Fast) via Recursion
         if ((state & HAS_MONO) != 0) {
-            final Assumption[] originalAssumptions = monoExecutor.getAssumptions();
-
-            if (Assumption.isValidAssumption(originalAssumptions)) {
-                final ClassObject originalClass = monoGuard.getSqueakClassInternal(null);
-                final Object originalLookupResult = getContext().lookup(originalClass, selector);
-                final CompiledCodeObject originalMethod = originalLookupResult instanceof CompiledCodeObject m ? m : null;
-                final Assumption originalCallTargetStable = originalMethod != null ? originalMethod.getCallTargetStable() : null;
-
-                final DispatchEntry<T> monoEntry = new DispatchEntry<>(originalMethod, originalCallTargetStable,
-                                new LookupClassGuard[]{monoGuard}, originalAssumptions);
-
-                // Avoid reparenting issues: add new cache entry as our child first, then add monoEntry as its child
-                this.fastEntries = insert((DispatchEntry<T>[]) new DispatchEntry<?>[]{monoEntry});
-                monoEntry.executor = monoEntry.insert(monoExecutor);
-
-                this.state |= HAS_FAST;
-            }
-
-            this.state &= ~HAS_MONO;
-
-            // RE-ENTER: Process the new class insertion
-            return specialize(receiver, receiverClass, lookupResult, nodeSupplier);
+            return transitionMonoToFast(receiver, receiverClass, lookupResult, nodeSupplier);
         }
 
         // ------------------------------------------------------------------
@@ -269,8 +278,8 @@ public abstract class AbstractDispatchNode<T extends AbstractDispatchDirectNode>
 
             final LookupClassGuard[] currentGuards = guards;
             if (currentGuards != null) {
-                for (int i = 0; i < currentGuards.length; i++) {
-                    if (currentGuards[i].check(receiver)) {
+                for (LookupClassGuard currentGuard : currentGuards) {
+                    if (currentGuard.check(receiver)) {
                         return true;
                     }
                 }
