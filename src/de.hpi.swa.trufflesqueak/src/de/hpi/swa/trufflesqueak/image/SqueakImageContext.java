@@ -1136,7 +1136,31 @@ public final class SqueakImageContext {
         return methodCache[firstProbe].reuseFor(classObject, selector);
     }
 
+    @ExplodeLoop
     public Object lookup(final ClassObject receiverClass, final NativeObject selector) {
+        // 1. Read-Only Fast Path: strictly side-effect free for PE
+        final int selectorHash = System.identityHashCode(selector);
+        final int stride = (selectorHash << 1) | 1;
+        int probe = (System.identityHashCode(receiverClass) ^ selectorHash) & METHOD_CACHE_MASK;
+
+        for (int i = 0; i < METHOD_CACHE_REPROBES; i++) {
+            final MethodCacheEntry entry = methodCache[probe];
+            if (entry.getClassObject() == receiverClass && entry.getSelector() == selector) {
+                final Object result = entry.getResult();
+                if (result != null) {
+                    return result; // Fast path hit!
+                }
+                break; // Found the entry, but result is null. Drop to slow path.
+            }
+            probe = (probe + stride) & METHOD_CACHE_MASK;
+        }
+
+        // 2. Cache Miss: delegate to the out-of-line slow path
+        return lookupSlow(receiverClass, selector);
+    }
+
+    @TruffleBoundary
+    private Object lookupSlow(final ClassObject receiverClass, final NativeObject selector) {
         final MethodCacheEntry cachedEntry = findMethodCacheEntry(receiverClass, selector);
         if (cachedEntry.getResult() == null) {
             cachedEntry.setResult(receiverClass.lookupInMethodDictSlow(selector));
