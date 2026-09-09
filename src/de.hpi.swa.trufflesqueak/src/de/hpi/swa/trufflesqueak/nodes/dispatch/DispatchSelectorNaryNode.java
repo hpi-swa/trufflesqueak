@@ -23,6 +23,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedBranchProfile;
@@ -58,7 +59,6 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive7;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive8;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive9;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
-import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
