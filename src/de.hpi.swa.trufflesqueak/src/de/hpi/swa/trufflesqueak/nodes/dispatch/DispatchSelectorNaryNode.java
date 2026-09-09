@@ -24,7 +24,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
-import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedBranchProfile;
@@ -769,7 +768,6 @@ public final class DispatchSelectorNaryNode extends AbstractDispatchSelectorNode
             }
 
             @Specialization(guards = {"lookupResult == null", "arguments.length == cachedArity"}, limit = "1", replaces = {"doMessageFallbackCached", "doMessageFallbackGeneric"})
-            @ExplodeLoop
             protected static final Object[] doMessageFallbackWithShortcutsCached(final Node node, final AbstractSqueakObject sender, final Object receiver, final Object[] arguments,
                             final ClassObject receiverClass,
                             @SuppressWarnings("unused") final Object lookupResult, final NativeObject selector,
