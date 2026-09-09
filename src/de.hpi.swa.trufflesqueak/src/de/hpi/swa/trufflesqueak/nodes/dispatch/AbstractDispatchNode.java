@@ -144,6 +144,37 @@ public abstract class AbstractDispatchNode<T extends AbstractDispatchDirectNode>
         this.wideEntries = EMPTY_ENTRIES;
     }
 
+    private DispatchEntry<T> findTargetFastEntry(final Object lookupResult) {
+        if (lookupResult instanceof CompiledCodeObject targetMethod) {
+            for (final DispatchEntry<T> current : fastEntries) {
+                if (current.isFastValid() && current.methodOrNull == targetMethod) {
+                    return current;
+                }
+            }
+        }
+        return null;
+    }
+
+    private int filterFastEntries(final DispatchEntry<T>[] newFastEntries) {
+        int count = 0;
+        for (final DispatchEntry<T> current : fastEntries) {
+            if (current.isFastValid()) {
+                newFastEntries[count++] = current;
+            }
+        }
+        return count;
+    }
+
+    private int filterWideEntries(final DispatchEntry<T>[] newWideEntries) {
+        int count = 0;
+        for (final DispatchEntry<T> current : wideEntries) {
+            if (current.isWideValid()) {
+                newWideEntries[count++] = current;
+            }
+        }
+        return count;
+    }
+
     /*
      * Note on concurrency: Smalltalk execution is strictly single-threaded.
      * If multiple OS threads of execution are ever permitted in the VM,
@@ -171,45 +202,29 @@ public abstract class AbstractDispatchNode<T extends AbstractDispatchDirectNode>
         final DispatchEntry<T>[] newFastEntries = (DispatchEntry<T>[]) new DispatchEntry<?>[CacheLimits.DISPATCH_CACHE_LIMIT];
         final DispatchEntry<T>[] newWideEntries = (DispatchEntry<T>[]) new DispatchEntry<?>[CacheLimits.DISPATCH_CACHE_LIMIT];
 
-        int fastEntriesNeeded = 0;
-        CompiledCodeObject targetMethodToWiden = null;
-        DispatchEntry<T> targetEntry = null;
+        // 2. Find target and determine if we need to promote to Wide
+        final DispatchEntry<T> targetEntry = findTargetFastEntry(lookupResult);
+        boolean needsWidening = false;
 
-        // 2. Process Fast Entries
-        for (final DispatchEntry<T> current : fastEntries) {
-            if (!current.isFastValid()) {
-                continue;
-            }
-
-            if (targetEntry == null && lookupResult instanceof CompiledCodeObject targetMethod && current.methodOrNull == targetMethod) {
-                if (current.append(receiver, receiverClass, targetMethod)) {
-                    newFastEntries[fastEntriesNeeded++] = current;
-                    targetEntry = current;
-                } else {
-                    targetMethodToWiden = targetMethod;
-                    targetEntry = current;
-                }
-            } else {
-                newFastEntries[fastEntriesNeeded++] = current;
+        if (targetEntry != null) {
+            needsWidening = !targetEntry.append(receiver, receiverClass, (CompiledCodeObject) lookupResult);
+            if (needsWidening) {
+                // This nulls the guards, causing the filter below to remove the Fast entry.
+                targetEntry.promoteToWide();
             }
         }
 
-        // 3. Process Wide Entries
-        int wideEntriesNeeded = 0;
-        for (final DispatchEntry<T> current : wideEntries) {
-            if (current.isWideValid()) {
-                newWideEntries[wideEntriesNeeded++] = current;
-            }
-        }
+        // 3. Filter valid entries.
+        int fastCount = filterFastEntries(newFastEntries);
+        int wideCount = filterWideEntries(newWideEntries);
 
-        // 4. Handle Wide Promotion
-        if (targetMethodToWiden != null) {
-            targetEntry.promoteToWide();
-            newWideEntries[wideEntriesNeeded++] = targetEntry;
-            this.fastEntries = insert(Arrays.copyOf(newFastEntries, fastEntriesNeeded));
-            this.wideEntries = insert(Arrays.copyOf(newWideEntries, wideEntriesNeeded));
+        // 4. Reassign Fast entry to Wide list, if needed.
+        if (needsWidening) {
+            newWideEntries[wideCount++] = targetEntry;
+            this.fastEntries = insert(Arrays.copyOf(newFastEntries, fastCount));
+            this.wideEntries = insert(Arrays.copyOf(newWideEntries, wideCount));
             this.state |= HAS_WIDE;
-            if (fastEntriesNeeded > 0) {
+            if (fastCount > 0) {
                 this.state |= HAS_FAST;
             } else {
                 this.state &= ~HAS_FAST;
@@ -217,23 +232,24 @@ public abstract class AbstractDispatchNode<T extends AbstractDispatchDirectNode>
             return targetEntry.executor;
         }
 
-        if (wideEntriesNeeded != wideEntries.length) {
-            this.wideEntries = insert(Arrays.copyOf(newWideEntries, wideEntriesNeeded));
+        // 5. Update arrays for successful Fast append or invalid entry cleanup.
+        if (wideCount != wideEntries.length) {
+            this.wideEntries = insert(Arrays.copyOf(newWideEntries, wideCount));
         }
 
         if (targetEntry != null) {
-            if (fastEntriesNeeded != fastEntries.length) {
-                this.fastEntries = insert(Arrays.copyOf(newFastEntries, fastEntriesNeeded));
+            if (fastCount != fastEntries.length) {
+                this.fastEntries = insert(Arrays.copyOf(newFastEntries, fastCount));
             }
             return targetEntry.executor;
         }
 
-        // 5. Append New Fast Entry
-        if (fastEntriesNeeded + wideEntriesNeeded < CacheLimits.DISPATCH_CACHE_LIMIT) {
+        // 6. Append New Fast Entry
+        if (fastCount + wideCount < CacheLimits.DISPATCH_CACHE_LIMIT) {
             final T newDispatchNode = nodeSupplier.get();
             final DispatchEntry<T> newEntry = new DispatchEntry<>(receiver, lookupResult, newDispatchNode);
-            newFastEntries[fastEntriesNeeded++] = newEntry;
-            this.fastEntries = insert(Arrays.copyOf(newFastEntries, fastEntriesNeeded));
+            newFastEntries[fastCount++] = newEntry;
+            this.fastEntries = insert(Arrays.copyOf(newFastEntries, fastCount));
             this.state |= HAS_FAST;
             return newDispatchNode;
         }
