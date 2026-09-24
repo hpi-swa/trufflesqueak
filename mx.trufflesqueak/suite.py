@@ -10,9 +10,9 @@ suite = {
     #  METADATA
     # ==========================================================================
     "name": "trufflesqueak",
-    "mxversion": "7.83.0",
+    "mxversion": "7.86.0",
     "versionConflictResolution": "latest",
-    "version": "25.1.3",
+    "version": "25.4.4.1.1",
     "release": False,
     "groupId": "de.hpi.swa.trufflesqueak",
     "url": "https://github.com/hpi-swa/trufflesqueak",
@@ -41,7 +41,7 @@ suite = {
             {
                 "name": "truffle",
                 "subdir": True,
-                "version": "vm-25.1.3",
+                "version": "vm-25.4.4.1.1",
                 "urls": [{"url": "https://github.com/oracle/graal", "kind": "git"}],
             }
         ],

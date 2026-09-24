@@ -12,7 +12,7 @@ on:
 
 env:
   # JVMCI_VERSION_CHECK: 'warn' # version of EA build does not always match
-  GRAALVM_VERSION: '25.1.3'
+  GRAALVM_VERSION: '25.4.4.1.1'
   NATIVE_IMAGE_OPTIONS: '-J-XX:MaxRAMPercentage=100'
   PGO_FILE_CUIS: '${{ github.workspace }}/trufflesqueak-cuis.iprof'
   PGO_FILE_SQUEAK: '${{ github.workspace }}/trufflesqueak-squeak.iprof'
