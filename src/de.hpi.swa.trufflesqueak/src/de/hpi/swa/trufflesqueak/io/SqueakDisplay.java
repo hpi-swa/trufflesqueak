@@ -1115,6 +1115,7 @@ public final class SqueakDisplay {
         buttons = buttons & ~KEYBOARD.ALL | modifiers;
     }
 
+    @TruffleBoundary
     public long[] getNextEvent() {
         return deferredEvents.pollFirst();
     }
