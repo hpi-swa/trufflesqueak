@@ -79,8 +79,7 @@ public final class SqueakImageReader {
         }
         initObjects();
         LogUtils.IMAGE.fine(() -> "Image loaded in " + (MiscUtils.currentTimeMillis() - start) + "ms.");
-        LogUtils.IMAGE.fine(() -> "Image screen size is " + image.flags.getScreenWidth() + "x" + image.flags.getScreenHeight() + ", HighDPI is " + (image.flags.upscaleDisplayIfHighDPI() ? "enabled"
-                        : "disabled"));
+        LogUtils.IMAGE.fine(() -> "Image screen size is " + image.flags.getScreenWidth() + "x" + image.flags.getScreenHeight());
         image.setHiddenRoots((ArrayObject) hiddenRootsChunk.asObject());
         image.getSqueakImage();
     }
