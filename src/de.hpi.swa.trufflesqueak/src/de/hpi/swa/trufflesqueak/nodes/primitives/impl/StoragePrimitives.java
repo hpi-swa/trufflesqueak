@@ -323,6 +323,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                     throw PrimitiveFailed.GENERIC_ERROR;
                 }
             }
+            reportLoopCount(node, receiverSize);
             getContext().flushMethodCacheAfterBecome();
             return receiver;
         }

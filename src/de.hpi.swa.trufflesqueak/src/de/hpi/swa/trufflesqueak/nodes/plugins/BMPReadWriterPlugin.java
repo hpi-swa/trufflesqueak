@@ -8,10 +8,12 @@ package de.hpi.swa.trufflesqueak.nodes.plugins;
 
 import java.util.List;
 
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
+import com.oracle.truffle.api.nodes.Node;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
@@ -31,7 +33,8 @@ public final class BMPReadWriterPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveRead24BmpLine")
     protected abstract static class PrimRead24BmpLineNode extends AbstractBMPPluginNode implements Primitive4WithFallback {
         @Specialization(guards = {"pixelLine.isByteType()", "formBits.isIntType()", "inBounds(formBitsIndex, width, formBits, pixelLine)"})
-        protected static final Object doRead(final Object receiver, final NativeObject pixelLine, final NativeObject formBits, final long formBitsIndex, final long width) {
+        protected static final Object doRead(final Object receiver, final NativeObject pixelLine, final NativeObject formBits, final long formBitsIndex, final long width,
+                        @Bind final Node node) {
             final byte[] bytes = pixelLine.getByteStorage();
             final int[] ints = formBits.getIntStorage();
             final int bitsStartIndex = (int) formBitsIndex - 1;
@@ -40,6 +43,7 @@ public final class BMPReadWriterPlugin extends AbstractPrimitiveFactoryHolder {
                 final int rgb = bytes[pixelIndex] & 0xFF | (bytes[pixelIndex + 1] & 0xFF) << 8 | (bytes[pixelIndex + 2] & 0xFF) << 16;
                 ints[bitsStartIndex + i] = rgb == 0 ? 0xFF000001 : rgb | 0xFF000000;
             }
+            reportLoopCount(node, width);
             return receiver;
         }
     }
@@ -48,7 +52,8 @@ public final class BMPReadWriterPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveWrite24BmpLine")
     protected abstract static class PrimWrite24BmpLineNode extends AbstractBMPPluginNode implements Primitive4WithFallback {
         @Specialization(guards = {"pixelLine.isByteType()", "formBits.isIntType()", "inBounds(formBitsIndex, width, formBits, pixelLine)"})
-        protected static final Object doWrite(final Object receiver, final NativeObject pixelLine, final NativeObject formBits, final long formBitsIndex, final long width) {
+        protected static final Object doWrite(final Object receiver, final NativeObject pixelLine, final NativeObject formBits, final long formBitsIndex, final long width,
+                        @Bind final Node node) {
             final byte[] bytes = pixelLine.getByteStorage();
             final int[] ints = formBits.getIntStorage();
             final int bitsStartIndex = (int) formBitsIndex - 1;
@@ -59,6 +64,7 @@ public final class BMPReadWriterPlugin extends AbstractPrimitiveFactoryHolder {
                 bytes[pixelIndex + 1] = (byte) (rgb >> 8 & 0xFF);
                 bytes[pixelIndex + 2] = (byte) (rgb >> 16 & 0xFF);
             }
+            reportLoopCount(node, width);
             return receiver;
         }
     }

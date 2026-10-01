@@ -363,6 +363,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             for (long i = start - 1; i < stop; i++) {
                 rcvr.atput0(i, repl.at0(repOff + i));
             }
+            reportLoopCountStartStop(node, start, stop);
             return rcvr;
         }
 
@@ -387,6 +388,10 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         private static boolean inBounds(final int arrayInstSize, final int arrayLength, final long start, final long stop, final int replInstSize, final int replLength, final long replStart) {
             return start >= 1 && start - 1 <= stop && stop + arrayInstSize <= arrayLength && replStart >= 1 && stop - start + replStart + replInstSize <= replLength;
+        }
+
+        private static void reportLoopCountStartStop(final Node node, final long start, final long stop) {
+            reportLoopCount(node, stop - start - 1);
         }
 
         @GenerateInline
@@ -476,6 +481,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 for (long i = start - 1; i < stop; i++) {
                     writeNode.execute(node, rcvr, i, readNode.execute(node, repl, repOff + i));
                 }
+                reportLoopCountStartStop(node, start, stop);
             }
 
             @Specialization
@@ -492,6 +498,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 for (long i = start - 1; i < stop; i++) {
                     writeNode.execute(node, rcvr, i, readNode.execute(repl, repOff + i));
                 }
+                reportLoopCountStartStop(node, start, stop);
             }
 
             @Specialization
@@ -509,6 +516,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 for (long i = start - 1; i < stop; i++) {
                     writeNode.execute(node, rcvr, i, readNode.execute(repl, repOff + i));
                 }
+                reportLoopCountStartStop(node, start, stop);
             }
 
             @SuppressWarnings("unused")
@@ -593,6 +601,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                     for (long i = start - 1; i < stop; i++) {
                         writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
                     }
+                    reportLoopCountStartStop(node, start, stop);
                 } else {
                     errorProfile.enter(node);
                     throw PrimitiveFailed.BAD_INDEX;
@@ -615,6 +624,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 for (long i = start - 1; i < stop; i++) {
                     writeNode.execute(rcvr, i, readNode.execute(node, repl, repOff + i));
                 }
+                reportLoopCountStartStop(node, start, stop);
             }
 
             @SuppressWarnings("unused")
@@ -647,6 +657,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 for (long i = start - 1; i < stop; i++) {
                     writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
                 }
+                reportLoopCountStartStop(node, start, stop);
             }
 
             @Specialization
@@ -665,6 +676,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 for (long i = start - 1; i < stop; i++) {
                     writeNode.execute(rcvr, i, readNode.execute(node, repl, repOff + i));
                 }
+                reportLoopCountStartStop(node, start, stop);
             }
 
             @SuppressWarnings("unused")
@@ -697,6 +709,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 for (long i = start - 1; i < stop; i++) {
                     writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
                 }
+                reportLoopCountStartStop(node, start, stop);
             }
 
             @Specialization
@@ -715,6 +728,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 for (long i = start - 1; i < stop; i++) {
                     writeNode.execute(rcvr, i, readNode.execute(node, repl, repOff + i));
                 }
+                reportLoopCountStartStop(node, start, stop);
             }
 
             @SuppressWarnings("unused")

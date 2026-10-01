@@ -19,7 +19,6 @@ import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.BytecodeOSRNode;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
-import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeVisitor;
 import com.oracle.truffle.api.source.Source;
@@ -349,9 +348,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     }
 
     protected final Object handleReturn(final VirtualFrame frame, final int currentPC, final int pc, final int sp, final Object result, final int loopCounter) {
-        if (loopCounter > 0) {
-            LoopNode.reportLoopCount(this, loopCounter);
-        }
+        reportLoopCount(this, loopCounter);
         return handleReturn(frame, currentPC, pc, sp, result);
     }
 
@@ -364,9 +361,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     }
 
     protected final Object handleReturnFromBlock(final VirtualFrame frame, final int currentPC, final int pc, final int sp, final Object result, final int loopCounter) {
-        if (loopCounter > 0) {
-            LoopNode.reportLoopCount(this, loopCounter);
-        }
+        reportLoopCount(this, loopCounter);
         return handleNormalReturn(frame, currentPC, pc, sp, result);
     }
 

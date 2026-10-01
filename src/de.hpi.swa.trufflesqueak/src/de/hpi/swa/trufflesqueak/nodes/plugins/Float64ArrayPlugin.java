@@ -27,8 +27,8 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 
@@ -42,14 +42,15 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveAddFloat64Array")
     public abstract static class PrimAddFloat64ArrayNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-
         @Specialization(guards = {"receiver.isLongType()", "floatArray.isLongType()", "receiver.getLongLength() == floatArray.getLongLength()"})
-        protected static final NativeObject doAdd(final NativeObject receiver, final NativeObject floatArray) {
+        protected static final NativeObject doAdd(final NativeObject receiver, final NativeObject floatArray,
+                        @Bind final Node node) {
             final long[] longs1 = receiver.getLongStorage();
             final long[] longs2 = floatArray.getLongStorage();
             for (int i = 0; i < longs1.length; i++) {
                 longs1[i] = Double.doubleToRawLongBits(Double.longBitsToDouble(longs1[i]) + Double.longBitsToDouble(longs2[i]));
             }
+            reportLoopCount(node, longs1.length);
             return receiver;
         }
 
@@ -58,13 +59,14 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveAddScalar")
     public abstract static class PrimAddScalarNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-
         @Specialization(guards = {"receiver.isLongType()"})
-        protected static final NativeObject doAdd(final NativeObject receiver, final double scalarValue) {
+        protected static final NativeObject doAdd(final NativeObject receiver, final double scalarValue,
+                        @Bind final Node node) {
             final long[] longs = receiver.getLongStorage();
             for (int i = 0; i < longs.length; i++) {
                 longs[i] = Double.doubleToRawLongBits(Double.longBitsToDouble(longs[i]) + scalarValue);
             }
+            reportLoopCount(node, longs.length);
             return receiver;
         }
 
@@ -73,7 +75,6 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveAt")
     public abstract static class PrimFloat64ArrayAtNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-
         @Specialization(guards = {"receiver.isLongType()", "inBounds1(index, receiver.getLongLength())"})
         protected static final double doAt(final NativeObject receiver, final long index) {
             return Double.longBitsToDouble(receiver.getLong(index - 1));
@@ -83,7 +84,6 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveAtPut")
     public abstract static class PrimFloat64ArrayAtPutNode extends AbstractPrimitiveNode implements Primitive2 {
-
         @Specialization(guards = {"receiver.isLongType()", "inBounds1(index, receiver.getLongLength())"})
         protected static final double doDouble(final NativeObject receiver, final long index, final double value) {
             receiver.setLong(index - 1, Double.doubleToRawLongBits(value));
@@ -123,20 +123,22 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDivFloat64Array")
     public abstract static class PrimDivFloat64ArrayNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-
         @Specialization(guards = {"receiver.isLongType()", "floatArray.isLongType()", "receiver.getLongLength() == floatArray.getLongLength()"})
-        protected static final NativeObject doDiv(final NativeObject receiver, final NativeObject floatArray) {
+        protected static final NativeObject doDiv(final NativeObject receiver, final NativeObject floatArray,
+                        @Bind final Node node) {
             final long[] longs1 = receiver.getLongStorage();
             final long[] longs2 = floatArray.getLongStorage();
+            final int length = longs1.length;
             /* "Check if any of the argument's values is zero". */
-            for (final long value : longs2) {
-                if (Double.longBitsToDouble(value) == 0) {
+            for (int i = 0; i < length; i++) {
+                if (Double.longBitsToDouble(longs2[i]) == 0) {
                     throw PrimitiveFailed.andTransferToInterpreter();
                 }
             }
-            for (int i = 0; i < longs1.length; i++) {
+            for (int i = 0; i < length; i++) {
                 longs1[i] = Double.doubleToRawLongBits(Double.longBitsToDouble(longs1[i]) / Double.longBitsToDouble(longs2[i]));
             }
+            reportLoopCount(node, 2 * length);
             return receiver;
         }
 
@@ -145,13 +147,14 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDivScalar")
     public abstract static class PrimDivScalarNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-
         @Specialization(guards = {"receiver.isLongType()"})
-        protected static final NativeObject doDiv(final NativeObject receiver, final double scalarValue) {
+        protected static final NativeObject doDiv(final NativeObject receiver, final double scalarValue,
+                        @Bind final Node node) {
             final long[] longs = receiver.getLongStorage();
             for (int i = 0; i < longs.length; i++) {
                 longs[i] = Double.doubleToRawLongBits(Double.longBitsToDouble(longs[i]) / scalarValue);
             }
+            reportLoopCount(node, longs.length);
             return receiver;
         }
     }
@@ -159,15 +162,16 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDotProduct")
     public abstract static class PrimDotProductNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-
         @Specialization(guards = {"receiver.isLongType()", "aFloatVector.isLongType()", "receiver.getLongLength() == aFloatVector.getLongLength()"})
-        protected static final double doDot64bit(final NativeObject receiver, final NativeObject aFloatVector) {
+        protected static final double doDot64bit(final NativeObject receiver, final NativeObject aFloatVector,
+                        @Bind final Node node) {
             final long[] longs1 = receiver.getLongStorage();
             final long[] longs2 = aFloatVector.getLongStorage();
             double result = 0;
             for (int i = 0; i < longs1.length; i++) {
                 result += Double.longBitsToDouble(longs1[i]) * Double.longBitsToDouble(longs2[i]);
             }
+            reportLoopCount(node, longs1.length);
             return result;
         }
     }
@@ -175,7 +179,6 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveEqual")
     public abstract static class PrimFloat64ArrayEqualNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-
         @Specialization(guards = {"receiver.isLongType()", "other.isLongType()"})
         protected static final boolean doEqual(final NativeObject receiver, final NativeObject other) {
             return BooleanObject.wrap(Arrays.equals(receiver.getLongStorage(), other.getLongStorage()));
@@ -194,14 +197,15 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveFromFloatArray")
     public abstract static class PrimFromFloatArrayNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-
         @Specialization(guards = {"receiver.isLongType()", "other.isIntType()", "receiver.getLongLength() == other.getIntLength()"})
-        protected static final NativeObject doFromFloatArray(final NativeObject receiver, final NativeObject other) {
+        protected static final NativeObject doFromFloatArray(final NativeObject receiver, final NativeObject other,
+                        @Bind final Node node) {
             final long[] longs = receiver.getLongStorage();
             final int[] ints = other.getIntStorage();
             for (int i = 0; i < longs.length; i++) {
                 longs[i] = Double.doubleToRawLongBits(Float.intBitsToFloat(ints[i]));
             }
+            reportLoopCount(node, longs.length);
             return receiver;
         }
     }
@@ -209,14 +213,16 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveHashArray")
     public abstract static class PrimHashArrayNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
-
         @Specialization(guards = "receiver.isLongType()")
-        protected static final long doHash(final NativeObject receiver) {
+        protected static final long doHash(final NativeObject receiver,
+                        @Bind final Node node) {
             final long[] words = receiver.getLongStorage();
+            final int length = words.length;
             long hash = 0;
-            for (final long word : words) {
-                hash += word;
+            for (int i = 0; i < length; i++) {
+                hash += words[i];
             }
+            reportLoopCount(node, length);
             return hash & 0x1fffffff;
         }
     }
@@ -226,16 +232,17 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveMulFloat64Array")
     public abstract static class PrimMulFloat64ArrayNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-
         @Specialization(guards = {"receiver.isLongType()", "floatArray.isLongType()",
                         "receiver.getLongLength() == floatArray.getLongLength()"})
-        protected static final NativeObject doMul(final NativeObject receiver, final NativeObject floatArray) {
+        protected static final NativeObject doMul(final NativeObject receiver, final NativeObject floatArray,
+                        @Bind final Node node) {
             final long[] longs1 = receiver.getLongStorage();
             final long[] longs2 = floatArray.getLongStorage();
 
             for (int i = 0; i < longs1.length; i++) {
                 longs1[i] = Double.doubleToRawLongBits(Double.longBitsToDouble(longs1[i]) * Double.longBitsToDouble(longs2[i]));
             }
+            reportLoopCount(node, longs1.length);
             return receiver;
         }
 
@@ -244,13 +251,14 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveMulScalar")
     public abstract static class PrimMulScalarNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-
         @Specialization(guards = {"receiver.isLongType()"})
-        protected static final NativeObject doMul(final NativeObject receiver, final double scalarValue) {
+        protected static final NativeObject doMul(final NativeObject receiver, final double scalarValue,
+                        @Bind final Node node) {
             final long[] longs = receiver.getLongStorage();
             for (int i = 0; i < longs.length; i++) {
                 longs[i] = Double.doubleToRawLongBits(Double.longBitsToDouble(longs[i]) * scalarValue);
             }
+            reportLoopCount(node, longs.length);
             return receiver;
         }
 
@@ -259,16 +267,17 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveNormalize")
     public abstract static class PrimFloat64ArrayNormalizeNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
-
         @Specialization(guards = {"receiver.isLongType()"})
-        protected static final NativeObject doNormalize(final NativeObject receiver) {
+        protected static final NativeObject doNormalize(final NativeObject receiver,
+                        @Bind final Node node) {
             final long[] words = receiver.getLongStorage();
             final int length = words.length;
             double len = 0.0D;
-            for (long word : words) {
-                final double value = Double.longBitsToDouble(word);
+            for (int i = 0; i < length; i++) {
+                final double value = Double.longBitsToDouble(words[i]);
                 len += value * value;
             }
+            reportLoopCount(node, length);
             if (len <= 0.0D) {
                 throw PrimitiveFailed.BAD_RECEIVER;
             }
@@ -276,6 +285,7 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
             for (int i = 0; i < length; i++) {
                 words[i] = Double.doubleToRawLongBits(Double.longBitsToDouble(words[i]) / sqrtLen);
             }
+            reportLoopCount(node, length);
             return receiver;
         }
     }
@@ -283,15 +293,16 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSubFloat64Array")
     public abstract static class PrimSubFloat64ArrayNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-
         @Specialization(guards = {"receiver.isLongType()", "floatArray.isLongType()", "receiver.getLongLength() == floatArray.getLongLength()"})
-        protected static final NativeObject doSub(final NativeObject receiver, final NativeObject floatArray) {
+        protected static final NativeObject doSub(final NativeObject receiver, final NativeObject floatArray,
+                        @Bind final Node node) {
             final long[] longs1 = receiver.getLongStorage();
             final long[] longs2 = floatArray.getLongStorage();
 
             for (int i = 0; i < longs1.length; i++) {
                 longs1[i] = Double.doubleToRawLongBits(Double.longBitsToDouble(longs1[i]) - Double.longBitsToDouble(longs2[i]));
             }
+            reportLoopCount(node, longs1.length);
             return receiver;
         }
 
@@ -300,13 +311,14 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSubScalar")
     public abstract static class PrimSubScalarNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-
         @Specialization(guards = {"receiver.isLongType()"})
-        protected static final NativeObject doSub(final NativeObject receiver, final double scalarValue) {
+        protected static final NativeObject doSub(final NativeObject receiver, final double scalarValue,
+                        @Bind final Node node) {
             final long[] longs = receiver.getLongStorage();
             for (int i = 0; i < longs.length; i++) {
                 longs[i] = Double.doubleToRawLongBits(Double.longBitsToDouble(longs[i]) - scalarValue);
             }
+            reportLoopCount(node, longs.length);
             return receiver;
         }
     }
@@ -314,14 +326,15 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSum")
     public abstract static class PrimFloat64ArraySumNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
-
         @Specialization(guards = {"receiver.isLongType()"})
-        protected static final double doSum(final NativeObject receiver) {
+        protected static final double doSum(final NativeObject receiver,
+                        @Bind final Node node) {
             final long[] words = receiver.getLongStorage();
             double sum = 0;
             for (final long word : words) {
                 sum += Double.longBitsToDouble(word);
             }
+            reportLoopCount(node, words.length);
             return sum;
         }
     }

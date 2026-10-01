@@ -170,10 +170,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         @EarlyInline
         private void reportLoopCountOnReturn(final Node source) {
             if (CompilerDirectives.hasNextTier()) {
-                final int count = CompilerDirectives.inInterpreter() ? interpreterLoopCounter : loopCounter.value;
-                if (count > 0) {
-                    LoopNode.reportLoopCount(source, count);
-                }
+                reportLoopCount(source, CompilerDirectives.inInterpreter() ? interpreterLoopCounter : loopCounter.value);
             }
         }
     }

@@ -35,6 +35,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3WithFallbac
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive4WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimHashMultiplyNode;
+import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
@@ -63,7 +64,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             return orderValue.isByteType() && orderValue.getByteLength() >= 256 ? orderValue : null;
         }
 
-        protected static final long compareAsciiOrder(final NativeObject string1, final NativeObject string2) {
+        protected static final long compareAsciiOrder(final Node node, final NativeObject string1, final NativeObject string2) {
             final int len1 = string1.getByteLength();
             final int len2 = string2.getByteLength();
             final int min = Math.min(len1, len2);
@@ -71,13 +72,15 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                 final byte c1 = string1.getByte(i);
                 final byte c2 = string2.getByte(i);
                 if (c1 != c2) {
+                    reportLoopCount(node, min - i);
                     return (c1 & 0xff) < (c2 & 0xff) ? -1L : 1L;
                 }
             }
+            reportLoopCount(node, min);
             return len1 == len2 ? 0L : len1 < len2 ? -1L : 1L;
         }
 
-        protected static final long compare(final NativeObject string1, final NativeObject string2, final NativeObject orderValue) {
+        protected static final long compare(final Node node, final NativeObject string1, final NativeObject string2, final NativeObject orderValue) {
             final int len1 = string1.getByteLength();
             final int len2 = string2.getByteLength();
             final int min = Math.min(len1, len2);
@@ -85,9 +88,11 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                 final byte c1 = orderValue.getByte(string1.getByteUnsigned(i));
                 final byte c2 = orderValue.getByte(string2.getByteUnsigned(i));
                 if (c1 != c2) {
+                    reportLoopCount(node, min - i);
                     return (c1 & 0xff) < (c2 & 0xff) ? -1L : 1L;
                 }
             }
+            reportLoopCount(node, min);
             return len1 == len2 ? 0L : len1 < len2 ? -1L : 1L;
         }
     }
@@ -99,22 +104,25 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"string1.isByteType()", "string2.isByteType()", "orderValue == cachedAsciiOrder"}, limit = "1")
         protected static final long doCompareAsciiOrder(@SuppressWarnings("unused") final Object receiver, final NativeObject string1, final NativeObject string2,
                         @SuppressWarnings("unused") final NativeObject orderValue,
+                        @Bind final Node node,
                         @SuppressWarnings("unused") @Cached("asciiOrderOrNull(orderValue)") final NativeObject cachedAsciiOrder) {
-            return compareAsciiOrder(string1, string2) + 2L;
+            return compareAsciiOrder(node, string1, string2) + 2L;
         }
 
         @Specialization(guards = {"string1.isByteType()", "string2.isByteType()", "orderValue == cachedOrder"}, limit = "1")
         protected static final long doCompareCached(@SuppressWarnings("unused") final Object receiver, final NativeObject string1, final NativeObject string2,
                         @SuppressWarnings("unused") final NativeObject orderValue,
+                        @Bind final Node node,
                         @Cached("validOrderOrNull(orderValue)") final NativeObject cachedOrder) {
-            return compare(string1, string2, cachedOrder) + 2L;
+            return compare(node, string1, string2, cachedOrder) + 2L;
         }
 
         @Specialization(guards = {"string1.isByteType()", "string2.isByteType()", "orderValue.isByteType()", "orderValue.getByteLength() >= 256"}, //
                         replaces = {"doCompareAsciiOrder", "doCompareCached"})
         protected static final long doCompare(@SuppressWarnings("unused") final Object receiver, final NativeObject string1, final NativeObject string2,
-                        final NativeObject orderValue) {
-            return compare(string1, string2, orderValue) + 2L;
+                        final NativeObject orderValue,
+                        @Bind final Node node) {
+            return compare(node, string1, string2, orderValue) + 2L;
         }
 
         @SuppressWarnings("unused")
@@ -235,6 +243,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     public abstract static class PrimConvert8BitSignedNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
         @Specialization(guards = {"aByteArray.isByteType()", "aSoundBuffer.isIntType()", "aByteArrayLength > aSoundBuffer.getIntLength()"})
         protected static final Object doConvert(final Object receiver, final NativeObject aByteArray, final NativeObject aSoundBuffer,
+                        @Bind final Node node,
                         @Bind("aByteArray.getByteLength()") final int aByteArrayLength) {
             for (int i = 0; i < aByteArrayLength; i++) {
                 final int wordIndex = i / 2;
@@ -247,6 +256,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                 }
                 aSoundBuffer.setInt(wordIndex, intValue);
             }
+            reportLoopCount(node, aByteArrayLength);
             return receiver;
         }
     }
@@ -375,18 +385,21 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             if (quickReturnProfile.profile(node, keyLength == 0)) {
                 return 0L;
             } else {
-                final int bodyLength = body.getByteLength();
-                for (long startIndex = Math.max(start - 1, 0); startIndex <= bodyLength - keyLength; startIndex++) {
+                final int startIndex = Math.max(MiscUtils.toIntExact(start) - 1, 0);
+                final int endIndex = body.getByteLength() - keyLength;
+                for (int i = startIndex; i <= endIndex; i++) {
                     int index = 0;
-                    while (matchTable.getByte(body.getByteUnsigned(startIndex + index)) == matchTable.getByte(key.getByteUnsigned(index))) {
+                    while (matchTable.getByte(body.getByteUnsigned(i + index)) == matchTable.getByte(key.getByteUnsigned(index))) {
                         if (index == keyLength - 1) {
                             foundProfile.enter(node);
-                            return startIndex + 1;
+                            reportLoopCount(node, endIndex - i);
+                            return i + 1;
                         } else {
                             index++;
                         }
                     }
                 }
+                reportLoopCount(node, endIndex - startIndex);
                 notFoundProfile.enter(node);
                 return 0L;
             }
@@ -403,25 +416,30 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                         @Cached final InlinedBranchProfile foundProfile,
                         @Cached final InlinedBranchProfile notFoundProfile) {
             final byte valueByte = (byte) value;
-            for (long i = start - 1; i < string.getByteLength(); i++) {
+            final int startIndex = MiscUtils.toIntExact(start) - 1;
+            final int endIndex = string.getByteLength();
+            for (int i = startIndex; i < endIndex; i++) {
                 if (string.getByte(i) == valueByte) {
                     foundProfile.enter(node);
+                    reportLoopCount(node, endIndex - i);
                     return i + 1;
                 }
             }
             notFoundProfile.enter(node);
+            reportLoopCount(node, endIndex - startIndex);
             return 0L;
         }
     }
 
     private abstract static class AbstractPrimStringHashNode extends AbstractPrimitiveNode {
-        protected static final long calculateHash(final long initialHash, final byte[] bytes) {
+        protected static final long calculateHash(final Node node, final long initialHash, final byte[] bytes) {
             // Using int here is sufficient and slightly more efficient
             int hash = (int) initialHash & PrimHashMultiplyNode.HASH_MULTIPLY_MASK;
             final int length = bytes.length;
             for (int i = 0; i < length; i++) {
                 hash = (hash + (UnsafeUtils.getByte(bytes, i) & 0xff)) * PrimHashMultiplyNode.HASH_MULTIPLY_CONSTANT & PrimHashMultiplyNode.HASH_MULTIPLY_MASK;
             }
+            reportLoopCount(node, length);
             return hash;
         }
     }
@@ -434,7 +452,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         protected static final long doStringHash(final Object receiver, final long initialHash,
                         @Bind final Node node,
                         @Cached final GetHashBytesNode getHashBytesNode) {
-            return calculateHash(initialHash, getHashBytesNode.execute(node, receiver));
+            return calculateHash(node, initialHash, getHashBytesNode.execute(node, receiver));
         }
     }
 
@@ -446,7 +464,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         protected static final long doStringHash(@SuppressWarnings("unused") final Object receiver, final Object target, final long initialHash,
                         @Bind final Node node,
                         @Cached final GetHashBytesNode getHashBytesNode) {
-            return calculateHash(initialHash, getHashBytesNode.execute(node, target));
+            return calculateHash(node, initialHash, getHashBytesNode.execute(node, target));
         }
     }
 
@@ -478,8 +496,9 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"start >= 1", "string.isByteType()", "stop <= string.getByteLength()", "table == cachedTable"}, limit = "1")
         protected static final Object doNativeObjectCachedTable(final Object receiver, final NativeObject string, final long start, final long stop,
                         @SuppressWarnings("unused") final NativeObject table,
+                        @Bind final Node node,
                         @Cached("byteTableOrNull(table)") final NativeObject cachedTable) {
-            return doNativeObject(receiver, string, start, stop, cachedTable);
+            return doNativeObject(receiver, string, start, stop, cachedTable, node);
         }
 
         protected static final NativeObject byteTableOrNull(final NativeObject table) {
@@ -487,18 +506,21 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"start >= 1", "string.isByteType()", "stop <= string.getByteLength()", "table.isByteType()", "table.getByteLength() >= 256"}, replaces = "doNativeObjectCachedTable")
-        protected static final Object doNativeObject(final Object receiver, final NativeObject string, final long start, final long stop, final NativeObject table) {
+        protected static final Object doNativeObject(final Object receiver, final NativeObject string, final long start, final long stop, final NativeObject table,
+                        @Bind final Node node) {
             for (long i = start - 1; i < stop; i++) {
                 string.setByte(i, table.getByte(string.getByteUnsigned(i)));
             }
+            reportLoopCount(node, stop - start - 1);
             return receiver;
         }
 
         @Specialization(guards = {"start >= 1", "string.isByteType()", "stop <= string.getByteLength()", "table == cachedTable"}, limit = "1")
         protected static final Object doNativeObjectIntTableCached(final Object receiver, final NativeObject string, final long start, final long stop,
                         @SuppressWarnings("unused") final NativeObject table,
+                        @Bind final Node node,
                         @Cached("intTableOrNull(table)") final NativeObject cachedTable) {
-            return doNativeObjectIntTable(receiver, string, start, stop, cachedTable);
+            return doNativeObjectIntTable(receiver, string, start, stop, cachedTable, node);
         }
 
         protected static final NativeObject intTableOrNull(final NativeObject table) {
@@ -507,10 +529,12 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"start >= 1", "string.isByteType()", "stop <= string.getByteLength()", "table.isIntType()", "table.getIntLength() >= 256"}, replaces = "doNativeObjectIntTableCached")
         protected static final Object doNativeObjectIntTable(final Object receiver, final NativeObject string, final long start, final long stop,
-                        final NativeObject table) {
+                        final NativeObject table,
+                        @Bind final Node node) {
             for (long i = start - 1; i < stop; i++) {
                 string.setByte(i, table.getInt(string.getByteUnsigned(i)));
             }
+            reportLoopCount(node, stop - start - 1);
             return receiver;
         }
 

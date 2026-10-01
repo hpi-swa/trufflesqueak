@@ -9,6 +9,7 @@ package de.hpi.swa.trufflesqueak.nodes;
 import com.oracle.truffle.api.dsl.Idempotent;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
@@ -60,4 +61,15 @@ public abstract class AbstractNode extends Node {
         return getContext().isSemaphoreClass(object.getSqueakClass());
     }
 
+    protected static final void reportLoopCount(final Node node, final int count) {
+        if (count > 0) {
+            LoopNode.reportLoopCount(node, count);
+        }
+    }
+
+    protected static final void reportLoopCount(final Node node, final long count) {
+        if (count > 0) {
+            LoopNode.reportLoopCount(node, count > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) count);
+        }
+    }
 }
