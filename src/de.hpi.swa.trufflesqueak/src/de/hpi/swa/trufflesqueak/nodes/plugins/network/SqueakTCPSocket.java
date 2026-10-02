@@ -6,32 +6,48 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.plugins.network;
 
+import static java.net.StandardSocketOptions.SO_REUSEADDR;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.SocketAddress;
+import java.net.SocketOption;
 import java.nio.ByteBuffer;
 import java.nio.channels.NetworkChannel;
+import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.util.Iterator;
 
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 
 final class SqueakTCPSocket extends SqueakSocket {
+    // clientChannel acts as a configuration prototype before bind/connect.
+    // For servers, this is destroyed during listenOn(), and later reused to hold the pending accepted connection.
     private SocketChannel clientChannel;
     private ServerSocketChannel serverChannel;
 
-    protected SqueakTCPSocket() throws IOException {
-        super();
+    private InetSocketAddress boundAddress;
+    private boolean remoteClosed = false;
+
+    private int peekedByte = -1; // -1 indicates no byte is currently peeked
+
+    protected SqueakTCPSocket(final SqueakSocketContext context, final long netType, final long statusSema, final long readSema, final long writeSema) throws IOException {
+        super(context, netType, statusSema, readSema, writeSema);
+        clientChannel = configure(SocketChannel.open());
     }
 
-    private SqueakTCPSocket(final SocketChannel clientChannel) throws IOException {
-        super();
-        this.clientChannel = clientChannel;
-        this.clientChannel.configureBlocking(false);
-        this.clientChannel.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+    // Used internally when accepting new connections
+    private SqueakTCPSocket(final SqueakSocketContext context, final long netType, final SocketChannel clientChannel, final long statusSema, final long readSema, final long writeSema) throws IOException {
+        super(context, netType, statusSema, readSema, writeSema);
+        this.clientChannel = configure(clientChannel);
+        context.register(this.clientChannel, SelectionKey.OP_READ | SelectionKey.OP_WRITE, this);
+    }
+
+    private <T extends SelectableChannel & NetworkChannel> T configure(T channel) throws IOException {
+        channel.configureBlocking(false);
+        channel.setOption(SO_REUSEADDR, true);
+        return channel;
     }
 
     @Override
@@ -40,52 +56,59 @@ final class SqueakTCPSocket extends SqueakSocket {
     }
 
     @Override
-    protected byte[] getLocalAddress() throws IOException {
-        if (listening) {
-            return Resolver.getLoopbackAddress();
-        }
+    protected SelectableChannel asSelectableChannel() {
+        return listening ? serverChannel : clientChannel;
+    }
 
-        return castAddress(clientChannel.getLocalAddress()).getAddress().getAddress();
+    private InetSocketAddress getLocalSocketAddress() throws IOException {
+        maybeCompleteConnection();
+        final NetworkChannel channel = asNetworkChannel();
+        return coerceToNetType(channel == null ? null : castAddress(channel.getLocalAddress()));
+    }
+
+    @Override
+    protected byte[] getLocalAddress() throws IOException {
+        final InetSocketAddress address = getLocalSocketAddress();
+        if (address != null) {
+            return address.getAddress().getAddress();
+        }
+        // Fallback for unbound sockets
+        return listening ? getResolver().getLoopbackAddress() : getResolver().getAnyLocalAddress();
     }
 
     @Override
     protected long getLocalPort() throws IOException {
-        final SocketAddress address = (listening ? serverChannel : clientChannel).getLocalAddress();
-        return castAddress(address).getPort();
+        final InetSocketAddress address = getLocalSocketAddress();
+        return address == null ? 0L : address.getPort();
     }
 
     @Override
     protected byte[] getRemoteAddress() throws IOException {
-        return listening ? getServerRemoteAddress() : getClientRemoteAddress();
-    }
-
-    private static byte[] getServerRemoteAddress() {
-        return Resolver.getAnyLocalAddress();
-    }
-
-    private byte[] getClientRemoteAddress() throws IOException {
-        if (clientChannel == null || !clientChannel.isConnected()) {
-            return Resolver.getAnyLocalAddress();
+        maybeCompleteConnection();
+        if (listening) {
+            return getResolver().getAnyLocalAddress();
         }
-
-        final SocketAddress address = clientChannel.getRemoteAddress();
-        return castAddress(address).getAddress().getAddress();
+        if (clientIsConnected()) {
+            return castAddress(clientChannel.getRemoteAddress()).getAddress().getAddress();
+        }
+        return getResolver().getAnyLocalAddress();
     }
 
     @Override
     protected long getRemotePort() throws IOException {
-        if (clientChannel != null && clientChannel.isConnected()) {
+        maybeCompleteConnection();
+        if (clientIsConnected()) {
             return castAddress(clientChannel.getRemoteAddress()).getPort();
         }
         return 0L;
     }
 
+    private boolean clientIsConnected() {
+        return clientChannel != null && clientChannel.isConnected();
+    }
+
     @Override
     protected Status getStatus() throws IOException {
-        if (selector.isOpen()) {
-            selector.selectNow();
-        }
-
         final Status status = listening ? serverStatus() : clientStatus();
         LogUtils.SOCKET.finer(() -> this + " " + status);
         return status;
@@ -96,29 +119,40 @@ final class SqueakTCPSocket extends SqueakSocket {
             return Status.Connected;
         }
 
-        final Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
-        while (keys.hasNext()) {
-            if (keys.next().isAcceptable()) {
-                clientChannel = serverChannel.accept();
-                clientChannel.configureBlocking(false);
-                clientChannel.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
-                keys.remove();
-                return Status.Connected;
-            }
+        if (serverChannel == null || !serverChannel.isOpen() || !serverChannel.socket().isBound()) {
+            return Status.Unconnected;
         }
 
+        clientChannel = serverChannel.accept();
+        if (clientChannel != null) {
+            configure(clientChannel);
+            context.register(clientChannel, SelectionKey.OP_READ | SelectionKey.OP_WRITE, this);
+            return Status.Connected;
+        }
+
+        context.resumeInterest(serverChannel, SelectionKey.OP_ACCEPT);
         return Status.WaitingForConnection;
     }
 
     private Status clientStatus() throws IOException {
-        if (clientChannel == null) {
+        if (clientChannel == null || !clientChannel.isOpen()) {
             return Status.Unconnected;
         }
 
         maybeCompleteConnection();
+
+        if (clientChannel.isConnectionPending()) {
+            context.resumeInterest(clientChannel, SelectionKey.OP_CONNECT);
+            return Status.WaitingForConnection;
+        }
+
         final Socket socket = clientChannel.socket();
 
-        if (socket.isInputShutdown()) {
+        if (!socket.isConnected()) {
+            return Status.Unconnected;
+        }
+
+        if (remoteClosed || socket.isInputShutdown()) {
             return Status.OtherEndClosed;
         }
 
@@ -126,84 +160,224 @@ final class SqueakTCPSocket extends SqueakSocket {
             return Status.ThisEndClosed;
         }
 
-        if (!socket.isConnected()) {
-            return Status.Unconnected;
-        }
-
-        if (socket.isClosed()) {
-            return Status.ThisEndClosed;
-        }
-
         return Status.Connected;
     }
 
-    private void maybeCompleteConnection() throws IOException {
-        while (clientChannel.isConnectionPending()) {
-            clientChannel.finishConnect();
+    private void maybeCompleteConnection() {
+        if (clientChannel != null && clientChannel.isConnectionPending()) {
+            try {
+                if (clientChannel.finishConnect()) {
+                    context.resumeInterest(clientChannel, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+                }
+            } catch (IOException e) {
+                // Any IOException here means the OS definitively aborted the handshake.
+                socketError = POSIX_ECONNREFUSED;
+                try {
+                    clientChannel.close();
+                } catch (IOException ignored) {}
+            }
         }
+    }
+
+    @Override
+    protected void bindTo(final String address, final int port) throws IOException {
+        boundAddress = socketAddressFor(address, port);
     }
 
     @Override
     protected void connectTo(final String address, final long port) throws IOException {
-        clientChannel = SocketChannel.open();
-        clientChannel.configureBlocking(false);
-        clientChannel.register(selector, SelectionKey.OP_CONNECT | SelectionKey.OP_WRITE | SelectionKey.OP_READ);
+        if (boundAddress != null && clientChannel != null) {
+            clientChannel.bind(boundAddress);
+        }
+        context.register(clientChannel, SelectionKey.OP_CONNECT | SelectionKey.OP_WRITE | SelectionKey.OP_READ, this);
         clientChannel.connect(new InetSocketAddress(address, (int) port));
     }
 
     @Override
-    protected void listenOn(final long port, final long backlogSize) throws IOException {
+    protected void listenBacklog(final long backlogSize) throws IOException {
         listening = true;
-        serverChannel = ServerSocketChannel.open();
-        serverChannel.configureBlocking(false);
-        serverChannel.bind(new InetSocketAddress((int) port), (int) backlogSize);
-        serverChannel.register(selector, SelectionKey.OP_ACCEPT);
+        serverChannel = configure(ServerSocketChannel.open());
+
+        if (clientChannel != null) {
+            for (final SocketOption<?> option : clientChannel.supportedOptions()) {
+                if (serverChannel.supportedOptions().contains(option)) {
+                    transferOption(clientChannel, serverChannel, option);
+                }
+            }
+            clientChannel.close();
+            clientChannel = null;
+        }
+
+        if (boundAddress == null) {
+            boundAddress = socketAddressFor(null, 0);
+        }
+
+        serverChannel.bind(boundAddress, (int) backlogSize);
+        context.register(serverChannel, SelectionKey.OP_ACCEPT, this);
     }
 
     @Override
-    protected SqueakSocket accept() throws IOException {
-        if (listening && clientChannel != null) {
-            clientChannel.keyFor(selector).cancel();
-            final SqueakSocket created = new SqueakTCPSocket(clientChannel);
-            clientChannel = null;
-            return created;
-        }
+    protected void listenOn(final String address, final long port, final long backlogSize) throws IOException {
+        bindTo(address, (int) port);
+        listenBacklog(backlogSize);
+    }
 
+    private <T> void transferOption(NetworkChannel from, NetworkChannel to, SocketOption<T> opt) {
+        try {
+            to.setOption(opt, from.getOption(opt));
+        } catch (Exception e) {
+            // Safely ignore if a specific option cannot be read or transferred
+        }
+    }
+
+    @Override
+    protected SqueakSocket accept(final long statusSema, final long readSema, final long writeSema) throws IOException {
+        if (listening) {
+            SocketChannel accepted = clientChannel;
+            clientChannel = null;
+
+            if (accepted == null && serverChannel != null) {
+                accepted = serverChannel.accept();
+            }
+
+            if (accepted != null) {
+                final SqueakSocket created = new SqueakTCPSocket(context, netType, accepted, statusSema, readSema, writeSema);
+                if (serverChannel != null && serverChannel.isOpen()) {
+                    context.resumeInterest(serverChannel, SelectionKey.OP_ACCEPT);
+                }
+                return created;
+            }
+        }
         return null;
     }
 
     @Override
-    protected boolean isSendDone() throws IOException {
-        selector.selectNow();
-        return selector.selectedKeys().stream().anyMatch(SelectionKey::isWritable);
+    protected boolean isOutputShutdown() {
+        return clientChannel == null || remoteClosed || clientChannel.socket().isOutputShutdown();
     }
 
     @Override
-    protected long sendDataTo(final ByteBuffer data, final SelectionKey key) throws IOException {
-        final SocketChannel channel = (SocketChannel) key.channel();
-        if (!channel.isConnected()) {
+    protected long sendDataTo(final ByteBuffer data) throws IOException {
+        maybeCompleteConnection();
+        if (!clientIsConnected()) {
             throw new IOException("Client not connected");
         }
-        return channel.write(data);
+
+        try {
+            return clientChannel.write(data);
+        } catch (final IOException e) {
+            remoteClosed = true;
+            try {
+                clientChannel.shutdownOutput();
+            } catch (final IOException ignored) {}
+            throw e;
+        }
     }
 
     @Override
-    protected long receiveDataFrom(final SelectionKey key, final ByteBuffer data) throws IOException {
-        final SocketChannel channel = (SocketChannel) key.channel();
-        final long read = channel.read(data);
+    protected boolean isInputShutdown() {
+        return clientChannel == null || remoteClosed || clientChannel.socket().isInputShutdown();
+    }
 
-        if (read == -1) {
-            channel.shutdownInput();
-            key.cancel();
+    @Override
+    protected boolean isDataAvailable() throws IOException {
+        if (peekedByte != -1) {
+            return true;
+        }
+        if (remoteClosed || clientChannel == null || !clientChannel.isOpen()) {
+            return false;
+        }
+        maybeCompleteConnection();
+        if (!clientIsConnected()) {
+            return false;
+        }
+
+        if (dataAvailable) {
+            final ByteBuffer buf = ByteBuffer.allocate(1);
+            int read;
+            try {
+                read = clientChannel.read(buf);
+            } catch (final IOException e) {
+                remoteClosed = true;
+                dataAvailable = false;
+                try {
+                    clientChannel.shutdownInput();
+                } catch (final IOException ignored) {
+                    // Channel is already broken; ignore shutdown failures.
+                }
+                throw e; // Propagate so the primitive can log and set socketError
+            }
+
+            if (read > 0) {
+                peekedByte = buf.get(0) & 0xFF; // Store the unsigned byte
+                return true;
+            } else if (read == -1) { // EOF detected
+                remoteClosed = true;
+                dataAvailable = false;
+                try {
+                    clientChannel.shutdownInput();
+                } catch (final IOException ignored) {
+                    // Channel is already broken; ignore shutdown failures.
+                }
+                return false;
+            } else { // read == 0 (Spurious wakeup)
+                dataAvailable = false;
+                if (!isInputShutdown()) {
+                    context.resumeInterest(clientChannel, SelectionKey.OP_READ);
+                }
+                return false;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    protected long receiveDataFrom(final ByteBuffer data) throws IOException {
+        maybeCompleteConnection();
+        if (!clientIsConnected()) {
             return 0;
         }
 
-        return read;
+        long totalRead = 0;
+
+        // Drain the peeked byte first if we have one
+        if (peekedByte != -1 && data.hasRemaining()) {
+            data.put((byte) peekedByte);
+            peekedByte = -1;
+            totalRead++;
+        }
+
+        // Read the rest directly from the channel
+        if (data.hasRemaining() && !remoteClosed) {
+            try {
+                final int read = clientChannel.read(data);
+                if (read == -1) {
+                    remoteClosed = true;
+                    try {
+                        clientChannel.shutdownInput();
+                    } catch (final IOException ignored) {
+                        // Channel is already broken; ignore shutdown failures.
+                    }
+                } else if (read > 0) {
+                    totalRead += read;
+                }
+            } catch (final IOException e) {
+                remoteClosed = true;
+                try {
+                    clientChannel.shutdownInput();
+                } catch (final IOException ignored) {
+                    // Channel is already broken; ignore shutdown failures.
+                }
+                throw e;
+            }
+        }
+
+        return totalRead;
     }
 
     @Override
     protected void close() throws IOException {
-        super.close();
+        peekedByte = -1; // Reset peek state on close
         if (serverChannel != null) {
             serverChannel.close();
         }

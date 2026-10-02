@@ -16,6 +16,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.nodes.plugins.network.SqueakSocketContext;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
@@ -92,7 +93,7 @@ public final class CheckForInterruptsState {
                         SHOULD_TRIGGER.setOpaque(CheckForInterruptsState.this, true);
                         wakeupVM();
                     }
-                    LockSupport.parkNanos(interruptCheckNanos);
+                    image.squeakSocketContext.pollEvents(interruptCheckNanos, CheckForInterruptsState.this);
                 }
             } catch (Throwable t) {
                 LogUtils.severe("CheckForInterruptsThread FATAL CRASH", t);

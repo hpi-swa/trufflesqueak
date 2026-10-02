@@ -6,22 +6,31 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.plugins.network;
 
+import static java.net.StandardSocketOptions.SO_BROADCAST;
+import static java.net.StandardSocketOptions.SO_REUSEADDR;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.NetworkChannel;
+import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 
 final class SqueakUDPSocket extends SqueakSocket {
 
     private final DatagramChannel channel;
+    private InetSocketAddress remoteAddress;
 
-    SqueakUDPSocket() throws IOException {
-        super();
+    SqueakUDPSocket(final SqueakSocketContext context, final long netType, final long statusSema, final long readSema, final long writeSema) throws IOException {
+        super(context, netType, statusSema, readSema, writeSema);
         channel = DatagramChannel.open();
         channel.configureBlocking(false);
+        try {
+            channel.setOption(SO_REUSEADDR, true);
+            channel.setOption(SO_BROADCAST, true);
+        } catch (IOException ignored) {}
     }
 
     @Override
@@ -30,18 +39,25 @@ final class SqueakUDPSocket extends SqueakSocket {
     }
 
     @Override
-    protected byte[] getLocalAddress() throws IOException {
-        if (listening) {
-            return Resolver.getLoopbackAddress();
-        }
+    protected SelectableChannel asSelectableChannel() {
+        return channel;
+    }
 
-        return castAddress(channel.getLocalAddress()).getAddress().getAddress();
+    @Override
+    protected byte[] getLocalAddress() throws IOException {
+        final InetSocketAddress address = castAddress(channel.getLocalAddress());
+        if (address != null) {
+            return address.getAddress().getAddress();
+        }
+        // Fallback for unbound sockets
+        return listening ? getResolver().getLoopbackAddress() : getResolver().getAnyLocalAddress();
     }
 
     @Override
     protected long getLocalPort() throws IOException {
-        final SocketAddress address = channel.getLocalAddress();
-        return castAddress(address).getPort();
+        /** Return the local port for this socket, or zero if no port has yet been assigned. */
+        final InetSocketAddress address = castAddress(channel.getLocalAddress());
+        return address == null ? 0L : address.getPort();
     }
 
     @Override
@@ -50,7 +66,7 @@ final class SqueakUDPSocket extends SqueakSocket {
         if (channel.isConnected()) {
             return castAddress(address).getAddress().getAddress();
         }
-        return Resolver.getAnyLocalAddress();
+        return getResolver().getAnyLocalAddress();
     }
 
     @Override
@@ -68,56 +84,86 @@ final class SqueakUDPSocket extends SqueakSocket {
 
     @Override
     protected Status getStatus() {
-        if (listening) {
-            return Status.WaitingForConnection;
-        }
-
-        if (channel.isConnected()) {
-            return Status.Connected;
-        }
-
-        return Status.Unconnected;
+        return Status.Connected;
     }
 
     @Override
     protected void connectTo(final String address, final long port) throws IOException {
-        channel.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
-        channel.connect(new InetSocketAddress(address, (int) port));
+        context.register(channel, SelectionKey.OP_READ | SelectionKey.OP_WRITE, this);
+        remoteAddress = new InetSocketAddress(address, (int) port);
+        try {
+            channel.connect(remoteAddress);
+        } catch (Exception e) {
+            // Silently ignore connection failures (expected for broadcast addresses).
+            // sendDataTo will fall back to using the connectionless send() method.
+        }
     }
 
     @Override
-    protected void listenOn(final long port, final long backlogSize) throws IOException {
+    protected void bindTo(final String address, final int port) throws IOException {
+        if (!channel.socket().isBound()) {
+            channel.bind(socketAddressFor(address, port));
+        }
+    }
+
+    @Override
+    protected void listenBacklog(final long backlogSize) throws IOException {
         listening = true;
-        channel.bind(new InetSocketAddress((int) port));
-        channel.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+        context.register(channel, SelectionKey.OP_READ | SelectionKey.OP_WRITE, this);
     }
 
     @Override
-    protected SqueakSocket accept() {
+    protected void listenOn(final String address, final long port, final long backlogSize) throws IOException {
+        bindTo(address, (int) port);
+        listenBacklog(backlogSize);
+    }
+
+    @Override
+    protected SqueakSocket accept(final long statusSema, final long readSema, final long writeSema) {
         throw new UnsupportedOperationException("accept() on UDP socket");
     }
 
     @Override
-    protected boolean isSendDone() {
-        return true;
+    protected boolean isInputShutdown() {
+        return false;
     }
 
     @Override
-    protected long sendDataTo(final ByteBuffer data, final SelectionKey key) throws IOException {
-        final DatagramChannel to = (DatagramChannel) key.channel();
-        return to.send(data, to.getRemoteAddress());
+    protected boolean isOutputShutdown() {
+        return false;
     }
 
     @Override
-    protected long receiveDataFrom(final SelectionKey key, final ByteBuffer data) throws IOException {
-        final DatagramChannel from = (DatagramChannel) key.channel();
-        from.receive(data);
-        return data.position();
+    protected long sendDataTo(final ByteBuffer data) throws IOException {
+        if (channel.isConnected()) {
+            return channel.write(data);
+        }
+        if (remoteAddress != null) {
+            return channel.send(data, remoteAddress);
+        }
+        return 0;
+    }
+
+    @Override
+    protected long receiveDataFrom(final ByteBuffer data) {
+        final int initialPosition = data.position();
+
+        try {
+            final SocketAddress address = channel.receive(data);
+            if (address == null) {
+                return 0; // Spurious wakeup, no bytes read
+            }
+        } catch (IOException e) {
+            // Absorb ICMP Port Unreachable and other connectionless errors.
+            // Returning 0 clears the OS readable flag and breaks the Squeak spin-loop.
+            return 0;
+        }
+
+        return data.position() - initialPosition;
     }
 
     @Override
     protected void close() throws IOException {
-        super.close();
         channel.close();
     }
 }
