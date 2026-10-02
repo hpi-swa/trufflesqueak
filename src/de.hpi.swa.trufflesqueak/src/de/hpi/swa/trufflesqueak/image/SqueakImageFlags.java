@@ -25,7 +25,7 @@ import com.oracle.truffle.api.dsl.Idempotent;
  * Bit  7: if set, implies wheel events will be delivered as such and not mapped to arrow key events
  * Bit  8: if set, implies arithmetic primitives will fail if given arguments of different types (float vs int)
  * Bit  9: if set, implies file primitives (FilePlugin, FileAttributesPlugin) will answer file times in UTC not local times
- * Bit 10: if set, implies the VM will not upscale the display on high DPI monitors; older VMs did this by default.
+ * Bit 10: if set, implies the VM will not upscale the display on high DPI monitors; older VMs did this by default. (OBSOLETE)
  * Bit 11: if set, implies numeric comparison primitives will fail if given arguments of different types (float vs int)
  * </pre>
  */
@@ -34,7 +34,6 @@ public final class SqueakImageFlags {
     private static final int PREEMPTION_DOES_NOT_YIELD = 0x010;
     private static final int NUMERIC_PRIMS_MIX_ARITHMETIC = 0x100;
     private static final int NUMERIC_PRIMS_MIX_COMPARISON = 0x800;
-    private static final int UPSCALE_DISPLAY_IF_HIGH_DPI = 0x400;
 
     @CompilationFinal private Assumption headerFlagsAssumption = Assumption.create("constant headerFlags");
 
@@ -154,10 +153,5 @@ public final class SqueakImageFlags {
             CompilerDirectives.transferToInterpreterAndInvalidate();
         }
         return preemptionYields;
-    }
-
-    @Idempotent
-    public boolean upscaleDisplayIfHighDPI() {
-        return (headerFlags & UPSCALE_DISPLAY_IF_HIGH_DPI) == 0;
     }
 }
