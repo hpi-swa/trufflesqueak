@@ -699,7 +699,7 @@ public final class SqueakDisplay {
                 SDL_RunOnMainThread(SDL_MainThreadCallback.allocate((_) -> {
                     // The window is initially hidden. It will be shown when rendered at full size.
                     isWindowHidden = true;
-                    long windowFlags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN | SDL_WINDOW_HIGH_PIXEL_DENSITY;
+                    final long windowFlags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN | SDL_WINDOW_HIGH_PIXEL_DENSITY;
 
                     try (Arena windowTitleArena = Arena.ofConfined()) {
                         window = checkSdlError(SDL_CreateWindow(windowTitleArena.allocateFrom(title), logicalWindowWidth, logicalWindowHeight, windowFlags));
