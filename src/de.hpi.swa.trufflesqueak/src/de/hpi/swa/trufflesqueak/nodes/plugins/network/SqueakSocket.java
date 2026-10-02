@@ -6,18 +6,23 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.plugins.network;
 
+import static de.hpi.swa.trufflesqueak.nodes.plugins.network.SqueakSocketContext.SQ_FAMILY_INET4;
+import static de.hpi.swa.trufflesqueak.nodes.plugins.network.SqueakSocketContext.SQ_FAMILY_INET6;
+
 import java.io.IOException;
+import java.net.Inet4Address;
+import java.net.Inet6Address;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.SocketOption;
 import java.nio.ByteBuffer;
 import java.nio.channels.NetworkChannel;
+import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.util.Iterator;
-import java.util.Set;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsState;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 
 public abstract class SqueakSocket {
@@ -41,16 +46,43 @@ public abstract class SqueakSocket {
         }
     }
 
-    protected final Selector selector;
+    // Standard POSIX error mappings
+    protected static final int POSIX_EPERM = 1;        // Operation not permitted
+    protected static final int POSIX_EIO = 5;          // Input/output error
+    protected static final int POSIX_EWOULDBLOCK = 35; // Resource temporarily unavailable
+    protected static final int POSIX_ECONNRESET = 54;  // Connection reset by peer
+    protected static final int POSIX_ECONNREFUSED = 61;// Connection refused
+
+    protected final SqueakSocketContext context;
 
     protected boolean listening;
 
-    protected SqueakSocket() throws IOException {
-        selector = Selector.open();
+    protected final long netType;
+    protected final long statusSema;
+    protected final long readSema;
+    protected final long writeSema;
+
+    public int socketError = 0;
+
+    protected volatile boolean dataAvailable = false;
+    protected volatile boolean writeReady = true;
+
+    protected SqueakSocket(final SqueakSocketContext context, final long netType, final long statusSema, final long readSema, final long writeSema) throws IOException {
+        this.context = context;
+        this.netType = netType;
         listening = false;
+        this.statusSema = statusSema;
+        this.readSema = readSema;
+        this.writeSema = writeSema;
+    }
+
+    protected Resolver getResolver() {
+        return context.getResolver();
     }
 
     protected abstract NetworkChannel asNetworkChannel();
+
+    protected abstract SelectableChannel asSelectableChannel();
 
     protected abstract byte[] getLocalAddress() throws IOException;
 
@@ -64,63 +96,87 @@ public abstract class SqueakSocket {
 
     protected abstract void connectTo(String address, long port) throws IOException;
 
-    protected abstract void listenOn(long port, long backlogSize) throws IOException;
+    protected abstract void bindTo(String address, int port) throws IOException;
 
-    protected abstract SqueakSocket accept() throws IOException;
+    protected abstract void listenBacklog(long backlogSize) throws IOException;
 
-    protected abstract boolean isSendDone() throws IOException;
+    protected abstract void listenOn(String address, long port, long backlogSize) throws IOException;
 
-    protected final long sendData(final byte[] data, final int start, final int count) throws IOException {
+    protected abstract SqueakSocket accept(final long statusSema, final long readSema, final long writeSema) throws IOException;
+
+    protected abstract boolean isInputShutdown();
+
+    protected abstract boolean isOutputShutdown();
+
+    protected abstract void close() throws IOException;
+
+    private int mapExceptionToErrno(final IOException e) {
+        final String msg = e.getMessage();
+        if (msg == null) {
+            return POSIX_EIO; // Use EIO (5) or EPERM (1) for generic errors
+        }
+        if (msg.contains("Connection reset") || msg.contains("Broken pipe")) {
+            return POSIX_ECONNRESET;
+        }
+        if (msg.contains("Connection refused")) {
+            return POSIX_ECONNREFUSED;
+        }
+        if (msg.contains("Resource temporarily unavailable")) {
+            return POSIX_EWOULDBLOCK;
+        }
+        return POSIX_EIO;
+    }
+
+    protected boolean isSendDone() throws IOException {
+        return writeReady;
+    }
+
+    protected final long sendData(final byte[] data, final int start, final int count) {
         final ByteBuffer buffer = ByteBuffer.wrap(data, start, count);
-        selector.selectNow();
-        final Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
-        while (keys.hasNext()) {
-            final SelectionKey key = keys.next();
-            if (key.isWritable()) {
-                final long written = sendDataTo(buffer, key);
-                LogUtils.SOCKET.finer(() -> this + " written: " + written);
-                keys.remove();
-                return written;
+        try {
+            final long written = sendDataTo(buffer);
+            if (written == 0 && count > 0) {
+                writeReady = false; // Buffer is full, flag it to wait for OP_WRITE
+            }
+            LogUtils.SOCKET.finer(() -> this + " written: " + written);
+            socketError = 0;
+            return written;
+        } catch (final IOException e) {
+            socketError = mapExceptionToErrno(e);
+            writeReady = false;
+            return 0;
+        } finally {
+            if (!isOutputShutdown()) {
+                context.resumeInterest(asSelectableChannel(), SelectionKey.OP_WRITE);
             }
         }
-
-        throw new IOException("No writable key found");
     }
 
-    protected abstract long sendDataTo(ByteBuffer data, SelectionKey key) throws IOException;
+    protected abstract long sendDataTo(ByteBuffer data) throws IOException;
 
-    protected final boolean isDataAvailable() throws IOException {
-        selector.selectNow();
-        final Set<SelectionKey> keys = selector.selectedKeys();
-        for (final SelectionKey key : keys) {
-            if (key.isReadable()) {
-                LogUtils.SOCKET.finer(() -> this + " data available");
-                return true;
-            }
-        }
-
-        LogUtils.SOCKET.finer(() -> this + " no data available");
-        return false;
+    protected boolean isDataAvailable() throws IOException {
+        return dataAvailable && !isInputShutdown();
     }
 
-    protected final long receiveData(final byte[] data, final int start, final int count) throws IOException {
+    protected final long receiveData(final byte[] data, final int start, final int count) {
         final ByteBuffer buffer = ByteBuffer.wrap(data, start, count);
-        selector.selectNow();
-        final Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
-        while (keys.hasNext()) {
-            final SelectionKey key = keys.next();
-
-            if (key.isReadable()) {
-                final long received = receiveDataFrom(key, buffer);
-                LogUtils.SOCKET.finer(() -> this + " received: " + received);
-                keys.remove();
-                return received;
+        try {
+            final long received = receiveDataFrom(buffer);
+            LogUtils.SOCKET.finer(() -> this + " received: " + received);
+            socketError = 0;
+            return received;
+        } catch (final IOException e) {
+            socketError = mapExceptionToErrno(e);
+            return 0;
+        } finally {
+            dataAvailable = false;
+            if (!isInputShutdown()) {
+                context.resumeInterest(asSelectableChannel(), SelectionKey.OP_READ);
             }
         }
-        return 0;
     }
 
-    protected abstract long receiveDataFrom(SelectionKey key, ByteBuffer data) throws IOException;
+    protected abstract long receiveDataFrom(ByteBuffer data) throws IOException;
 
     protected final boolean supportsOption(final String name) {
         return asNetworkChannel().supportedOptions().stream().anyMatch(o -> o.name().equals(name));
@@ -129,7 +185,7 @@ public abstract class SqueakSocket {
     protected final String getOption(final String name) throws IOException {
         final SocketOption<?> option = socketOptionFromString(name);
         final Object value = asNetworkChannel().getOption(option);
-        if (value instanceof final Boolean b) {
+        if (value instanceof Boolean b) {
             return b ? "1" : "0";
         }
         return String.valueOf(value);
@@ -138,7 +194,7 @@ public abstract class SqueakSocket {
     protected final void setOption(final String name, final String value) throws IOException {
         final Boolean enabled = "1".equals(value);
         final SocketOption<?> option = socketOptionFromString(name);
-        sneakySetOption(option, enabled);
+        setOptionUnchecked(option, enabled);
     }
 
     private SocketOption<?> socketOptionFromString(final String name) {
@@ -146,12 +202,42 @@ public abstract class SqueakSocket {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> void sneakySetOption(final SocketOption<T> opt, final Object value) throws IOException {
+    private <T> void setOptionUnchecked(final SocketOption<T> opt, final Object value) throws IOException {
         asNetworkChannel().setOption(opt, (T) value);
     }
 
-    protected void close() throws IOException {
-        selector.close();
+    protected void handleReadyOps(final SelectionKey key, final CheckForInterruptsState interrupts) {
+        final int ready = key.readyOps();
+        int currentOps = key.interestOps();
+
+        if ((ready & (SelectionKey.OP_ACCEPT | SelectionKey.OP_CONNECT)) != 0 && statusSema > 0) {
+            interrupts.signalSemaphoreWithIndex((int) statusSema);
+            currentOps &= ~(SelectionKey.OP_ACCEPT | SelectionKey.OP_CONNECT);
+        }
+        if ((ready & SelectionKey.OP_READ) != 0) {
+            dataAvailable = true;
+            if (readSema > 0) {
+                interrupts.signalSemaphoreWithIndex((int) readSema);
+            }
+            currentOps &= ~SelectionKey.OP_READ;
+        }
+        if ((ready & SelectionKey.OP_WRITE) != 0) {
+            writeReady = true; // Buffer is ready for writing again
+            if (writeSema > 0) {
+                interrupts.signalSemaphoreWithIndex((int) writeSema);
+            }
+            currentOps &= ~SelectionKey.OP_WRITE;
+        }
+
+        key.interestOps(currentOps);
+    }
+
+    protected InetSocketAddress socketAddressFor(final String address, final long port) {
+        if (address == null || address.isEmpty()) {
+            // Respect the IPv4 (2) or IPv6 (3) netType requirement during default binding
+            return new InetSocketAddress(netType == SQ_FAMILY_INET6 ? "::" : "0.0.0.0", (int) port);
+        }
+        return new InetSocketAddress(address, (int) port);
     }
 
     protected static InetSocketAddress castAddress(final SocketAddress address) {
@@ -163,5 +249,29 @@ public abstract class SqueakSocket {
             return o;
         }
         throw SqueakException.create("Unknown address type");
+    }
+
+    protected InetSocketAddress coerceToNetType(InetSocketAddress addr) {
+        if (addr != null && addr.getAddress() != null) {
+            InetAddress ip = addr.getAddress();
+
+            // If Squeak requested IPv4 but Java promoted it to IPv6
+            if (netType == SQ_FAMILY_INET4 && ip instanceof Inet6Address) {
+                if (ip.isAnyLocalAddress()) {
+                    return new InetSocketAddress("0.0.0.0", addr.getPort());
+                } else if (ip.isLoopbackAddress()) {
+                    return new InetSocketAddress("127.0.0.1", addr.getPort());
+                }
+            }
+            // If Squeak requested IPv6 but Java returned IPv4
+            else if (netType == SQ_FAMILY_INET6 && ip instanceof Inet4Address) {
+                if (ip.isAnyLocalAddress()) {
+                    return new InetSocketAddress("::", addr.getPort());
+                } else if (ip.isLoopbackAddress()) {
+                    return new InetSocketAddress("::1", addr.getPort());
+                }
+            }
+        }
+        return addr;
     }
 }
