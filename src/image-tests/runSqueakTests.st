@@ -133,7 +133,6 @@
         SlangTests -> #(#testSimpleMethod). "broken"
         SlangTypePromotionTest -> #(#testFloatAndNil #testNilAndFloat). "broken"
         SmalltalkImageTest -> #(#testForceChangesToDiskRobustness).
-        SocketTest -> #(#testSocketReuse #testTCPSocketReuse #testUDP).
         StackInterpreterTests -> #(#testImmediateFloats #testPointerTaggingDetagging). "broken"
         SystemChangeFileTest -> #(#testClassRenamed). "flaky and can hang the system"
     } collect: [:assoc | | testCase |

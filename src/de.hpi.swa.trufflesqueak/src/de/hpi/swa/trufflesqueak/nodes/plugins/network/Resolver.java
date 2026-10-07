@@ -51,16 +51,6 @@ public final class Resolver {
     private static final long LEGACY_HOST_LOOKUP_HANDLE = -1L;
     private static final long LEGACY_ADDRESS_LOOKUP_HANDLE = -2L;
 
-    private static final InetAddress[] WILDCARD_ADDRESSES = new InetAddress[] {
-            new InetSocketAddress("0.0.0.0", 0).getAddress(),
-            new InetSocketAddress("::", 0).getAddress()
-    };
-
-    private static final InetAddress[] LOOPBACK_ADDRESSES = new InetAddress[] {
-            new InetSocketAddress("127.0.0.1", 0).getAddress(),
-            new InetSocketAddress("::1", 0).getAddress()
-    };
-
     private final SqueakSocketContext context;
 
     private final AtomicLong handleGenerator = new AtomicLong(1);
@@ -75,8 +65,21 @@ public final class Resolver {
     private InetAddress anyLocalAddress;
     private InetAddress loopbackAddress;
 
+    private final InetAddress[] wildcardAddresses;
+    private final InetAddress[] loopbackAddresses;
+
     Resolver(final SqueakSocketContext context) {
         this.context = context;
+
+        this.wildcardAddresses = new InetAddress[]{
+                        new InetSocketAddress("0.0.0.0", 0).getAddress(),
+                        new InetSocketAddress("::", 0).getAddress()
+        };
+
+        this.loopbackAddresses = new InetAddress[]{
+                        new InetSocketAddress("127.0.0.1", 0).getAddress(),
+                        new InetSocketAddress("::1", 0).getAddress()
+        };
     }
 
     // Wrapper to hold the asynchronous job
@@ -96,7 +99,7 @@ public final class Resolver {
         final CompletableFuture<List<AddressInfo>> future = new CompletableFuture<>();
         lookupSessions.put(handle, new AsyncSession(future));
 
-        future.whenComplete((res, ex) -> triggerStatusChange());
+        future.whenComplete((@SuppressWarnings("unused") final List<AddressInfo> res, @SuppressWarnings("unused") final Throwable ex) -> triggerStatusChange());
 
         CompletableFuture.runAsync(() -> {
             try {
@@ -206,14 +209,15 @@ public final class Resolver {
         for (int i = 0; i < host.length(); i++) {
             final char c = host.charAt(i);
             if (!Character.isDigit(c) && c != '.' && c != ':' &&
-                    !(c >= 'a' && c <= 'f') && !(c >= 'A' && c <= 'F')) {
+                            !(c >= 'a' && c <= 'f') && !(c >= 'A' && c <= 'F')) {
                 return false;
             }
         }
         return true;
     }
 
-    private static List<AddressInfo> performGetAddressInfo(final String hostName, final String serviceName, final int flags, final int family, final int type, final int protocol) throws UnknownHostException {
+    private List<AddressInfo> performGetAddressInfo(final String hostName, final String serviceName, final int flags, final int family, final int type, final int protocol)
+                    throws UnknownHostException {
         // Strict Numeric Validation
         if ((flags & SQ_SOCKET_NUMERIC) != 0 && hostName != null && !hostName.isEmpty()) {
             if (!isIPLiteral(hostName)) {
@@ -244,18 +248,18 @@ public final class Resolver {
         }
 
         // Resolve addresses based on hostName and SQ_SOCKET_PASSIVE flag
-        InetAddress[] addresses;
+        final InetAddress[] addresses;
         if (hostName == null || hostName.isEmpty()) {
             if ((flags & SQ_SOCKET_PASSIVE) != 0) {
                 // Wildcard (Any) addresses for binding a server
-                addresses = WILDCARD_ADDRESSES;
+                addresses = wildcardAddresses;
             } else {
                 // Loopback addresses for local connections
-                addresses = LOOPBACK_ADDRESSES;
+                addresses = loopbackAddresses;
             }
         } else if ("localhost".equals(hostName)) {
             // Loopback addresses for local connections
-            addresses = LOOPBACK_ADDRESSES;
+            addresses = loopbackAddresses;
         } else {
             // Standard DNS lookup
             addresses = InetAddress.getAllByName(hostName);
