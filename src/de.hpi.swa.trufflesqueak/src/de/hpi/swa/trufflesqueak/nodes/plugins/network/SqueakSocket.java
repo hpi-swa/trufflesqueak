@@ -262,8 +262,8 @@ public abstract class SqueakSocket {
                 } else if (ip.isLoopbackAddress()) {
                     return new InetSocketAddress("127.0.0.1", addr.getPort());
                 }
-            // If Squeak requested IPv6 but Java returned IPv4
             } else if (netType == SQ_FAMILY_INET6 && ip instanceof Inet4Address) {
+                // Squeak requested IPv6 but Java returned IPv4
                 if (ip.isAnyLocalAddress()) {
                     return new InetSocketAddress("::", addr.getPort());
                 } else if (ip.isLoopbackAddress()) {
