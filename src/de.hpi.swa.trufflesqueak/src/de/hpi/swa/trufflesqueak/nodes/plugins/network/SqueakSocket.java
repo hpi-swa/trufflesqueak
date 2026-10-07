@@ -47,11 +47,11 @@ public abstract class SqueakSocket {
     }
 
     // Standard POSIX error mappings
-    protected static final int POSIX_EPERM = 1;        // Operation not permitted
-    protected static final int POSIX_EIO = 5;          // Input/output error
-    protected static final int POSIX_EWOULDBLOCK = 35; // Resource temporarily unavailable
-    protected static final int POSIX_ECONNRESET = 54;  // Connection reset by peer
-    protected static final int POSIX_ECONNREFUSED = 61;// Connection refused
+    protected static final int POSIX_EPERM = 1;         // Operation not permitted
+    protected static final int POSIX_EIO = 5;           // Input/output error
+    protected static final int POSIX_EWOULDBLOCK = 35;  // Resource temporarily unavailable
+    protected static final int POSIX_ECONNRESET = 54;   // Connection reset by peer
+    protected static final int POSIX_ECONNREFUSED = 61; // Connection refused
 
     protected final SqueakSocketContext context;
 
@@ -67,7 +67,7 @@ public abstract class SqueakSocket {
     protected volatile boolean dataAvailable = false;
     protected volatile boolean writeReady = true;
 
-    protected SqueakSocket(final SqueakSocketContext context, final long netType, final long statusSema, final long readSema, final long writeSema) throws IOException {
+    protected SqueakSocket(final SqueakSocketContext context, final long netType, final long statusSema, final long readSema, final long writeSema) {
         this.context = context;
         this.netType = netType;
         listening = false;
@@ -102,7 +102,7 @@ public abstract class SqueakSocket {
 
     protected abstract void listenOn(String address, long port, long backlogSize) throws IOException;
 
-    protected abstract SqueakSocket accept(final long statusSema, final long readSema, final long writeSema) throws IOException;
+    protected abstract SqueakSocket accept(long acceptStatusSema, long acceptReadSema, long acceptWriteSema) throws IOException;
 
     protected abstract boolean isInputShutdown();
 
@@ -110,7 +110,7 @@ public abstract class SqueakSocket {
 
     protected abstract void close() throws IOException;
 
-    private int mapExceptionToErrno(final IOException e) {
+    protected static int mapExceptionToErrno(final IOException e) {
         final String msg = e.getMessage();
         if (msg == null) {
             return POSIX_EIO; // Use EIO (5) or EPERM (1) for generic errors
@@ -127,7 +127,7 @@ public abstract class SqueakSocket {
         return POSIX_EIO;
     }
 
-    protected boolean isSendDone() throws IOException {
+    protected boolean isSendDone() {
         return writeReady;
     }
 
@@ -154,7 +154,7 @@ public abstract class SqueakSocket {
 
     protected abstract long sendDataTo(ByteBuffer data) throws IOException;
 
-    protected boolean isDataAvailable() throws IOException {
+    protected boolean isDataAvailable() {
         return dataAvailable && !isInputShutdown();
     }
 
@@ -251,9 +251,9 @@ public abstract class SqueakSocket {
         throw SqueakException.create("Unknown address type");
     }
 
-    protected InetSocketAddress coerceToNetType(InetSocketAddress addr) {
+    protected InetSocketAddress coerceToNetType(final InetSocketAddress addr) {
         if (addr != null && addr.getAddress() != null) {
-            InetAddress ip = addr.getAddress();
+            final InetAddress ip = addr.getAddress();
 
             // If Squeak requested IPv4 but Java promoted it to IPv6
             if (netType == SQ_FAMILY_INET4 && ip instanceof Inet6Address) {
@@ -262,9 +262,8 @@ public abstract class SqueakSocket {
                 } else if (ip.isLoopbackAddress()) {
                     return new InetSocketAddress("127.0.0.1", addr.getPort());
                 }
-            }
             // If Squeak requested IPv6 but Java returned IPv4
-            else if (netType == SQ_FAMILY_INET6 && ip instanceof Inet4Address) {
+            } else if (netType == SQ_FAMILY_INET6 && ip instanceof Inet4Address) {
                 if (ip.isAnyLocalAddress()) {
                     return new InetSocketAddress("::", addr.getPort());
                 } else if (ip.isLoopbackAddress()) {
