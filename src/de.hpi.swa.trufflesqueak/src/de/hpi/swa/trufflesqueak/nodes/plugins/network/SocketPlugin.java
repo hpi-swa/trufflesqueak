@@ -620,18 +620,19 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
          */
         @Specialization(guards = "option.isByteType()")
         protected final Object doGetOption(@SuppressWarnings("unused") final Object receiver, final PointersObject sd, final NativeObject option) {
-            final SqueakImageContext image = getContext();
-            try {
-                return image.asArrayOfObjects(0L, image.asByteString(getOption(sd, option)));
-            } catch (final IOException e) {
-                LogUtils.SOCKET.log(Level.FINE, "Retrieving socket option failed", e);
-                throw PrimitiveFailed.andTransferToInterpreter();
-            }
+            return getSocketOption(getContext(), getSocketOrPrimFail(sd), option.asStringUnsafe());
         }
 
-        @TruffleBoundary(transferToInterpreterOnException = false)
-        private static String getOption(final PointersObject sd, final NativeObject option) throws IOException {
-            return getSocketOrPrimFail(sd).getOption(option.asStringUnsafe());
+        @TruffleBoundary
+        private static ArrayObject getSocketOption(final SqueakImageContext image, final SqueakSocket socket, final String option) {
+            try {
+                if (socket.supportsOption(option)) {
+                    return image.asArrayOfObjects(0L, image.asByteString(socket.getOption(option)));
+                }
+            } catch (final Exception e) {
+                // Safely absorb UnsupportedOperationException or IOExceptions for missing options like SO_REUSEPORT on Windows
+            }
+            return image.asArrayOfObjects(1L, image.asByteString("0"));
         }
     }
 
