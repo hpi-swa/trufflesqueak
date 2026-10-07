@@ -7,6 +7,8 @@
 package de.hpi.swa.trufflesqueak.nodes.plugins.network;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.channels.CancelledKeyException;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectableChannel;
@@ -15,6 +17,7 @@ import java.nio.channels.Selector;
 import java.util.concurrent.locks.LockSupport;
 
 import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsState;
+import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.OS;
 
 public final class SqueakSocketContext {
@@ -40,12 +43,26 @@ public final class SqueakSocketContext {
     private final int sessionID;
     private final Resolver resolver;
 
+    private final byte[] localHostName;
+    private final boolean hasSocketAccess;
+
     public SqueakSocketContext() {
         try {
             selector = Selector.open();
         } catch (final IOException e) {
             throw new RuntimeException("Failed to open NIO selector", e);
         }
+
+        boolean socketAccess = false;
+        String hostName = "unknown";
+        try {
+            hostName = InetAddress.getLocalHost().getHostName();
+            socketAccess = true;
+        } catch (final SecurityException | UnknownHostException e) {
+            LogUtils.MAIN.warning(e.toString());
+        }
+        localHostName = hostName.getBytes();
+        hasSocketAccess = socketAccess;
 
         // Generate a unique session ID. OSVM treats 0 as uninitialized.
         final int id = (int) System.nanoTime();
@@ -60,6 +77,14 @@ public final class SqueakSocketContext {
 
     public Resolver getResolver() {
         return resolver;
+    }
+
+    public byte[] getLocalHostName() {
+        return localHostName;
+    }
+
+    public boolean hasSocketAccess() {
+        return hasSocketAccess;
     }
 
     public void pollEvents(final long parkNanos, final CheckForInterruptsState interrupts) {

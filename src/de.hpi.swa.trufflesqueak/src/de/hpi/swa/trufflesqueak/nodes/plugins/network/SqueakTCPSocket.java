@@ -18,6 +18,7 @@ import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.logging.Level;
 
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 
@@ -38,13 +39,14 @@ final class SqueakTCPSocket extends SqueakSocket {
     }
 
     // Used internally when accepting new connections
-    private SqueakTCPSocket(final SqueakSocketContext context, final long netType, final SocketChannel clientChannel, final long statusSema, final long readSema, final long writeSema) throws IOException {
+    private SqueakTCPSocket(final SqueakSocketContext context, final long netType, final SocketChannel clientChannel, final long statusSema, final long readSema, final long writeSema)
+                    throws IOException {
         super(context, netType, statusSema, readSema, writeSema);
         this.clientChannel = configure(clientChannel);
         context.register(this.clientChannel, SelectionKey.OP_READ | SelectionKey.OP_WRITE, this);
     }
 
-    private <T extends SelectableChannel & NetworkChannel> T configure(T channel) throws IOException {
+    private static <T extends SelectableChannel & NetworkChannel> T configure(final T channel) throws IOException {
         channel.configureBlocking(false);
         channel.setOption(SO_REUSEADDR, true);
         return channel;
@@ -134,7 +136,7 @@ final class SqueakTCPSocket extends SqueakSocket {
         return Status.WaitingForConnection;
     }
 
-    private Status clientStatus() throws IOException {
+    private Status clientStatus() {
         if (clientChannel == null || !clientChannel.isOpen()) {
             return Status.Unconnected;
         }
@@ -174,7 +176,8 @@ final class SqueakTCPSocket extends SqueakSocket {
                 socketError = POSIX_ECONNREFUSED;
                 try {
                     clientChannel.close();
-                } catch (IOException ignored) {}
+                } catch (IOException ignored) {
+                }
             }
         }
     }
@@ -222,7 +225,7 @@ final class SqueakTCPSocket extends SqueakSocket {
         listenBacklog(backlogSize);
     }
 
-    private <T> void transferOption(NetworkChannel from, NetworkChannel to, SocketOption<T> opt) {
+    private static <T> void transferOption(final NetworkChannel from, final NetworkChannel to, final SocketOption<T> opt) {
         try {
             to.setOption(opt, from.getOption(opt));
         } catch (Exception e) {
@@ -231,7 +234,7 @@ final class SqueakTCPSocket extends SqueakSocket {
     }
 
     @Override
-    protected SqueakSocket accept(final long statusSema, final long readSema, final long writeSema) throws IOException {
+    protected SqueakSocket accept(final long acceptStatusSema, final long acceptReadSema, final long acceptWriteSema) throws IOException {
         if (listening) {
             SocketChannel accepted = clientChannel;
             clientChannel = null;
@@ -241,7 +244,7 @@ final class SqueakTCPSocket extends SqueakSocket {
             }
 
             if (accepted != null) {
-                final SqueakSocket created = new SqueakTCPSocket(context, netType, accepted, statusSema, readSema, writeSema);
+                final SqueakSocket created = new SqueakTCPSocket(context, netType, accepted, acceptStatusSema, acceptReadSema, acceptWriteSema);
                 if (serverChannel != null && serverChannel.isOpen()) {
                     context.resumeInterest(serverChannel, SelectionKey.OP_ACCEPT);
                 }
@@ -269,7 +272,8 @@ final class SqueakTCPSocket extends SqueakSocket {
             remoteClosed = true;
             try {
                 clientChannel.shutdownOutput();
-            } catch (final IOException ignored) {}
+            } catch (final IOException ignored) {
+            }
             throw e;
         }
     }
@@ -280,7 +284,7 @@ final class SqueakTCPSocket extends SqueakSocket {
     }
 
     @Override
-    protected boolean isDataAvailable() throws IOException {
+    protected boolean isDataAvailable() {
         if (peekedByte != -1) {
             return true;
         }
@@ -294,7 +298,7 @@ final class SqueakTCPSocket extends SqueakSocket {
 
         if (dataAvailable) {
             final ByteBuffer buf = ByteBuffer.allocate(1);
-            int read;
+            final int read;
             try {
                 read = clientChannel.read(buf);
             } catch (final IOException e) {
@@ -305,7 +309,8 @@ final class SqueakTCPSocket extends SqueakSocket {
                 } catch (final IOException ignored) {
                     // Channel is already broken; ignore shutdown failures.
                 }
-                throw e; // Propagate so the primitive can log and set socketError
+                LogUtils.SOCKET.log(Level.FINE, "Checking for available data failed", e);
+                return false;
             }
 
             if (read > 0) {

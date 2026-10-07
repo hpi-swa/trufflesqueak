@@ -30,7 +30,8 @@ final class SqueakUDPSocket extends SqueakSocket {
         try {
             channel.setOption(SO_REUSEADDR, true);
             channel.setOption(SO_BROADCAST, true);
-        } catch (IOException ignored) {}
+        } catch (IOException ignored) {
+        }
     }
 
     @Override
@@ -53,9 +54,9 @@ final class SqueakUDPSocket extends SqueakSocket {
         return listening ? getResolver().getLoopbackAddress() : getResolver().getAnyLocalAddress();
     }
 
+    /** Return the local port for this socket, or zero if no port has yet been assigned. */
     @Override
     protected long getLocalPort() throws IOException {
-        /** Return the local port for this socket, or zero if no port has yet been assigned. */
         final InetSocketAddress address = castAddress(channel.getLocalAddress());
         return address == null ? 0L : address.getPort();
     }
@@ -119,7 +120,7 @@ final class SqueakUDPSocket extends SqueakSocket {
     }
 
     @Override
-    protected SqueakSocket accept(final long statusSema, final long readSema, final long writeSema) {
+    protected SqueakSocket accept(final long acceptStatusSema, final long acceptReadSema, final long acceptWriteSema) {
         throw new UnsupportedOperationException("accept() on UDP socket");
     }
 

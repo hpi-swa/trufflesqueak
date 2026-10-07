@@ -40,14 +40,14 @@ final class SqueakOpaqueSocketAddress {
         }
     }
 
+    private SqueakOpaqueSocketAddress() {
+    }
+
     @TruffleBoundary
     static long getOpaqueAddressSize(final byte[] rawIpAddress) {
         // 8 bytes for the addressHeader (sessionID + size)
         // 16 bytes for IPv4 sockaddr_in, 28 bytes for IPv6 sockaddr_in6
         return SQUEAK_HEADER_SIZE + (rawIpAddress.length == 4 ? IPV4_STRUCT_SIZE : IPV6_STRUCT_SIZE);
-    }
-
-    private SqueakOpaqueSocketAddress() {
     }
 
     @TruffleBoundary
@@ -104,7 +104,7 @@ final class SqueakOpaqueSocketAddress {
         checkSessionId(buffer, expectedSessionId);
         buffer.getInt(); // Skip size
 
-        int family;
+        final int family;
         if (OS.isMacOS()) {
             buffer.get(); // Skip length byte
             family = buffer.get();
