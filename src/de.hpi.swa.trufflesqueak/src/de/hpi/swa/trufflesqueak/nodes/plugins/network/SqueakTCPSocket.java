@@ -293,45 +293,48 @@ final class SqueakTCPSocket extends SqueakSocket {
         }
     }
 
+    private boolean isReadyToRead() {
+        if (remoteClosed || clientChannel == null || !clientChannel.isOpen()) {
+            return false;
+        }
+        maybeCompleteConnection();
+        return clientIsConnected() && dataAvailable;
+    }
+
+    private boolean tryPeekByte() {
+        final ByteBuffer buf = ByteBuffer.allocate(1);
+        try {
+            final int read = clientChannel.read(buf);
+            if (read > 0) {
+                peekedByte = buf.get(0) & 0xFF; // Store the unsigned byte
+                return true;
+            }
+
+            if (read == -1) {
+                markRemoteClosed();
+            } else {
+                // read == 0 (Spurious wakeup)
+                dataAvailable = false;
+                if (!isInputShutdown()) {
+                    context.resumeInterest(clientChannel, SelectionKey.OP_READ);
+                }
+            }
+        } catch (final IOException e) {
+            LogUtils.SOCKET.log(Level.FINE, "Checking for available data failed", e);
+            markRemoteClosed();
+        }
+        return false;
+    }
+
     @Override
     protected boolean isDataAvailable() {
         if (peekedByte != -1) {
             return true;
         }
-        if (remoteClosed || clientChannel == null || !clientChannel.isOpen()) {
+        if (!isReadyToRead()) {
             return false;
         }
-        maybeCompleteConnection();
-        if (!clientIsConnected() || !dataAvailable) {
-            return false;
-        }
-
-        final ByteBuffer buf = ByteBuffer.allocate(1);
-        final int read;
-        try {
-            read = clientChannel.read(buf);
-        } catch (final IOException e) {
-            LogUtils.SOCKET.log(Level.FINE, "Checking for available data failed", e);
-            markRemoteClosed();
-            return false;
-        }
-
-        if (read > 0) {
-            peekedByte = buf.get(0) & 0xFF; // Store the unsigned byte
-            return true;
-        }
-
-        if (read == -1) { // EOF detected
-            markRemoteClosed();
-            return false;
-        }
-
-        // read == 0 (Spurious wakeup)
-        dataAvailable = false;
-        if (!isInputShutdown()) {
-            context.resumeInterest(clientChannel, SelectionKey.OP_READ);
-        }
-        return false;
+        return tryPeekByte();
     }
 
     @Override
