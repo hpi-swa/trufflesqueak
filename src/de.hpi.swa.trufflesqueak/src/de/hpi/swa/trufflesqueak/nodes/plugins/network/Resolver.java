@@ -12,6 +12,7 @@ import static de.hpi.swa.trufflesqueak.nodes.plugins.network.SqueakSocketContext
 import static de.hpi.swa.trufflesqueak.nodes.plugins.network.SqueakSocketContext.SQ_SOCKET_NUMERIC;
 import static de.hpi.swa.trufflesqueak.nodes.plugins.network.SqueakSocketContext.SQ_SOCKET_PASSIVE;
 
+import java.io.UncheckedIOException;
 import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;
@@ -58,7 +59,7 @@ public final class Resolver {
 
     private Runnable statusChangeCallback;
 
-    private List<AddressInfo> currentAddressInfoList = null;
+    private List<AddressInfo> currentAddressInfoList;
     private String lastHostNameInfo = "";
     private String lastServiceInfo = "";
 
@@ -216,16 +217,7 @@ public final class Resolver {
         return true;
     }
 
-    private List<AddressInfo> performGetAddressInfo(final String hostName, final String serviceName, final int flags, final int family, final int type, final int protocol)
-                    throws UnknownHostException {
-        // Strict Numeric Validation
-        if ((flags & SQ_SOCKET_NUMERIC) != 0 && hostName != null && !hostName.isEmpty()) {
-            if (!isIPLiteral(hostName)) {
-                throw new UnknownHostException("Host is not numeric");
-            }
-        }
-
-        // Parse service name to a port
+    private static int parseServiceNameToPort(final String serviceName) {
         int port = 0;
         if (serviceName != null && !serviceName.isEmpty()) {
             try {
@@ -246,7 +238,10 @@ public final class Resolver {
                 };
             }
         }
+        return port;
+    }
 
+    private InetAddress[] resolveAddresses(final String hostName, final int flags) throws UnknownHostException {
         // Resolve addresses based on hostName and SQ_SOCKET_PASSIVE flag
         final InetAddress[] addresses;
         if (hostName == null || hostName.isEmpty()) {
@@ -264,6 +259,21 @@ public final class Resolver {
             // Standard DNS lookup
             addresses = InetAddress.getAllByName(hostName);
         }
+        return addresses;
+    }
+
+    private List<AddressInfo> performGetAddressInfo(final String hostName, final String serviceName, final int flags, final int family, final int type, final int protocol)
+                    throws UnknownHostException {
+        // Strict Numeric Validation
+        if ((flags & SQ_SOCKET_NUMERIC) != 0 && hostName != null && !hostName.isEmpty() && !isIPLiteral(hostName)) {
+            throw new UnknownHostException("Host is not numeric");
+        }
+
+        // Parse service name to a port
+        final int port = parseServiceNameToPort(serviceName);
+
+        // Resolve addresses based on hostName and SQ_SOCKET_PASSIVE flag
+        final InetAddress[] addresses =  resolveAddresses(hostName, flags);
 
         final List<AddressInfo> results = new ArrayList<>();
         for (final InetAddress address : addresses) {
@@ -282,48 +292,17 @@ public final class Resolver {
     }
 
     @TruffleBoundary
-    long startAddressInfoLookup(final String hostName, final String serviceName, final int flags, final int family, final int type, final int protocol) {
-        final long handle = handleGenerator.getAndIncrement();
-        return executeAsyncLookup(handle, () -> {
-            try {
-                return performGetAddressInfo(hostName, serviceName, flags, family, type, protocol);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        });
-    }
-
-    @TruffleBoundary
-    AddressInfo getNextAddressInfo(final long handle) {
-        return fetchAddressInfo(handle, true);
-    }
-
-    @TruffleBoundary
-    AddressInfo peekAddressInfo(final long handle) {
-        return fetchAddressInfo(handle, false);
-    }
-
-    private AddressInfo fetchAddressInfo(final long handle, final boolean consume) {
+    private AddressInfo peekAddressInfo(final long handle) {
         final AsyncSession session = lookupSessions.get(handle);
         if (session != null) {
             if (session.getStatus() == Status.Ready) {
                 try {
                     final List<AddressInfo> results = session.future().get();
                     if (!results.isEmpty()) {
-                        final AddressInfo info = consume ? results.removeFirst() : results.getFirst();
-                        if (consume && results.isEmpty()) {
-                            lookupSessions.remove(handle);
-                        }
-                        return info;
+                        return results.getFirst();
                     }
                 } catch (Exception e) {
-                    if (consume) {
-                        lookupSessions.remove(handle);
-                    }
-                }
-            } else if (session.getStatus() == Status.Error) {
-                if (consume) {
-                    lookupSessions.remove(handle);
+                    // Safely ignore and fall through to return null
                 }
             }
         }
@@ -395,8 +374,8 @@ public final class Resolver {
         executeAsyncLookup(LEGACY_HOST_LOOKUP_HANDLE, () -> {
             try {
                 return performGetAddressInfo(hostName, null, 0, SQ_FAMILY_INET4, 0, 0);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
+            } catch (final UnknownHostException e) {
+                throw new UncheckedIOException(e);
             }
         });
     }
@@ -416,7 +395,7 @@ public final class Resolver {
                 results.add(new AddressInfo(inetAddress, 0, SQ_FAMILY_INET4, 0, 0));
                 return results;
             } catch (UnknownHostException e) {
-                throw new RuntimeException(e);
+                throw new UncheckedIOException(e);
             }
         });
     }
