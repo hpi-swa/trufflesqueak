@@ -62,9 +62,9 @@ public abstract class SqueakSocket {
     protected final long readSema;
     protected final long writeSema;
 
-    public int socketError = 0;
+    public int socketError;
 
-    protected volatile boolean dataAvailable = false;
+    protected volatile boolean dataAvailable;
     protected volatile boolean writeReady = true;
 
     protected SqueakSocket(final SqueakSocketContext context, final long netType, final long statusSema, final long readSema, final long writeSema) {

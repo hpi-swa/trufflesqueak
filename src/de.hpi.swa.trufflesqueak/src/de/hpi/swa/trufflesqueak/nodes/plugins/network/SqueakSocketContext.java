@@ -16,9 +16,9 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.util.concurrent.locks.LockSupport;
 
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsState;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
-import de.hpi.swa.trufflesqueak.util.OS;
 
 public final class SqueakSocketContext {
 
@@ -50,7 +50,7 @@ public final class SqueakSocketContext {
         try {
             selector = Selector.open();
         } catch (final IOException e) {
-            throw new RuntimeException("Failed to open NIO selector", e);
+            throw SqueakException.create("Failed to open NIO selector", e);
         }
 
         boolean socketAccess = false;

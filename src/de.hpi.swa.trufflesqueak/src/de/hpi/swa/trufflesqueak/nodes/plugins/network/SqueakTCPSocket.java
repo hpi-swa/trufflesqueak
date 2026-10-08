@@ -29,7 +29,7 @@ final class SqueakTCPSocket extends SqueakSocket {
     private ServerSocketChannel serverChannel;
 
     private InetSocketAddress boundAddress;
-    private boolean remoteClosed = false;
+    private boolean remoteClosed;
 
     private int peekedByte = -1; // -1 indicates no byte is currently peeked
 
@@ -283,6 +283,16 @@ final class SqueakTCPSocket extends SqueakSocket {
         return clientChannel == null || remoteClosed || clientChannel.socket().isInputShutdown();
     }
 
+    private void markRemoteClosed() {
+        remoteClosed = true;
+        dataAvailable = false;
+        try {
+            clientChannel.shutdownInput();
+        } catch (final IOException ignored) {
+            // Channel is already broken; ignore shutdown failures.
+        }
+    }
+
     @Override
     protected boolean isDataAvailable() {
         if (peekedByte != -1) {
@@ -292,46 +302,34 @@ final class SqueakTCPSocket extends SqueakSocket {
             return false;
         }
         maybeCompleteConnection();
-        if (!clientIsConnected()) {
+        if (!clientIsConnected() || !dataAvailable) {
             return false;
         }
 
-        if (dataAvailable) {
-            final ByteBuffer buf = ByteBuffer.allocate(1);
-            final int read;
-            try {
-                read = clientChannel.read(buf);
-            } catch (final IOException e) {
-                remoteClosed = true;
-                dataAvailable = false;
-                try {
-                    clientChannel.shutdownInput();
-                } catch (final IOException ignored) {
-                    // Channel is already broken; ignore shutdown failures.
-                }
-                LogUtils.SOCKET.log(Level.FINE, "Checking for available data failed", e);
-                return false;
-            }
+        final ByteBuffer buf = ByteBuffer.allocate(1);
+        final int read;
+        try {
+            read = clientChannel.read(buf);
+        } catch (final IOException e) {
+            LogUtils.SOCKET.log(Level.FINE, "Checking for available data failed", e);
+            markRemoteClosed();
+            return false;
+        }
 
-            if (read > 0) {
-                peekedByte = buf.get(0) & 0xFF; // Store the unsigned byte
-                return true;
-            } else if (read == -1) { // EOF detected
-                remoteClosed = true;
-                dataAvailable = false;
-                try {
-                    clientChannel.shutdownInput();
-                } catch (final IOException ignored) {
-                    // Channel is already broken; ignore shutdown failures.
-                }
-                return false;
-            } else { // read == 0 (Spurious wakeup)
-                dataAvailable = false;
-                if (!isInputShutdown()) {
-                    context.resumeInterest(clientChannel, SelectionKey.OP_READ);
-                }
-                return false;
-            }
+        if (read > 0) {
+            peekedByte = buf.get(0) & 0xFF; // Store the unsigned byte
+            return true;
+        }
+
+        if (read == -1) { // EOF detected
+            markRemoteClosed();
+            return false;
+        }
+
+        // read == 0 (Spurious wakeup)
+        dataAvailable = false;
+        if (!isInputShutdown()) {
+            context.resumeInterest(clientChannel, SelectionKey.OP_READ);
         }
         return false;
     }
