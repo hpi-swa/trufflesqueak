@@ -21,8 +21,6 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -49,14 +47,9 @@ public final class Resolver {
         }
     }
 
-    private static final long LEGACY_HOST_LOOKUP_HANDLE = -1L;
-    private static final long LEGACY_ADDRESS_LOOKUP_HANDLE = -2L;
-
     private final SqueakSocketContext context;
 
-    private final AtomicLong handleGenerator = new AtomicLong(1);
-    private final ConcurrentHashMap<Long, AsyncSession> lookupSessions = new ConcurrentHashMap<>();
-
+    private volatile AsyncSession activeLegacySession;
     private Runnable statusChangeCallback;
 
     private List<AddressInfo> currentAddressInfoList;
@@ -96,9 +89,9 @@ public final class Resolver {
         }
     }
 
-    private long executeAsyncLookup(final long handle, final Supplier<List<AddressInfo>> lookupTask) {
+    private AsyncSession executeAsyncLookup(final Supplier<List<AddressInfo>> lookupTask) {
         final CompletableFuture<List<AddressInfo>> future = new CompletableFuture<>();
-        lookupSessions.put(handle, new AsyncSession(future));
+        final AsyncSession session = new AsyncSession(future);
 
         future.whenComplete((@SuppressWarnings("unused") final List<AddressInfo> res, @SuppressWarnings("unused") final Throwable ex) -> triggerStatusChange());
 
@@ -110,7 +103,7 @@ public final class Resolver {
             }
         });
 
-        return handle;
+        return session;
     }
 
     void setStatusChangeCallback(final Runnable callback) {
@@ -292,18 +285,15 @@ public final class Resolver {
     }
 
     @TruffleBoundary
-    private AddressInfo peekAddressInfo(final long handle) {
-        final AsyncSession session = lookupSessions.get(handle);
-        if (session != null) {
-            if (session.getStatus() == Status.Ready) {
-                try {
-                    final List<AddressInfo> results = session.future().get();
-                    if (!results.isEmpty()) {
-                        return results.getFirst();
-                    }
-                } catch (Exception e) {
-                    // Safely ignore and fall through to return null
+    private static AddressInfo peekAddressInfo(final AsyncSession session) {
+        if (session != null && session.getStatus() == Status.Ready) {
+            try {
+                final List<AddressInfo> results = session.future().get();
+                if (!results.isEmpty()) {
+                    return results.getFirst();
                 }
+            } catch (Exception e) {
+                // Safely ignore and fall through to return null
             }
         }
         return null;
@@ -363,15 +353,13 @@ public final class Resolver {
 
     @TruffleBoundary
     byte[] lastHostNameLookupResult() {
-        final AddressInfo info = peekAddressInfo(LEGACY_HOST_LOOKUP_HANDLE);
+        final AddressInfo info = peekAddressInfo(activeLegacySession);
         return info != null ? info.address().getAddress() : null;
     }
 
     @TruffleBoundary
     void startHostNameLookUp(final String hostName) {
-        lookupSessions.remove(LEGACY_HOST_LOOKUP_HANDLE);
-
-        executeAsyncLookup(LEGACY_HOST_LOOKUP_HANDLE, () -> {
+        activeLegacySession = executeAsyncLookup(() -> {
             try {
                 return performGetAddressInfo(hostName, null, 0, SQ_FAMILY_INET4, 0, 0);
             } catch (final UnknownHostException e) {
@@ -382,9 +370,7 @@ public final class Resolver {
 
     @TruffleBoundary
     void startAddressLookUp(final byte[] address) {
-        lookupSessions.remove(LEGACY_ADDRESS_LOOKUP_HANDLE);
-
-        executeAsyncLookup(LEGACY_ADDRESS_LOOKUP_HANDLE, () -> {
+        activeLegacySession = executeAsyncLookup(() -> {
             try {
                 final InetAddress inetAddress = InetAddress.getByAddress(address);
 
@@ -394,7 +380,7 @@ public final class Resolver {
                 final List<AddressInfo> results = new ArrayList<>();
                 results.add(new AddressInfo(inetAddress, 0, SQ_FAMILY_INET4, 0, 0));
                 return results;
-            } catch (UnknownHostException e) {
+            } catch (final UnknownHostException e) {
                 throw new UncheckedIOException(e);
             }
         });
@@ -402,7 +388,7 @@ public final class Resolver {
 
     @TruffleBoundary
     String lastAddressLookUpResult() {
-        final AddressInfo info = peekAddressInfo(LEGACY_ADDRESS_LOOKUP_HANDLE);
+        final AddressInfo info = peekAddressInfo(activeLegacySession);
         return info != null ? info.address().getHostName() : null;
     }
 
@@ -416,14 +402,13 @@ public final class Resolver {
             return Status.Uninitialized;
         }
 
-        final AsyncSession hostSession = lookupSessions.get(LEGACY_HOST_LOOKUP_HANDLE);
-        if (hostSession != null && hostSession.getStatus() == Status.Busy) {
-            return Status.Busy;
+        if (activeLegacySession != null) {
+            final Status status = activeLegacySession.getStatus();
+            if (status == Status.Busy || status == Status.Error) {
+                return status;
+            }
         }
-        final AsyncSession addressSession = lookupSessions.get(LEGACY_ADDRESS_LOOKUP_HANDLE);
-        if (addressSession != null && addressSession.getStatus() == Status.Busy) {
-            return Status.Busy;
-        }
+
         return Status.Ready;
     }
 }
