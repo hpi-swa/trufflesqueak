@@ -70,6 +70,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimInitializeNetwork1Node extends AbstractNetworkPrimitiveNode implements Primitive1 {
         @Specialization
         protected final Object doWork(final Object receiver, final long resolverSemaIndex) {
+            getResolver().initialize();
             if (resolverSemaIndex > 0) {
                 final int semaIndex = (int) resolverSemaIndex;
                 final SqueakImageContext image = getContext();
@@ -85,7 +86,8 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         /** Return the local address of this host. */
         @Specialization
         protected final AbstractSqueakObject doWork(@SuppressWarnings("unused") final Object receiver) {
-            final byte[] address = getResolver().getLoopbackAddress();
+            // Legacy primitive assumes IPv4
+            final byte[] address = getResolver().getLoopbackInetAddress(SqueakSocketContext.SQ_FAMILY_INET4).getAddress();
             LogUtils.SOCKET.finer(() -> "Local Address: " + SqueakOpaqueSocketAddress.getIpAddressString(address, getSocketContext().getSessionID()));
             return getContext().asByteArray(address);
         }
@@ -271,8 +273,8 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary(transferToInterpreterOnException = false)
         protected final Object doResult(final Object receiver, final PointersObject sd, final NativeObject address) {
             try {
-                final InetAddress localAddr = InetAddress.getByAddress(getSocketOrPrimFail(sd).getLocalAddress());
-                final AddressInfo info = new AddressInfo(localAddr, (int) getSocketOrPrimFail(sd).getLocalPort(), 0, 0, 0);
+                final InetSocketAddress localAddr = getSocketOrPrimFail(sd).getLocalSocketAddress();
+                final AddressInfo info = new AddressInfo(localAddr.getAddress(), localAddr.getPort(), 0, 0, 0);
                 final byte[] opaqueBytes = info.toSockaddrBytes(getSocketContext().getSessionID());
                 System.arraycopy(opaqueBytes, 0, address.getByteStorage(), 0, Math.min(opaqueBytes.length, address.getByteLength()));
             } catch (final Exception e) {
@@ -289,8 +291,8 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary(transferToInterpreterOnException = false)
         protected final Object doResult(final Object receiver, final PointersObject sd, final NativeObject address) {
             try {
-                final InetAddress remoteAddr = InetAddress.getByAddress(getSocketOrPrimFail(sd).getRemoteAddress());
-                final AddressInfo info = new AddressInfo(remoteAddr, (int) getSocketOrPrimFail(sd).getRemotePort(), 0, 0, 0);
+                final InetSocketAddress remoteAddr = getSocketOrPrimFail(sd).getRemoteSocketAddress();
+                final AddressInfo info = new AddressInfo(remoteAddr.getAddress(), remoteAddr.getPort(), 0, 0, 0);
                 final byte[] opaqueBytes = info.toSockaddrBytes(getSocketContext().getSessionID());
                 System.arraycopy(opaqueBytes, 0, address.getByteStorage(), 0, Math.min(opaqueBytes.length, address.getByteLength()));
             } catch (final Exception e) {

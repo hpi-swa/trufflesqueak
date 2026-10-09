@@ -9,6 +9,7 @@ package de.hpi.swa.trufflesqueak.nodes.plugins.network;
 import static java.net.StandardSocketOptions.SO_REUSEADDR;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketOption;
@@ -35,7 +36,7 @@ final class SqueakTCPSocket extends SqueakSocket {
 
     protected SqueakTCPSocket(final SqueakSocketContext context, final long netType, final long statusSema, final long readSema, final long writeSema) throws IOException {
         super(context, netType, statusSema, readSema, writeSema);
-        clientChannel = configure(SocketChannel.open());
+        clientChannel = configure(specifiesProtocolFamily() ? SocketChannel.open(getProtocolFamily()) : SocketChannel.open());
     }
 
     // Used internally when accepting new connections
@@ -62,38 +63,31 @@ final class SqueakTCPSocket extends SqueakSocket {
         return listening ? serverChannel : clientChannel;
     }
 
-    private InetSocketAddress getLocalSocketAddress() throws IOException {
+    @Override
+    protected InetSocketAddress getLocalSocketAddress() throws IOException {
         maybeCompleteConnection();
         final NetworkChannel channel = asNetworkChannel();
-        return coerceToNetType(channel == null ? null : castAddress(channel.getLocalAddress()));
+        final InetSocketAddress addr = coerceToNetType(channel == null ? null : castAddress(channel.getLocalAddress()));
+        if (addr != null) {
+            return addr;
+        }
+        // Fallback for unbound sockets
+        return listening ? loopbackAddressFor(0) : socketAddressFor(null, 0);
     }
 
     @Override
-    protected byte[] getLocalAddress() throws IOException {
-        final InetSocketAddress address = getLocalSocketAddress();
-        if (address != null) {
-            return address.getAddress().getAddress();
+    protected InetSocketAddress getRemoteSocketAddress() throws IOException {
+        maybeCompleteConnection();
+        if (listening || !clientIsConnected()) {
+            return socketAddressFor(null, 0);
         }
-        // Fallback for unbound sockets
-        return listening ? getResolver().getLoopbackAddress() : getResolver().getAnyLocalAddress();
+        return castAddress(clientChannel.getRemoteAddress());
     }
 
     @Override
     protected long getLocalPort() throws IOException {
         final InetSocketAddress address = getLocalSocketAddress();
         return address == null ? 0L : address.getPort();
-    }
-
-    @Override
-    protected byte[] getRemoteAddress() throws IOException {
-        maybeCompleteConnection();
-        if (listening) {
-            return getResolver().getAnyLocalAddress();
-        }
-        if (clientIsConnected()) {
-            return castAddress(clientChannel.getRemoteAddress()).getAddress().getAddress();
-        }
-        return getResolver().getAnyLocalAddress();
     }
 
     @Override
@@ -172,8 +166,7 @@ final class SqueakTCPSocket extends SqueakSocket {
                     context.resumeInterest(clientChannel, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
                 }
             } catch (IOException e) {
-                // Any IOException here means the OS definitively aborted the handshake.
-                socketError = POSIX_ECONNREFUSED;
+                socketError = mapExceptionToErrno(e);
                 try {
                     clientChannel.close();
                 } catch (IOException ignored) {
@@ -185,6 +178,14 @@ final class SqueakTCPSocket extends SqueakSocket {
     @Override
     protected void bindTo(final String address, final int port) throws IOException {
         boundAddress = socketAddressFor(address, port);
+        if (clientChannel != null && !clientChannel.socket().isBound()) {
+            clientChannel.bind(boundAddress);
+
+            // Capture the actual bound address. If port 0 was requested, this ensures
+            // the assigned ephemeral port is preserved for later when transitioning
+            // to a ServerSocketChannel during listenBacklog().
+            boundAddress = castAddress(clientChannel.getLocalAddress());
+        }
     }
 
     @Override
@@ -199,7 +200,7 @@ final class SqueakTCPSocket extends SqueakSocket {
     @Override
     protected void listenBacklog(final long backlogSize) throws IOException {
         listening = true;
-        serverChannel = configure(ServerSocketChannel.open());
+        serverChannel = configure(specifiesProtocolFamily() ? ServerSocketChannel.open(getProtocolFamily()) : ServerSocketChannel.open());
 
         if (clientChannel != null) {
             for (final SocketOption<?> option : clientChannel.supportedOptions()) {

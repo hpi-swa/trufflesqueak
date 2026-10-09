@@ -9,8 +9,12 @@ package de.hpi.swa.trufflesqueak.nodes.plugins.network;
 import static de.hpi.swa.trufflesqueak.nodes.plugins.network.SqueakSocketContext.SQ_FAMILY_INET4;
 import static de.hpi.swa.trufflesqueak.nodes.plugins.network.SqueakSocketContext.SQ_FAMILY_INET6;
 import static de.hpi.swa.trufflesqueak.nodes.plugins.network.SqueakSocketContext.SQ_FAMILY_UNSPEC;
+import static de.hpi.swa.trufflesqueak.nodes.plugins.network.SqueakSocketContext.SQ_PROTOCOL_TCP;
+import static de.hpi.swa.trufflesqueak.nodes.plugins.network.SqueakSocketContext.SQ_PROTOCOL_UDP;
 import static de.hpi.swa.trufflesqueak.nodes.plugins.network.SqueakSocketContext.SQ_SOCKET_NUMERIC;
 import static de.hpi.swa.trufflesqueak.nodes.plugins.network.SqueakSocketContext.SQ_SOCKET_PASSIVE;
+import static de.hpi.swa.trufflesqueak.nodes.plugins.network.SqueakSocketContext.SQ_TYPE_DGRAM;
+import static de.hpi.swa.trufflesqueak.nodes.plugins.network.SqueakSocketContext.SQ_TYPE_STREAM;
 
 import java.io.UncheckedIOException;
 import java.net.Inet4Address;
@@ -49,15 +53,13 @@ public final class Resolver {
 
     private final SqueakSocketContext context;
 
+    private boolean initialized;
     private volatile AsyncSession activeLegacySession;
     private Runnable statusChangeCallback;
 
     private List<AddressInfo> currentAddressInfoList;
     private String lastHostNameInfo = "";
     private String lastServiceInfo = "";
-
-    private InetAddress anyLocalAddress;
-    private InetAddress loopbackAddress;
 
     private final InetAddress[] wildcardAddresses;
     private final InetAddress[] loopbackAddresses;
@@ -106,6 +108,13 @@ public final class Resolver {
         return session;
     }
 
+    void initialize() {
+        initialized = true;
+        statusChangeCallback = null;
+        currentAddressInfoList = null;
+        lastHostNameInfo = "";
+    }
+
     void setStatusChangeCallback(final Runnable callback) {
         statusChangeCallback = callback;
     }
@@ -117,19 +126,14 @@ public final class Resolver {
         }
     }
 
-    byte[] getAnyLocalAddress() {
-        if (anyLocalAddress == null) {
-            anyLocalAddress = new InetSocketAddress(0).getAddress();
-        }
-        return anyLocalAddress.getAddress();
+    InetAddress getAnyLocalInetAddress(final long netType) {
+        // wildcardAddresses[0] is IPv4, [1] is IPv6
+        return netType == SQ_FAMILY_INET6 ? wildcardAddresses[1] : wildcardAddresses[0];
     }
 
-    @TruffleBoundary
-    byte[] getLoopbackAddress() {
-        if (loopbackAddress == null) {
-            loopbackAddress = InetAddress.getLoopbackAddress();
-        }
-        return loopbackAddress.getAddress();
+    InetAddress getLoopbackInetAddress(final long netType) {
+        // loopbackAddresses[0] is IPv4, [1] is IPv6
+        return netType == SQ_FAMILY_INET6 ? loopbackAddresses[1] : loopbackAddresses[0];
     }
 
     @TruffleBoundary
@@ -210,28 +214,38 @@ public final class Resolver {
         return true;
     }
 
-    private static int parseServiceNameToPort(final String serviceName) {
-        int port = 0;
-        if (serviceName != null && !serviceName.isEmpty()) {
-            try {
-                port = Integer.parseInt(serviceName);
-            } catch (NumberFormatException e) {
-                // Parse common named services
-                port = switch (serviceName.toLowerCase()) {
-                    case "http" -> 80;
-                    case "https" -> 443;
-                    case "ftp" -> 21;
-                    case "ssh" -> 22;
-                    case "smtp" -> 25;
-                    default -> {
-                        final String errorMsg = "Unparseable service name: " + serviceName;
-                        LogUtils.SOCKET.warning(errorMsg);
-                        throw new IllegalArgumentException(errorMsg);
-                    }
-                };
-            }
+    private static int parseServiceNameToPort(final String serviceName, final int type, final int protocol) throws UnknownHostException {
+        if (serviceName == null || serviceName.isEmpty()) {
+            return 0;
         }
-        return port;
+        try {
+            return Integer.parseInt(serviceName);
+        } catch (NumberFormatException e) {
+            int port = -1;
+
+            final boolean isUdp = (protocol == SQ_PROTOCOL_UDP) || (type == SQ_TYPE_DGRAM);
+            final boolean isTcp = (protocol == SQ_PROTOCOL_TCP) || (type == SQ_TYPE_STREAM);
+
+            // Query exactly what Squeak asked for
+            if (isUdp && !isTcp) {
+                port = CachedServicesResolver.resolvePort(serviceName, "udp");
+            } else if (isTcp && !isUdp) {
+                port = CachedServicesResolver.resolvePort(serviceName, "tcp");
+            } else {
+                // If unspecified (0), try TCP first, then UDP
+                port = CachedServicesResolver.resolvePort(serviceName, "tcp");
+                if (port == -1) {
+                    port = CachedServicesResolver.resolvePort(serviceName, "udp");
+                }
+            }
+
+            if (port > 0) {
+                return port;
+            }
+
+            LogUtils.SOCKET.warning("Unresolvable service name: " + serviceName);
+            throw new UnknownHostException("Unknown service: " + serviceName);
+        }
     }
 
     private InetAddress[] resolveAddresses(final String hostName, final int flags) throws UnknownHostException {
@@ -262,11 +276,11 @@ public final class Resolver {
             throw new UnknownHostException("Host is not numeric");
         }
 
-        // Parse service name to a port
-        final int port = parseServiceNameToPort(serviceName);
+        // Parse service name to a port using the requested type and protocol
+        final int port = parseServiceNameToPort(serviceName, type, protocol);
 
         // Resolve addresses based on hostName and SQ_SOCKET_PASSIVE flag
-        final InetAddress[] addresses =  resolveAddresses(hostName, flags);
+        final InetAddress[] addresses = resolveAddresses(hostName, flags);
 
         final List<AddressInfo> results = new ArrayList<>();
         for (final InetAddress address : addresses) {
@@ -274,7 +288,20 @@ public final class Resolver {
 
             // Filter using SQUEAK constants
             if (family == SQ_FAMILY_UNSPEC || family == sqFamily) {
-                results.add(new AddressInfo(address, port, sqFamily, type, protocol));
+                final boolean addTcp = (type == 0 || type == SQ_TYPE_STREAM) && (protocol == 0 || protocol == SQ_PROTOCOL_TCP);
+                final boolean addUdp = (type == 0 || type == SQ_TYPE_DGRAM) && (protocol == 0 || protocol == SQ_PROTOCOL_UDP);
+
+                if (addTcp) {
+                    results.add(new AddressInfo(address, port, sqFamily, SQ_TYPE_STREAM, SQ_PROTOCOL_TCP));
+                }
+                if (addUdp) {
+                    results.add(new AddressInfo(address, port, sqFamily, SQ_TYPE_DGRAM, SQ_PROTOCOL_UDP));
+                }
+
+                // Fallback for RAW sockets or unknown exact matches
+                if (!addTcp && !addUdp) {
+                    results.add(new AddressInfo(address, port, sqFamily, type, protocol));
+                }
             }
         }
 
@@ -398,7 +425,7 @@ public final class Resolver {
      */
     @TruffleBoundary
     Status getLegacyStatus() {
-        if (statusChangeCallback == null) {
+        if (!initialized) {
             return Status.Uninitialized;
         }
 
