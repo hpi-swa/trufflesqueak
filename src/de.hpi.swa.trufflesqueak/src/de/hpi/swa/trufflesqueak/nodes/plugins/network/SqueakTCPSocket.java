@@ -9,7 +9,6 @@ package de.hpi.swa.trufflesqueak.nodes.plugins.network;
 import static java.net.StandardSocketOptions.SO_REUSEADDR;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketOption;

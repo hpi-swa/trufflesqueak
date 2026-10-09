@@ -282,33 +282,37 @@ public final class Resolver {
         // Resolve addresses based on hostName and SQ_SOCKET_PASSIVE flag
         final InetAddress[] addresses = resolveAddresses(hostName, flags);
 
+        final boolean addTcp = (type == 0 || type == SQ_TYPE_STREAM) && (protocol == 0 || protocol == SQ_PROTOCOL_TCP);
+        final boolean addUdp = (type == 0 || type == SQ_TYPE_DGRAM) && (protocol == 0 || protocol == SQ_PROTOCOL_UDP);
+
         final List<AddressInfo> results = new ArrayList<>();
         for (final InetAddress address : addresses) {
-            final int sqFamily = (address instanceof Inet4Address) ? SQ_FAMILY_INET4 : SQ_FAMILY_INET6;
-
-            // Filter using SQUEAK constants
-            if (family == SQ_FAMILY_UNSPEC || family == sqFamily) {
-                final boolean addTcp = (type == 0 || type == SQ_TYPE_STREAM) && (protocol == 0 || protocol == SQ_PROTOCOL_TCP);
-                final boolean addUdp = (type == 0 || type == SQ_TYPE_DGRAM) && (protocol == 0 || protocol == SQ_PROTOCOL_UDP);
-
-                if (addTcp) {
-                    results.add(new AddressInfo(address, port, sqFamily, SQ_TYPE_STREAM, SQ_PROTOCOL_TCP));
-                }
-                if (addUdp) {
-                    results.add(new AddressInfo(address, port, sqFamily, SQ_TYPE_DGRAM, SQ_PROTOCOL_UDP));
-                }
-
-                // Fallback for RAW sockets or unknown exact matches
-                if (!addTcp && !addUdp) {
-                    results.add(new AddressInfo(address, port, sqFamily, type, protocol));
-                }
-            }
+            appendAddressInfo(results, address, port, family, type, protocol, addTcp, addUdp);
         }
 
         if (results.isEmpty()) {
             throw new UnknownHostException("No addresses found for family");
         }
         return results;
+    }
+
+    private static void appendAddressInfo(final List<AddressInfo> results, final InetAddress address, final int port, final int family, final int type, final int protocol, final boolean addTcp,
+                    final boolean addUdp) {
+        final int sqFamily = (address instanceof Inet4Address) ? SQ_FAMILY_INET4 : SQ_FAMILY_INET6;
+
+        // Filter using SQUEAK constants
+        if (family == SQ_FAMILY_UNSPEC || family == sqFamily) {
+            if (addTcp) {
+                results.add(new AddressInfo(address, port, sqFamily, SQ_TYPE_STREAM, SQ_PROTOCOL_TCP));
+            }
+            if (addUdp) {
+                results.add(new AddressInfo(address, port, sqFamily, SQ_TYPE_DGRAM, SQ_PROTOCOL_UDP));
+            }
+            // Fallback for RAW sockets or unknown exact matches
+            if (!addTcp && !addUdp) {
+                results.add(new AddressInfo(address, port, sqFamily, type, protocol));
+            }
+        }
     }
 
     @TruffleBoundary
