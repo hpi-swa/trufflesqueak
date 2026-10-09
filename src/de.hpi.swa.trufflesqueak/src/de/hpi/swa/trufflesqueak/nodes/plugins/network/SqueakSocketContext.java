@@ -6,6 +6,7 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.plugins.network;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -20,7 +21,7 @@ import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsState;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 
-public final class SqueakSocketContext {
+public final class SqueakSocketContext implements Closeable {
 
     // Squeak internal lookup flags
     public static final int SQ_SOCKET_NUMERIC = (1 << 0);
@@ -69,6 +70,28 @@ public final class SqueakSocketContext {
         sessionID = id == 0 ? 1 : id;
 
         resolver = new Resolver(this);
+    }
+
+    @Override
+    public void close() {
+        if (selector != null && selector.isOpen()) {
+            // Close all registered channels to release their OS file descriptors
+            for (final SelectionKey key : selector.keys()) {
+                try {
+                    if (key.channel().isOpen()) {
+                        key.channel().close();
+                    }
+                } catch (final IOException e) {
+                    // Safely ignore errors during teardown
+                }
+            }
+
+            try {
+                selector.close();
+            } catch (final IOException e) {
+                LogUtils.MAIN.warning("Failed to close socket context selector: " + e.getMessage());
+            }
+        }
     }
 
     public int getSessionID() {

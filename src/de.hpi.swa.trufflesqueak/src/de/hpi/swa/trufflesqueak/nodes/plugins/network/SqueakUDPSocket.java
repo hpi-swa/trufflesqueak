@@ -10,6 +10,7 @@ import static java.net.StandardSocketOptions.SO_BROADCAST;
 import static java.net.StandardSocketOptions.SO_REUSEADDR;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
@@ -25,7 +26,7 @@ final class SqueakUDPSocket extends SqueakSocket {
 
     SqueakUDPSocket(final SqueakSocketContext context, final long netType, final long statusSema, final long readSema, final long writeSema) throws IOException {
         super(context, netType, statusSema, readSema, writeSema);
-        channel = DatagramChannel.open();
+        channel = specifiesProtocolFamily() ? DatagramChannel.open(getProtocolFamily()) : DatagramChannel.open();
         channel.configureBlocking(false);
         try {
             channel.setOption(SO_REUSEADDR, true);
@@ -45,13 +46,13 @@ final class SqueakUDPSocket extends SqueakSocket {
     }
 
     @Override
-    protected byte[] getLocalAddress() throws IOException {
+    protected InetSocketAddress getLocalSocketAddress() throws IOException {
         final InetSocketAddress address = castAddress(channel.getLocalAddress());
         if (address != null) {
-            return address.getAddress().getAddress();
+            return address;
         }
         // Fallback for unbound sockets
-        return listening ? getResolver().getLoopbackAddress() : getResolver().getAnyLocalAddress();
+        return listening ? loopbackAddressFor(0) : socketAddressFor(null, 0);
     }
 
     /** Return the local port for this socket, or zero if no port has yet been assigned. */
@@ -62,12 +63,11 @@ final class SqueakUDPSocket extends SqueakSocket {
     }
 
     @Override
-    protected byte[] getRemoteAddress() throws IOException {
-        final SocketAddress address = channel.getRemoteAddress();
-        if (channel.isConnected()) {
-            return castAddress(address).getAddress().getAddress();
+    protected InetSocketAddress getRemoteSocketAddress() throws IOException {
+        if (listening || !channel.isConnected()) {
+            return socketAddressFor(null, 0);
         }
-        return getResolver().getAnyLocalAddress();
+        return castAddress(channel.getRemoteAddress());
     }
 
     @Override
