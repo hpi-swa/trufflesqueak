@@ -6,16 +6,23 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.plugins.network;
 
+import static java.net.StandardProtocolFamily.INET;
+import static java.net.StandardProtocolFamily.INET6;
+
 import static de.hpi.swa.trufflesqueak.nodes.plugins.network.SqueakSocketContext.SQ_FAMILY_INET4;
 import static de.hpi.swa.trufflesqueak.nodes.plugins.network.SqueakSocketContext.SQ_FAMILY_INET6;
 
 import java.io.IOException;
+import java.net.BindException;
 import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.NoRouteToHostException;
+import java.net.ProtocolFamily;
 import java.net.SocketAddress;
 import java.net.SocketOption;
+import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.channels.NetworkChannel;
 import java.nio.channels.SelectableChannel;
@@ -24,6 +31,7 @@ import java.nio.channels.SelectionKey;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsState;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
+import de.hpi.swa.trufflesqueak.util.OS;
 
 public abstract class SqueakSocket {
 
@@ -47,11 +55,16 @@ public abstract class SqueakSocket {
     }
 
     // Standard POSIX error mappings
-    protected static final int POSIX_EPERM = 1;         // Operation not permitted
-    protected static final int POSIX_EIO = 5;           // Input/output error
-    protected static final int POSIX_EWOULDBLOCK = 35;  // Resource temporarily unavailable
-    protected static final int POSIX_ECONNRESET = 54;   // Connection reset by peer
-    protected static final int POSIX_ECONNREFUSED = 61; // Connection refused
+    protected static final int POSIX_EADDRINUSE = resolveErrno(48, 98, 10048);    // Address alread in use
+    protected static final int POSIX_ECONNRESET = resolveErrno(54, 104, 10054);   // Connection reset by peer
+    protected static final int POSIX_ECONNREFUSED = resolveErrno(61, 111, 10061); // Connection refused
+    protected static final int POSIX_EHOSTUNREACH = resolveErrno(65, 113, 10065); // No route to host
+    protected static final int POSIX_EIO = resolveErrno(5, 5, 10022);             // Input/output error
+    protected static final int POSIX_EPERM = resolveErrno(1, 1, 10013);           // Operation not permitted
+    protected static final int POSIX_ETIMEDOUT = resolveErrno(60, 110, 10060);    // Connection timed out
+    protected static final int POSIX_EWOULDBLOCK = resolveErrno(35, 11, 10035);   // Resource temporarily unavailable
+
+    public int socketError;
 
     protected final SqueakSocketContext context;
 
@@ -61,8 +74,6 @@ public abstract class SqueakSocket {
     protected final long statusSema;
     protected final long readSema;
     protected final long writeSema;
-
-    public int socketError;
 
     protected volatile boolean dataAvailable;
     protected volatile boolean writeReady = true;
@@ -76,19 +87,44 @@ public abstract class SqueakSocket {
         this.writeSema = writeSema;
     }
 
+    private static int resolveErrno(final int mac, final int linux, final int win) {
+        if (OS.isWindows()) {
+            return win;
+        } else if (OS.isMacOS()) {
+            return mac;
+        }
+        return linux; // Default to standard POSIX/Linux
+    }
+
     protected Resolver getResolver() {
         return context.getResolver();
+    }
+
+    protected boolean specifiesProtocolFamily() {
+        return (netType == SQ_FAMILY_INET6) || (netType == SQ_FAMILY_INET4);
+    }
+
+    protected ProtocolFamily getProtocolFamily() {
+        return netType == SQ_FAMILY_INET6 ? INET6 : INET;
     }
 
     protected abstract NetworkChannel asNetworkChannel();
 
     protected abstract SelectableChannel asSelectableChannel();
 
-    protected abstract byte[] getLocalAddress() throws IOException;
+    protected abstract InetSocketAddress getLocalSocketAddress() throws IOException;
+
+    protected final byte[] getLocalAddress() throws IOException {
+        return getLocalSocketAddress().getAddress().getAddress();
+    }
 
     protected abstract long getLocalPort() throws IOException;
 
-    protected abstract byte[] getRemoteAddress() throws IOException;
+    protected abstract InetSocketAddress getRemoteSocketAddress() throws IOException;
+
+    protected final byte[] getRemoteAddress() throws IOException {
+        return getRemoteSocketAddress().getAddress().getAddress();
+    }
 
     protected abstract long getRemotePort() throws IOException;
 
@@ -111,24 +147,51 @@ public abstract class SqueakSocket {
     protected abstract void close() throws IOException;
 
     protected static int mapExceptionToErrno(final IOException e) {
+        // Fast paths for specific Java network exceptions
+        if (e instanceof BindException) {
+            return POSIX_EADDRINUSE;
+        }
+        if (e instanceof SocketTimeoutException) {
+            return POSIX_ETIMEDOUT;
+        }
+        if (e instanceof NoRouteToHostException) {
+            return POSIX_EHOSTUNREACH;
+        }
+
         final String msg = e.getMessage();
         if (msg == null) {
-            return POSIX_EIO; // Use EIO (5) or EPERM (1) for generic errors
+            return POSIX_EIO; // Use EIO (5) for generic errors
         }
+
+        // String matching fallbacks for generic IOExceptions
         if (msg.contains("Connection reset") || msg.contains("Broken pipe")) {
             return POSIX_ECONNRESET;
         }
         if (msg.contains("Connection refused")) {
             return POSIX_ECONNREFUSED;
         }
+        if (msg.contains("Address already in use")) {
+            return POSIX_EADDRINUSE;
+        }
+        if (msg.contains("timed out")) {
+            return POSIX_ETIMEDOUT;
+        }
+        if (msg.contains("Host is unreachable") || msg.contains("No route to host")) {
+            return POSIX_EHOSTUNREACH;
+        }
         if (msg.contains("Resource temporarily unavailable")) {
             return POSIX_EWOULDBLOCK;
         }
+
         return POSIX_EIO;
     }
 
     protected boolean isSendDone() {
-        return writeReady;
+        try {
+            return writeReady && getStatus() == Status.Connected;
+        } catch (final IOException e) {
+            return false;
+        }
     }
 
     protected final long sendData(final byte[] data, final int start, final int count) {
@@ -234,10 +297,13 @@ public abstract class SqueakSocket {
 
     protected InetSocketAddress socketAddressFor(final String address, final long port) {
         if (address == null || address.isEmpty()) {
-            // Respect the IPv4 (2) or IPv6 (3) netType requirement during default binding
-            return new InetSocketAddress(netType == SQ_FAMILY_INET6 ? "::" : "0.0.0.0", (int) port);
+            return new InetSocketAddress(getResolver().getAnyLocalInetAddress(netType), (int) port);
         }
         return new InetSocketAddress(address, (int) port);
+    }
+
+    protected InetSocketAddress loopbackAddressFor(final long port) {
+        return new InetSocketAddress(getResolver().getLoopbackInetAddress(netType), (int) port);
     }
 
     protected static InetSocketAddress castAddress(final SocketAddress address) {
