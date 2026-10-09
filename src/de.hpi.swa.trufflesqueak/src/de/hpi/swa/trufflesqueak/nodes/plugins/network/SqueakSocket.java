@@ -150,11 +150,9 @@ public abstract class SqueakSocket {
         // Fast paths for specific Java network exceptions
         if (e instanceof BindException) {
             return POSIX_EADDRINUSE;
-        }
-        if (e instanceof SocketTimeoutException) {
+        } else if (e instanceof SocketTimeoutException) {
             return POSIX_ETIMEDOUT;
-        }
-        if (e instanceof NoRouteToHostException) {
+        } else if (e instanceof NoRouteToHostException) {
             return POSIX_EHOSTUNREACH;
         }
 
@@ -166,20 +164,15 @@ public abstract class SqueakSocket {
         // String matching fallbacks for generic IOExceptions
         if (msg.contains("Connection reset") || msg.contains("Broken pipe")) {
             return POSIX_ECONNRESET;
-        }
-        if (msg.contains("Connection refused")) {
+        } else if (msg.contains("Connection refused")) {
             return POSIX_ECONNREFUSED;
-        }
-        if (msg.contains("Address already in use")) {
+        } else if (msg.contains("Address already in use")) {
             return POSIX_EADDRINUSE;
-        }
-        if (msg.contains("timed out")) {
+        } else if (msg.contains("timed out")) {
             return POSIX_ETIMEDOUT;
-        }
-        if (msg.contains("Host is unreachable") || msg.contains("No route to host")) {
+        } else if (msg.contains("Host is unreachable") || msg.contains("No route to host")) {
             return POSIX_EHOSTUNREACH;
-        }
-        if (msg.contains("Resource temporarily unavailable")) {
+        } else if (msg.contains("Resource temporarily unavailable")) {
             return POSIX_EWOULDBLOCK;
         }
 
