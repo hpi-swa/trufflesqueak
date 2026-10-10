@@ -3,15 +3,56 @@ on: [ push, pull_request ]
 
 jobs:
   build:
-    strategy:
-      matrix:
-        smalltalk: [ Squeak64-6.0, Squeak64-trunk ]
-    name: ${{ matrix.smalltalk }}
+    name: Create TruffleSqueak image
+    runs-on: ubuntu-latest
+    env:
+      SQUEAK_VERSION: '6.0'
+      SQUEAK_UPDATE_LEVEL: '22156'
+    steps:
+      - uses: actions/checkout@v7
+      - name: Download and set up OpenSmalltalkVM
+        run: |
+          curl -sSLO https://github.com/OpenSmalltalk/opensmalltalk-vm/releases/download/202606270913/squeak.cog.spur_linux64x64.tar.gz
+          tar -xzf squeak.cog.spur_linux64x64.tar.gz
+          bin_dir=$(cd sqcogspur64linuxht && pwd)
+          echo "Adding '${bin_dir}' to system path..."
+          echo "${bin_dir}" >> $GITHUB_PATH
+      - name: OSVM version
+        run: squeak -version
+      - name: Start Xvfb in background
+        run: |
+          Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+          echo "DISPLAY=:99" >> $GITHUB_ENV
+      - name: Download Squeak base image
+        run: |
+          curl -sSLO https://files.squeak.org/${{ env.SQUEAK_VERSION }}/Squeak${{ env.SQUEAK_VERSION }}-${{ env.SQUEAK_UPDATE_LEVEL }}-64bit/Squeak${{ env.SQUEAK_VERSION }}-${{ env.SQUEAK_UPDATE_LEVEL }}-64bit.zip
+          unzip Squeak${{ env.SQUEAK_VERSION }}-${{ env.SQUEAK_UPDATE_LEVEL }}-64bit.zip
+          mv Squeak${{ env.SQUEAK_VERSION }}-${{ env.SQUEAK_UPDATE_LEVEL }}-64bit.image TruffleSqueak-dev.image
+          mv Squeak${{ env.SQUEAK_VERSION }}-${{ env.SQUEAK_UPDATE_LEVEL }}-64bit.changes TruffleSqueak-dev.changes
+      - name: Create TruffleSqueak image
+        run: squeak TruffleSqueak-dev.image $GITHUB_WORKSPACE/scripts/createTruffleSqueakImage.st
+        timeout-minutes: 10
+      - name: Create archive
+        run: zip -r TruffleSqueakImage-dev.zip TruffleSqueak-*.image TruffleSqueak-*.changes SqueakV*.sources
+      - name: Set up smalltalkCI
+        uses: hpi-swa/setup-smalltalkCI@v1
+        with:
+          smalltalk-image: 'Squeak64-${{ env.SQUEAK_VERSION }}'
+      - run: smalltalkci -s Squeak64-${{ env.SQUEAK_VERSION }} --image TruffleSqueak-dev.image
+        timeout-minutes: 15
+      - name: Upload TruffleSqueak image
+        uses: actions/upload-artifact@v7
+        with:
+          path: TruffleSqueakImage-dev.zip
+          archive: false
+          retention-days: 5
+  trunk:
+    name: Test on Squeak64-trunk
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: hpi-swa/setup-smalltalkCI@v1
         with:
-          smalltalk-image: ${{ matrix.smalltalk }}
-      - run: smalltalkci -s ${{ matrix.smalltalk }}
+          smalltalk-image: Squeak64-trunk
+      - run: smalltalkci -s Squeak64-trunk
         timeout-minutes: 15
