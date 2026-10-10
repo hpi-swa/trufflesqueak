@@ -3,13 +3,45 @@ on: [ push, pull_request ]
 
 jobs:
   build:
+    name: Create TruffleSqueak image
+    runs-on: ubuntu-latest
+    env:
+      SQUEAK_VERSION: '6.0'
+      SQUEAK_UPDATE_LEVEL: '22156'
+    steps:
+      - uses: actions/checkout@v7
+      - name: Download and set up OpenSmalltalkVM
+        run: |
+          curl -sSLO https://github.com/OpenSmalltalk/opensmalltalk-vm/releases/download/202606270913/squeak.cog.spur_linux64x64.tar.gz
+          tar -xzf squeak.cog.spur_linux64x64.tar.gz
+          bin_dir=$(cd sqcogspur64linuxht && pwd)
+          echo "Adding '${bin_dir}' to system path..."
+          echo "${bin_dir}" >> $GITHUB_PATH
+      - name: OSVM version
+        run: squeak -version
+      - name: Download Squeak base image
+        run: |
+          curl -sSLO https://files.squeak.org/${{ env.SQUEAK_VERSION }}/Squeak${{ env.SQUEAK_VERSION }}-${{ env.SQUEAK_UPDATE_LEVEL }}-64bit/Squeak${{ env.SQUEAK_VERSION }}-${{ env.SQUEAK_UPDATE_LEVEL }}-64bit.zip
+          unzip Squeak${{ env.SQUEAK_VERSION }}-${{ env.SQUEAK_UPDATE_LEVEL }}-64bit.zip
+          mv Squeak${{ env.SQUEAK_VERSION }}-${{ env.SQUEAK_UPDATE_LEVEL }}-64bit.image TruffleSqueak-dev.image
+          mv Squeak${{ env.SQUEAK_VERSION }}-${{ env.SQUEAK_UPDATE_LEVEL }}-64bit.changes TruffleSqueak-dev.changes
+      - name: Create TruffleSqueak image
+        run: squeak -nosound -vm-display-null TruffleSqueak-dev.image $(pwd)/src/image-tests/createTruffleSqueakImage.st
+      - uses: hpi-swa/setup-smalltalkCI@v1
+        with:
+          smalltalk-image: 'Squeak64-${{ env.SQUEAK_VERSION }}'
+      - run: smalltalkci -s Squeak64-${{ env.SQUEAK_VERSION }} --image TruffleSqueak-dev.image
+        timeout-minutes: 15
+      # - name: Upload TruffleSqueak image
+      #   run: ...
+  trunk:
     strategy:
       matrix:
-        smalltalk: [ Squeak64-6.0, Squeak64-trunk ]
+        smalltalk: [ Squeak64-trunk ]
     name: ${{ matrix.smalltalk }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: hpi-swa/setup-smalltalkCI@v1
         with:
           smalltalk-image: ${{ matrix.smalltalk }}
