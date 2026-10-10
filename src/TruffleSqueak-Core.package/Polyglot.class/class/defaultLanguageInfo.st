@@ -1,3 +1,3 @@
 preferences
 defaultLanguageInfo
-	^ DefaultLanguageInfo ifNil: [ LanguageInfoStub instance ]
+	^ DefaultLanguageInfo ifNil: [ Polyglot availableLanguages first ]
