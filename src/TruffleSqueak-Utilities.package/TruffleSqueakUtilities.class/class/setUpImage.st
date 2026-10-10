@@ -1,15 +1,9 @@
 image creation
 setUpImage
-	"Install polyglot tools"
 	| currentScale |
 	
 	PolyglotToolSet register.
 	ToolSet default: PolyglotToolSet.
-	
-	self patchBehaviorBasicRemoveSelector.
-	
-	"Set a default language."
-	Polyglot askForDefaultLanguageInfo.
 	
 	"Ensure FullBlockClosure is in special objects array"
 	(Smalltalk specialObjectsArray at: 38) ifNil:
@@ -57,8 +51,5 @@ setUpImage
 
 	PolyglotWorkspace open
 		position: 20@60 * currentScale;
-		extent: 600@300 * currentScale.
+		extent: 600@300 * currentScale
 
-	"Clean up image"
-	Smalltalk garbageCollect.
-	(self confirm: 'Condense changes?') ifTrue: [ Smalltalk condenseChanges ]
