@@ -4,6 +4,7 @@ setUpImage
 	
 	PolyglotToolSet register.
 	ToolSet default: PolyglotToolSet.
+	SystemBrowser default: Browser.
 	
 	"Ensure FullBlockClosure is in special objects array"
 	(Smalltalk specialObjectsArray at: 38) ifNil:
