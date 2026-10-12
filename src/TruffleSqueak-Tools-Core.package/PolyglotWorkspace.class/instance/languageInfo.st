@@ -1,3 +1,3 @@
 language
 languageInfo
-	^ languageInfo
+	^ languageInfo ifNil: [ languageInfo := Polyglot defaultLanguageInfo ]
