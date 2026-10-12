@@ -26,14 +26,22 @@ jobs:
           mv Squeak${{ env.SQUEAK_VERSION }}-${{ env.SQUEAK_UPDATE_LEVEL }}-64bit.image TruffleSqueak-dev.image
           mv Squeak${{ env.SQUEAK_VERSION }}-${{ env.SQUEAK_UPDATE_LEVEL }}-64bit.changes TruffleSqueak-dev.changes
       - name: Create TruffleSqueak image
-        run: squeak -nosound -vm-display-null TruffleSqueak-dev.image $GITHUB_WORKSPACE/.github/createTruffleSqueakImage.st
-      - uses: hpi-swa/setup-smalltalkCI@v1
+        run: squeak -nosound -vm-display-null TruffleSqueak-dev.image $GITHUB_WORKSPACE/scripts/createTruffleSqueakImage.st
+        timeout-minutes: 10
+      - name: Set up smalltalkCI
+        uses: hpi-swa/setup-smalltalkCI@v1
         with:
           smalltalk-image: 'Squeak64-${{ env.SQUEAK_VERSION }}'
       - run: smalltalkci -s Squeak64-${{ env.SQUEAK_VERSION }} --image TruffleSqueak-dev.image
         timeout-minutes: 15
-      # - name: Upload TruffleSqueak image
-      #   run: ...
+      - name: Upload TruffleSqueak image
+        uses: actions/upload-artifact@v7
+        with:
+          name: trufflesqueak-image
+          path: |
+            TruffleSqueak-*.image
+            TruffleSqueak-*.changes
+            SqueakV*.sources
   trunk:
     strategy:
       matrix:
