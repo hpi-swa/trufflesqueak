@@ -26,7 +26,7 @@ jobs:
           mv Squeak${{ env.SQUEAK_VERSION }}-${{ env.SQUEAK_UPDATE_LEVEL }}-64bit.image TruffleSqueak-dev.image
           mv Squeak${{ env.SQUEAK_VERSION }}-${{ env.SQUEAK_UPDATE_LEVEL }}-64bit.changes TruffleSqueak-dev.changes
       - name: Create TruffleSqueak image
-        run: squeak -nosound -vm-display-null TruffleSqueak-dev.image $(pwd)/src/image-tests/createTruffleSqueakImage.st
+        run: squeak -nosound -vm-display-null TruffleSqueak-dev.image $GITHUB_WORKSPACE/.github/createTruffleSqueakImage.st
       - uses: hpi-swa/setup-smalltalkCI@v1
         with:
           smalltalk-image: 'Squeak64-${{ env.SQUEAK_VERSION }}'
