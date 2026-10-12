@@ -1,4 +1,6 @@
 [
+    | srcPath |
+
     FileStream startUp: true.
     ToolSet default: CommandLineToolSet.
 
@@ -13,10 +15,14 @@
         baseline: 'Tonel';
         load.
 
-    FileStream stdout nextPutAll: 'Installing TruffleSqueak packages ...'; cr; flush.
+    srcPath := (((FileDirectory on: Smalltalk documentPath) containingDirectory containingDirectory) / 'src') fullName.
+    (FileDirectory default directoryExists: srcPath) ifFalse: [
+        FileStream stdout cr; cr; nextPutAll: 'TruffleSqueak packages not found at "', srcPath, '". EXITING'; cr; cr; flush.
+        Smalltalk quitPrimitive: 1].
+    FileStream stdout nextPutAll: 'Installing TruffleSqueak packages from "', srcPath, '" ...'; cr; flush.
     Metacello new
         baseline: 'TruffleSqueak';
-        repository: 'github://hpi-swa/trufflesqueak:image/src';
+        repository: 'filetree://', srcPath;
         load: #('tests').
     
     FileStream stdout nextPutAll: 'Installing AWFY benchmarks ...'; cr; flush.
