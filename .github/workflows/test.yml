@@ -19,6 +19,10 @@ jobs:
           echo "${bin_dir}" >> $GITHUB_PATH
       - name: OSVM version
         run: squeak -version
+      - name: Start Xvfb in background
+        run: |
+          Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+          echo "DISPLAY=:99" >> $GITHUB_ENV
       - name: Download Squeak base image
         run: |
           curl -sSLO https://files.squeak.org/${{ env.SQUEAK_VERSION }}/Squeak${{ env.SQUEAK_VERSION }}-${{ env.SQUEAK_UPDATE_LEVEL }}-64bit/Squeak${{ env.SQUEAK_VERSION }}-${{ env.SQUEAK_UPDATE_LEVEL }}-64bit.zip
@@ -26,7 +30,7 @@ jobs:
           mv Squeak${{ env.SQUEAK_VERSION }}-${{ env.SQUEAK_UPDATE_LEVEL }}-64bit.image TruffleSqueak-dev.image
           mv Squeak${{ env.SQUEAK_VERSION }}-${{ env.SQUEAK_UPDATE_LEVEL }}-64bit.changes TruffleSqueak-dev.changes
       - name: Create TruffleSqueak image
-        run: squeak -nosound -vm-display-null TruffleSqueak-dev.image $GITHUB_WORKSPACE/scripts/createTruffleSqueakImage.st
+        run: squeak TruffleSqueak-dev.image $GITHUB_WORKSPACE/scripts/createTruffleSqueakImage.st
         timeout-minutes: 10
       - name: Create archive
         run: zip -r TruffleSqueakImage-dev.zip TruffleSqueak-*.image TruffleSqueak-*.changes SqueakV*.sources
