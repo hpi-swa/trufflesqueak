@@ -1,3 +1,3 @@
 *TruffleSqueak-Core-meta-object
 interopIsMetaInstance: arguments
-	self subclassResponsibility
+	^ Java throwUnsupportedMessageException

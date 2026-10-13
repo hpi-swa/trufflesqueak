@@ -1,3 +1,3 @@
 *TruffleSqueak-Core-meta-object
 interopGetMetaSimpleName
-	self subclassResponsibility
+	^ Java throwUnsupportedMessageException
