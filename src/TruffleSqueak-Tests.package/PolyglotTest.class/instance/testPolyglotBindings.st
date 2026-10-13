@@ -1,7 +1,7 @@
 testing
 testPolyglotBindings
 	Polyglot primitiveIsPolyglotBindingsAccessAllowed ifFalse: [
-		self should: [ Polyglot bindings ] raise: Error.
+		self assert: nil equals: Polyglot bindings.
 		^ self ].
 
 	self shouldnt: [ Polyglot bindings at: 'bindings' ] raise: Error.
