@@ -1,7 +1,6 @@
 testing
 testCallTarget
 	| method callTarget string |
-	Java primitiveIsHostLookupAllowed ifFalse: [ ^ self ].
 	
 	self assert: (SmalltalkImage >> #exitToDebugger) callTarget isNil.
 	
