@@ -1,9 +1,17 @@
 testing
 testPolyglotEval
+	self assert: (Polyglot isPolyglotEvalAllowed: Polyglot languageIdSmalltalk).
+	self assert: 9 equals: (Polyglot eval: Polyglot languageIdSmalltalk string: '1 + 2 * 3').
+	self assert: (42 min: 21) equals: (Polyglot eval: Polyglot languageIdSmalltalk string: '(42 min: 21)').
+	self assert: Polyglot bindings equals: (Polyglot evalWithBindings: Polyglot languageIdSmalltalk string: 'bindings').
+	
+	self should: [ Polyglot eval: Polyglot languageIdSmalltalk string: 'syntax.() error' ] raise: Error.
+
 	(Polyglot isPermitted: Polyglot languageIdJS) ifFalse: [ ^self ].
-	self assert: (Polyglot primitiveIsPolyglotEvalAllowed: Polyglot languageIdJS).
+	self assert: (Polyglot isPolyglotEvalAllowed: Polyglot languageIdJS).
 	self assert: 7 equals: (Polyglot eval: Polyglot languageIdJS string: '1 + 2 * 3').
 	self assert: (42 min: 21) equals: (Polyglot eval: Polyglot languageIdJS string: 'Math.min(42, 21)').
+	self assert: Polyglot bindings equals: (Polyglot evalWithBindings: Polyglot languageIdJS string: 'bindings').
 
 	self should: [ Polyglot eval: Polyglot languageIdJS string: 'Polyglot eval: "js" string: "1 + 2"' ] raise: Error.
 	self should: [ Polyglot eval: Polyglot languageIdJS string: 'const _testPolyglotEval = 42; const _testPolyglotEval = 42; _testPolyglotEval' ] raise: Error.

@@ -1,6 +1,6 @@
 primitives
 primitiveLastError
 	<primitive: 'primitiveGetLastError' module: 'PolyglotPlugin'>
-	(self primitiveIsPolyglotEvalAllowed: Polyglot languageIdSmalltalk)
+	self isSupportedByVM
 		ifTrue: [ self primitiveFailed ]
-		ifFalse: [ self error: 'Polyglot API is not available' ]
+		ifFalse: [ self error: 'VM support for Polyglot API is not available' ]
