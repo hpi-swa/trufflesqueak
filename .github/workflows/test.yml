@@ -3,7 +3,7 @@ on: [ push, pull_request ]
 
 jobs:
   build:
-    name: Create TruffleSqueak image
+    name: Prepare image
     runs-on: ubuntu-latest
     env:
       SQUEAK_VERSION: '6.0'

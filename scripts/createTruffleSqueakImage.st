@@ -9,6 +9,13 @@
         authorName: 'TruffleSqueak';
         setAuthorInitials: 'TS'.
 
+    "Update image"
+    [[ MCMcmUpdater default doUpdate: false ]
+    on: Warning do: [ :ex | ex resume: true ]]
+    on: Error do: [ :ex |
+        FileStream stdout nextPutAll: ex asString.
+        Smalltalk quitPrimitive: 1 ]].
+
     FileStream stdout nextPutAll: 'Installing Metacello and Tonel ...'; cr; flush.
     Metacello new
         repository: 'github://squeak-smalltalk/squeak-tonel:squeak';
@@ -18,7 +25,7 @@
     srcPath := (((FileDirectory on: Smalltalk documentPath) containingDirectory containingDirectory) / 'src') fullName.
     (FileDirectory default directoryExists: srcPath) ifFalse: [
         FileStream stdout cr; cr; nextPutAll: 'TruffleSqueak packages not found at "', srcPath, '". EXITING'; cr; cr; flush.
-        Smalltalk quitPrimitive: 1].
+        Smalltalk quitPrimitive: 1 ].
     FileStream stdout nextPutAll: 'Installing TruffleSqueak packages from "', srcPath, '" ...'; cr; flush.
     Metacello new
         baseline: 'TruffleSqueak';
