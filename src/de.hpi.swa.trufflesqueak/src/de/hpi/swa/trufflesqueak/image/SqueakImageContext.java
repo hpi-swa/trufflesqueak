@@ -372,17 +372,22 @@ public final class SqueakImageContext {
     @TruffleBoundary
     public DoItRootNode getDoItContextNode(final ParsingRequest request) {
         final Source source = request.getSource();
+
+        final String argsPrefix;
+        if (request.getArgumentNames().isEmpty()) {
+            argsPrefix = "";
+        } else {
+            argsPrefix = " :" + String.join(" :", request.getArgumentNames()) + " |";
+        }
+
         final String blockBody;
         if (isFileInFormat(source)) {
             blockBody = "(FileStream readOnlyFileNamed: '" + source.getPath() + "') fileIn. true";
         } else {
-            if (request.getArgumentNames().isEmpty()) {
-                blockBody = source.getCharacters().toString();
-            } else {
-                blockBody = ":" + String.join(" :", request.getArgumentNames()) + " | " + source.getCharacters();
-            }
+            blockBody = source.getCharacters().toString();
         }
-        final String sourceCode = "[[ " + blockBody + " ] on: Error do: [ :e | Interop throwException: e ]]";
+
+        final String sourceCode = "[" + argsPrefix + " [ " + blockBody + " ] on: Error do: [ :e | Interop throwException: e ]]";
         return DoItRootNode.create(this, language, (BlockClosureObject) evaluateUninterruptably(sourceCode));
     }
 
