@@ -14,7 +14,7 @@
     on: Warning do: [ :ex | ex resume: true ]]
     on: Error do: [ :ex |
         FileStream stdout nextPutAll: ex asString.
-        Smalltalk quitPrimitive: 1 ]].
+        Smalltalk quitPrimitive: 1 ].
 
     FileStream stdout nextPutAll: 'Installing Metacello and Tonel ...'; cr; flush.
     Metacello new
