@@ -5,7 +5,7 @@
 		"expectedFailures" : "fn 9/24/2026 23:06",
 		"testJavaAddToHostClassPath" : "fn 11/11/2019 22:16",
 		"testJavaArray" : "fn 12/13/2019 11:43",
-		"testJavaBasic" : "fn 6/14/2026 14:40",
+		"testJavaBasic" : "fn 10/15/2026 20:59",
 		"testJavaBuffers" : "fn 10/22/2024 09:38",
 		"testJavaDuration" : "fn 12/12/2019 23:15",
 		"testJavaException" : "fn 12/12/2019 23:15",
