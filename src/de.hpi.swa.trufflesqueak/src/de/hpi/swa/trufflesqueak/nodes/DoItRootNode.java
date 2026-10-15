@@ -15,10 +15,10 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.interop.WrapToSqueakNode;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
-import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.BlockClosurePrimitives.PrimClosureValueWithArgsNode;
 
 public abstract class DoItRootNode extends RootNode {
@@ -42,7 +42,7 @@ public abstract class DoItRootNode extends RootNode {
                     @Cached final WrapToSqueakNode wrapNode,
                     @Cached final PrimClosureValueWithArgsNode primitiveNode) {
         if (blockClosure.getNumArgs() != frame.getArguments().length) {
-            return NilObject.SINGLETON;
+            throw SqueakException.create("Wrong number of arguments for DoItRootNode");
         }
         final var state = image.suspendNormalExecution();
         try {
