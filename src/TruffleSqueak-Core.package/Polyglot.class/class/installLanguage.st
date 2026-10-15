@@ -4,8 +4,8 @@ installLanguage
 	modulesPath := (FSLocator vmDirectory resolve: '../modules').
 	modulesPath isDirectory ifFalse: [ self error: 'Unable to find modules/ directory.' ].
 	languageId := UIManager default 
-		chooseFrom: #('JavaScript' 'Ruby' 'Python' 'Java' 'LLVM' 'Wasm')
-		values: #('js' 'ruby' 'python' 'java' 'llvm' 'wasm')
+		chooseFrom: #('JavaScript' 'Python' 'Java' 'Wasm')
+		values: #('js' 'python' 'java' 'wasm')
 		title: 'Which language would you like to install?'.
 	version := UIManager default
 		request: 'Select a version:'
