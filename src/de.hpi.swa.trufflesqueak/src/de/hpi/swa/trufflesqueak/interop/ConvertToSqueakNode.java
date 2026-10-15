@@ -20,6 +20,7 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
+import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 
 /**
@@ -84,6 +85,18 @@ public abstract class ConvertToSqueakNode extends AbstractNode {
             CompilerDirectives.transferToInterpreter();
             LogUtils.INTEROP.warning(e.toString());
             return 0D;
+        }
+    }
+
+    @Specialization(guards = {"lib.fitsInBigInteger(value)", "!lib.fitsInLong(value)"}, limit = "1")
+    protected final Object doBigInteger(final Object value,
+                    @CachedLibrary("value") final InteropLibrary lib) {
+        try {
+            return LargeIntegers.toNativeObject(getContext(), lib.asBigInteger(value));
+        } catch (final UnsupportedMessageException e) {
+            CompilerDirectives.transferToInterpreter();
+            LogUtils.INTEROP.warning(e.toString());
+            return NilObject.SINGLETON;
         }
     }
 
