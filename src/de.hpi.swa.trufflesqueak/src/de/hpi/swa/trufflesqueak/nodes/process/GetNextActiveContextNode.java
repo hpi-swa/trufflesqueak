@@ -9,6 +9,7 @@ package de.hpi.swa.trufflesqueak.nodes.process;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateInline;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 
@@ -20,11 +21,16 @@ import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 
+@GenerateUncached
 @GenerateInline(false)
 public abstract class GetNextActiveContextNode extends AbstractNode {
 
     public static GetNextActiveContextNode create() {
         return GetNextActiveContextNodeGen.create();
+    }
+
+    public static GetNextActiveContextNode getUncached() {
+        return GetNextActiveContextNodeGen.getUncached();
     }
 
     public abstract ContextObject execute();

@@ -96,7 +96,7 @@ public final class SqueakImageContext {
      * Note: Use a standard try/finally block in partially evaluated Truffle code to avoid
      * AOT compilation failures caused by try-with-resources desugaring.
      */
-    public record SavedExecutionState(SqueakImageContext context, boolean interruptsWereActive, int savedContextDepth) implements AutoCloseable {
+    public record SavedExecutionState(SqueakImageContext context, PointersObject activeProcess, boolean interruptsWereActive, int savedContextDepth) implements AutoCloseable {
         @Override
         public void close() {
             context.resumeNormalExecution(this);
@@ -324,13 +324,15 @@ public final class SqueakImageContext {
      * {@code try-with-resources} is safe to use.
      */
     public SavedExecutionState suspendNormalExecution() {
+        final PointersObject activeProcess = getActiveProcessSlow();
         final boolean wasActive = interrupt.deactivate();
         final int savedDepth = currentContextStackDepth;
         currentContextStackDepth = SUSPENDED_CONTEXT_STACK_DEPTH;
-        return new SavedExecutionState(this, wasActive, savedDepth);
+        return new SavedExecutionState(this, activeProcess, wasActive, savedDepth);
     }
 
     private void resumeNormalExecution(final SavedExecutionState state) {
+        setActiveProcessSlow(state.activeProcess());
         currentContextStackDepth = state.savedContextDepth();
         interrupt.reactivate(state.interruptsWereActive());
     }
@@ -901,6 +903,10 @@ public final class SqueakImageContext {
 
     public PointersObject getActiveProcessSlow() {
         return AbstractPointersObjectReadNode.getUncached().executePointers(getScheduler(), PROCESS_SCHEDULER.ACTIVE_PROCESS);
+    }
+
+    private void setActiveProcessSlow(final PointersObject process) {
+        AbstractPointersObjectWriteNode.getUncached().execute(getScheduler(), PROCESS_SCHEDULER.ACTIVE_PROCESS, process);
     }
 
     public Object getSpecialObject(final int index) {
