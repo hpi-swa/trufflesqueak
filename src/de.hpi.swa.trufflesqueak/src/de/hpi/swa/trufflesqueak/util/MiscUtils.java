@@ -61,6 +61,11 @@ public final class MiscUtils {
     }
 
     @TruffleBoundary
+    public static boolean equals(final String left, final String right) {
+        return left.equals(right);
+    }
+
+    @TruffleBoundary
     public static String format(final String format, final Object... args) {
         return String.format(format, args);
     }

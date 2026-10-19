@@ -1562,7 +1562,10 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final Object getLanguageInfo(@SuppressWarnings("unused") final Object receiver, final Object object,
                         @CachedLibrary("object") final InteropLibrary lib) {
             try {
-                return JavaObjectWrapper.wrap(MiscUtils.get(getInstrumentEnv().getLanguages(), lib.getLanguageId(object)));
+                final String languageId = lib.getLanguageId(object);
+                final var env = getInstrumentEnv();
+                final var languageInfo = MiscUtils.equals("host", languageId) ? env.getHostLanguage() : MiscUtils.get(env.getLanguages(), lib.getLanguageId(object));
+                return JavaObjectWrapper.wrap(languageInfo);
             } catch (final UnsupportedMessageException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
             }
