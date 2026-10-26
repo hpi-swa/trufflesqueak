@@ -173,7 +173,7 @@ public final class BitBlt {
     private int dy;
     private long endOfDestination;
     private long endOfSource;
-    private long[] gammaLookupTable;
+    // private long[] gammaLookupTable;
     private AbstractSqueakObject halftoneForm;
     private int[] halftoneBits;
     private int halftoneHeight;
@@ -211,7 +211,7 @@ public final class BitBlt {
     private int srcBitShift;
     private int sx;
     private int sy;
-    private long[] ungammaLookupTable;
+    // private long[] ungammaLookupTable;
     private int vDir;
     private int warpAlignMask;
     private int warpAlignShift;
@@ -834,8 +834,8 @@ public final class BitBlt {
             /* fetch the forecolor into componentAlphaModeColor. */
             componentAlphaModeAlpha = 0xFF;
             componentAlphaModeColor = 0xFFFFFF;
-            gammaLookupTable = null;
-            ungammaLookupTable = null;
+            // gammaLookupTable = null;
+            // ungammaLookupTable = null;
 
             throw SqueakException.create("Not implemented");
             // TODO: uncomment:
@@ -2750,47 +2750,47 @@ public final class BitBlt {
         long dstMask = destinationWord;
         long d = dstMask & 0xFF;
         long s = srcColor & 0xFF;
-        if (ungammaLookupTable != null) {
-            d = ungammaLookupTable[(int) d];
-            s = ungammaLookupTable[(int) s];
-        }
+        // if (ungammaLookupTable != null) {
+        // d = ungammaLookupTable[(int) d];
+        // s = ungammaLookupTable[(int) s];
+        // }
         long b = (d * (0xFF - aB) >>> 8) + (s * aB >>> 8);
         if (b > 0xFF) {
             b = 0xFF;
         }
-        if (gammaLookupTable != null) {
-            b = gammaLookupTable[(int) b];
-        }
+        // if (gammaLookupTable != null) {
+        // b = gammaLookupTable[(int) b];
+        // }
         dstMask = dstMask >>> 8;
         srcColor = srcColor >>> 8;
         d = dstMask & 0xFF;
         s = srcColor & 0xFF;
-        if (ungammaLookupTable != null) {
-            d = ungammaLookupTable[(int) d];
-            s = ungammaLookupTable[(int) s];
-        }
+        // if (ungammaLookupTable != null) {
+        // d = ungammaLookupTable[(int) d];
+        // s = ungammaLookupTable[(int) s];
+        // }
         long g = (d * (0xFF - aG) >>> 8) + (s * aG >>> 8);
         if (g > 0xFF) {
             g = 0xFF;
         }
-        if (gammaLookupTable != null) {
-            g = gammaLookupTable[(int) g];
-        }
+        // if (gammaLookupTable != null) {
+        // g = gammaLookupTable[(int) g];
+        // }
         dstMask = dstMask >>> 8;
         srcColor = srcColor >>> 8;
         d = dstMask & 0xFF;
         s = srcColor & 0xFF;
-        if (ungammaLookupTable != null) {
-            d = ungammaLookupTable[(int) d];
-            s = ungammaLookupTable[(int) s];
-        }
+        // if (ungammaLookupTable != null) {
+        // d = ungammaLookupTable[(int) d];
+        // s = ungammaLookupTable[(int) s];
+        // }
         long r = (d * (0xFF - aR) >>> 8) + (s * aR >>> 8);
         if (r > 0xFF) {
             r = 0xFF;
         }
-        if (gammaLookupTable != null) {
-            r = gammaLookupTable[(int) r];
-        }
+        // if (gammaLookupTable != null) {
+        // r = gammaLookupTable[(int) r];
+        // }
         dstMask = dstMask >>> 8;
         /* no need to gamma correct alpha value ? */
         long a = ((dstMask & 0xFF) * (0xFF - aA) >>> 8) + aA;
