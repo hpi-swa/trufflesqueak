@@ -24,6 +24,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
+import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 @ExportLibrary(InteropLibrary.class)
 @SuppressWarnings("static-method")
@@ -161,7 +162,7 @@ public final class ContextScope implements TruffleObject {
         if (hasScopeParent()) {
             return new ContextScope(FrameAccess.getSenderContext(frame).getTruffleFrame());
         } else {
-            throw UnsupportedMessageException.create();
+            throw MiscUtils.throwUnsupportedMessageException();
         }
     }
 

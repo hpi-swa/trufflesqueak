@@ -2302,11 +2302,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveThrowUnsupportedMessageException")
     protected abstract static class PrimThrowUnsupportedMessageExceptionNode extends AbstractPrimitiveNode implements Primitive0 {
-        private static final UnsupportedMessageException EXCEPTION = UnsupportedMessageException.create();
-
         @Specialization
         protected static final UnsupportedMessageException throwException(@SuppressWarnings("unused") final Object receiver) {
-            throw UnsafeUtils.throwException(EXCEPTION);
+            throw UnsafeUtils.throwException(MiscUtils.UNSUPPORTED_MESSAGE_EXCEPTION);
         }
     }
 

@@ -47,6 +47,7 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
+import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ReflectionUtils;
 
 @SuppressWarnings("static-method")
@@ -406,7 +407,7 @@ public final class JavaObjectWrapper implements TruffleObject {
         if (isNumber()) {
             return lib.asByte(wrappedObject);
         } else {
-            throw UnsupportedMessageException.create();
+            throw MiscUtils.throwUnsupportedMessageException();
         }
     }
 
@@ -415,7 +416,7 @@ public final class JavaObjectWrapper implements TruffleObject {
         if (isNumber()) {
             return lib.asShort(wrappedObject);
         } else {
-            throw UnsupportedMessageException.create();
+            throw MiscUtils.throwUnsupportedMessageException();
         }
     }
 
@@ -424,7 +425,7 @@ public final class JavaObjectWrapper implements TruffleObject {
         if (isNumber()) {
             return lib.asInt(wrappedObject);
         } else {
-            throw UnsupportedMessageException.create();
+            throw MiscUtils.throwUnsupportedMessageException();
         }
     }
 
@@ -433,7 +434,7 @@ public final class JavaObjectWrapper implements TruffleObject {
         if (isNumber()) {
             return lib.asLong(wrappedObject);
         } else {
-            throw UnsupportedMessageException.create();
+            throw MiscUtils.throwUnsupportedMessageException();
         }
     }
 
@@ -444,7 +445,7 @@ public final class JavaObjectWrapper implements TruffleObject {
         } else if (isNumber()) {
             return lib.asBigInteger(wrappedObject);
         } else {
-            throw UnsupportedMessageException.create();
+            throw MiscUtils.throwUnsupportedMessageException();
         }
     }
 
@@ -453,7 +454,7 @@ public final class JavaObjectWrapper implements TruffleObject {
         if (isNumber()) {
             return lib.asFloat(wrappedObject);
         } else {
-            throw UnsupportedMessageException.create();
+            throw MiscUtils.throwUnsupportedMessageException();
         }
     }
 
@@ -462,7 +463,7 @@ public final class JavaObjectWrapper implements TruffleObject {
         if (isNumber()) {
             return lib.asDouble(wrappedObject);
         } else {
-            throw UnsupportedMessageException.create();
+            throw MiscUtils.throwUnsupportedMessageException();
         }
     }
 
@@ -477,7 +478,7 @@ public final class JavaObjectWrapper implements TruffleObject {
         @Specialization(guards = "!receiver.isClass()")
         @SuppressWarnings("unused")
         static final Object doUnsupported(final JavaObjectWrapper receiver, final Object[] args) throws UnsupportedMessageException {
-            throw UnsupportedMessageException.create();
+            throw MiscUtils.throwUnsupportedMessageException();
         }
 
         @TruffleBoundary
@@ -531,7 +532,7 @@ public final class JavaObjectWrapper implements TruffleObject {
         try {
             return (String) wrappedObject;
         } catch (final ClassCastException e) {
-            throw UnsupportedMessageException.create();
+            throw MiscUtils.throwUnsupportedMessageException();
         }
     }
 
@@ -569,7 +570,7 @@ public final class JavaObjectWrapper implements TruffleObject {
         try {
             return sizeNode.execute(node, wrappedObject);
         } catch (final UnsupportedSpecializationException e) {
-            throw UnsupportedMessageException.create();
+            throw MiscUtils.throwUnsupportedMessageException();
         }
     }
 
@@ -637,7 +638,7 @@ public final class JavaObjectWrapper implements TruffleObject {
         } catch (final ArrayIndexOutOfBoundsException e) {
             throw InvalidArrayIndexException.create(index);
         } catch (final UnsupportedSpecializationException e) {
-            throw UnsupportedMessageException.create();
+            throw MiscUtils.throwUnsupportedMessageException();
         }
     }
 
@@ -707,7 +708,7 @@ public final class JavaObjectWrapper implements TruffleObject {
         } catch (final ArrayIndexOutOfBoundsException e) {
             throw InvalidArrayIndexException.create(index);
         } catch (final UnsupportedSpecializationException e) {
-            throw UnsupportedMessageException.create();
+            throw MiscUtils.throwUnsupportedMessageException();
         }
     }
 
@@ -792,7 +793,7 @@ public final class JavaObjectWrapper implements TruffleObject {
         if (isClass()) {
             return asClass().getTypeName();
         } else {
-            throw UnsupportedMessageException.create();
+            throw MiscUtils.throwUnsupportedMessageException();
         }
     }
 
@@ -802,7 +803,7 @@ public final class JavaObjectWrapper implements TruffleObject {
         if (isClass()) {
             return asClass().getSimpleName();
         } else {
-            throw UnsupportedMessageException.create();
+            throw MiscUtils.throwUnsupportedMessageException();
         }
     }
 
@@ -819,7 +820,7 @@ public final class JavaObjectWrapper implements TruffleObject {
                 return false;
             }
         } else {
-            throw UnsupportedMessageException.create();
+            throw MiscUtils.throwUnsupportedMessageException();
         }
     }
 
@@ -833,7 +834,7 @@ public final class JavaObjectWrapper implements TruffleObject {
         if (isClass()) {
             return wrap(new Object[]{asClass().getSuperclass()});
         } else {
-            throw UnsupportedMessageException.create();
+            throw MiscUtils.throwUnsupportedMessageException();
         }
     }
 

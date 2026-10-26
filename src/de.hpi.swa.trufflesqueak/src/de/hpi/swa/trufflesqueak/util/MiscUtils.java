@@ -30,6 +30,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLogger;
 
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectGraphOperations;
 
 public final class MiscUtils {
@@ -47,6 +48,8 @@ public final class MiscUtils {
     public static final String GC_OLD_GEN_SUFFIX = "Old Gen";
 
     @CompilationFinal private static volatile SecureRandom random;
+
+    public static final UnsupportedMessageException UNSUPPORTED_MESSAGE_EXCEPTION = UnsupportedMessageException.create();
 
     private MiscUtils() {
     }
@@ -343,5 +346,10 @@ public final class MiscUtils {
     /** Copy of {@link Object#toString()}. */
     public static String toObjectString(final Object value) {
         return value == null ? "null" : value.getClass().getName() + "@" + Integer.toHexString(value.hashCode());
+    }
+
+    public static UnsupportedMessageException throwUnsupportedMessageException() throws UnsupportedMessageException {
+        CompilerDirectives.transferToInterpreter();
+        throw UNSUPPORTED_MESSAGE_EXCEPTION;
     }
 }
