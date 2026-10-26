@@ -84,7 +84,7 @@ public final class JavaObjectWrapper implements TruffleObject {
             return result;
         }
 
-        private boolean ignoredForAOT(final Class<?> cls) {
+        private static boolean ignoredForAOT(final Class<?> cls) {
             return "Class".equals(cls.getSimpleName());
         }
     };
@@ -128,7 +128,7 @@ public final class JavaObjectWrapper implements TruffleObject {
             return result;
         }
 
-        private String methodNameWithTypes(final Method method, final String name) {
+        private static String methodNameWithTypes(final Method method, final String name) {
             final String key;
             final Class<?>[] types = method.getParameterTypes();
             final String[] typeNames = new String[types.length];
@@ -139,7 +139,7 @@ public final class JavaObjectWrapper implements TruffleObject {
             return key;
         }
 
-        private boolean ignoredForAOT(final Method method) {
+        private static boolean ignoredForAOT(final Method method) {
             final String methodName = method.getName();
             if (methodName.endsWith("0")) { // skip internal methods
                 return true;
@@ -253,7 +253,8 @@ public final class JavaObjectWrapper implements TruffleObject {
             try {
                 return wrap(field.get(wrappedObject));
             } catch (final IllegalAccessException | IllegalArgumentException e) {
-                throw UnknownIdentifierException.create(member);
+                CompilerDirectives.transferToInterpreter();
+                throw UnknownIdentifierException.create(member, e);
             }
         } else {
             throw UnknownIdentifierException.create(member);
@@ -296,7 +297,8 @@ public final class JavaObjectWrapper implements TruffleObject {
             try {
                 return wrap(method.invoke(wrappedObject, toJavaArguments(arguments)));
             } catch (final Exception e) {
-                throw UnsupportedTypeException.create(arguments);
+                CompilerDirectives.transferToInterpreter();
+                throw UnsupportedTypeException.create(arguments, "invokeMember() failed", e);
             }
         } else {
             throw UnknownIdentifierException.create(member);
@@ -305,16 +307,20 @@ public final class JavaObjectWrapper implements TruffleObject {
 
     @ExportMessage
     @TruffleBoundary
-    void writeMember(final String key, final Object value) {
+    void writeMember(final String key, final Object value) throws UnknownIdentifierException, UnsupportedTypeException {
         final Field field = lookupFields().get(key);
         if (field != null) {
             try {
                 field.set(wrappedObject, value instanceof final JavaObjectWrapper o ? o.wrappedObject : value);
-            } catch (final IllegalAccessException | IllegalArgumentException e) {
-                throw new UnsupportedOperationException(e);
+            } catch (final IllegalAccessException e) {
+                CompilerDirectives.transferToInterpreter();
+                throw UnknownIdentifierException.create(key, e);
+            } catch (final IllegalArgumentException e) {
+                CompilerDirectives.transferToInterpreter();
+                throw UnsupportedTypeException.create(new Object[]{wrappedObject, key, value}, "writeMember() failed", e);
             }
         } else {
-            throw new UnsupportedOperationException(wrappedObject + " has not member " + key);
+            throw UnknownIdentifierException.create(key);
         }
     }
 
