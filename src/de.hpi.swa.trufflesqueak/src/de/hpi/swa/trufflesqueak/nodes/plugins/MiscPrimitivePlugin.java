@@ -364,7 +364,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         protected static final long doFind(@SuppressWarnings("unused") final Object receiver, final NativeObject key, final NativeObject body, final long start,
                         final NativeObject matchTable,
                         @Bind final Node node,
-                        @Cached final InlinedConditionProfile quickReturnProfile,
+                        @Cached final InlinedBranchProfile keyProfile,
                         @Cached final InlinedBranchProfile foundProfile,
                         @Cached final InlinedBranchProfile notFoundProfile) {
             if (!key.isByteType() || !body.isByteType() || !matchTable.isByteType() || matchTable.getByteLength() < 256) {
@@ -372,9 +372,8 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                 throw PrimitiveFailed.BAD_ARGUMENT;
             }
             final int keyLength = key.getByteLength();
-            if (quickReturnProfile.profile(node, keyLength == 0)) {
-                return 0L;
-            } else {
+            if (keyLength != 0) {
+                keyProfile.enter(node);
                 final int bodyLength = body.getByteLength();
                 for (long startIndex = Math.max(start - 1, 0); startIndex <= bodyLength - keyLength; startIndex++) {
                     int index = 0;
@@ -387,9 +386,9 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                         }
                     }
                 }
-                notFoundProfile.enter(node);
-                return 0L;
             }
+            notFoundProfile.enter(node);
+            return 0L;
         }
     }
 

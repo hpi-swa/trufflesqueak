@@ -231,7 +231,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveIsIdentity")
     protected abstract static class PrimIsIdentityNode extends AbstractMatrix2x3PrimitiveNode implements Primitive0WithFallback {
         @Specialization(guards = "receiver.isIntType()")
-        protected final Object doIdentity(final NativeObject receiver) {
+        protected final boolean doIdentity(final NativeObject receiver) {
             final int[] ints = loadMatrix(receiver);
             return BooleanObject.wrap(ints[0] == FLOAT_ONE && ints[1] == 0 && ints[2] == 0 && ints[3] == 0 && ints[4] == FLOAT_ONE && ints[5] == 0);
         }
@@ -241,7 +241,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveIsPureTranslation")
     protected abstract static class PrimIsPureTranslationNode extends AbstractMatrix2x3PrimitiveNode implements Primitive0WithFallback {
         @Specialization(guards = "receiver.isIntType()")
-        protected final Object doPure(final NativeObject receiver) {
+        protected final boolean doPure(final NativeObject receiver) {
             final int[] ints = loadMatrix(receiver);
             return BooleanObject.wrap(ints[0] == FLOAT_ONE && ints[1] == 0 && ints[3] == 0 && ints[4] == FLOAT_ONE);
         }

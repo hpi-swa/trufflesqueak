@@ -985,7 +985,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveGetMemberSize")
     protected abstract static class PrimGetMemberSizeNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
         @Specialization(guards = {"lib.hasMembers(object)"}, limit = "3")
-        protected static final Object doGetMembers(@SuppressWarnings("unused") final Object receiver, final Object object, final boolean includeInternal,
+        protected static final long doGetMembers(@SuppressWarnings("unused") final Object receiver, final Object object, final boolean includeInternal,
                         @CachedLibrary("object") final InteropLibrary lib,
                         @CachedLibrary(limit = "3") final InteropLibrary sizeLib) {
             try {
@@ -1576,7 +1576,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveIsInternal")
     protected abstract static class PrimIsInternalNode extends AbstractPrimitiveNode implements Primitive1 {
         @Specialization(limit = "3")
-        protected static final Object isInternal(@SuppressWarnings("unused") final Object receiver, final Object object,
+        protected static final boolean isInternal(@SuppressWarnings("unused") final Object receiver, final Object object,
                         @CachedLibrary("object") final InteropLibrary lib) {
             return BooleanObject.wrap(lib.isInternal(object));
         }
@@ -2099,7 +2099,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveIsHostLookupAllowed")
     protected abstract static class PrimIsHostLookupAllowedNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
-        protected final Object doLookupHostSymbol(@SuppressWarnings("unused") final Object receiver) {
+        protected final boolean doLookupHostSymbol(@SuppressWarnings("unused") final Object receiver) {
             return BooleanObject.wrap(getContext().env.isHostLookupAllowed());
         }
     }
