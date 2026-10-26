@@ -192,7 +192,7 @@ public final class BitBlt {
     private int nWords;
     @CompilationFinal(dimensions = 1) private final LongBinaryOperator[] opTable = new LongBinaryOperator[43];
     private boolean preload;
-    private long skew;
+    private int skew;
     private long sourceAlpha;
     private Object sourceBits;
     private int sourceBitsBaseOffset;
@@ -881,7 +881,7 @@ public final class BitBlt {
 
         /* Byte delta */
         final int hInc = hDir << 2;
-        final long unskew;
+        final int unskew;
         final long skewMask;
         if (skew < 0) {
             unskew = skew + 32;
@@ -915,7 +915,7 @@ public final class BitBlt {
         }
     }
 
-    private void copyLoopCombinationRule3(final long initialHalftoneWord, final int hInc, final long notSkewMask, final long skewMask, final long unskew) {
+    private void copyLoopCombinationRule3(final long initialHalftoneWord, final int hInc, final long notSkewMask, final long skewMask, final int unskew) {
         long halftoneWord = initialHalftoneWord;
         int y = dy;
         for (int i = 1; i <= bbH; i++) {
@@ -950,7 +950,7 @@ public final class BitBlt {
             if (skew == 0 && halftoneWord == ALL_ONES) {
                 /* Very special inner loop for STORE mode with no skew -- just move words */
                 if (preload && hDir == 1) {
-                    for (long word = 2; word < nWords; word++) {
+                    for (int word = 2; word < nWords; word++) {
                         /* Note loop starts with prevWord loaded (due to preload) */
                         dstLongAtput(destIndex, prevWord);
                         destIndex += hInc;
@@ -958,7 +958,7 @@ public final class BitBlt {
                         sourceIndex += hInc;
                     }
                 } else {
-                    for (long word = 2; word < nWords; word++) {
+                    for (int word = 2; word < nWords; word++) {
                         thisWord = srcLongAt(sourceIndex);
                         sourceIndex += hInc;
                         dstLongAtput(destIndex, thisWord);
@@ -967,7 +967,7 @@ public final class BitBlt {
                     prevWord = thisWord;
                 }
             } else {
-                for (long word = 2; word < nWords; word++) {
+                for (int word = 2; word < nWords; word++) {
                     thisWord = srcLongAt(sourceIndex);
                     sourceIndex += hInc;
                     /* 32-bit rotate */
@@ -998,7 +998,7 @@ public final class BitBlt {
         }
     }
 
-    private void copyLoopGeneralCase(final long initialHalftoneWord, final int hInc, final long notSkewMask, final long skewMask, final long unskew) {
+    private void copyLoopGeneralCase(final long initialHalftoneWord, final int hInc, final long notSkewMask, final long skewMask, final int unskew) {
         long halftoneWord = initialHalftoneWord;
         int y = dy;
         final LongBinaryOperator mergeFnwith = opTable[combinationRule + 1];
@@ -1032,7 +1032,7 @@ public final class BitBlt {
             dstLongAtput(destIndex, destWord);
             destIndex += hInc;
             destMask = ALL_ONES;
-            for (long word = 2; word < nWords; word++) {
+            for (int word = 2; word < nWords; word++) {
                 /* Normal inner loop does merge: */
                 /* pick up next word */
                 thisWord = srcLongAt(sourceIndex);
@@ -1096,13 +1096,13 @@ public final class BitBlt {
             if (combinationRule == 3) {
                 /* Special inner loop for STORE */
                 destWord = halftoneWord;
-                for (long word = 2; word < nWords; word++) {
+                for (int word = 2; word < nWords; word++) {
                     dstLongAtput(destIndex, destWord);
                     destIndex += 4;
                 }
             } else {
                 /* Normal inner loop does merge */
-                for (long word = 2; word < nWords; word++) {
+                for (int word = 2; word < nWords; word++) {
                     /* Normal inner loop does merge */
                     destWord = dstLongAt(destIndex);
                     mergeWord = mergeFnwith.applyAsLong(halftoneWord, destWord);
@@ -1185,8 +1185,8 @@ public final class BitBlt {
             dstBitShift = dstShift;
             destMask = mask1;
             /* Here is the horizontal loop... */
-            long nPix = startBits;
-            long words = nWords;
+            int nPix = startBits;
+            int words = nWords;
             do {
                 /* align next word to leftmost pixel */
                 final long skewWord = pickSourcePixelsflagssrcMaskdestMasksrcShiftIncdstShiftInc(nPix, mapperFlags, sourcePixMask, destPixMask, srcShiftInc, dstShiftInc);
@@ -2235,7 +2235,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#pickSourcePixels:flags:srcMask:destMask:srcShiftInc:dstShiftInc: */
-    private long pickSourcePixelsflagssrcMaskdestMasksrcShiftIncdstShiftInc(final long nPixels, final int mapperFlags, final long srcMask, final long dstMask, final int srcShiftInc,
+    private long pickSourcePixelsflagssrcMaskdestMasksrcShiftIncdstShiftInc(final int nPixels, final int mapperFlags, final long srcMask, final long dstMask, final int srcShiftInc,
                     final int dstShiftInc) {
         long destWord = 0;
         /* Hint: Keep in register */
@@ -2243,7 +2243,7 @@ public final class BitBlt {
         /* Hint: Keep in register */
         int dstShift = dstBitShift;
         /* always > 0 so we can use do { } while(--nPix); */
-        long nPix = nPixels;
+        int nPix = nPixels;
         if (mapperFlags == (COLOR_MAP_PRESENT | COLOR_MAP_INDEXED_PART)) {
             /* a little optimization for (pretty crucial) blits using indexed lookups only */
             /* grab, colormap and mix in pixel */
@@ -2289,20 +2289,20 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#pickWarpPixelAtX:y: */
-    private int pickWarpPixelAtXy(final long xx, final long yy) {
+    private int pickWarpPixelAtXy(final int xx, final int yy) {
         /*
          * note: it would be much faster if we could just avoid these stupid tests for being inside
          * sourceForm.
          */
-        final long x = xx >>> BINARY_POINT;
-        final long y = yy >>> BINARY_POINT;
+        final int x = xx >>> BINARY_POINT;
+        final int y = yy >>> BINARY_POINT;
         if (xx < 0 || yy < 0 || x >= sourceWidth || y >= sourceHeight) {
             return 0;
         }
-        final long srcIndex = y * sourcePitch + (shr(x, warpAlignShift) << 2);
+        final long srcIndex = (long) y * sourcePitch + ((x >>> warpAlignShift) << 2);
         /* Extract pixel from word */
         final long sourceWord = srcLongAt(srcIndex);
-        srcBitShift = warpBitShiftTable[(int) (x & warpAlignMask)];
+        srcBitShift = warpBitShiftTable[x & warpAlignMask];
         return (int) shr(sourceWord, srcBitShift) & warpSrcMask;
     }
 
@@ -3727,7 +3727,7 @@ public final class BitBlt {
     private long warpPickSourcePixelsxDeltahyDeltahxDeltavyDeltavdstShiftIncflags(final int nPixels, final int xDeltah, final int yDeltah, final int dstShiftInc, final int mapperFlags) {
         final int dstMask = MASK_TABLE[destDepth];
         long destWord = 0;
-        long nPix = nPixels;
+        int nPix = nPixels;
         if (mapperFlags == (COLOR_MAP_PRESENT | COLOR_MAP_INDEXED_PART)) {
             /* a little optimization for (pretty crucial) blits using indexed lookups only */
             /* grab, colormap and mix in pixel */
@@ -3824,8 +3824,8 @@ public final class BitBlt {
         return (int) (a / b);
     }
 
-    private static int mod(final long a, final long b) {
-        return (int) (a % b);
+    private static int mod(final int a, final int b) {
+        return a % b;
     }
 
     private static long shl(final long a, final long b) {
@@ -3869,7 +3869,7 @@ public final class BitBlt {
         UnsafeUtils.putIntAt(destBits, destBitsBaseOffset + (index >>> 2) * destBitsIndexScale, (int) value);
     }
 
-    private long halftoneLongAt(final long index) {
+    private long halftoneLongAt(final int index) {
         return Integer.toUnsignedLong(halftoneBits[mod(index, halftoneHeight)]);
     }
 
