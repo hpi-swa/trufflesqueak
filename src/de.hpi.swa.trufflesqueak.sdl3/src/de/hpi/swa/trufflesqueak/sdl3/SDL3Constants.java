@@ -21,6 +21,7 @@ public final class SDL3Constants {
     public static final int SDL_EVENT_WINDOW_FOCUS_LOST = 0x20F;
     public static final int SDL_EVENT_WINDOW_CLOSE_REQUESTED = 0x210;
     public static final int SDL_EVENT_WINDOW_DISPLAY_CHANGED = 0x213;
+    public static final int SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED = 0x214;
     public static final int SDL_EVENT_KEY_DOWN = 0x300;
     public static final int SDL_EVENT_KEY_UP = 0x301;
     public static final int SDL_EVENT_TEXT_EDITING = 0x302;

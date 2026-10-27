@@ -65,6 +65,7 @@ import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDL_EVENT_RENDER_TARGE
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDL_EVENT_TEXT_INPUT;
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDL_EVENT_WINDOW_CLOSE_REQUESTED;
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDL_EVENT_WINDOW_DISPLAY_CHANGED;
+import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED;
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDL_EVENT_WINDOW_EXPOSED;
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDL_EVENT_WINDOW_FOCUS_GAINED;
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDL_EVENT_WINDOW_FOCUS_LOST;
@@ -877,7 +878,7 @@ public final class SqueakDisplay {
             case SDL_EVENT_QUIT, SDL_EVENT_WINDOW_CLOSE_REQUESTED:
                 addWindowEvent(WINDOW.CLOSE);
                 break;
-            case SDL_EVENT_WINDOW_DISPLAY_CHANGED:
+            case SDL_EVENT_WINDOW_DISPLAY_CHANGED, SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED:
                 scaleFactor = checkSdlError(SDL_GetWindowDisplayScale(window));
                 addWindowEvent(WINDOW.CHANGED_SCREEN);
                 break;
