@@ -92,6 +92,7 @@ public final class SDL3Constants {
     public static final int SDLK_RSHIFT = 0x400000E5;
     public static final int SDLK_RALT = 0x400000E6;
     public static final int SDLK_RGUI = 0x400000E7;
+    public static final int SDLK_MODE = 0x40000101;
     public static final int SDL_KMOD_LSHIFT = 0x0001;
     public static final int SDL_KMOD_RSHIFT = 0x0002;
     public static final int SDL_KMOD_LCTRL = 0x0040;

@@ -34,6 +34,7 @@ import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDLK_LCTRL;
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDLK_LEFT;
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDLK_LGUI;
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDLK_LSHIFT;
+import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDLK_MODE;
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDLK_PAGEDOWN;
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDLK_PAGEUP;
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDLK_RALT;
@@ -158,6 +159,7 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.FORM;
 import de.hpi.swa.trufflesqueak.nodes.plugins.HostWindowPlugin;
+import de.hpi.swa.trufflesqueak.sdl3.SDL3Utils;
 import de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_DisplayMode;
 import de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_DropEvent;
 import de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_Event;
@@ -824,10 +826,7 @@ public final class SqueakDisplay {
                 processKeyUp(SDL_KeyboardEvent.key(event), SDL_KeyboardEvent.mod(event));
                 break;
             case SDL_EVENT_TEXT_INPUT:
-                final MemorySegment textPtr = SDL_TextInputEvent.text(event);
-                if (!isNull(textPtr)) {
-                    processTextInput(textPtr.getString(0));
-                }
+                processTextInput(SDL_TextInputEvent.text(event));
                 break;
             case SDL_EVENT_MOUSE_MOTION:
                 processMouseMotion(event, scaleFactor);
@@ -959,16 +958,20 @@ public final class SqueakDisplay {
         addKeyboardEvent(KEYBOARD_EVENT.UP, keyChar);
     }
 
-    public void processTextInput(final String text) {
-        final int currentModifiers = buttons >> 3;
-
-        final boolean isCommandOrCtrl = (currentModifiers & (KEYBOARD.CTRL | KEYBOARD.CMD)) != 0;
-
-        if (isCommandOrCtrl || text == null || text.isEmpty()) {
+    public void processTextInput(final MemorySegment textPtr) {
+        if (isNull(textPtr)) {
             return;
         }
-
-        text.codePoints().forEach(codePoint -> addKeyboardEvent(KEYBOARD_EVENT.CHAR, codePoint));
+        final boolean isCommandOrCtrl = (buttons & (KEYBOARD.CTRL | KEYBOARD.CMD)) != 0;
+        if (isCommandOrCtrl) {
+            return;
+        }
+        try {
+            final String text = textPtr.getString(0);
+            text.codePoints().forEach(codePoint -> addKeyboardEvent(KEYBOARD_EVENT.CHAR, codePoint));
+        } catch (final IllegalArgumentException | IndexOutOfBoundsException e) {
+            SDL3Utils.warning("Error processing text input: " + e.getMessage());
+        }
     }
 
     private void addKeyboardEvent(final long eventType, final int keyCharOrCode) {
@@ -977,7 +980,7 @@ public final class SqueakDisplay {
 
     private static boolean isModifier(final int sdlKeySym) {
         return switch (sdlKeySym) {
-            case SDLK_LSHIFT, SDLK_RSHIFT, SDLK_LCTRL, SDLK_RCTRL, SDLK_LALT, SDLK_RALT, SDLK_LGUI, SDLK_RGUI -> true;
+            case SDLK_LSHIFT, SDLK_RSHIFT, SDLK_LCTRL, SDLK_RCTRL, SDLK_LALT, SDLK_RALT, SDLK_LGUI, SDLK_RGUI, SDLK_MODE -> true;
             default -> false;
         };
     }
@@ -1119,9 +1122,11 @@ public final class SqueakDisplay {
             optValue = (sdlModifiers & (SDL_KMOD_LALT | SDL_KMOD_RALT)) != 0 ? KEYBOARD.ALT : 0;
             cmdValue = (sdlModifiers & (SDL_KMOD_LGUI | SDL_KMOD_RGUI)) != 0 ? KEYBOARD.CMD : 0;
         } else {
-            // Windows/Linux: Alt hijacked for Cmd, AltGr (MODE) isolated for Opt
-            optValue = (sdlModifiers & SDL_KMOD_MODE) != 0 ? KEYBOARD.ALT : 0;
-            cmdValue = (sdlModifiers & (SDL_KMOD_LALT | SDL_KMOD_RALT | SDL_KMOD_LGUI | SDL_KMOD_RGUI)) != 0 ? KEYBOARD.CMD : 0;
+            // Windows reports AltGr as RAlt; X11/Wayland use MODE.
+            final boolean isAltGr = (sdlModifiers & SDL_KMOD_MODE) != 0 || OS.isWindows() && (sdlModifiers & SDL_KMOD_RALT) != 0;
+            final int commandAltMask = isAltGr ? SDL_KMOD_LALT : (SDL_KMOD_LALT | SDL_KMOD_RALT);
+            optValue = isAltGr ? KEYBOARD.ALT : 0;
+            cmdValue = (sdlModifiers & (commandAltMask | SDL_KMOD_LGUI | SDL_KMOD_RGUI)) != 0 ? KEYBOARD.CMD : 0;
         }
 
         final int modifiers = shiftValue + ctrlValue + optValue + cmdValue;
