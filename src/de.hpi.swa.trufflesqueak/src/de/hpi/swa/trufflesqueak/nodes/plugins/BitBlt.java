@@ -918,6 +918,9 @@ public final class BitBlt {
     private void copyLoopCombinationRule3(final long initialHalftoneWord, final int hInc, final long notSkewMask, final long skewMask, final int unskew) {
         long halftoneWord = initialHalftoneWord;
         int y = dy;
+        /* A preloaded shifter can represent an aligned copy with a skew of +/-32. */
+        final boolean copyWholeWords = (preload ? skew == -32 || skew == 32 : skew == 0) &&
+                        (mask1 & ALL_ONES) == ALL_ONES && (nWords == 1 || (mask2 & ALL_ONES) == ALL_ONES);
         for (int i = 1; i <= bbH; i++) {
             /*
              * here is the vertical loop for combinationRule = 3 copy mode; no need to call merge
@@ -926,6 +929,16 @@ public final class BitBlt {
                 /* Otherwise, its always the same */
                 halftoneWord = halftoneLongAt(y);
                 y += vDir;
+            }
+            if (copyWholeWords && halftoneWord == ALL_ONES && tryCopyWords(nWords, hInc)) {
+                if (preload) {
+                    /* sourceDelta compensates for the shifter's extra source word. */
+                    sourceIndex += hInc;
+                }
+                destMask = nWords > 1 ? mask2 : ALL_ONES;
+                sourceIndex += sourceDelta;
+                destIndex += destDelta;
+                continue;
             }
             long prevWord;
             if (preload) {
@@ -957,7 +970,7 @@ public final class BitBlt {
                         prevWord = srcLongAt(sourceIndex);
                         sourceIndex += hInc;
                     }
-                } else {
+                } else if (preload || !tryCopyWords(nWords - 2, hInc)) {
                     for (int word = 2; word < nWords; word++) {
                         thisWord = srcLongAt(sourceIndex);
                         sourceIndex += hInc;
@@ -996,6 +1009,55 @@ public final class BitBlt {
             sourceIndex += sourceDelta;
             destIndex += destDelta;
         }
+    }
+
+    /**
+     * Copy complete words when arraycopy preserves the scalar loop's behavior. With zero skew, the
+     * caller does not need the last source word for its final edge-word merge.
+     */
+    private boolean tryCopyWords(final int wordCount, final int hInc) {
+        if (wordCount <= 0) {
+            return false;
+        }
+        final long byteCount = (long) wordCount * Integer.BYTES;
+        final long offset = hInc < 0 ? byteCount - Integer.BYTES : 0;
+        final long sourceStart = sourceIndex - offset;
+        final long destStart = destIndex - offset;
+        final long sourceEnd = sourceStart + byteCount;
+        final long destEnd = destStart + byteCount;
+        if (sourceStart < 0 || destStart < 0 || ((sourceStart | destStart) & 3) != 0 ||
+                        sourceEnd - Integer.BYTES > endOfSource || destEnd > Integer.MAX_VALUE ||
+                        (destEnd - Integer.BYTES) >>> 2 >= endOfDestination) {
+            return false;
+        }
+        if (preload) {
+            /* Preserve the scalar loop's bounds checks for its otherwise unused source word. */
+            final long extraSourceIndex = sourceIndex + (long) wordCount * hInc;
+            if (extraSourceIndex < 0 || extraSourceIndex > endOfSource) {
+                return false;
+            }
+        }
+        /* Distinct Forms may share bits without checkSourceOverlap having adjusted the direction. */
+        if (sourceBits == destBits && Math.abs(sourceStart - destStart) < byteCount &&
+                        (hInc > 0 ? destStart > sourceStart : destStart < sourceStart)) {
+            return false;
+        }
+        if (sourceBits instanceof final int[] sourceWords && destBits instanceof final int[] destWords) {
+            if (sourceEnd > (long) sourceWords.length * Integer.BYTES || destEnd > (long) destWords.length * Integer.BYTES) {
+                return false;
+            }
+            System.arraycopy(sourceWords, (int) (sourceStart >>> 2), destWords, (int) (destStart >>> 2), wordCount);
+        } else if (sourceBits instanceof final byte[] sourceBytes && destBits instanceof final byte[] destBytes) {
+            if (sourceEnd > sourceBytes.length || destEnd > destBytes.length) {
+                return false;
+            }
+            System.arraycopy(sourceBytes, (int) sourceStart, destBytes, (int) destStart, (int) byteCount);
+        } else {
+            return false;
+        }
+        sourceIndex += (long) wordCount * hInc;
+        destIndex += wordCount * hInc;
+        return true;
     }
 
     private void copyLoopGeneralCase(final long initialHalftoneWord, final int hInc, final long notSkewMask, final long skewMask, final int unskew) {
