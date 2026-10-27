@@ -193,8 +193,9 @@ public final class SqueakDisplay {
     // Async staging buffer
     private MemorySegment stagingBuffer = MemorySegment.NULL;
     private Arena stagingArena = null;
-    private int stagingCapacity = 0;
+    private long stagingCapacity = 0;
     private int stagingPitchBytes = 0;
+    private int stagingHeight = 0;
 
     // Dirty 2D bounding box for coalescing damage
     private int dirtyLeft = Integer.MAX_VALUE;
@@ -425,15 +426,20 @@ public final class SqueakDisplay {
         return true;
     }
 
-    private void ensureStagingPixels(final int w, final int h) {
-        final int requiredBytes = w * h * Integer.BYTES;
+    private boolean ensureStagingPixels(final int w, final int h) {
+        final int pitchBytes = Math.multiplyExact(w, Integer.BYTES);
+        final long requiredBytes = (long) pitchBytes * h;
+        boolean changed = stagingPitchBytes != pitchBytes || stagingHeight != h;
         if (stagingArena == null || stagingCapacity < requiredBytes) {
             // DO NOT close the old arena. The GC will clean it up automatically.
             stagingArena = Arena.ofAuto();
             stagingBuffer = stagingArena.allocate(requiredBytes);
             stagingCapacity = requiredBytes;
+            changed = true;
         }
-        stagingPitchBytes = w * Integer.BYTES;
+        stagingPitchBytes = pitchBytes;
+        stagingHeight = h;
+        return changed;
     }
 
     public double getDisplayScale() {
@@ -464,13 +470,14 @@ public final class SqueakDisplay {
             int safeLeft = Math.max(0, dirtyLeft);
             int safeRight = Math.min(width, dirtyRight);
 
-            resetDamage();
             frameRequested = false;
 
             // Skip frame if staging buffer is outdated (e.g. after HiDPI resize)
-            if (stagingPitchBytes != width * Integer.BYTES) {
+            if (stagingPitchBytes != (long) width * Integer.BYTES || stagingHeight != height || stagingBuffer.byteSize() < (long) stagingPitchBytes * height) {
                 return;
             }
+
+            resetDamage();
 
             if (safeTop >= safeBottom || safeLeft >= safeRight) {
                 return;
@@ -577,14 +584,20 @@ public final class SqueakDisplay {
                 return;
             }
 
-            ensureStagingPixels(currentWidth, currentHeight);
             final int[] sqPixels = bitmap.getIntStorage();
+            if (sqPixels.length < (long) currentWidth * currentHeight) {
+                return;
+            }
 
-            if (sqPixels.length >= currentWidth * currentHeight) {
+            // Wrap the Squeak pixel array into a Panama segment
+            final MemorySegment srcSegment = MemorySegment.ofArray(sqPixels);
+
+            if (ensureStagingPixels(currentWidth, currentHeight)) {
+                // A changed layout needs a complete snapshot before any native upload.
+                MemorySegment.copy(srcSegment, 0, stagingBuffer, 0, (long) stagingPitchBytes * currentHeight);
+                recordDamage(0, 0, currentWidth, currentHeight);
+            } else {
                 final int rowInts = safeRight - safeLeft;
-
-                // Wrap the Squeak pixel array into a Panama segment
-                final MemorySegment srcSegment = MemorySegment.ofArray(sqPixels);
 
                 // Fast Path: one single transfer if more than 75% screen width
                 if (rowInts >= (currentWidth * 3) / 4) {
@@ -603,9 +616,8 @@ public final class SqueakDisplay {
                         dstOffsetBytes += stagingPitchBytes;
                     }
                 }
+                recordDamage(safeLeft, safeTop, safeRight, safeBottom);
             }
-
-            recordDamage(safeLeft, safeTop, safeRight, safeBottom);
         }
 
         requestRender();
@@ -683,9 +695,8 @@ public final class SqueakDisplay {
             bitmap = newBitmap;
             width = newWidth;
             height = newHeight;
+            clampDamageToBounds();
         }
-
-        clampDamageToBounds();
 
         // Wait for the main thread to finish SDL_Init
         PlatformEventLoop.waitUntilInitialized();
@@ -767,9 +778,8 @@ public final class SqueakDisplay {
         synchronized (this) {
             width = newWidth;
             height = newHeight;
+            clampDamageToBounds();
         }
-
-        clampDamageToBounds();
 
         final int targetLogicalWidth = (int) Math.ceil(newWidth / getDisplayScale());
         final int targetLogicalHeight = (int) Math.ceil(newHeight / getDisplayScale());
