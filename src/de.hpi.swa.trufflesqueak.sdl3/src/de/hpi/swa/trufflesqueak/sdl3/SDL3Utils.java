@@ -7,8 +7,13 @@
 package de.hpi.swa.trufflesqueak.sdl3;
 
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_GetError;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_RunOnMainThread;
 
+import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
+import java.util.concurrent.atomic.AtomicReference;
+
+import de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_MainThreadCallback;
 
 public final class SDL3Utils {
     private SDL3Utils() {
@@ -40,6 +45,48 @@ public final class SDL3Utils {
 
     public static boolean isNull(final MemorySegment segment) {
         return segment.address() == 0;
+    }
+
+    /** Keep the returned stub alive until all asynchronous calls have completed. */
+    public static MemorySegment mainThreadCallback(final SDL_MainThreadCallback.Function task) {
+        return SDL_MainThreadCallback.allocate(data -> {
+            try {
+                task.apply(data);
+            } catch (final Throwable failure) {
+                // Exceptions must never escape a native upcall: that terminates the JVM.
+                try {
+                    warning("Main-thread callback failed: " + failure);
+                } catch (final Throwable loggingFailure) {
+                    // Even a failure while reporting the error must stay inside the upcall.
+                }
+            }
+        }, Arena.ofAuto());
+    }
+
+    public static void runOnMainThread(final SDL_MainThreadCallback.Function task, final MemorySegment data) {
+        final AtomicReference<Throwable> failure = new AtomicReference<>();
+        try (Arena arena = Arena.ofConfined()) {
+            final MemorySegment callback = SDL_MainThreadCallback.allocate(argument -> {
+                try {
+                    task.apply(argument);
+                } catch (final Throwable exception) {
+                    failure.set(exception);
+                }
+            }, arena);
+            checkSdlError(SDL_RunOnMainThread(callback, data, true));
+        }
+        final Throwable cause = failure.get();
+        if (cause instanceof final RuntimeException exception) {
+            throw exception;
+        } else if (cause instanceof final Error error) {
+            throw error;
+        } else if (cause != null) {
+            throw new IllegalStateException("Main-thread callback failed", cause);
+        }
+    }
+
+    public static void runOnMainThreadAsync(final MemorySegment callback, final MemorySegment data) {
+        checkSdlError(SDL_RunOnMainThread(callback, data, false));
     }
 
     /** Cannot use TruffleLogger on main thread. */
