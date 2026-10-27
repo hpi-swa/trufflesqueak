@@ -78,6 +78,7 @@ src/SDL-release-3.4.12/include/SDL3/SDL.h
 --include-function SDL_RenderClear
 --include-function SDL_RenderPresent
 --include-function SDL_RenderTexture
+--include-function SDL_SetTextureBlendMode
 --include-function SDL_SetTextureScaleMode
 --include-function SDL_UpdateTexture
 --include-function SDL_CreateSurface

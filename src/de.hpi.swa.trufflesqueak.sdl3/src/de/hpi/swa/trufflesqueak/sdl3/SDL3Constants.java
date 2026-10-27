@@ -7,6 +7,9 @@
 package de.hpi.swa.trufflesqueak.sdl3;
 
 public final class SDL3Constants {
+    // SDL_blendmode.h
+    public static final int SDL_BLENDMODE_NONE = 0x00000000;
+
     // SDL_events.h
     public static final int SDL_EVENT_FIRST = 0;
     public static final int SDL_EVENT_QUIT = 0x100;

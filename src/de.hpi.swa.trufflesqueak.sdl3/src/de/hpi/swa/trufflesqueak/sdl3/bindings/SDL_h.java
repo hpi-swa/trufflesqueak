@@ -2410,6 +2410,68 @@ public class SDL_h extends SDL_h$shared {
         }
     }
 
+    private static class SDL_SetTextureBlendMode {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            SDL_h.C_BOOL,
+            SDL_h.C_POINTER,
+            SDL_h.C_INT
+        );
+
+        public static long addr;
+
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
+    }
+
+    /**
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * extern bool SDL_SetTextureBlendMode(SDL_Texture *texture, SDL_BlendMode blendMode)
+     * }
+     */
+    public static FunctionDescriptor SDL_SetTextureBlendMode$descriptor() {
+        return SDL_SetTextureBlendMode.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * extern bool SDL_SetTextureBlendMode(SDL_Texture *texture, SDL_BlendMode blendMode)
+     * }
+     */
+    public static MethodHandle SDL_SetTextureBlendMode$handle() {
+        return SDL_SetTextureBlendMode.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * extern bool SDL_SetTextureBlendMode(SDL_Texture *texture, SDL_BlendMode blendMode)
+     * }
+     */
+    public static MemorySegment SDL_SetTextureBlendMode$address() {
+        return MemorySegment.ofAddress(SDL_SetTextureBlendMode.addr);
+    }
+
+    /**
+     * {@snippet lang=c :
+     * extern bool SDL_SetTextureBlendMode(SDL_Texture *texture, SDL_BlendMode blendMode)
+     * }
+     */
+    public static boolean SDL_SetTextureBlendMode(MemorySegment texture, int blendMode) {
+        var mh$ = SDL_SetTextureBlendMode.HANDLE;
+        try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("SDL_SetTextureBlendMode", texture, blendMode);
+            }
+            return (boolean)mh$.invokeExact(SDL_SetTextureBlendMode.addr, texture, blendMode);
+        } catch (Error | RuntimeException ex) {
+           throw ex;
+        } catch (Throwable ex$) {
+           throw new AssertionError("should not reach here", ex$);
+        }
+    }
+
     private static class SDL_SetTextureScaleMode {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_BOOL,
@@ -2931,6 +2993,7 @@ public class SDL_h extends SDL_h$shared {
         SDL_SetAppMetadataProperty.addr = symbolLookup.findOrThrow("SDL_SetAppMetadataProperty").address();
         SDL_CreateRenderer.addr = symbolLookup.findOrThrow("SDL_CreateRenderer").address();
         SDL_CreateTexture.addr = symbolLookup.findOrThrow("SDL_CreateTexture").address();
+        SDL_SetTextureBlendMode.addr = symbolLookup.findOrThrow("SDL_SetTextureBlendMode").address();
         SDL_SetTextureScaleMode.addr = symbolLookup.findOrThrow("SDL_SetTextureScaleMode").address();
         SDL_UpdateTexture.addr = symbolLookup.findOrThrow("SDL_UpdateTexture").address();
         SDL_RenderClear.addr = symbolLookup.findOrThrow("SDL_RenderClear").address();

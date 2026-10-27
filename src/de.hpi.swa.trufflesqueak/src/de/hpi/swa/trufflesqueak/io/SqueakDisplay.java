@@ -45,6 +45,7 @@ import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDLK_RSHIFT;
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDLK_SPACE;
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDLK_TAB;
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDLK_UP;
+import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDL_BLENDMODE_NONE;
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDL_BUTTON_LEFT;
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDL_BUTTON_MIDDLE;
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDL_BUTTON_RIGHT;
@@ -115,6 +116,7 @@ import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_RenderTexture;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_RunOnMainThread;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_SetClipboardText;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_SetCursor;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_SetTextureBlendMode;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_SetTextureScaleMode;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_SetWindowFullscreen;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_SetWindowIcon;
@@ -489,6 +491,8 @@ public final class SqueakDisplay {
                 textureHeight = height;
                 texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, textureWidth, textureHeight);
                 checkSdlError(texture);
+                // The display framebuffer is opaque; ignore its alpha byte.
+                checkSdlError(SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_NONE));
                 checkSdlError(SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST));
             }
 
