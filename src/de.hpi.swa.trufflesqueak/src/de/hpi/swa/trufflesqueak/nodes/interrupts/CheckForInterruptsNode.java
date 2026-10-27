@@ -149,7 +149,7 @@ public abstract class CheckForInterruptsNode extends AbstractNode {
 
             if (nextActiveProcess != originalActiveProcess) {
                 TransferToNode.executeUncached(frame, nextActiveProcess);
-                throw ProcessSwitch.SINGLETON;
+                throw ProcessSwitch.SCHEDULING;
             }
         }
 
@@ -243,7 +243,7 @@ public abstract class CheckForInterruptsNode extends AbstractNode {
 
                 if (nextActiveProcess != originalActiveProcess) {
                     TransferToNode.executeUncached(frame, nextActiveProcess);
-                    throw ProcessSwitch.SINGLETON;
+                    throw ProcessSwitch.SCHEDULING;
                 }
             }
 
@@ -296,7 +296,7 @@ public abstract class CheckForInterruptsNode extends AbstractNode {
 
             if (nextActiveProcess != originalActiveProcess) {
                 transferToNode.execute(frame, nextActiveProcess);
-                throw ProcessSwitch.SINGLETON;
+                throw ProcessSwitch.SCHEDULING;
             }
         }
     }

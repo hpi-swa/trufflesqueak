@@ -69,7 +69,7 @@ public final class StartContextRootNode extends AbstractRootNode {
                 // Suspend current context and throw ProcessSwitch to unwind Java stack and resume
                 final ContextObject activeContext = GetOrCreateContextWithFrameNode.executeUncached(frame);
                 AbstractPointersObjectWriteNode.executeUncached(image.getActiveProcessSlow(), PROCESS.SUSPENDED_CONTEXT, activeContext);
-                throw ProcessSwitch.SINGLETON;
+                throw ProcessSwitch.STACK_FLUSH_REQUESTED;
             }
             interruptHandlerNode.execute(frame);
             return interpreterNode.execute(frame, initialPC, initialSP);

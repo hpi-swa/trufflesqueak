@@ -451,7 +451,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
                 FrameAccess.externalizePCAndSP(frame, pc, sp);
                 final ContextObject activeContext = GetOrCreateContextWithFrameNode.executeUncached(frame);
                 AbstractPointersObjectWriteNode.executeUncached(getContext().getActiveProcessSlow(), PROCESS.SUSPENDED_CONTEXT, activeContext);
-                throw ProcessSwitch.SINGLETON;
+                throw ProcessSwitch.STACK_FLUSH_REQUESTED;
             }
         }
     }

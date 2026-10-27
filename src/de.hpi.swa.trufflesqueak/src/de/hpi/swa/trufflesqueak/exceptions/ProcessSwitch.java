@@ -9,9 +9,14 @@ package de.hpi.swa.trufflesqueak.exceptions;
 import com.oracle.truffle.api.nodes.ControlFlowException;
 
 public final class ProcessSwitch extends ControlFlowException {
-    public static final ProcessSwitch SINGLETON = new ProcessSwitch();
+    public static final ProcessSwitch SCHEDULING = new ProcessSwitch();
+    public static final ProcessSwitch STACK_FLUSH_REQUESTED = new ProcessSwitch();
     private static final long serialVersionUID = 1L;
 
     private ProcessSwitch() {
+    }
+
+    public boolean isStackFlushRequested() {
+        return STACK_FLUSH_REQUESTED == this;
     }
 }

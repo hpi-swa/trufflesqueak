@@ -55,22 +55,29 @@ public abstract class DoItRootNode extends RootNode {
         if (blockClosure.getNumArgs() != frame.getArguments().length) {
             throw SqueakException.create("Wrong number of arguments for DoItRootNode");
         }
-        final var state = image.suspendNormalExecution();
+        final var state = image.suspendNormalExecution(false);
         try {
             return primitiveNode.execute(image.externalSenderFrame, blockClosure, wrapNode.executeWrap(node, frame.getArguments()));
-        } catch (final ProcessSwitch ps) {
+        } catch (final ProcessSwitch initialPS) {
             CompilerDirectives.transferToInterpreter();
+            if (!initialPS.isStackFlushRequested()) {
+                throw SqueakException.create("Illegal Process Switch in DoIt", initialPS);
+            }
             final var getNextActiveContextNode = GetNextActiveContextNode.getUncached();
-            ContextObject activeContext = getNextActiveContextNode.execute();
-            LogUtils.SCHEDULING.log(Level.FINE, "Process Switch in DoIt: {0}", activeContext);
+            final var indirectCallNode = IndirectCallNode.getUncached();
             while (true) {
                 try {
-                    return IndirectCallNode.getUncached().call(activeContext.getCallTarget());
-                } catch (final NonLocalReturn | NonVirtualReturn | CannotReturnToTarget ret) {
-                    throw SqueakException.create("Return exception in DoIt", ret);
-                } catch (final ProcessSwitch anotherPs) {
-                    activeContext = getNextActiveContextNode.execute();
+                    // Continue execution after stack flush request.
+                    final ContextObject activeContext = getNextActiveContextNode.execute();
                     LogUtils.SCHEDULING.log(Level.FINE, "Process Switch in DoIt: {0}", activeContext);
+                    return indirectCallNode.call(activeContext.getCallTarget());
+                } catch (final NonLocalReturn | NonVirtualReturn | CannotReturnToTarget ret) {
+                    // ToDo: To properly handle this, we should do something similar to ExecuteTopLevelContextNode.executeLoop
+                    throw SqueakException.create("Return exception in DoIt", ret);
+                } catch (final ProcessSwitch continuationPS) {
+                    if (!continuationPS.isStackFlushRequested()) {
+                        throw SqueakException.create("Illegal Process Switch in DoIt", continuationPS);
+                    }
                 }
             }
         } finally {

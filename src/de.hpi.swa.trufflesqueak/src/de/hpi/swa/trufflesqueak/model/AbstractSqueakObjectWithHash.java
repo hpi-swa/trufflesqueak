@@ -281,7 +281,7 @@ public abstract class AbstractSqueakObjectWithHash extends AbstractSqueakObject 
     public final Object send(final SqueakImageContext image, final String selector, final Object... arguments) {
         final Object methodObject = LookupMethodByStringNode.executeUncached(getSqueakClass(), selector);
         if (methodObject instanceof final CompiledCodeObject method) {
-            final var state = image.suspendNormalExecution();
+            final var state = image.suspendNormalExecution(true);
             try {
                 final Object result = TryPrimitiveNaryNode.executeUncached(image.externalSenderFrame, method, this, arguments);
                 if (result != null) {

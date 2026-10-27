@@ -307,7 +307,7 @@ public final class SqueakImageContext {
 
     /**
      * Suspends normal execution constraints by deactivating the interrupt handler
-     * and bypassing context stack depth limits.
+     * and optionally bypassing context stack depth limits.
      *
      * This method prepares the environment for safe execution of internal VM routines
      * or external Interop calls. In these scenarios, normal Smalltalk semantics
@@ -323,11 +323,13 @@ public final class SqueakImageContext {
      * partial evaluation. In standard Java code or behind a {@code @TruffleBoundary},
      * {@code try-with-resources} is safe to use.
      */
-    public SavedExecutionState suspendNormalExecution() {
+    public SavedExecutionState suspendNormalExecution(final boolean preventStackDepthProcessSwitch) {
         final PointersObject activeProcess = getActiveProcessSlow();
         final boolean wasActive = interrupt.deactivate();
         final int savedDepth = currentContextStackDepth;
-        currentContextStackDepth = SUSPENDED_CONTEXT_STACK_DEPTH;
+        if (preventStackDepthProcessSwitch) {
+            currentContextStackDepth = SUSPENDED_CONTEXT_STACK_DEPTH;
+        }
         return new SavedExecutionState(this, activeProcess, wasActive, savedDepth);
     }
 
@@ -344,7 +346,7 @@ public final class SqueakImageContext {
 
     @TruffleBoundary
     public Object evaluateUninterruptably(final String sourceCode) {
-        final var state = suspendNormalExecution();
+        final var state = suspendNormalExecution(true);
         try {
             return evaluate(sourceCode);
         } finally {
@@ -954,7 +956,7 @@ public final class SqueakImageContext {
             if (SignalSemaphoreNodeGen.executeUncached(frame, this, lowSpaceSemaphoreOrNil)) {
                 // success! reset counter and continue in new process
                 lowSpaceSkippedSendsCount = 0;
-                throw ProcessSwitch.SINGLETON;
+                throw ProcessSwitch.SCHEDULING;
             }
             throw CompilerDirectives.shouldNotReachHere("Failed to signal low space semaphore.", stackOverflowError);
         }

@@ -53,7 +53,7 @@ public abstract class WakeHighestPriorityNode extends AbstractNode {
         } while (processList.isEmptyList(pointersReadNode));
         final PointersObject newProcess = processList.removeFirstLinkOfList(pointersReadNode, pointersWriteNode);
         TransferToNode.executeUncached(frame, newProcess);
-        throw ProcessSwitch.SINGLETON;
+        throw ProcessSwitch.SCHEDULING;
     }
 
     public abstract void executeWake(VirtualFrame frame);
