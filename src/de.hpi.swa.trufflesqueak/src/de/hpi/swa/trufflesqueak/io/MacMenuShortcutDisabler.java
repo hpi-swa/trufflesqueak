@@ -6,6 +6,9 @@
  */
 package de.hpi.swa.trufflesqueak.io;
 
+import static de.hpi.swa.trufflesqueak.sdl3.SDL3Utils.isNull;
+import static de.hpi.swa.trufflesqueak.sdl3.SDL3Utils.warning;
+
 import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
@@ -13,8 +16,6 @@ import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SymbolLookup;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
-
-import static de.hpi.swa.trufflesqueak.sdl3.SDL3Utils.warning;
 
 @SuppressWarnings("restricted")
 class MacMenuShortcutDisabler {
@@ -69,7 +70,7 @@ class MacMenuShortcutDisabler {
             final MemorySegment mainMenuSel = (MemorySegment) ObjC.SEL_REGISTER_NAME.invokeExact(arena.allocateFrom("mainMenu"));
             final MemorySegment mainMenu = (MemorySegment) ObjC.MSG_SEND_PTR.invokeExact(app, mainMenuSel);
 
-            if (mainMenu.equals(MemorySegment.NULL)) {
+            if (mainMenu.address() == 0) {
                 return;
             }
 
@@ -86,7 +87,7 @@ class MacMenuShortcutDisabler {
             final MemorySegment emptyString = (MemorySegment) ObjC.MSG_SEND_PTR_PTR.invokeExact(nsStringClass, utf8Sel, arena.allocateFrom(""));
 
             final MemorySegment topLevelItems = (MemorySegment) ObjC.MSG_SEND_PTR.invokeExact(mainMenu, itemArraySel);
-            if (topLevelItems.equals(MemorySegment.NULL)) {
+            if (topLevelItems.address() == 0) {
                 return;
             }
 
@@ -97,9 +98,9 @@ class MacMenuShortcutDisabler {
                 final MemorySegment topMenuItem = (MemorySegment) ObjC.MSG_SEND_PTR_LONG.invokeExact(topLevelItems, objectAtIndexSel, i);
                 final MemorySegment submenu = (MemorySegment) ObjC.MSG_SEND_PTR.invokeExact(topMenuItem, submenuSel);
 
-                if (!submenu.equals(MemorySegment.NULL)) {
+                if (!isNull(submenu)) {
                     final MemorySegment subItems = (MemorySegment) ObjC.MSG_SEND_PTR.invokeExact(submenu, itemArraySel);
-                    if (!subItems.equals(MemorySegment.NULL)) {
+                    if (!isNull(subItems)) {
                         final long subCount = (long) ObjC.MSG_SEND_LONG.invokeExact(subItems, countSel);
 
                         // Iterate through immediate sub-items
@@ -107,9 +108,9 @@ class MacMenuShortcutDisabler {
                             final MemorySegment subMenuItem = (MemorySegment) ObjC.MSG_SEND_PTR_LONG.invokeExact(subItems, objectAtIndexSel, j);
 
                             final MemorySegment keyEquivObj = (MemorySegment) ObjC.MSG_SEND_PTR.invokeExact(subMenuItem, keyEquivalentSel);
-                            if (!keyEquivObj.equals(MemorySegment.NULL)) {
+                            if (!isNull(keyEquivObj)) {
                                 final MemorySegment cStrPtr = (MemorySegment) ObjC.MSG_SEND_PTR.invokeExact(keyEquivObj, utf8StringSel);
-                                if (!cStrPtr.equals(MemorySegment.NULL)) {
+                                if (!isNull(cStrPtr)) {
                                     final String keyEquiv = cStrPtr.reinterpret(Long.MAX_VALUE).getString(0);
                                     if ("q".equalsIgnoreCase(keyEquiv)) {
                                         continue;

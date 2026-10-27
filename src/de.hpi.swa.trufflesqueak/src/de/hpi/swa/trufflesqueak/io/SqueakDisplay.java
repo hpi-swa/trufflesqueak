@@ -87,6 +87,7 @@ import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDL_WINDOW_HIGH_PIXEL_
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDL_WINDOW_RESIZABLE;
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Utils.checkSdlError;
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Utils.getSDLError;
+import static de.hpi.swa.trufflesqueak.sdl3.SDL3Utils.isNull;
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Utils.warning;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_CreateColorCursor;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_CreateRenderer;
@@ -231,19 +232,19 @@ public final class SqueakDisplay {
 
     final MemorySegment closeTask = SDL_MainThreadCallback.allocate((_) -> {
         stagingArena = null; // Just drop the reference so the GC can safely free the native memory
-        if (texture != MemorySegment.NULL) {
+        if (!isNull(texture)) {
             SDL_DestroyTexture(texture);
             texture = MemorySegment.NULL;
         }
-        if (renderer != MemorySegment.NULL) {
+        if (!isNull(renderer)) {
             SDL_DestroyRenderer(renderer);
             renderer = MemorySegment.NULL;
         }
-        if (cursor != MemorySegment.NULL) {
+        if (!isNull(cursor)) {
             SDL_DestroyCursor(cursor);
             cursor = MemorySegment.NULL;
         }
-        if (window != MemorySegment.NULL) {
+        if (!isNull(window)) {
             SDL_DestroyWindow(window);
             window = MemorySegment.NULL;
         }
@@ -256,7 +257,7 @@ public final class SqueakDisplay {
     private final MemorySegment getClipboardTextTask = SDL_MainThreadCallback.allocate((_) -> {
         if (SDL_HasClipboardText()) {
             final MemorySegment textPtr = SDL_GetClipboardText();
-            if (textPtr != MemorySegment.NULL) {
+            if (!isNull(textPtr)) {
                 final String text = textPtr.getString(0);
                 SDL_free(textPtr);
                 clipboardText = text;
@@ -282,7 +283,7 @@ public final class SqueakDisplay {
         final CursorData data = cursorData;
         cursorData = null;
 
-        if (cursor != MemorySegment.NULL) {
+        if (!isNull(cursor)) {
             SDL_DestroyCursor(cursor);
             cursor = MemorySegment.NULL;
         }
@@ -296,7 +297,7 @@ public final class SqueakDisplay {
         final int h = data.height;
 
         final MemorySegment surface = SDL_CreateSurface(w, h, SDL_PIXELFORMAT_ARGB8888);
-        if (surface == MemorySegment.NULL) {
+        if (isNull(surface)) {
             return;
         }
 
@@ -361,7 +362,7 @@ public final class SqueakDisplay {
             }
 
             cursor = checkSdlError(SDL_CreateColorCursor(surface, data.offsetX, data.offsetY));
-            if (cursor != MemorySegment.NULL) {
+            if (!isNull(cursor)) {
                 checkSdlError(SDL_SetCursor(cursor));
                 checkSdlError(SDL_ShowCursor());
             }
@@ -374,7 +375,7 @@ public final class SqueakDisplay {
         final int displayId = SDL_GetPrimaryDisplay();
         if (displayId != 0) {
             final MemorySegment mode = SDL_GetDesktopDisplayMode(displayId);
-            if (mode != MemorySegment.NULL) {
+            if (!isNull(mode)) {
                 primaryDisplayDimensions[0] = SDL_DisplayMode.w(mode);
                 primaryDisplayDimensions[1] = SDL_DisplayMode.h(mode);
             }
@@ -443,7 +444,7 @@ public final class SqueakDisplay {
 
     // Called by the main thread at the end of the event loop
     private void performRenderIfNeeded() {
-        if (renderer == MemorySegment.NULL || stagingBuffer == MemorySegment.NULL) {
+        if (isNull(renderer) || isNull(stagingBuffer)) {
             synchronized (this) {
                 frameRequested = false;
             }
@@ -480,14 +481,14 @@ public final class SqueakDisplay {
             }
 
             // Prepare SDL Texture
-            if (textureWidth != width || textureHeight != height || texture == MemorySegment.NULL) {
-                if (texture != MemorySegment.NULL) {
+            if (textureWidth != width || textureHeight != height || isNull(texture)) {
+                if (!isNull(texture)) {
                     SDL_DestroyTexture(texture);
                 }
                 textureWidth = width;
                 textureHeight = height;
                 texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, textureWidth, textureHeight);
-                checkSdlError(texture != null && texture != MemorySegment.NULL);
+                checkSdlError(texture);
                 checkSdlError(SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST));
             }
 
@@ -657,7 +658,7 @@ public final class SqueakDisplay {
 
     @TruffleBoundary
     public void setFullscreen(final boolean fullscreen) {
-        if (window == MemorySegment.NULL) {
+        if (isNull(window)) {
             return;
         }
         SDL_RunOnMainThread(setFullscreenTask, MemorySegment.ofAddress(fullscreen ? 1L : 0L), false);
@@ -685,7 +686,7 @@ public final class SqueakDisplay {
         // Wait for the main thread to finish SDL_Init
         PlatformEventLoop.waitUntilInitialized();
 
-        if (window == MemorySegment.NULL) {
+        if (isNull(window)) {
             final String imageFileName = new File(image.getImagePath()).getName();
             final String title = imageFileName.contains(SqueakLanguageConfig.IMPLEMENTATION_NAME) ? imageFileName
                             : imageFileName + " running on " + SqueakLanguageConfig.IMPLEMENTATION_NAME;
@@ -735,7 +736,7 @@ public final class SqueakDisplay {
             try (Arena arena = Arena.ofConfined()) {
                 final MemorySegment imageBuffer = arena.allocateFrom(ValueLayout.JAVA_BYTE, imageBytes);
                 final MemorySegment ioStream = SDL_IOFromMem(imageBuffer, imageBytes.length);
-                if (ioStream == MemorySegment.NULL) {
+                if (isNull(ioStream)) {
                     warning("SDL_IOFromMem failed: " + getSDLError());
                     return;
                 }
@@ -743,7 +744,7 @@ public final class SqueakDisplay {
                 // Load the PNG directly from the IO stream
                 final MemorySegment iconSurface = SDL_LoadPNG_IO(ioStream, true);
 
-                if (iconSurface != MemorySegment.NULL) {
+                if (!isNull(iconSurface)) {
                     if (!SDL_SetWindowIcon(window, iconSurface)) {
                         warning("SDL_SetWindowIcon failed: " + getSDLError());
                     }
@@ -775,7 +776,7 @@ public final class SqueakDisplay {
         // Save current logical window size in flags for later writing to disk image
         image.flags.setScreenSize(getLogicalWindowWidth(), getLogicalWindowHeight());
 
-        if (window != MemorySegment.NULL) {
+        if (!isNull(window)) {
             SDL_RunOnMainThread(resizeTask, MemorySegment.NULL, true);
         }
 
@@ -784,14 +785,14 @@ public final class SqueakDisplay {
 
     @TruffleBoundary
     public boolean isVisible() {
-        return window != MemorySegment.NULL;
+        return !isNull(window);
     }
 
     @TruffleBoundary
     public void setCursor(final int[] cursorWords, final int[] maskWords, final int width, final int height, final int depth, final int offsetX, final int offsetY) {
         assert depth == 1 || depth == 32 : "Bad cursor depth: " + depth;
         cursorData = new CursorData(cursorWords, maskWords, width, height, depth, offsetX, offsetY);
-        if (window == MemorySegment.NULL) {
+        if (isNull(window)) {
             return;
         }
         SDL_RunOnMainThread(setCursorTask, MemorySegment.NULL, false);
@@ -809,7 +810,7 @@ public final class SqueakDisplay {
                 break;
             case SDL_EVENT_TEXT_INPUT:
                 final MemorySegment textPtr = SDL_TextInputEvent.text(event);
-                if (textPtr != MemorySegment.NULL) {
+                if (!isNull(textPtr)) {
                     processTextInput(textPtr.getString(0));
                 }
                 break;
@@ -839,7 +840,7 @@ public final class SqueakDisplay {
             case SDL_EVENT_DROP_FILE: {
                 // Read the C-string directly from the memory pointer
                 final MemorySegment dataPtr = SDL_DropEvent.data(event);
-                if (dataPtr != MemorySegment.NULL) {
+                if (!isNull(dataPtr)) {
                     dropFilesAccumulator.add(dataPtr.getString(0));
                 }
                 break;
@@ -890,7 +891,7 @@ public final class SqueakDisplay {
                 break;
             case SDL_EVENT_RENDER_TARGETS_RESET, SDL_EVENT_RENDER_DEVICE_RESET:
                 synchronized (this) {
-                    if (texture != MemorySegment.NULL) {
+                    if (!isNull(texture)) {
                         SDL_DestroyTexture(texture);
                         texture = MemorySegment.NULL;
                     }
@@ -1169,7 +1170,7 @@ public final class SqueakDisplay {
 
     @TruffleBoundary
     public void setWindowTitle(final String title) {
-        if (window == MemorySegment.NULL) {
+        if (isNull(window)) {
             warning("Cannot set window title because window is not created yet");
             return;
         }

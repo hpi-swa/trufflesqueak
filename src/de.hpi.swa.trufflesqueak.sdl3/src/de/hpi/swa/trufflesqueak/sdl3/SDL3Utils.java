@@ -31,11 +31,15 @@ public final class SDL3Utils {
         return value;
     }
 
-    public static MemorySegment checkSdlError(final MemorySegment value) {
-        if (value == null || value == MemorySegment.NULL) {
+    public static MemorySegment checkSdlError(final MemorySegment segment) {
+        if (segment == null || isNull(segment)) {
             throw new IllegalStateException(getSDLError());
         }
-        return value;
+        return segment;
+    }
+
+    public static boolean isNull(final MemorySegment segment) {
+        return segment.address() == 0;
     }
 
     /** Cannot use TruffleLogger on main thread. */
