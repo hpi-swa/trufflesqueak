@@ -7,6 +7,7 @@
 package de.hpi.swa.trufflesqueak.model.layout;
 
 import java.util.Arrays;
+import java.util.BitSet;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
@@ -129,51 +130,27 @@ public final class ObjectLayout {
         return maxPrimitiveField;
     }
 
-    private static int getHighestObjectField(final SlotLocation[] locations) {
-        int maxPrimitiveField = -1;
-        for (final SlotLocation location : locations) {
-            if (location.isGeneric()) {
-                maxPrimitiveField = Math.max(location.getFieldIndex(), maxPrimitiveField);
-            }
-        }
-        return maxPrimitiveField;
-    }
-
     private static boolean slotLocationsAreConsecutive(final SlotLocation[] locations) {
         CompilerAsserts.neverPartOfCompilation();
-        final int maxPrimitiveField = getHighestPrimitiveField(locations);
-        final int maxObjectField = getHighestObjectField(locations);
-        for (int i = 0; i <= maxPrimitiveField; i++) {
-            boolean found = false;
-            for (final SlotLocation location : locations) {
-                if (location.isPrimitive() && location.getFieldIndex() == i) {
-                    if (found) {
-                        return false;
-                    } else {
-                        found = true;
-                    }
-                }
+        final BitSet primitiveFields = new BitSet();
+        final BitSet objectFields = new BitSet();
+        for (final SlotLocation location : locations) {
+            final BitSet fields;
+            if (location.isPrimitive()) {
+                fields = primitiveFields;
+            } else if (location.isGeneric()) {
+                fields = objectFields;
+            } else {
+                continue;
             }
-            if (!found) {
+            final int fieldIndex = location.getFieldIndex();
+            if (fields.get(fieldIndex)) {
                 return false;
             }
+            fields.set(fieldIndex);
         }
-        for (int i = 0; i <= maxObjectField; i++) {
-            boolean found = false;
-            for (final SlotLocation location : locations) {
-                if (location.isGeneric() && location.getFieldIndex() == i) {
-                    if (found) {
-                        return false;
-                    } else {
-                        found = true;
-                    }
-                }
-            }
-            if (!found) {
-                return false;
-            }
-        }
-        return true;
+        // A gap puts the first clear bit below the highest set bit.
+        return primitiveFields.nextClearBit(0) == primitiveFields.length() && objectFields.nextClearBit(0) == objectFields.length();
     }
 
     private static boolean inUse(final SlotLocation[] locations, final SlotLocation targetlocation) {
