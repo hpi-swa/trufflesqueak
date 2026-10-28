@@ -507,6 +507,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primMontgomeryTimesModulo")
     protected abstract static class PrimMontgomeryTimesModuloNode extends AbstractArithmeticPrimitiveNode implements Primitive3 {
+        /* Words and their 64-bit products are unsigned, even when their Java values are negative. */
         private static final long LONG_MASK = 0xFFFFFFFFL;
 
         /*
@@ -521,7 +522,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             final long u = accum3 * mInv & LONG_MASK;
             final long accum2 = u * m;
             long accum = (accum2 & LONG_MASK) + (accum3 & LONG_MASK);
-            accum = (accum >> 32) + (accum2 >> 32) + (accum3 >> 32);
+            accum = (accum >>> 32) + (accum2 >>> 32) + (accum3 >>> 32);
             long result = accum & LONG_MASK;
             if (!(accum >> 32 == 0 && result < m)) {
                 result = result - m & LONG_MASK;
@@ -551,6 +552,9 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             if (thirdLen == 0 || firstLen > thirdLen || secondLen > thirdLen) {
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
+            if (firstLen == 0 || secondLen == 0) {
+                return 0L;
+            }
             final int limit1 = firstLen - 1;
             final int limit2 = secondLen - 1;
             final int limit3 = thirdLen - 1;
@@ -565,20 +569,20 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
                 final long u = accum3 * mInv & LONG_MASK;
                 accum2 = u * (thirdInts[0] & LONG_MASK);
                 accum = (accum2 & LONG_MASK) + (accum3 & LONG_MASK);
-                accum = (accum >> 32) + (accum2 >> 32) + (accum3 >> 32 & LONG_MASK);
+                accum = (accum >>> 32) + (accum2 >>> 32) + (accum3 >>> 32);
                 for (int k = 1; k <= limit2; k++) {
                     accum3 = firstInts[i] & LONG_MASK;
                     accum3 = accum3 * (secondInts[k] & LONG_MASK) + (result[k] & LONG_MASK);
                     accum2 = u * (thirdInts[k] & LONG_MASK);
                     accum = accum + (accum2 & LONG_MASK) + (accum3 & LONG_MASK);
                     result[k - 1] = (int) (accum & LONG_MASK);
-                    accum = (accum >> 32) + (accum2 >> 32) + (accum3 >> 32 & LONG_MASK);
+                    accum = (accum >>> 32) + (accum2 >>> 32) + (accum3 >>> 32);
                 }
                 for (int k = secondLen; k <= limit3; k++) {
                     accum2 = u * (thirdInts[k] & LONG_MASK);
                     accum = accum + (result[k] & LONG_MASK) + (accum2 & LONG_MASK);
                     result[k - 1] = (int) (accum & LONG_MASK);
-                    accum = (accum >> 32) + (accum2 >> 32) & LONG_MASK;
+                    accum = (accum >>> 32) + (accum2 >>> 32);
                 }
                 accum += lastDigit;
                 result[limit3] = (int) (accum & LONG_MASK);
@@ -588,12 +592,12 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
                 accum = result[0] & LONG_MASK;
                 final long u = accum * mInv & LONG_MASK;
                 accum += u * (thirdInts[0] & LONG_MASK);
-                accum = accum >> 32;
+                accum = accum >>> 32;
                 for (int k = 1; k <= limit3; k++) {
                     accum2 = u * (thirdInts[k] & LONG_MASK);
                     accum = accum + (result[k] & LONG_MASK) + (accum2 & LONG_MASK);
                     result[k - 1] = (int) (accum & LONG_MASK);
-                    accum = (accum >> 32) + (accum2 >> 32) & LONG_MASK;
+                    accum = (accum >>> 32) + (accum2 >>> 32);
                 }
                 accum += lastDigit;
                 result[limit3] = (int) (accum & LONG_MASK);
@@ -602,9 +606,10 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             if (!(lastDigit == 0 && cDigitComparewithlen(thirdInts, result, thirdLen) == 1)) {
                 accum = 0;
                 for (int i = 0; i <= limit3; i++) {
-                    accum = accum + result[i] - (thirdInts[i] & LONG_MASK);
+                    accum = accum + (result[i] & LONG_MASK) - (thirdInts[i] & LONG_MASK);
                     result[i] = (int) (accum & LONG_MASK);
-                    accum = -(accum >> 63);
+                    /* Propagate a borrow as -1 to the next unsigned word. */
+                    accum >>= 32;
                 }
             }
             return normalize(image, UnsafeUtils.toBytes(result), false);
@@ -616,11 +621,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             int index = len - 1;
             while (index >= 0) {
                 if ((secondDigit = second[index]) != (firstDigit = first[index])) {
-                    if (secondDigit < firstDigit) {
-                        return 1;
-                    } else {
-                        return -1;
-                    }
+                    return Integer.compareUnsigned(firstDigit, secondDigit);
                 }
                 --index;
             }
