@@ -636,21 +636,12 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             @Specialization
             protected static final void doVariablePointers(final Node node, final VariablePointersObject rcvr, final long start, final long stop, final VariablePointersObject repl,
                             final long replStart,
-                            @Exclusive @Cached final AbstractPointersObjectInstSizeNode rcvrInstSizeNode,
-                            @Exclusive @Cached final AbstractPointersObjectInstSizeNode replInstSizeNode,
-                            @Cached final VariablePointersObjectReadNode readNode,
-                            @Exclusive @Cached final VariablePointersObjectWriteNode writeNode,
                             @Exclusive @Cached final InlinedBranchProfile errorProfile) {
-                final int rcvrInstSize = rcvrInstSizeNode.execute(node, rcvr);
-                final int replInstSize = replInstSizeNode.execute(node, repl);
-                if (!inBounds(rcvrInstSize, rcvrInstSize + rcvr.getVariablePartSize(), start, stop, replInstSize, replInstSize + repl.getVariablePartSize(), replStart)) {
+                if (!inBounds(rcvr.getVariablePartSize(), start, stop, repl.getVariablePartSize(), replStart)) {
                     errorProfile.enter(node);
                     throw PrimitiveFailed.BAD_INDEX;
                 }
-                final long repOff = replStart - start;
-                for (long i = start - 1; i < stop; i++) {
-                    writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
-                }
+                System.arraycopy(repl.getVariablePart(), (int) (replStart - 1), rcvr.getVariablePart(), (int) (start - 1), (int) (1 + stop - start));
             }
 
             @Specialization
