@@ -229,6 +229,7 @@ public final class ObjectGraphUtils {
         AbstractSqueakObject result = currentObject; // first object
         boolean foundObject = false;
         while (currentObject != null) {
+            marked.add(currentObject);
             if (foundObject) {
                 result = currentObject;
                 // Unmark marked objects
@@ -237,7 +238,6 @@ public final class ObjectGraphUtils {
                 image.toggleCurrentMarkingFlag();
                 break;
             }
-            marked.add(currentObject);
             if (currentObject == targetObject) {
                 foundObject = true;
             }
