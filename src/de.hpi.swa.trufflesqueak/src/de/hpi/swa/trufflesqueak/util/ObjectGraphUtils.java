@@ -80,11 +80,14 @@ public final class ObjectGraphUtils {
                     UnmodifiableEconomicMap<Object, Object> fromToMap) implements Runnable {
         public void run() {
             final ObjectTracer tracer = roots.copyEmpty();
+            final boolean needsBecome = !fromToMap.isEmpty();
             AbstractSqueakObjectWithHash root;
             while ((root = roots.getNextWithLock()) != null) {
                 AbstractSqueakObjectWithHash currentObject = root;
                 do {
-                    currentObject.pointersBecomeOneWay(fromToMap);
+                    if (needsBecome) {
+                        currentObject.pointersBecomeOneWay(fromToMap);
+                    }
                     objects.add(currentObject);
                     tracer.tracePointers(currentObject);
                 } while ((currentObject = tracer.getNext()) != null);
@@ -135,11 +138,14 @@ public final class ObjectGraphUtils {
         public void run() {
             final ObjectTracer tracer = roots.copyEmpty();
             final SqueakImageContext image = tracer.image;
+            final boolean needsBecome = !fromToMap.isEmpty();
             AbstractSqueakObjectWithHash root;
             while ((root = roots.getNextWithLock()) != null) {
                 AbstractSqueakObjectWithHash currentObject = root;
                 do {
-                    currentObject.pointersBecomeOneWay(fromToMap);
+                    if (needsBecome) {
+                        currentObject.pointersBecomeOneWay(fromToMap);
+                    }
                     if (targetClass == currentObject.getSqueakClass(image)) {
                         objects.add(currentObject);
                     }
