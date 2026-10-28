@@ -23,11 +23,16 @@ import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
+import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.model.VariablePointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.METHOD_DICT;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
@@ -323,9 +328,32 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
         }
     }
 
-    // TODO: testSingleExtendedSend()
-    // TODO: testDoubleExtendedSendSelf()
-    // TODO: testDoubleExtendedSingleExtendedSend()
+    @Test
+    public void testSingleExtendedSend() {
+        for (int numArgs = 0; numArgs <= 7; numArgs++) {
+            for (final int selectorIndex : new int[]{0, 31}) {
+                assertSend(numArgs, selectorIndex, 131, numArgs << 5 | selectorIndex);
+            }
+        }
+    }
+
+    @Test
+    public void testDoubleExtendedSendSelf() {
+        for (int numArgs = 0; numArgs <= 15; numArgs++) {
+            for (final int selectorIndex : new int[]{0, 255}) {
+                assertSend(numArgs, selectorIndex, 132, numArgs, selectorIndex);
+            }
+        }
+    }
+
+    @Test
+    public void testSecondExtendedSend() {
+        for (int numArgs = 0; numArgs <= 3; numArgs++) {
+            for (final int selectorIndex : new int[]{0, 63}) {
+                assertSend(numArgs, selectorIndex, 134, numArgs << 6 | selectorIndex);
+            }
+        }
+    }
 
     @Test
     public void testDoubleExtendedPushReceiverVariables() {
@@ -435,7 +463,16 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
         assertSame(BooleanObject.TRUE, runMethod(1L, 113, 136, 136, 135, 135, 124));
     }
 
-    // TODO: testPushActiveContext()
+    @Test
+    public void testPushActiveContext() {
+        final Object receiver = image.specialObjectsArray;
+        final CompiledCodeObject method = makeMethod(makeHeaderWord(0, 0, 2, false, false), new Object[0], 137, 124);
+        final ContextObject result = (ContextObject) runMethod(method, receiver);
+        assertSame(method, result.getCodeObject());
+        assertSame(receiver, result.getReceiver());
+        assertSame(NilObject.SINGLETON, result.getSender());
+        assertTrue(result.isDead());
+    }
 
     @Test
     public void testPushNewArray() {
@@ -622,7 +659,67 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
     }
 
     // TODO: testSendSelector()
-    // TODO: testSend()
+
+    @Test
+    public void testSend() {
+        for (int numArgs = 0; numArgs <= 2; numArgs++) {
+            for (int selectorIndex = 0; selectorIndex < 16; selectorIndex++) {
+                assertSend(numArgs, selectorIndex, 208 + (numArgs << 4) + selectorIndex);
+            }
+        }
+    }
+
+    private static void assertSend(final int numArgs, final int selectorIndex, final int... sendBytecodes) {
+        final NativeObject selector = NativeObject.newNativeBytes(image.getByteSymbolClass(), new byte[]{'t', 'e', 's', 't'});
+        final ClassObject receiverClass = new ClassObject(image, image.metaClass, 0);
+        receiverClass.setFormat(0);
+        final PointersObject receiver = new PointersObject(receiverClass);
+
+        // Return an array containing the receiver followed by every argument, in order.
+        final int[] calleeBytecodes = new int[numArgs + 4];
+        calleeBytecodes[0] = 112;
+        for (int i = 0; i < numArgs; i++) {
+            calleeBytecodes[i + 1] = 16 + i;
+        }
+        calleeBytecodes[numArgs + 1] = 138;
+        calleeBytecodes[numArgs + 2] = 128 + numArgs + 1;
+        calleeBytecodes[numArgs + 3] = 124;
+        final CompiledCodeObject callee = makeMethod(makeHeaderWord(numArgs, numArgs, 2, false, true), new Object[0], calleeBytecodes);
+        final ClassObject methodDictClass = new ClassObject(image, image.metaClass, 0);
+        methodDictClass.setFormat(METHOD_DICT.NAMES);
+        final VariablePointersObject methodDict = new VariablePointersObject(methodDictClass, methodDictClass.getLayout(), 2);
+        final int index = selector.getSqueakHashInt() & 1;
+        methodDict.putIntoVariablePart(index, selector);
+        final Object[] methods = createDummyLiterals(2);
+        methods[index] = callee;
+        methodDict.instVarAtPut0Slow(METHOD_DICT.VALUES, image.asArrayOfObjects(methods));
+        receiverClass.setMethodDict(methodDict);
+
+        // Keep a value below the send operands to check that the send preserves the stack.
+        final int[] callerBytecodes = new int[numArgs + sendBytecodes.length + 5];
+        callerBytecodes[0] = 114;
+        callerBytecodes[1] = 112;
+        for (int i = 0; i < numArgs; i++) {
+            callerBytecodes[i + 2] = 16 + i;
+        }
+        System.arraycopy(sendBytecodes, 0, callerBytecodes, numArgs + 2, sendBytecodes.length);
+        callerBytecodes[callerBytecodes.length - 3] = 138;
+        callerBytecodes[callerBytecodes.length - 2] = 130;
+        callerBytecodes[callerBytecodes.length - 1] = 124;
+        final Object[] literals = createDummyLiterals(selectorIndex + 1);
+        literals[selectorIndex] = selector;
+        final CompiledCodeObject caller = makeMethod(makeHeaderWord(numArgs, numArgs, literals.length + 2, false, true), literals, callerBytecodes);
+        final Object[] arguments = getTestObjects(numArgs);
+        final ArrayObject result = (ArrayObject) runMethod(caller, receiver, arguments);
+        assertEquals(2, result.size());
+        assertSame(BooleanObject.FALSE, result.getObject(0));
+        final ArrayObject sendResult = (ArrayObject) result.getObject(1);
+        assertEquals(numArgs + 1, sendResult.size());
+        assertSame(receiver, sendResult.getObject(0));
+        for (int i = 0; i < numArgs; i++) {
+            assertSame(arguments[i], sendResult.getObject(i + 1));
+        }
+    }
 
     private static Object[] createDummyLiterals(final int numLiterals) {
         return ArrayUtils.withAll(numLiterals, NilObject.SINGLETON);
