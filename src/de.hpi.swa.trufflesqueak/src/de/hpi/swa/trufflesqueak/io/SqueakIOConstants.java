@@ -6,20 +6,12 @@
  */
 package de.hpi.swa.trufflesqueak.io;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-
 public final class SqueakIOConstants {
 
     public static final int CURSOR_WIDTH = 16;
     public static final int CURSOR_HEIGHT = 16;
 
     public static final int EVENT_SIZE = 8;
-
-    /*
-     * All zeros. Since it does not escape EventSensor>>#fetchMoreEvents, there is no need to
-     * allocate individual `long[]` arrays to signal no event (reduces memory pressure).
-     */
-    @CompilationFinal(dimensions = 1) public static final long[] NONE_EVENT = new long[EVENT_SIZE];
 
     public enum MOUSE_EVENT {
         DOWN,

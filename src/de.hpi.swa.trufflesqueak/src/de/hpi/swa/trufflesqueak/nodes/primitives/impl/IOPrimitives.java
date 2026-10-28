@@ -111,9 +111,9 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             final SqueakDisplay display = getContext().getDisplay();
             if (display != null) {
                 final long[] event = display.getNextEvent();
-                targetArray.setStorage(event != null ? event : SqueakIOConstants.NONE_EVENT);
+                targetArray.setStorage(event != null ? event : new long[SqueakIOConstants.EVENT_SIZE]);
             } else {
-                targetArray.setStorage(SqueakIOConstants.NONE_EVENT);
+                targetArray.setStorage(new long[SqueakIOConstants.EVENT_SIZE]);
             }
             return eventSensor;
         }

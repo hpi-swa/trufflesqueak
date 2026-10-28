@@ -6,6 +6,7 @@
  */
 package de.hpi.swa.trufflesqueak.test;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
@@ -17,10 +18,13 @@ import java.math.BigInteger;
 import org.junit.Test;
 
 import de.hpi.swa.trufflesqueak.interop.WrapToSqueakNode;
+import de.hpi.swa.trufflesqueak.io.SqueakIOConstants;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
 
 @SuppressWarnings("static-method")
@@ -30,6 +34,24 @@ public final class SqueakPrimitiveTest extends AbstractSqueakTestCaseWithDummyIm
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
         assertTrue((boolean) runPrimitive(110, rcvr, rcvr));
         assertFalse((boolean) runPrimitive(110, rcvr, NilObject.SINGLETON));
+    }
+
+    @Test
+    public void testPrimGetNextEventDoesNotShareEmptyBuffers() {
+        final ArrayObject first = ArrayObject.createEmptyStrategy(image.arrayClass, SqueakIOConstants.EVENT_SIZE);
+        final ArrayObject second = ArrayObject.createEmptyStrategy(image.arrayClass, SqueakIOConstants.EVENT_SIZE);
+        assertSame(nilClassBinding, runPrimitive(94, nilClassBinding, first));
+        first.getLongStorage()[0] = 12345L;
+
+        assertSame(nilClassBinding, runPrimitive(94, nilClassBinding, second));
+        assertArrayEquals(new long[SqueakIOConstants.EVENT_SIZE], second.getLongStorage());
+        second.getLongStorage()[1] = 67890L;
+        assertEquals(0L, first.getLongStorage()[1]);
+        assertEquals(12345L, first.getLongStorage()[0]);
+
+        runPrimitive(94, nilClassBinding, first);
+        assertArrayEquals(new long[SqueakIOConstants.EVENT_SIZE], first.getLongStorage());
+        assertEquals(67890L, second.getLongStorage()[1]);
     }
 
     @Test
