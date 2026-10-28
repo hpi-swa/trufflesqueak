@@ -272,9 +272,6 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                     storeStateInReceiver(pointersWriteNode, receiver, scanDestX, scanLastIndex);
                     return stopReason;
                 }
-                if (arraySizeNode.execute(node, scanMap) <= ascii) {
-                    throw PrimitiveFailed.andTransferToInterpreter();
-                }
                 final long glyphIndex = (long) arrayReadNode.execute(node, scanMap, ascii);
                 if (glyphIndex < 0 || glyphIndex > maxGlyph) {
                     throw PrimitiveFailed.andTransferToInterpreter();
