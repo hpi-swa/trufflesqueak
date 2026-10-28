@@ -82,14 +82,14 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             }
             final int firstDigitIndex = ((int) start - 1) / 8 + 1;
             final int lastDigitIndex = ((int) stop - 1) / 8 + 1;
-            final int rightShift = -(((int) start - 1) % 8);
-            final int leftShift = 7 - ((int) stop - 1) % 8;
+            final int firstMask = 0xFF << ((int) start - 1) % 8 & 0xFF;
+            final int lastMask = 0xFF >>> (7 - ((int) stop - 1) % 8);
             if (firstAndLastDigitIndexIdenticalProfile.profile(node, firstDigitIndex == lastDigitIndex)) {
-                final int mask = 0xFF >> rightShift & 0xFF >> leftShift;
+                final int mask = firstMask & lastMask;
                 final byte digit = digitOf(receiver, firstDigitIndex - 1);
                 return BooleanObject.wrap((digit & mask) != 0);
             } else {
-                if (digitOf(receiver, firstDigitIndex - 1) << rightShift != 0) {
+                if ((digitOf(receiver, firstDigitIndex - 1) & firstMask) != 0) {
                     firstDigitNonZeroProfile.enter(node);
                     return BooleanObject.TRUE;
                 }
@@ -100,7 +100,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
                     }
                 }
                 lastDigitProfile.enter(node);
-                return BooleanObject.wrap((digitOf(receiver, lastDigitIndex - 1) << leftShift & 0xFF) != 0);
+                return BooleanObject.wrap((digitOf(receiver, lastDigitIndex - 1) & lastMask) != 0);
             }
         }
 
@@ -134,14 +134,14 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             final byte[] bytes = receiver.getByteStorage();
             final int firstDigitIndex = ((int) start - 1) / 8 + 1;
             final int lastDigitIndex = ((int) stop - 1) / 8 + 1;
-            final int rightShift = -(((int) start - 1) % 8);
-            final int leftShift = 7 - ((int) stop - 1) % 8;
+            final int firstMask = 0xFF << ((int) start - 1) % 8 & 0xFF;
+            final int lastMask = 0xFF >>> (7 - ((int) stop - 1) % 8);
             if (firstAndLastDigitIndexIdenticalProfile.profile(node, firstDigitIndex == lastDigitIndex)) {
-                final int mask = 0xFF >> rightShift & 0xFF >> leftShift;
+                final int mask = firstMask & lastMask;
                 final byte digit = bytes[firstDigitIndex - 1];
                 return BooleanObject.wrap((digit & mask) != 0);
             } else {
-                if (bytes[firstDigitIndex - 1] << rightShift != 0) {
+                if ((bytes[firstDigitIndex - 1] & firstMask) != 0) {
                     firstDigitNonZeroProfile.enter(node);
                     return BooleanObject.TRUE;
                 }
@@ -152,7 +152,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
                     }
                 }
                 lastDigitProfile.enter(node);
-                return BooleanObject.wrap((bytes[lastDigitIndex - 1] << leftShift & 0xFF) != 0);
+                return BooleanObject.wrap((bytes[lastDigitIndex - 1] & lastMask) != 0);
             }
         }
 

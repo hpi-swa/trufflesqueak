@@ -16,12 +16,82 @@ import org.junit.Test;
 
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
+import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 
 @SuppressWarnings("static-method")
 public final class LargeIntegersTest extends AbstractSqueakTestCaseWithDummyImage {
     private static final BigInteger WORD_BASE = BigInteger.ONE.shiftLeft(Integer.SIZE);
+
+    @Test
+    public void testAnyBitFromToRegressions() {
+        final long[][] cases = {{4, 3, 3}, {513, 2, 9}, {769, 2, 9}, {0x8001, 2, 15}, {0x800001, 2, 23}, {0x0180, 8, 9}};
+        final Primitive2 longs = newAnyBitFromToNode();
+        final Primitive2 smallNative = newAnyBitFromToNode();
+        final Primitive2 largeNative = newAnyBitFromToNode();
+        for (final long[] values : cases) {
+            final BigInteger value = BigInteger.valueOf(values[0]);
+            assertAnyBitFromTo(longs, value, values[0], values[1], values[2]);
+            assertAnyBitFromTo(smallNative, value, operand(value, true), values[1], values[2]);
+            final BigInteger largeValue = value.setBit(80);
+            assertAnyBitFromTo(largeNative, largeValue, operand(largeValue, true), values[1], values[2]);
+        }
+    }
+
+    @Test
+    public void testAnyBitFromToAllByteRanges() {
+        final Primitive2 longs = newAnyBitFromToNode();
+        final Primitive2 smallNative = newAnyBitFromToNode();
+        final Primitive2 largeNative = newAnyBitFromToNode();
+        for (int digit = 0; digit <= 0xFF; digit++) {
+            final BigInteger value = BigInteger.valueOf(digit);
+            final BigInteger smallValue = value.setBit(40);
+            final BigInteger largeValue = value.setBit(80);
+            final Object smallReceiver = operand(smallValue, true);
+            final Object largeReceiver = operand(largeValue, true);
+            for (long start = 1; start <= Byte.SIZE; start++) {
+                for (long stop = 1; stop <= Byte.SIZE; stop++) {
+                    assertAnyBitFromTo(longs, value, (long) digit, start, stop);
+                    assertAnyBitFromTo(smallNative, smallValue, smallReceiver, start, stop);
+                    assertAnyBitFromTo(largeNative, largeValue, largeReceiver, start, stop);
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testAnyBitFromToRandomRanges() {
+        final Random random = new Random(44);
+        final Primitive2 longs = newAnyBitFromToNode();
+        final Primitive2 smallNative = newAnyBitFromToNode();
+        final Primitive2 largeNative = newAnyBitFromToNode();
+        for (int i = 0; i < 1000; i++) {
+            final BigInteger value = BigInteger.valueOf(random.nextLong(1, Long.MAX_VALUE));
+            final BigInteger largeValue = new BigInteger(256, random).setBit(255);
+            final long start = random.nextLong(1, 301);
+            final long stop = random.nextLong(start, 302);
+            assertAnyBitFromTo(longs, value, value.longValue(), start, stop);
+            assertAnyBitFromTo(smallNative, value, operand(value, true), start, stop);
+            assertAnyBitFromTo(largeNative, largeValue, operand(largeValue, true), start, stop);
+        }
+    }
+
+    @Test
+    public void testAnyBitFromToBoundsAndRespecialization() {
+        final Primitive2 primitive = newAnyBitFromToNode();
+        for (final BigInteger value : new BigInteger[]{BigInteger.valueOf(4), BigInteger.ONE.shiftLeft(63), BigInteger.ONE.shiftLeft(80).add(BigInteger.valueOf(4)), BigInteger.valueOf(4)}) {
+            final Object receiver = operand(value, true);
+            for (final long[] range : new long[][]{{3, 3}, {1, Long.MAX_VALUE}, {63, 64}, {80, 81}, {9, 8}, {Long.MAX_VALUE, Long.MAX_VALUE}}) {
+                assertAnyBitFromTo(primitive, value, receiver, range[0], range[1]);
+            }
+        }
+        final Object zero = NativeObject.newNativeBytes(image.largePositiveIntegerClass, new byte[Long.BYTES]);
+        assertAnyBitFromTo(primitive, BigInteger.ZERO, zero, 1, Long.MAX_VALUE);
+        assertAnyBitFromTo(primitive, BigInteger.ZERO, 0L, 1, Long.MAX_VALUE);
+        assertAnyBitFromTo(primitive, BigInteger.valueOf(Long.MAX_VALUE), Long.MAX_VALUE, 63, Long.MAX_VALUE);
+    }
 
     @Test
     public void testMontgomeryUnsignedWords() {
@@ -96,12 +166,31 @@ public final class LargeIntegersTest extends AbstractSqueakTestCaseWithDummyImag
     }
 
     private static Primitive3 newMontgomeryNode() {
-        return (Primitive3) new LargeIntegers().getFactories().stream().filter(factory -> Arrays.asList(factory.getNodeClass().getAnnotation(SqueakPrimitive.class).names()).contains(
-                        "primMontgomeryTimesModulo")).findFirst().orElseThrow().createNode();
+        return (Primitive3) newPrimitive("primMontgomeryTimesModulo");
+    }
+
+    private static Primitive2 newAnyBitFromToNode() {
+        return (Primitive2) newPrimitive("primAnyBitFromTo");
+    }
+
+    private static AbstractPrimitiveNode newPrimitive(final String name) {
+        return new LargeIntegers().getFactories().stream().filter(factory -> Arrays.asList(factory.getNodeClass().getAnnotation(SqueakPrimitive.class).names()).contains(
+                        name)).findFirst().orElseThrow().createNode();
     }
 
     private static Object operand(final BigInteger value, final boolean nativeObject) {
         return nativeObject ? LargeIntegers.toNativeObject(image, value) : LargeIntegers.normalize(image, value);
+    }
+
+    private static void assertAnyBitFromTo(final Primitive2 primitive, final BigInteger value, final Object receiver, final long start, final long stop) {
+        boolean expected = false;
+        for (long bit = start; bit <= Math.min(stop, value.bitLength()); bit++) {
+            if (value.testBit((int) bit - 1)) {
+                expected = true;
+                break;
+            }
+        }
+        assertEquals("Any bit of " + value + " from " + start + " to " + stop, expected, primitive.execute(null, receiver, start, stop));
     }
 
     private static void assertMontgomery(final Primitive3 primitive, final BigInteger first, final BigInteger second, final BigInteger modulus,
