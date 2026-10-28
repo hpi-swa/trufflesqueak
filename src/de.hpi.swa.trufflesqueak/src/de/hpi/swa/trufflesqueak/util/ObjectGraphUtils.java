@@ -194,7 +194,7 @@ public final class ObjectGraphUtils {
     @TruffleBoundary
     public AbstractSqueakObject someInstanceOf(final ClassObject targetClass) {
         final long startTime = System.nanoTime();
-        final ArrayDeque<AbstractSqueakObjectWithHash> marked = new ArrayDeque<>(lastSeenObjects / 2);
+        final ArrayDeque<AbstractSqueakObjectWithHash> marked = new ArrayDeque<>();
         final ObjectTracer tracer = ObjectTracer.fromRoots(image, true, FrameHandling.SCAN);
         AbstractSqueakObject result = NilObject.SINGLETON;
         AbstractSqueakObjectWithHash currentObject;
@@ -223,7 +223,7 @@ public final class ObjectGraphUtils {
         // of all live objects and a parallel search is likely to produce a different result
         // each time it is called.
         final long startTime = System.nanoTime();
-        final ArrayDeque<AbstractSqueakObjectWithHash> marked = new ArrayDeque<>(lastSeenObjects / 2);
+        final ArrayDeque<AbstractSqueakObjectWithHash> marked = new ArrayDeque<>();
         final ObjectTracer tracer = ObjectTracer.fromRoots(image, true, FrameHandling.SCAN);
         AbstractSqueakObjectWithHash currentObject = tracer.getNext();
         AbstractSqueakObject result = currentObject; // first object
