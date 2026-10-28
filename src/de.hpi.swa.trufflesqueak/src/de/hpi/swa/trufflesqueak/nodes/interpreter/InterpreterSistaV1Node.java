@@ -78,8 +78,8 @@ import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
-    public InterpreterSistaV1Node(final CompiledCodeObject code) {
-        super(code);
+    public InterpreterSistaV1Node(final SqueakImageContext image, final CompiledCodeObject code) {
+        super(image, code);
     }
 
     public InterpreterSistaV1Node(final InterpreterSistaV1Node original) {
@@ -179,9 +179,8 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     }
 
     @Override
-    protected boolean processBytecode(final int startPC, final int endPC) {
+    protected boolean processBytecode(final SqueakImageContext image, final int startPC, final int endPC) {
         final byte[] bc = code.getBytes();
-        final SqueakImageContext image = SqueakImageContext.getSlow();
         boolean hasPotentialContextIVStore = false;
 
         int pc = startPC;

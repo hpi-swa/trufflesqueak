@@ -21,7 +21,7 @@ public abstract class AbstractRootNode extends RootNode {
 
     protected AbstractRootNode(final SqueakImageContext image, final CompiledCodeObject code) {
         super(image.getLanguage(), code.getFrameDescriptor());
-        interpreterNode = code.getHasV3PlusClosuresBytecodes() ? new InterpreterV3PlusClosuresNode(code) : new InterpreterSistaV1Node(code);
+        interpreterNode = code.getHasV3PlusClosuresBytecodes() ? new InterpreterV3PlusClosuresNode(image, code) : new InterpreterSistaV1Node(image, code);
     }
 
     protected AbstractRootNode(final AbstractRootNode original) {

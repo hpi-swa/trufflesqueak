@@ -83,14 +83,14 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     @CompilationFinal private Object osrMetadata;
 
     @SuppressWarnings("this-escape")
-    public AbstractInterpreterNode(final CompiledCodeObject code) {
+    public AbstractInterpreterNode(final SqueakImageContext image, final CompiledCodeObject code) {
         this.code = code;
         isBlock = code.isCompiledBlock() || code.isShadowBlock();
         final int startPC = code.getStartPCZeroBased();
         final int endPC = code.getMaxPCZeroBased();
         data = new Object[endPC];
         profiles = new byte[endPC];
-        final boolean hasPotentialContextIVStore = processBytecode(startPC, endPC);
+        final boolean hasPotentialContextIVStore = processBytecode(image, startPC, endPC);
         modifiesContext = couldMutateContextVariables(hasPotentialContextIVStore);
     }
 
@@ -104,12 +104,12 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         final int endPC = code.getMaxPCZeroBased();
         data = new Object[endPC];
         profiles = new byte[endPC];
-        final boolean hasPotentialContextIVStore = processBytecode(startPC, endPC);
+        final boolean hasPotentialContextIVStore = processBytecode(SqueakImageContext.get(original), startPC, endPC);
         modifiesContext = couldMutateContextVariables(hasPotentialContextIVStore);
         osrMetadata = null;
     }
 
-    protected abstract boolean processBytecode(int startPC, int endPC);
+    protected abstract boolean processBytecode(SqueakImageContext image, int startPC, int endPC);
 
     @Override
     public abstract Object execute(VirtualFrame frame, int startPC, int startSP);

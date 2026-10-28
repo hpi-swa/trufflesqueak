@@ -62,8 +62,8 @@ import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode {
-    public InterpreterV3PlusClosuresNode(final CompiledCodeObject code) {
-        super(code);
+    public InterpreterV3PlusClosuresNode(final SqueakImageContext image, final CompiledCodeObject code) {
+        super(image, code);
     }
 
     public InterpreterV3PlusClosuresNode(final InterpreterV3PlusClosuresNode original) {
@@ -71,9 +71,8 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
     }
 
     @Override
-    protected boolean processBytecode(final int startPC, final int endPC) {
+    protected boolean processBytecode(final SqueakImageContext image, final int startPC, final int endPC) {
         final byte[] bc = code.getBytes();
-        final SqueakImageContext image = SqueakImageContext.getSlow();
         boolean hasPotentialContextIVStore = false;
 
         int pc = startPC;
