@@ -233,7 +233,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveConvert8BitSigned")
     public abstract static class PrimConvert8BitSignedNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
-        @Specialization(guards = {"aByteArray.isByteType()", "aSoundBuffer.isIntType()", "aByteArrayLength > aSoundBuffer.getIntLength()"})
+        @Specialization(guards = {"aByteArray.isByteType()", "aSoundBuffer.isIntType()", "hasCapacity(aByteArrayLength, aSoundBuffer)"})
         protected static final Object doConvert(final Object receiver, final NativeObject aByteArray, final NativeObject aSoundBuffer,
                         @Bind("aByteArray.getByteLength()") final int aByteArrayLength) {
             for (int i = 0; i < aByteArrayLength; i++) {
@@ -248,6 +248,10 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                 aSoundBuffer.setInt(wordIndex, intValue);
             }
             return receiver;
+        }
+
+        protected static final boolean hasCapacity(final int byteArrayLength, final NativeObject soundBuffer) {
+            return byteArrayLength <= 2L * soundBuffer.getIntLength();
         }
     }
 
