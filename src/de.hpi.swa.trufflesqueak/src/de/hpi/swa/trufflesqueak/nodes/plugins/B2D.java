@@ -3799,7 +3799,9 @@ public final class B2D {
 
     /* BalloonEngineBase>>#loadPoint:from: */
     private void loadPointfrom(final int pointIndex, final PointersObject pointOop) {
-        assert SqueakImageContext.getSlow().isPoint(pointOop) : "Not a point (VMMaker code lets primitive fail)";
+        if (!image.isPoint(pointOop)) {
+            throw PrimitiveFailed.andTransferToInterpreter();
+        }
         pointSetX(pointIndex, toInt(fetchObjectofObject(0, pointOop)));
         pointSetY(pointIndex, toInt(fetchObjectofObject(1, pointOop)));
     }
