@@ -106,4 +106,24 @@ public final class SqueakPrimitiveTest extends AbstractSqueakTestCaseWithDummyIm
                         String.valueOf(runPrimitive(22, WrapToSqueakNode.executeUncached(LargeIntegers.toNativeObject(image, BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE))),
                                         WrapToSqueakNode.executeUncached(1L))));
     }
+
+    @Test
+    public void testBitShiftLongOverflow() {
+        final long[] receivers = {Long.MIN_VALUE, Long.MIN_VALUE + 1, -(1L << 62), -42L, -3L, -2L, -1L, 1L, 2L, 42L, Long.MAX_VALUE};
+        for (final long receiver : receivers) {
+            for (int shift = 0; shift <= Long.SIZE + 1; shift++) {
+                final BigInteger expected = BigInteger.valueOf(receiver).shiftLeft(shift);
+                final boolean overflow = expected.bitLength() >= Long.SIZE;
+                final String message = receiver + " bitShift: " + shift;
+                assertEquals(message, overflow, SqueakGuards.isLShiftLongOverflow(receiver, shift));
+                final Object actual = runPrimitive(17, receiver, (long) shift);
+                if (overflow) {
+                    assertTrue(message, actual instanceof NativeObject);
+                    assertEquals(message, expected, LargeIntegers.toBigInteger(image, (NativeObject) actual));
+                } else {
+                    assertEquals(message, expected.longValueExact(), actual);
+                }
+            }
+        }
+    }
 }

@@ -146,7 +146,8 @@ public final class SqueakGuards {
     }
 
     public static boolean isLShiftLongOverflow(final long receiver, final long arg) {
-        return Long.numberOfLeadingZeros(receiver) - 1 < arg;
+        // Count redundant sign bits, reserving one to preserve the sign of the result.
+        return Long.numberOfLeadingZeros(receiver ^ receiver >> (Long.SIZE - 1)) - 1 < arg;
     }
 
     @Idempotent

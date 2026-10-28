@@ -544,10 +544,6 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind final Node node,
                         @Exclusive @Cached final InlinedConditionProfile isOverflowProfile) {
             if (isOverflowProfile.profile(node, SqueakGuards.isLShiftLongOverflow(receiver, arg))) {
-                /*
-                 * -1 in check needed, because we do not want to shift a positive long into negative
-                 * long (most significant bit indicates positive/negative).
-                 */
                 return LargeIntegers.shiftLeftPositive(getContext(node), receiver, (int) arg);
             } else {
                 return receiver << arg;
