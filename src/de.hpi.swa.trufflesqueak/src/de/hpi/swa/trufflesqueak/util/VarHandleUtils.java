@@ -90,7 +90,11 @@ public final class VarHandleUtils {
     }
 
     public static void putIntReversed(final byte[] storage, final int index, final int value) {
-        INT_BIG_ENDIAN.set(storage, index * Integer.BYTES, value);
+        putIntIntoBytesReversed(storage, index * Integer.BYTES, value);
+    }
+
+    public static void putIntIntoBytesReversed(final byte[] storage, final int byteIndex, final int value) {
+        INT_BIG_ENDIAN.set(storage, byteIndex, value);
     }
 
     public static void putLong(final byte[] storage, final int index, final long value) {

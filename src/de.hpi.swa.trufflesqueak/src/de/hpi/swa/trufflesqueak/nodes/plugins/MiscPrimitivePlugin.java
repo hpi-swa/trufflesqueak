@@ -36,6 +36,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive4WithFallbac
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimHashMultiplyNode;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
+import de.hpi.swa.trufflesqueak.util.VarHandleUtils;
 
 public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
@@ -129,25 +130,21 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     public abstract static class PrimCompressToByteArrayNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
 
         private static int encodeBytesOf(final int anInt, final NativeObject ba, final int i) {
-            ba.setByte(i - 1, (byte) (anInt >> 24));
-            ba.setByte(i + 0, (byte) (anInt >> 16));
-            ba.setByte(i + 1, (byte) (anInt >> 8));
-            ba.setByte(i + 2, (byte) anInt);
+            VarHandleUtils.putIntIntoBytesReversed(ba.getByteStorage(), i, anInt);
             return i + 4;
         }
 
-        // expects i to be a 1-based (Squeak) index
         private static int encodeInt(final int anInt, final NativeObject ba, final int i) {
-            if (anInt <= 223) {
-                ba.setByte(i - 1, anInt);
+            if (Integer.compareUnsigned(anInt, 223) <= 0) {
+                ba.setByte(i, anInt);
                 return i + 1;
             }
-            if (anInt <= 7935) {
-                ba.setByte(i - 1, anInt / 256 + 224);
-                ba.setByte(i, anInt % 256);
+            if (Integer.compareUnsigned(anInt, 7935) <= 0) {
+                ba.setByte(i, anInt / 256 + 224);
+                ba.setByte(i + 1, anInt % 256);
                 return i + 2;
             }
-            ba.setByte(i - 1, 255);
+            ba.setByte(i, 255);
             return encodeBytesOf(anInt, ba, i + 1);
         }
 
@@ -169,7 +166,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             // 224-254 (0-30)*256 + next byte (0-7935)
             // 255 next 4 bytes"
             final int size = bm.getIntLength();
-            int i = encodeInt(size, ba, 1);
+            int i = encodeInt(size, ba, 0);
             int k = 0;
             while (k < size) {
                 final int word = bm.getInt(k);
@@ -187,7 +184,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                     if (eqBytes) {
                         // Actually words of equal bytes
                         i = encodeInt(((j - k + 1) << 2) + 1, ba, i);
-                        ba.setByte(i - 1, lowByte);
+                        ba.setByte(i, lowByte);
                         i++;
                     } else {
                         i = encodeInt(((j - k + 1) << 2) + 2, ba, i);
@@ -199,7 +196,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                     if (eqBytes) {
                         // Note 1 word of 4 == bytes
                         i = encodeInt((1 << 2) + 1, ba, i);
-                        ba.setByte(i - 1, lowByte);
+                        ba.setByte(i, lowByte);
                         i++;
                         k++;
                     } else {
@@ -220,7 +217,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                     }
                 }
             }
-            return i - 1;
+            return i;
         }
 
         @SuppressWarnings("unused")
