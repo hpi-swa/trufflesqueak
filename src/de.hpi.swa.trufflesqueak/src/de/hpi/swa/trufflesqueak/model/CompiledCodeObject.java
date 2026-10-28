@@ -478,6 +478,20 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         }
     }
 
+    /** Copy a range relative to the byte storage, excluding the header and literals. */
+    public void copyBytesFrom(final CompiledCodeObject source, final int sourceIndex, final int destinationIndex, final int length) {
+        if (length == 0) {
+            return;
+        }
+        final boolean canHavePrimitive = hasPrimitive() && bytes.length >= 3;
+        final int oldPrimitiveIndex = canHavePrimitive ? primitiveIndex() : -1;
+        System.arraycopy(source.bytes, sourceIndex, bytes, destinationIndex, length);
+        if (canHavePrimitive && oldPrimitiveIndex != primitiveIndex()) {
+            primitiveNodeOrNull = UNINITIALIZED_PRIMITIVE_NODE;
+        }
+        invalidateCallTarget();
+    }
+
     public Object getLiteral(final long longIndex) {
         return UnsafeUtils.getObject(literals, longIndex);
     }

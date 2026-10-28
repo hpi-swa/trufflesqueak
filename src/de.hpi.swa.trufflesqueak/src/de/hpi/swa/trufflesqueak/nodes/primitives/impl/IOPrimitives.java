@@ -352,13 +352,18 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final CompiledCodeObject doMethod(final CompiledCodeObject rcvr, final long start, final long stop, final CompiledCodeObject repl, final long replStart,
                         @Bind final Node node,
                         @Exclusive @Cached final InlinedBranchProfile errorProfile) {
-            if (!inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart)) {
+            if (!inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart) || replStart - 1 > repl.size()) {
                 errorProfile.enter(node);
                 throw PrimitiveFailed.BAD_INDEX;
             }
-            final long repOff = replStart - start;
-            for (long i = start - 1; i < stop; i++) {
-                rcvr.atput0(i, repl.at0(repOff + i));
+            if (start <= stop) {
+                final int rcvrOffset = rcvr.getBytecodeOffset();
+                final int replOffset = repl.getBytecodeOffset();
+                if (start <= rcvrOffset || replStart <= replOffset) {
+                    errorProfile.enter(node);
+                    throw PrimitiveFailed.BAD_INDEX;
+                }
+                rcvr.copyBytesFrom(repl, (int) (replStart - 1 - replOffset), (int) (start - 1 - rcvrOffset), (int) (1 + stop - start));
             }
             return rcvr;
         }
