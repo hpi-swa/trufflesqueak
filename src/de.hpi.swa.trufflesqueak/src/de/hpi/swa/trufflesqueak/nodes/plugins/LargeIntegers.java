@@ -884,7 +884,9 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     private static Object floorMod(final SqueakImageContext image, final BigInteger lhs, final BigInteger rhs) {
-        return normalize(image, lhs.subtract(floorDivide(lhs, rhs).multiply(rhs)));
+        final BigInteger remainder = lhs.remainder(rhs);
+        /* A nonzero floor remainder must have the divisor's sign. */
+        return normalize(image, remainder.signum() != 0 && remainder.signum() != rhs.signum() ? remainder.add(rhs) : remainder);
     }
 
     @TruffleBoundary
@@ -1046,7 +1048,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     private static int highBitOfLargeInt(final NativeObject value) {
         final byte[] storage = value.getByteStorage();
-        return cDigitHighBitLen(storage, storage.length);
+        return cDigitHighBitLen(storage, Math.ceilDiv(storage.length, Integer.BYTES));
     }
 
     private static int cDigitHighBitLen(final byte[] bytes, final int len) {
@@ -1202,15 +1204,9 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @TruffleBoundary
     public static long toSignedLong(final SqueakImageContext image, final NativeObject value) {
-        final int bitLength = highBitOfLargeInt(value);
-        assert isPositive(image, value) && bitLength <= Long.SIZE;
-        if (bitLength == Long.SIZE) {
-            return toBigInteger(image, value).subtract(ONE_SHIFTED_BY_64).longValue();
-        } else {
-            return longValue(value);
-        }
+        assert isPositive(image, value) && highBitOfLargeInt(value) <= Long.SIZE;
+        return longValue(value);
     }
 
     @TruffleBoundary
