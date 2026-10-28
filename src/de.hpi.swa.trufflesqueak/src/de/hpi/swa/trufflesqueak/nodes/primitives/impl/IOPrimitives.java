@@ -373,8 +373,15 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 errorProfile.enter(node);
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
-            rcvr.setHigh(Integer.toUnsignedLong(repl.getInt(replStart)));
-            rcvr.setLow(Integer.toUnsignedLong(repl.getInt(replStart - 1)));
+            // Native int storage keeps the low word first, while FloatObject exposes the high word first.
+            final long replFirstIndex = replStart - 1;
+            final long replLastIndex = replFirstIndex + (stop - start);
+            if (start <= 1 && stop >= 1) {
+                rcvr.setHigh(Integer.toUnsignedLong(repl.getInt(replLastIndex)));
+            }
+            if (start <= 2 && stop >= 2) {
+                rcvr.setLow(Integer.toUnsignedLong(repl.getInt(replFirstIndex)));
+            }
             return rcvr;
         }
 
