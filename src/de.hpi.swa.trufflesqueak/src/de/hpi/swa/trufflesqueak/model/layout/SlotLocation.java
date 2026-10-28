@@ -943,7 +943,6 @@ public abstract class SlotLocation {
 
         @Override
         public Object read(final AbstractPointersObject object) {
-            assert isSet(object);
             return UnsafeUtils.getObjectAt(object, address);
         }
 
@@ -957,7 +956,6 @@ public abstract class SlotLocation {
         @Override
         public void write(final AbstractPointersObject object, final Object value) {
             UnsafeUtils.putObjectAt(object, address, value);
-            assert isSet(object);
         }
 
         @Override
@@ -975,7 +973,6 @@ public abstract class SlotLocation {
 
         @Override
         public Object read(final AbstractPointersObject object) {
-            assert isSet(object);
             return UnsafeUtils.getObjectOffset(object.objectExtension, offset);
         }
 
@@ -989,7 +986,6 @@ public abstract class SlotLocation {
         @Override
         public void write(final AbstractPointersObject object, final Object value) {
             UnsafeUtils.putObjectOffset(object.objectExtension, offset, value);
-            assert isSet(object);
         }
 
         @Override
