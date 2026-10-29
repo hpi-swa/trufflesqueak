@@ -55,6 +55,8 @@ import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 @SuppressWarnings("static-method")
 public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHash {
+    // Select once per JVM so cached method and resumption targets use the same interpreter.
+    private static final boolean USE_BYTECODE_DSL = Boolean.parseBoolean(System.getProperty("trufflesqueak.UseBytecodeDSL", "true"));
     private static final String SOURCE_UNAVAILABLE_NAME = "<unavailable>";
     public static final String SOURCE_UNAVAILABLE_CONTENTS = "Source unavailable";
 
@@ -285,7 +287,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     @TruffleBoundary
     private void initializeCallTarget() {
         assert !(hasPrimitive() && PrimitiveNodeFactory.isNonFailing(this)) : "Should not create rood node for non failing primitives";
-        executionData.callTarget = getHasV3PlusClosuresBytecodes() ? new StartContextRootNode(SqueakImageContext.getSlow(), this).getCallTarget()
+        executionData.callTarget = getHasV3PlusClosuresBytecodes() || !USE_BYTECODE_DSL ? new StartContextRootNode(SqueakImageContext.getSlow(), this).getCallTarget()
                         : SmalltalkSistaV1Interpreter.build(this).getCallTarget();
     }
 
@@ -354,7 +356,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     @TruffleBoundary
     public RootCallTarget getResumptionCallTarget(final ContextObject context) {
-        if (!getHasV3PlusClosuresBytecodes()) {
+        if (USE_BYTECODE_DSL && !getHasV3PlusClosuresBytecodes()) {
             if (getExecutionData().resumptionCallTarget == null) {
                 executionData.resumptionCallTarget = new SistaV1ResumeRootNode(context).getCallTarget();
             } else {

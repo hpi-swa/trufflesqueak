@@ -13,6 +13,8 @@ import static org.junit.Assert.assertTrue;
 import com.oracle.truffle.api.Truffle;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SistaV1ResumeRootNode;
+import de.hpi.swa.trufflesqueak.nodes.ResumeContextRootNode;
+import de.hpi.swa.trufflesqueak.nodes.StartContextRootNode;
 
 import org.junit.Test;
 
@@ -35,6 +37,22 @@ public final class SistaV1BytecodeDSLTest extends AbstractSqueakTestCaseWithDumm
             result = target.call(FrameAccess.newWith(NilObject.SINGLETON, null, receiver, args));
         }
         return result;
+    }
+
+    @Test
+    public void selectsInterpreterForMethodsAndResumptions() {
+        final boolean useBytecodeDSL = Boolean.parseBoolean(System.getProperty("trufflesqueak.UseBytecodeDSL", "true"));
+        final CompiledCodeObject code = method(0, 0, 0x4C, 0x5C);
+        final var target = code.getCallTarget();
+        assertTrue(useBytecodeDSL ? target.getRootNode() instanceof SmalltalkSistaV1Interpreter : target.getRootNode() instanceof StartContextRootNode);
+        assertEquals(42L, target.call(FrameAccess.newWith(NilObject.SINGLETON, null, 42L)));
+
+        final var frame = Truffle.getRuntime().createMaterializedFrame(FrameAccess.newWith(NilObject.SINGLETON, null, 42L), code.getFrameDescriptor());
+        FrameAccess.setInstructionPointer(frame, 0);
+        FrameAccess.setStackPointer(frame, 0);
+        final var resumeTarget = code.getResumptionCallTarget(new ContextObject(frame));
+        assertTrue(useBytecodeDSL ? resumeTarget.getRootNode() instanceof SistaV1ResumeRootNode : resumeTarget.getRootNode() instanceof ResumeContextRootNode);
+        assertEquals(42L, resumeTarget.call());
     }
 
     @Test
