@@ -33,6 +33,7 @@ import de.hpi.swa.trufflesqueak.model.ContextObject.FrameHandling;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SistaV1Frame;
 
 /**
  * TruffleSqueak frame argument layout.
@@ -101,12 +102,17 @@ public final class FrameAccess {
     }
 
     public static void copyAllSlots(final MaterializedFrame source, final MaterializedFrame destination) {
-        source.copyTo(0, destination, 0, source.getFrameDescriptor().getNumberOfSlots());
+        if (source.getFrameDescriptor().getInfo() instanceof final SistaV1Frame info) {
+            info.copy(source, destination);
+        } else {
+            source.copyTo(0, destination, 0, source.getFrameDescriptor().getNumberOfSlots());
+        }
     }
 
     /* Returns the code object matching the frame's descriptor. */
     public static CompiledCodeObject getCodeObject(final Frame frame) {
-        return (CompiledCodeObject) frame.getFrameDescriptor().getInfo();
+        final Object info = frame.getFrameDescriptor().getInfo();
+        return info instanceof final SistaV1Frame sista ? sista.code() : (CompiledCodeObject) info;
     }
 
     public static AbstractSqueakObject getSender(final Frame frame) {
@@ -176,6 +182,10 @@ public final class FrameAccess {
     }
 
     public static ContextObject getContext(final Frame frame) {
+        if (frame.getFrameDescriptor().getInfo() instanceof final SistaV1Frame info) {
+            final SistaV1Frame.ContextState state = info.existingState(frame);
+            return state == null ? null : state.context;
+        }
         return (ContextObject) frame.getObjectStatic(SlotIndices.THIS_CONTEXT);
     }
 
@@ -186,10 +196,17 @@ public final class FrameAccess {
 
     public static void setContext(final Frame frame, final ContextObject context) {
         assert getContext(frame) == null || getContext(frame) == context : "ContextObject already allocated";
-        frame.setObjectStatic(SlotIndices.THIS_CONTEXT, context);
+        if (frame.getFrameDescriptor().getInfo() instanceof final SistaV1Frame info) {
+            info.state(frame).context = context;
+        } else {
+            frame.setObjectStatic(SlotIndices.THIS_CONTEXT, context);
+        }
     }
 
     public static int getInstructionPointer(final Frame frame) {
+        if (frame.getFrameDescriptor().getInfo() instanceof final SistaV1Frame info) {
+            return info.instructionPointer(frame);
+        }
         return frame.getIntStatic(SlotIndices.INSTRUCTION_POINTER);
     }
 
@@ -198,15 +215,27 @@ public final class FrameAccess {
     }
 
     public static void setInstructionPointer(final Frame frame, final int value) {
-        frame.setIntStatic(SlotIndices.INSTRUCTION_POINTER, value);
+        if (frame.getFrameDescriptor().getInfo() instanceof final SistaV1Frame info) {
+            info.state(frame).modifiedPC = value;
+            info.state(frame).dead = value < 0;
+        } else {
+            frame.setIntStatic(SlotIndices.INSTRUCTION_POINTER, value);
+        }
     }
 
     public static int getStackPointer(final Frame frame) {
+        if (frame.getFrameDescriptor().getInfo() instanceof final SistaV1Frame info) {
+            return info.stackPointer(frame);
+        }
         return frame.getIntStatic(SlotIndices.STACK_POINTER);
     }
 
     public static void setStackPointer(final Frame frame, final int value) {
-        frame.setIntStatic(SlotIndices.STACK_POINTER, value);
+        if (frame.getFrameDescriptor().getInfo() instanceof final SistaV1Frame info) {
+            info.state(frame).modifiedSP = value;
+        } else {
+            frame.setIntStatic(SlotIndices.STACK_POINTER, value);
+        }
     }
 
     @CompilerDirectives.EarlyInline
@@ -220,6 +249,9 @@ public final class FrameAccess {
     }
 
     public static int getNumStackSlots(final Frame frame) {
+        if (frame.getFrameDescriptor().getInfo() instanceof final SistaV1Frame info) {
+            return info.stackSize();
+        }
         return frame.getFrameDescriptor().getNumberOfSlots() - SlotIndices.STACK_START;
     }
 
@@ -243,6 +275,15 @@ public final class FrameAccess {
      * guarantees to preserve only the arguments after a return."
      */
     private static void clearStackSlots(final Frame frame) {
+        if (frame.getFrameDescriptor().getInfo() instanceof final SistaV1Frame info) {
+            if (info.instructionPointer(frame) != ContextObject.NIL_PC_STACK_NIL_VALUE) {
+                for (int i = 0; i < info.stackSize(); i++) {
+                    info.write(frame, i, null);
+                }
+                info.state(frame).modifiedPC = ContextObject.NIL_PC_STACK_NIL_VALUE;
+            }
+            return;
+        }
         assert isDead(frame);
         /*
          * Replace all initialized stack slots with null, removing spurious references from the
@@ -274,6 +315,12 @@ public final class FrameAccess {
      * @param action the action to perform on each valid slot index
      */
     public static void iterateStackSlots(final Frame frame, final int sp, final Consumer<Integer> action) {
+        if (frame.getFrameDescriptor().getInfo() instanceof final SistaV1Frame info) {
+            for (int i = 0; i < sp; i++) {
+                action.accept(SlotIndices.STACK_START + i);
+            }
+            return;
+        }
         if (isDead(frame)) {
             clearStackSlots(frame);
         } else {
@@ -302,6 +349,18 @@ public final class FrameAccess {
      * @param action the action to perform on each live stack object
      */
     public static void iterateStackObjects(final Frame frame, final FrameHandling frameHandling, final Consumer<Object> action) {
+        if (frame.getFrameDescriptor().getInfo() instanceof final SistaV1Frame info) {
+            final int limit = isDead(frame) ? 0 : info.stackPointer(frame);
+            for (int i = 0; i < limit; i++) {
+                action.accept(info.read(frame, i));
+            }
+            if (frameHandling == FrameHandling.SCRUB) {
+                for (int i = limit; i < info.stackSize(); i++) {
+                    info.write(frame, i, null);
+                }
+            }
+            return;
+        }
         if (isDead(frame)) {
             if (frameHandling == FrameHandling.SCRUB) {
                 clearStackSlots(frame);
@@ -342,6 +401,19 @@ public final class FrameAccess {
      * @param action a function that returns the replacement object, or null to keep the original
      */
     public static void iterateStackObjectsWithReplacement(final Frame frame, final boolean clearStackSlots, final Function<Object, Object> action) {
+        if (frame.getFrameDescriptor().getInfo() instanceof final SistaV1Frame info) {
+            final int limit = isDead(frame) ? 0 : info.stackPointer(frame);
+            for (int i = 0; i < limit; i++) {
+                final Object replacement = action.apply(info.read(frame, i));
+                if (replacement != null) {
+                    info.write(frame, i, replacement);
+                }
+            }
+            if (isDead(frame) && clearStackSlots) {
+                clearStackSlots(frame);
+            }
+            return;
+        }
         if (isDead(frame)) {
             if (clearStackSlots) {
                 clearStackSlots(frame);
@@ -362,11 +434,18 @@ public final class FrameAccess {
     }
 
     public static Object getStackValue(final Frame frame, final int sp) {
+        if (frame.getFrameDescriptor().getInfo() instanceof final SistaV1Frame info) {
+            return info.read(frame, sp);
+        }
         return frame.getObjectStatic(SlotIndices.STACK_START + sp);
     }
 
     public static void setStackValue(final Frame frame, final int sp, final Object value) {
-        frame.setObjectStatic(SlotIndices.STACK_START + sp, value);
+        if (frame.getFrameDescriptor().getInfo() instanceof final SistaV1Frame info) {
+            info.write(frame, sp, value);
+        } else {
+            frame.setObjectStatic(SlotIndices.STACK_START + sp, value);
+        }
     }
 
     public static void terminateFrame(final Frame frame) {
@@ -375,7 +454,7 @@ public final class FrameAccess {
     }
 
     public static boolean isTruffleSqueakFrame(final Frame frame) {
-        return frame.getFrameDescriptor().getInfo() instanceof CompiledCodeObject;
+        return frame.getFrameDescriptor().getInfo() instanceof CompiledCodeObject || frame.getFrameDescriptor().getInfo() instanceof SistaV1Frame;
     }
 
     public static Object[] newWith(final AbstractSqueakObject sender, final BlockClosureObject closure, final Object[] receiverAndArguments) {

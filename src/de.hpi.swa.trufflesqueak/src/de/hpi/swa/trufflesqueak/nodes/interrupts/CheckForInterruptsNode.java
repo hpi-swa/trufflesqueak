@@ -142,6 +142,19 @@ public abstract class CheckForInterruptsNode extends AbstractNode {
             /* Exclude interrupts case from compilation. */
             CompilerDirectives.transferToInterpreter();
             FrameAccess.externalizePCAndSP(frame, pc, sp);
+            handleInterrupts(frame, image);
+        }
+
+        /** DSL frames already carry their own execution position. */
+        public void execute(final VirtualFrame frame) {
+            final SqueakImageContext image = getContext();
+            if (!image.interrupt.shouldSkip()) {
+                CompilerDirectives.transferToInterpreter();
+                handleInterrupts(frame, image);
+            }
+        }
+
+        private static void handleInterrupts(final VirtualFrame frame, final SqueakImageContext image) {
             final Object[] specialObjects = image.specialObjectsArray.getObjectStorage();
 
             final PointersObject originalActiveProcess = image.getActiveProcessSlow();
