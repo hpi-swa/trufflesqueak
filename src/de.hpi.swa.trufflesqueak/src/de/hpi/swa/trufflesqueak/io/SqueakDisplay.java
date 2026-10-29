@@ -140,6 +140,7 @@ import java.lang.foreign.ValueLayout;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -191,7 +192,7 @@ public final class SqueakDisplay {
     private int height;
     private NativeObject bitmap;
 
-    private CursorData cursorData;
+    private final AtomicReference<CursorData> cursorData = new AtomicReference<>();
 
     // Async staging buffer
     private MemorySegment stagingBuffer = MemorySegment.NULL;
@@ -283,11 +284,11 @@ public final class SqueakDisplay {
     private final MemorySegment updateTitleTask = SDL_MainThreadCallback.allocate((title) -> checkSdlError(SDL_SetWindowTitle(window, title)), Arena.ofAuto());
 
     private final MemorySegment setCursorTask = SDL_MainThreadCallback.allocate((_) -> {
-        if (cursorData == null) {
+        // Atomically read and clear the latest cursor data.
+        final CursorData data = cursorData.getAndSet(null);
+        if (data == null) {
             return;
         }
-        final CursorData data = cursorData;
-        cursorData = null;
 
         if (!isNull(cursor)) {
             SDL_DestroyCursor(cursor);
@@ -808,7 +809,14 @@ public final class SqueakDisplay {
     @TruffleBoundary
     public void setCursor(final int[] cursorWords, final int[] maskWords, final int width, final int height, final int depth, final int offsetX, final int offsetY) {
         assert depth == 1 || depth == 32 : "Bad cursor depth: " + depth;
-        cursorData = new CursorData(cursorWords, maskWords, width, height, depth, offsetX, offsetY);
+
+        // Use copies of the cursor and mask to prevent further changes by Squeak.
+        cursorData.set(new CursorData(
+                cursorWords.clone(),
+                maskWords == null ? null : maskWords.clone(),
+                width, height, depth, offsetX, offsetY
+        ));
+
         if (isNull(window)) {
             return;
         }
