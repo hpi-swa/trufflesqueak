@@ -11,6 +11,7 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.frame.FrameSlotKind;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SistaV1ResumeRootNode;
 import de.hpi.swa.trufflesqueak.nodes.ResumeContextRootNode;
@@ -102,6 +103,47 @@ public final class SistaV1BytecodeDSLTest extends AbstractSqueakTestCaseWithDumm
         // Return thisContext with a computed operand retained below it.
         final ContextObject result = (ContextObject) execute(method(0, 0, 0x4C, 0x51, 0x60, 0x52, 0x5C), 41L);
         assertEquals(42L, result.atTemp(0));
+    }
+
+    @Test
+    public void unrelatedSpillsKeepSeparateTypeProfiles() {
+        // Reuse operand position zero for a number and then a boolean, spilling both at a nop.
+        final var root = SmalltalkSistaV1Interpreter.build(method(0, 0, 0x51, 0x5F, 0xD8, 0x4D, 0x5F, 0x5C));
+        for (int i = 0; i < 20; i++) {
+            assertEquals(true, root.getCallTarget().call(FrameAccess.newWith(NilObject.SINGLETON, null, NilObject.SINGLETON)));
+        }
+        assertTrue(root.getBytecodeNode().getLocals().stream().anyMatch(local -> local.getTypeProfile() == FrameSlotKind.Long));
+    }
+
+    @Test
+    public void contextsReadMergedValuesFromEitherBranch() {
+        final var root = SmalltalkSistaV1Interpreter.build(method(0, 0, 0x4C, 0xC1, 0x51, 0xB0, 0x4E, 0x52, 0x5C));
+        for (int i = 0; i < 20; i++) {
+            final boolean receiver = i % 2 == 0;
+            final ContextObject result = (ContextObject) root.getCallTarget().call(FrameAccess.newWith(NilObject.SINGLETON, null, receiver));
+            assertEquals(receiver ? 1L : false, result.atTemp(0));
+        }
+    }
+
+    @Test
+    public void loopCarriesOperandAcrossBackedge() {
+        // Keep the counter on the operand stack, rather than in a Smalltalk temporary.
+        final CompiledCodeObject code = method(0, 0, 0x4C, 0x53, 0x50, 0x63, 0xC5, 0x51, 0x61, 0xE1, 0xFF, 0xED, 0xF6, 0x5C);
+        assertEquals(0L, execute(code, 0L));
+        assertEquals(0L, execute(code, 10L));
+    }
+
+    @Test
+    public void copiedContextUsesSuspendedLayoutForMutationAndResumption() {
+        final ContextObject original = (ContextObject) execute(method(0, 0, 0x51, 0x5F, 0xD8, 0xE8, 42, 0x5F, 0x52, 0x5C), NilObject.SINGLETON);
+        final ContextObject copy = new ContextObject(original);
+        assertEquals(42L, copy.atTemp(0));
+        copy.atTempPut(0, 99L);
+        assertEquals(42L, original.atTemp(0));
+        assertEquals(99L, copy.atTemp(0));
+        FrameAccess.setInstructionPointer(copy.getTruffleFrame(), 7);
+        FrameAccess.setStackPointer(copy.getTruffleFrame(), 1);
+        assertEquals(99L, new SistaV1ResumeRootNode(copy).getCallTarget().call());
     }
 
     @Test
