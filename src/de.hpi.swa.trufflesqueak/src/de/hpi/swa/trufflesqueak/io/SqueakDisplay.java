@@ -224,6 +224,7 @@ public final class SqueakDisplay {
 
     public int buttons;
     private boolean isDragActive = false;
+    private long[] lastMouseMotionEvent;
 
     private int currentEmulatedButton = 0;
 
@@ -1113,7 +1114,7 @@ public final class SqueakDisplay {
 
         buttons = newButtonState | (buttons & ~MOUSE.ALL);
 
-        addEvent(EVENT_TYPE.MOUSE, (int) x, (int) y, buttons & MOUSE.ALL, modifiersForEvent);
+        addEvent(EVENT_TYPE.MOUSE, (int) x, (int) y, buttons & MOUSE.ALL, modifiersForEvent, 0L, type == MOUSE_EVENT.MOVE);
     }
 
     // --- Event queue methods ---
@@ -1150,6 +1151,10 @@ public final class SqueakDisplay {
         addEvent(eventType, value3, value4, value5, value6, 0L);
     }
 
+    public void addEvent(final long eventType, final long value3, final long value4, final long value5, final long value6, final long value7) {
+        addEvent(eventType, value3, value4, value5, value6, value7, false);
+    }
+
     private void addDragEvent(final long type, final int x, final int y) {
         addEvent(EVENT_TYPE.DRAG_DROP_FILES, type, x, y, buttons >> 3, image.dropPluginFileList.length);
     }
@@ -1158,22 +1163,21 @@ public final class SqueakDisplay {
         addEvent(EVENT_TYPE.WINDOW, type, 0L, 0L, 0L);
     }
 
-    public void addEvent(final long eventType, final long value3, final long value4, final long value5, final long value6, final long value7) {
-        if (eventType == EVENT_TYPE.MOUSE) {
-            final long[] lastEvent = deferredEvents.pollLast();
-            if (lastEvent != null) {
-                // Restore the last event if it is not a mouse event with the same button state.
-                // If the image's UI thread is keeping up and the queue is empty, no coalescing
-                // occurs; however, if mouse events are generated more quickly than the image
-                // can consume them (e.g., high-polling mice), this coalescing prevents the image
-                // from working through a backlog of stale coordinates and unnecessarily updating
-                // the GUI with old mouse locations.
-                if (!(lastEvent[0] == EVENT_TYPE.MOUSE && lastEvent[4] == value5)) {
-                    deferredEvents.addLast(lastEvent);
-                }
-            }
+    public void addEvent(final long eventType, final long value3, final long value4, final long value5, final long value6, final long value7, final boolean mouseMotion) {
+        if (mouseMotion && lastMouseMotionEvent != null && lastMouseMotionEvent[4] == value5 && lastMouseMotionEvent[5] == value6) {
+            // Remove the last mouse motion event if it has the same modifiers and button state.
+            // If the image's UI thread is keeping up and the queue is empty, no coalescing
+            // occurs; however, if mouse events are generated more quickly than the image
+            // can consume them (e.g., high-polling mice), this coalescing prevents the image
+            // from working through a backlog of stale coordinates and unnecessarily updating
+            // the GUI with old mouse locations.
+            deferredEvents.removeLastOccurrence(lastMouseMotionEvent);
         }
-        deferredEvents.addLast(new long[]{eventType, getEventTime(), value3, value4, value5, value6, value7, HostWindowPlugin.DEFAULT_HOST_WINDOW_ID});
+
+        final long[] event = {eventType, getEventTime(), value3, value4, value5, value6, value7, HostWindowPlugin.DEFAULT_HOST_WINDOW_ID};
+        deferredEvents.addLast(event);
+        lastMouseMotionEvent = mouseMotion ? event : null;
+
         if (image.options.signalInputSemaphore() && inputSemaphoreIndex > 0) {
             image.interrupt.signalSemaphoreWithIndex(inputSemaphoreIndex);
         }
