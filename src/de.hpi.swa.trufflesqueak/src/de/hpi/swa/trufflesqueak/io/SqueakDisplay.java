@@ -1239,8 +1239,7 @@ public final class SqueakDisplay {
 
         // If we were deferring updates and are no longer, force the screen to redraw.
         if (oldDeferUpdates && !deferUpdates) {
-            fullDamage();
-            requestRender();
+            updateDisplay(0, 0, width, height);
         }
     }
 
