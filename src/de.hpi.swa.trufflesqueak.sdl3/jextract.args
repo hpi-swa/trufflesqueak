@@ -72,6 +72,7 @@ src/SDL-release-3.4.12/include/SDL3/SDL.h
 --include-function SDL_ShowCursor
 --include-struct SDL_Rect
 --include-function SDL_CreateRenderer
+--include-function SDL_GetRendererName
 --include-function SDL_CreateTexture
 --include-function SDL_DestroyRenderer
 --include-function SDL_DestroyTexture
@@ -81,6 +82,8 @@ src/SDL-release-3.4.12/include/SDL3/SDL.h
 --include-function SDL_SetTextureBlendMode
 --include-function SDL_SetTextureScaleMode
 --include-function SDL_UpdateTexture
+--include-function SDL_LockTexture
+--include-function SDL_UnlockTexture
 --include-function SDL_CreateSurface
 --include-function SDL_DestroySurface
 --include-function SDL_LoadPNG_IO
@@ -94,6 +97,8 @@ src/SDL-release-3.4.12/include/SDL3/SDL.h
 --include-function SDL_GetDesktopDisplayMode
 --include-function SDL_GetPrimaryDisplay
 --include-function SDL_GetWindowDisplayScale
+--include-function SDL_GetWindowSize
+--include-function SDL_GetWindowSizeInPixels
 --include-function SDL_RaiseWindow
 --include-function SDL_ShowWindow
 --include-function SDL_SetWindowFullscreen

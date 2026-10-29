@@ -15,6 +15,7 @@ public final class SDL3Constants {
     public static final int SDL_EVENT_QUIT = 0x100;
     public static final int SDL_EVENT_WINDOW_EXPOSED = 0x204;
     public static final int SDL_EVENT_WINDOW_RESIZED = 0x206;
+    public static final int SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED = 0x207;
     public static final int SDL_EVENT_WINDOW_MINIMIZED = 0x209;
     public static final int SDL_EVENT_WINDOW_MOUSE_LEAVE = 0x20D;
     public static final int SDL_EVENT_WINDOW_FOCUS_GAINED = 0x20E;
