@@ -89,6 +89,7 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
                 languageClass = SqueakLanguage.class, //
                 defaultLocalValue = "defaultLocalValue()", //
                 enableUncachedInterpreter = true, //
+                enableTailCallHandlers = true, //
                 enableBlockScoping = false, //
                 storeBytecodeIndexInFrame = true, //
                 boxingEliminationTypes = {long.class, double.class, boolean.class})
