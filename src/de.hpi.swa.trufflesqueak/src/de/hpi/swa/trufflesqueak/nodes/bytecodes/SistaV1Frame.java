@@ -20,7 +20,7 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 
 /** Public-API view of a DSL frame for Squeak context inspection and mutation. */
 public final class SistaV1Frame {
-    public record Location(int pc, int sp, int[] locals) {
+    public record Location(int pc, int sp) {
     }
 
     public static final class ContextState {
@@ -29,20 +29,20 @@ public final class SistaV1Frame {
         public int modifiedPC = Integer.MIN_VALUE;
         public int modifiedSP = Integer.MIN_VALUE;
         public boolean dead;
-        // Copied contexts keep the source layout even before a DSL instruction has run in the copy.
-        private Location snapshotLocation;
     }
 
     @CompilationFinal private SmalltalkSistaV1Interpreter root;
     @CompilationFinal private CompiledCodeObject code;
+    @CompilationFinal(dimensions = 1) private int[] locals;
     @CompilationFinal private Map<Integer, Location> locations;
     @CompilationFinal private int contextSlot;
     @CompilationFinal private Location entry;
 
-    void initialize(final SmalltalkSistaV1Interpreter interpreter, final CompiledCodeObject method, final Map<Integer, Location> sourceLocations,
+    void initialize(final SmalltalkSistaV1Interpreter interpreter, final CompiledCodeObject method, final int[] localOffsets, final Map<Integer, Location> sourceLocations,
                     final Location entryLocation, final int contextLocal) {
         root = interpreter;
         code = method.isShadowBlock() ? method.getMethod() : method;
+        locals = localOffsets;
         locations = sourceLocations;
         entry = entryLocation;
         contextSlot = contextLocal;
@@ -67,20 +67,11 @@ public final class SistaV1Frame {
     }
 
     private int bytecodeIndex(final Frame frame) {
-        final ContextState state = existingState(frame);
-        if (state != null && state.snapshotLocation != null) {
-            // A copy has no active DSL instruction. All our locals have root scope.
-            return 0;
-        }
         final int bci = root.getBytecodeNode().getBytecodeIndex(frame);
         return Math.max(0, bci);
     }
 
     private Location location(final Frame frame) {
-        final ContextState state = existingState(frame);
-        if (state != null && state.snapshotLocation != null) {
-            return state.snapshotLocation;
-        }
         final SourceSection source = root.getBytecodeNode().getSourceLocation(bytecodeIndex(frame));
         final Location location = source == null ? null : locations.get(source.getCharIndex());
         return location == null ? entry : location;
@@ -106,29 +97,26 @@ public final class SistaV1Frame {
     }
 
     public int stackSize() {
-        return entry.locals().length;
+        return locals.length;
     }
 
     @TruffleBoundary
     public Object read(final MaterializedFrame frame, final int index) {
-        return root.getBytecodeNode().getLocalValue(bytecodeIndex(frame), frame, location(frame).locals()[index]);
+        return root.getBytecodeNode().getLocalValue(bytecodeIndex(frame), frame, locals[index]);
     }
 
     @TruffleBoundary
     public void write(final MaterializedFrame frame, final int index, final Object value) {
-        root.getBytecodeNode().setLocalValue(bytecodeIndex(frame), frame, location(frame).locals()[index], value);
+        root.getBytecodeNode().setLocalValue(bytecodeIndex(frame), frame, locals[index], value);
     }
 
     @TruffleBoundary
     public void copy(final MaterializedFrame source, final MaterializedFrame destination) {
         final BytecodeNode bytecode = root.getBytecodeNode();
-        final Location sourceLocation = location(source);
-        final int sourceBCI = bytecodeIndex(source);
-        for (final int local : sourceLocation.locals()) {
-            bytecode.setLocalValue(0, destination, local, bytecode.getLocalValue(sourceBCI, source, local));
+        for (int i = 0; i < locals.length; i++) {
+            bytecode.setLocalValue(0, destination, locals[i], read(source, i));
         }
         final ContextState state = state(destination);
-        state.snapshotLocation = sourceLocation;
         state.modifiedPC = instructionPointer(source);
         state.modifiedSP = stackPointer(source);
         state.dead = state(source).dead;
