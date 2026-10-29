@@ -60,6 +60,19 @@ public final class SistaV1BytecodeDSLImageTest extends AbstractSqueakTestCase {
         assertEquals(42L, executeArrayMethod(receiver, 0x4C, 0x51, 0x70, 0x5C));
     }
 
+    @Test
+    public void discardedSendStillPerformsItsSideEffects() {
+        final ArrayObject receiver = ArrayObject.createWithStorage(image.arrayClass, new Object[]{10L});
+        // self at: 1 put: 42. ^ self at: 1
+        assertEquals(42L, executeArrayMethod(receiver, 0x4C, 0x51, 0xE8, 42, 0x71, 0xD8, 0x4C, 0x51, 0x70, 0x5C));
+    }
+
+    @Test
+    public void laterOperandCanModifyEarlierOperandThroughSender() {
+        assertEquals(42L, context.eval(SqueakLanguageConfig.ID,
+                        "| result | result := 7 + [thisContext sender tempAt: 2 put: 40. 2] value. result").asLong());
+    }
+
     private static Object executeArrayMethod(final ArrayObject receiver, final int... bytecodes) {
         final CompiledCodeObject reference = (CompiledCodeObject) LookupMethodByStringNode.executeUncached(image.smallIntegerClass, "odd");
         final Object association = reference.getLiteral(reference.getNumLiterals() - 1);
