@@ -86,6 +86,25 @@ public final class SistaV1BytecodeDSLTest extends AbstractSqueakTestCaseWithDumm
     }
 
     @Test
+    public void evaluatesNestedExpressionsInOperandOrder() {
+        // (self + 1) * (self - 1)
+        assertEquals(15L, execute(method(0, 0, 0x4C, 0x51, 0x60, 0x4C, 0x51, 0x61, 0x68, 0x5C), 4L));
+    }
+
+    @Test
+    public void discardingExpressionStillEvaluatesIt() {
+        // Preserve a value below a discarded expression that materializes thisContext.
+        assertEquals(1L, execute(method(0, 0, 0x51, 0x52, 0xD8, 0x5C), NilObject.SINGLETON));
+    }
+
+    @Test
+    public void contextSeesRetainedOperandValues() {
+        // Return thisContext with a computed operand retained below it.
+        final ContextObject result = (ContextObject) execute(method(0, 0, 0x4C, 0x51, 0x60, 0x52, 0x5C), 41L);
+        assertEquals(42L, result.atTemp(0));
+    }
+
+    @Test
     public void materializesNativeDSLContext() {
         final CompiledCodeObject code = method(0, 0, 0x52, 0x5C);
         final ContextObject result = (ContextObject) execute(code, 42L);
