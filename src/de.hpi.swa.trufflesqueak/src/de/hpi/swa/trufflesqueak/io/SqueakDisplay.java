@@ -95,6 +95,7 @@ import static de.hpi.swa.trufflesqueak.sdl3.SDL3Utils.mainThreadCallback;
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Utils.runOnMainThread;
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Utils.runOnMainThreadAsync;
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Utils.warning;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.C_POINTER;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_CreateColorCursor;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_CreateRenderer;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_CreateSurface;
@@ -108,12 +109,14 @@ import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_DestroyWindow;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_GetClipboardText;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_GetDesktopDisplayMode;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_GetPrimaryDisplay;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_GetRendererName;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_GetWindowDisplayScale;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_HasClipboardText;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_HideCursor;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_IOFromMem;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_LoadPNG_IO;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_LockSurface;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_LockTexture;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_RaiseWindow;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_RenderClear;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_RenderPresent;
@@ -130,6 +133,7 @@ import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_ShowCursor;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_ShowWindow;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_StartTextInput;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_UnlockSurface;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_UnlockTexture;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_UpdateTexture;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_free;
 
@@ -202,6 +206,14 @@ public final class SqueakDisplay {
     private long stagingCapacity = 0;
     private int stagingPitchBytes = 0;
     private int stagingHeight = 0;
+
+    // Metal SDL_LockTexture support
+    private static final int METAL_LOCK_MIN_BYTES = 64 * 1024;
+
+    private MemorySegment texturePixelsPointer;
+    private MemorySegment texturePitchPointer;
+
+    private boolean preferTextureLocking;
 
     // Dirty 2D bounding box for coalescing damage
     private int dirtyLeft = Integer.MAX_VALUE;
@@ -518,10 +530,7 @@ public final class SqueakDisplay {
                 SDL_Rect.w(dirtyRect, safeRight - safeLeft);
                 SDL_Rect.h(dirtyRect, safeBottom - safeTop);
 
-                final long pixelStartOffsetBytes = ((long) safeTop * stagingPitchBytes) + ((long) safeLeft * Integer.BYTES);
-                final MemorySegment pixelPointer = stagingBuffer.asSlice(pixelStartOffsetBytes);
-
-                checkSdlError(SDL_UpdateTexture(texture, dirtyRect, pixelPointer, stagingPitchBytes));
+                uploadTexture(dirtyRect, safeLeft, safeTop, safeRight, safeBottom);
             }
         }
 
@@ -538,6 +547,32 @@ public final class SqueakDisplay {
                 checkSdlError(SDL_ShowWindow(window));
                 checkSdlError(SDL_RaiseWindow(window));
             }
+        }
+    }
+
+    private void uploadTexture(final MemorySegment dirtyRect, final int safeLeft, final int safeTop, final int safeRight, final int safeBottom) {
+        final long pixelStartOffsetBytes = ((long) safeTop * stagingPitchBytes) + ((long) safeLeft * Integer.BYTES);
+        final MemorySegment pixelPointer = stagingBuffer.asSlice(pixelStartOffsetBytes);
+        final long rowBytes = (long) (safeRight - safeLeft) * Integer.BYTES;
+        final int rows = safeBottom - safeTop;
+
+        if (preferTextureLocking && rowBytes * rows >= METAL_LOCK_MIN_BYTES && SDL_LockTexture(texture, dirtyRect, texturePixelsPointer, texturePitchPointer)) {
+            try {
+                final int lockedPitch = texturePitchPointer.get(ValueLayout.JAVA_INT, 0);
+                final MemorySegment lockedPixels = checkSdlError(texturePixelsPointer.get(C_POINTER, 0)).asSlice(0, (long) lockedPitch * (rows - 1) + rowBytes);
+
+                if (rowBytes == stagingPitchBytes && rowBytes == lockedPitch) {
+                    MemorySegment.copy(pixelPointer, 0, lockedPixels, 0, rowBytes * rows);
+                } else {
+                    for (int y = 0; y < rows; y++) {
+                        MemorySegment.copy(pixelPointer, (long) y * stagingPitchBytes, lockedPixels, (long) y * lockedPitch, rowBytes);
+                    }
+                }
+            } finally {
+                SDL_UnlockTexture(texture);
+            }
+        } else {
+            checkSdlError(SDL_UpdateTexture(texture, dirtyRect, pixelPointer, stagingPitchBytes));
         }
     }
 
@@ -729,7 +764,16 @@ public final class SqueakDisplay {
 
                 renderer = checkSdlError(SDL_CreateRenderer(window, MemorySegment.NULL));
 
-                    setWindowIcon(window);
+                // Check backend and conditionally allocate FFM pointers
+                preferTextureLocking = "metal".equals(checkSdlError(SDL_GetRendererName(renderer)).getString(0));
+
+                if (preferTextureLocking) {
+                    final Arena metalArena = Arena.ofAuto();
+                    texturePixelsPointer = metalArena.allocate(ValueLayout.ADDRESS);
+                    texturePitchPointer = metalArena.allocate(ValueLayout.JAVA_INT);
+                }
+
+                setWindowIcon(window);
 
                 scaleFactor = checkSdlError(SDL_GetWindowDisplayScale(window));
 
