@@ -207,6 +207,13 @@ public final class SqueakDisplay {
     private int stagingPitchBytes = 0;
     private int stagingHeight = 0;
 
+    // Spatial Synchronization State
+    private boolean isUploading = false;
+    private int activeUploadLeft;
+    private int activeUploadTop;
+    private int activeUploadRight;
+    private int activeUploadBottom;
+
     // Metal SDL_LockTexture support
     private static final int METAL_LOCK_MIN_BYTES = 64 * 1024;
 
@@ -471,66 +478,82 @@ public final class SqueakDisplay {
 
     // Called by the main thread at the end of the event loop
     private void performRenderIfNeeded() {
-        if (isNull(renderer) || isNull(stagingBuffer)) {
-            synchronized (this) {
-                frameRequested = false;
-            }
-            return;
-        }
+        final int safeTop;
+        final int safeBottom;
+        final int safeLeft;
+        final int safeRight;
 
-        // Lock the instance to safely read bounds and upload the texture
+        // Lock briefly to read damage bounds and set the active upload rect
         synchronized (this) {
-            if (!frameRequested) {
-                return;
-            }
-
-            final int safeTop = Math.max(0, dirtyTop);
-            final int safeBottom = Math.min(height, dirtyBottom);
-            int safeLeft = Math.max(0, dirtyLeft);
-            int safeRight = Math.min(width, dirtyRight);
-
+            final boolean wasRequested = frameRequested;
             frameRequested = false;
 
-            // Skip frame if staging buffer is outdated (e.g. after HiDPI resize)
-            if (stagingPitchBytes != (long) width * Integer.BYTES || stagingHeight != height || stagingBuffer.byteSize() < (long) stagingPitchBytes * height) {
+            // Exit if a render wasn't requested or if the staging buffer is invalid
+            if (!wasRequested
+                    || isNull(renderer) || isNull(stagingBuffer)
+                    || stagingPitchBytes != (long) width * Integer.BYTES
+                    || stagingHeight != height
+                    || stagingBuffer.byteSize() < (long) stagingPitchBytes * height) {
                 return;
             }
+
+            // Clip damage against stagingBuffer dimensions.
+            safeTop = Math.max(0, dirtyTop);
+            safeBottom = Math.min(height, dirtyBottom);
+            int tempLeft = Math.max(0, dirtyLeft);
+            int tempRight = Math.min(width, dirtyRight);
 
             resetDamage();
 
-            if (safeTop >= safeBottom || safeLeft >= safeRight) {
+            // Exit if nothing to draw.
+            if (safeTop >= safeBottom || tempLeft >= tempRight) {
                 return;
             }
 
-            // GPU Threshold Blast
-            if ((safeRight - safeLeft) >= (width * 3) / 4) {
-                safeLeft = 0;
-                safeRight = width;
+            // If damage is wider than 75% of screen, redraw full width.
+            if ((tempRight - tempLeft) >= (width * 3) / 4) {
+                tempLeft = 0;
+                tempRight = width;
             }
 
-            // Prepare SDL Texture
-            if (textureWidth != width || textureHeight != height || isNull(texture)) {
-                if (!isNull(texture)) {
-                    SDL_DestroyTexture(texture);
-                }
-                textureWidth = width;
-                textureHeight = height;
-                texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, textureWidth, textureHeight);
-                checkSdlError(texture);
-                // The display framebuffer is opaque; ignore its alpha byte.
-                checkSdlError(SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_NONE));
-                checkSdlError(SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST));
+            safeLeft = tempLeft;
+            safeRight = tempRight;
+
+            // Claim the region for upload
+            isUploading = true;
+            activeUploadLeft = safeLeft;
+            activeUploadTop = safeTop;
+            activeUploadRight = safeRight;
+            activeUploadBottom = safeBottom;
+        }
+
+        // Texture creation/validation
+        if (textureWidth != width || textureHeight != height || isNull(texture)) {
+            if (!isNull(texture)) {
+                SDL_DestroyTexture(texture);
             }
+            textureWidth = width;
+            textureHeight = height;
+            texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, textureWidth, textureHeight);
+            checkSdlError(texture);
+            checkSdlError(SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_NONE));
+            checkSdlError(SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST));
+        }
 
-            // Upload the texture
-            try (Arena arena = Arena.ofConfined()) {
-                final MemorySegment dirtyRect = SDL_Rect.allocate(arena);
-                SDL_Rect.x(dirtyRect, safeLeft);
-                SDL_Rect.y(dirtyRect, safeTop);
-                SDL_Rect.w(dirtyRect, safeRight - safeLeft);
-                SDL_Rect.h(dirtyRect, safeBottom - safeTop);
+        // Unlocked GPU upload (interpreter thread is free to write elsewhere)
+        try (Arena arena = Arena.ofConfined()) {
+            final MemorySegment dirtyRect = SDL_Rect.allocate(arena);
+            SDL_Rect.x(dirtyRect, safeLeft);
+            SDL_Rect.y(dirtyRect, safeTop);
+            SDL_Rect.w(dirtyRect, safeRight - safeLeft);
+            SDL_Rect.h(dirtyRect, safeBottom - safeTop);
 
-                uploadTexture(dirtyRect, safeLeft, safeTop, safeRight, safeBottom);
+            uploadTexture(dirtyRect, safeLeft, safeTop, safeRight, safeBottom);
+        } finally {
+            // Clear the active region and wake the interpreter thread if it was blocked
+            synchronized (this) {
+                isUploading = false;
+                this.notifyAll();
             }
         }
 
@@ -556,7 +579,9 @@ public final class SqueakDisplay {
         final long rowBytes = (long) (safeRight - safeLeft) * Integer.BYTES;
         final int rows = safeBottom - safeTop;
 
-        if (preferTextureLocking && rowBytes * rows >= METAL_LOCK_MIN_BYTES && SDL_LockTexture(texture, dirtyRect, texturePixelsPointer, texturePitchPointer)) {
+        if (preferTextureLocking
+                && rowBytes * rows >= METAL_LOCK_MIN_BYTES
+                && SDL_LockTexture(texture, dirtyRect, texturePixelsPointer, texturePitchPointer)) {
             try {
                 final int lockedPitch = texturePitchPointer.get(ValueLayout.JAVA_INT, 0);
                 final MemorySegment lockedPixels = checkSdlError(texturePixelsPointer.get(C_POINTER, 0)).asSlice(0, (long) lockedPitch * (rows - 1) + rowBytes);
@@ -629,6 +654,22 @@ public final class SqueakDisplay {
             final int[] sqPixels = bitmap.getIntStorage();
             if (sqPixels.length < (long) currentWidth * currentHeight) {
                 return;
+            }
+
+            // Spatial Synchronization: Spin briefly, then wait if trying to overwrite pixels currently uploading
+            int spinCount = 0;
+            while (isUploading && intersects(safeLeft, safeTop, safeRight, safeBottom, activeUploadLeft, activeUploadTop, activeUploadRight, activeUploadBottom)) {
+                if (spinCount < 1000) {
+                    Thread.onSpinWait();
+                    spinCount++;
+                } else {
+                    try {
+                        this.wait();
+                    } catch (final InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        return;
+                    }
+                }
             }
 
             // Wrap the Squeak pixel array into a Panama segment
@@ -1276,5 +1317,10 @@ public final class SqueakDisplay {
     public int[] getPrimaryDisplayDimensions() {
         runOnMainThread(getPrimaryDisplayDimensionsTask, MemorySegment.NULL);
         return primaryDisplayDimensions;
+    }
+
+    private static boolean intersects(final int l1, final int t1, final int r1, final int b1,
+                                      final int l2, final int t2, final int r2, final int b2) {
+        return l1 < r2 && r1 > l2 && t1 < b2 && b1 > t2;
     }
 }
