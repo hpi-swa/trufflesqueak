@@ -1121,6 +1121,132 @@ public class SDL_h extends SDL_h$shared {
         }
     }
 
+    private static class SDL_GetWindowSize {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            SDL_h.C_BOOL,
+            SDL_h.C_POINTER,
+            SDL_h.C_POINTER,
+            SDL_h.C_POINTER
+        );
+
+        public static long addr;
+
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
+    }
+
+    /**
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * extern bool SDL_GetWindowSize(SDL_Window *window, int *w, int *h)
+     * }
+     */
+    public static FunctionDescriptor SDL_GetWindowSize$descriptor() {
+        return SDL_GetWindowSize.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * extern bool SDL_GetWindowSize(SDL_Window *window, int *w, int *h)
+     * }
+     */
+    public static MethodHandle SDL_GetWindowSize$handle() {
+        return SDL_GetWindowSize.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * extern bool SDL_GetWindowSize(SDL_Window *window, int *w, int *h)
+     * }
+     */
+    public static MemorySegment SDL_GetWindowSize$address() {
+        return MemorySegment.ofAddress(SDL_GetWindowSize.addr);
+    }
+
+    /**
+     * {@snippet lang=c :
+     * extern bool SDL_GetWindowSize(SDL_Window *window, int *w, int *h)
+     * }
+     */
+    public static boolean SDL_GetWindowSize(MemorySegment window, MemorySegment w, MemorySegment h) {
+        var mh$ = SDL_GetWindowSize.HANDLE;
+        try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("SDL_GetWindowSize", window, w, h);
+            }
+            return (boolean)mh$.invokeExact(SDL_GetWindowSize.addr, window, w, h);
+        } catch (Error | RuntimeException ex) {
+           throw ex;
+        } catch (Throwable ex$) {
+           throw new AssertionError("should not reach here", ex$);
+        }
+    }
+
+    private static class SDL_GetWindowSizeInPixels {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            SDL_h.C_BOOL,
+            SDL_h.C_POINTER,
+            SDL_h.C_POINTER,
+            SDL_h.C_POINTER
+        );
+
+        public static long addr;
+
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
+    }
+
+    /**
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * extern bool SDL_GetWindowSizeInPixels(SDL_Window *window, int *w, int *h)
+     * }
+     */
+    public static FunctionDescriptor SDL_GetWindowSizeInPixels$descriptor() {
+        return SDL_GetWindowSizeInPixels.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * extern bool SDL_GetWindowSizeInPixels(SDL_Window *window, int *w, int *h)
+     * }
+     */
+    public static MethodHandle SDL_GetWindowSizeInPixels$handle() {
+        return SDL_GetWindowSizeInPixels.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * extern bool SDL_GetWindowSizeInPixels(SDL_Window *window, int *w, int *h)
+     * }
+     */
+    public static MemorySegment SDL_GetWindowSizeInPixels$address() {
+        return MemorySegment.ofAddress(SDL_GetWindowSizeInPixels.addr);
+    }
+
+    /**
+     * {@snippet lang=c :
+     * extern bool SDL_GetWindowSizeInPixels(SDL_Window *window, int *w, int *h)
+     * }
+     */
+    public static boolean SDL_GetWindowSizeInPixels(MemorySegment window, MemorySegment w, MemorySegment h) {
+        var mh$ = SDL_GetWindowSizeInPixels.HANDLE;
+        try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("SDL_GetWindowSizeInPixels", window, w, h);
+            }
+            return (boolean)mh$.invokeExact(SDL_GetWindowSizeInPixels.addr, window, w, h);
+        } catch (Error | RuntimeException ex) {
+           throw ex;
+        } catch (Throwable ex$) {
+           throw new AssertionError("should not reach here", ex$);
+        }
+    }
+
     private static class SDL_ShowWindow {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_BOOL,
@@ -2345,6 +2471,67 @@ public class SDL_h extends SDL_h$shared {
         }
     }
 
+    private static class SDL_GetRendererName {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            SDL_h.C_POINTER,
+            SDL_h.C_POINTER
+        );
+
+        public static long addr;
+
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
+    }
+
+    /**
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * extern const char *SDL_GetRendererName(SDL_Renderer *renderer)
+     * }
+     */
+    public static FunctionDescriptor SDL_GetRendererName$descriptor() {
+        return SDL_GetRendererName.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * extern const char *SDL_GetRendererName(SDL_Renderer *renderer)
+     * }
+     */
+    public static MethodHandle SDL_GetRendererName$handle() {
+        return SDL_GetRendererName.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * extern const char *SDL_GetRendererName(SDL_Renderer *renderer)
+     * }
+     */
+    public static MemorySegment SDL_GetRendererName$address() {
+        return MemorySegment.ofAddress(SDL_GetRendererName.addr);
+    }
+
+    /**
+     * {@snippet lang=c :
+     * extern const char *SDL_GetRendererName(SDL_Renderer *renderer)
+     * }
+     */
+    public static MemorySegment SDL_GetRendererName(MemorySegment renderer) {
+        var mh$ = SDL_GetRendererName.HANDLE;
+        try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("SDL_GetRendererName", renderer);
+            }
+            return (MemorySegment)mh$.invokeExact(SDL_GetRendererName.addr, renderer);
+        } catch (Error | RuntimeException ex) {
+           throw ex;
+        } catch (Throwable ex$) {
+           throw new AssertionError("should not reach here", ex$);
+        }
+    }
+
     private static class SDL_CreateTexture {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
             SDL_h.C_POINTER,
@@ -2591,6 +2778,130 @@ public class SDL_h extends SDL_h$shared {
                 traceDowncall("SDL_UpdateTexture", texture, rect, pixels, pitch);
             }
             return (boolean)mh$.invokeExact(SDL_UpdateTexture.addr, texture, rect, pixels, pitch);
+        } catch (Error | RuntimeException ex) {
+           throw ex;
+        } catch (Throwable ex$) {
+           throw new AssertionError("should not reach here", ex$);
+        }
+    }
+
+    private static class SDL_LockTexture {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            SDL_h.C_BOOL,
+            SDL_h.C_POINTER,
+            SDL_h.C_POINTER,
+            SDL_h.C_POINTER,
+            SDL_h.C_POINTER
+        );
+
+        public static long addr;
+
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
+    }
+
+    /**
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * extern bool SDL_LockTexture(SDL_Texture *texture, const SDL_Rect *rect, void **pixels, int *pitch)
+     * }
+     */
+    public static FunctionDescriptor SDL_LockTexture$descriptor() {
+        return SDL_LockTexture.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * extern bool SDL_LockTexture(SDL_Texture *texture, const SDL_Rect *rect, void **pixels, int *pitch)
+     * }
+     */
+    public static MethodHandle SDL_LockTexture$handle() {
+        return SDL_LockTexture.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * extern bool SDL_LockTexture(SDL_Texture *texture, const SDL_Rect *rect, void **pixels, int *pitch)
+     * }
+     */
+    public static MemorySegment SDL_LockTexture$address() {
+        return MemorySegment.ofAddress(SDL_LockTexture.addr);
+    }
+
+    /**
+     * {@snippet lang=c :
+     * extern bool SDL_LockTexture(SDL_Texture *texture, const SDL_Rect *rect, void **pixels, int *pitch)
+     * }
+     */
+    public static boolean SDL_LockTexture(MemorySegment texture, MemorySegment rect, MemorySegment pixels, MemorySegment pitch) {
+        var mh$ = SDL_LockTexture.HANDLE;
+        try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("SDL_LockTexture", texture, rect, pixels, pitch);
+            }
+            return (boolean)mh$.invokeExact(SDL_LockTexture.addr, texture, rect, pixels, pitch);
+        } catch (Error | RuntimeException ex) {
+           throw ex;
+        } catch (Throwable ex$) {
+           throw new AssertionError("should not reach here", ex$);
+        }
+    }
+
+    private static class SDL_UnlockTexture {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.ofVoid(
+            SDL_h.C_POINTER
+        );
+
+        public static long addr;
+
+        public static final MethodHandle HANDLE = MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(DESC), 0, OF_ADDRESS);
+    }
+
+    /**
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * extern void SDL_UnlockTexture(SDL_Texture *texture)
+     * }
+     */
+    public static FunctionDescriptor SDL_UnlockTexture$descriptor() {
+        return SDL_UnlockTexture.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * extern void SDL_UnlockTexture(SDL_Texture *texture)
+     * }
+     */
+    public static MethodHandle SDL_UnlockTexture$handle() {
+        return SDL_UnlockTexture.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * extern void SDL_UnlockTexture(SDL_Texture *texture)
+     * }
+     */
+    public static MemorySegment SDL_UnlockTexture$address() {
+        return MemorySegment.ofAddress(SDL_UnlockTexture.addr);
+    }
+
+    /**
+     * {@snippet lang=c :
+     * extern void SDL_UnlockTexture(SDL_Texture *texture)
+     * }
+     */
+    public static void SDL_UnlockTexture(MemorySegment texture) {
+        var mh$ = SDL_UnlockTexture.HANDLE;
+        try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("SDL_UnlockTexture", texture);
+            }
+            mh$.invokeExact(SDL_UnlockTexture.addr, texture);
         } catch (Error | RuntimeException ex) {
            throw ex;
         } catch (Throwable ex$) {
@@ -2972,6 +3283,8 @@ public class SDL_h extends SDL_h$shared {
         SDL_SetWindowTitle.addr = symbolLookup.findOrThrow("SDL_SetWindowTitle").address();
         SDL_SetWindowIcon.addr = symbolLookup.findOrThrow("SDL_SetWindowIcon").address();
         SDL_SetWindowSize.addr = symbolLookup.findOrThrow("SDL_SetWindowSize").address();
+        SDL_GetWindowSize.addr = symbolLookup.findOrThrow("SDL_GetWindowSize").address();
+        SDL_GetWindowSizeInPixels.addr = symbolLookup.findOrThrow("SDL_GetWindowSizeInPixels").address();
         SDL_ShowWindow.addr = symbolLookup.findOrThrow("SDL_ShowWindow").address();
         SDL_RaiseWindow.addr = symbolLookup.findOrThrow("SDL_RaiseWindow").address();
         SDL_SetWindowFullscreen.addr = symbolLookup.findOrThrow("SDL_SetWindowFullscreen").address();
@@ -2992,10 +3305,13 @@ public class SDL_h extends SDL_h$shared {
         SDL_RunOnMainThread.addr = symbolLookup.findOrThrow("SDL_RunOnMainThread").address();
         SDL_SetAppMetadataProperty.addr = symbolLookup.findOrThrow("SDL_SetAppMetadataProperty").address();
         SDL_CreateRenderer.addr = symbolLookup.findOrThrow("SDL_CreateRenderer").address();
+        SDL_GetRendererName.addr = symbolLookup.findOrThrow("SDL_GetRendererName").address();
         SDL_CreateTexture.addr = symbolLookup.findOrThrow("SDL_CreateTexture").address();
         SDL_SetTextureBlendMode.addr = symbolLookup.findOrThrow("SDL_SetTextureBlendMode").address();
         SDL_SetTextureScaleMode.addr = symbolLookup.findOrThrow("SDL_SetTextureScaleMode").address();
         SDL_UpdateTexture.addr = symbolLookup.findOrThrow("SDL_UpdateTexture").address();
+        SDL_LockTexture.addr = symbolLookup.findOrThrow("SDL_LockTexture").address();
+        SDL_UnlockTexture.addr = symbolLookup.findOrThrow("SDL_UnlockTexture").address();
         SDL_RenderClear.addr = symbolLookup.findOrThrow("SDL_RenderClear").address();
         SDL_RenderTexture.addr = symbolLookup.findOrThrow("SDL_RenderTexture").address();
         SDL_RenderPresent.addr = symbolLookup.findOrThrow("SDL_RenderPresent").address();

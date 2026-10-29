@@ -91,6 +91,9 @@ import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDL_WINDOW_RESIZABLE;
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Utils.checkSdlError;
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Utils.getSDLError;
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Utils.isNull;
+import static de.hpi.swa.trufflesqueak.sdl3.SDL3Utils.mainThreadCallback;
+import static de.hpi.swa.trufflesqueak.sdl3.SDL3Utils.runOnMainThread;
+import static de.hpi.swa.trufflesqueak.sdl3.SDL3Utils.runOnMainThreadAsync;
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Utils.warning;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_CreateColorCursor;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_CreateRenderer;
@@ -115,7 +118,6 @@ import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_RaiseWindow;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_RenderClear;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_RenderPresent;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_RenderTexture;
-import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_RunOnMainThread;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_SetClipboardText;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_SetCursor;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_SetTextureBlendMode;
@@ -238,7 +240,7 @@ public final class SqueakDisplay {
     record CursorData(int[] cursorWords, int[] maskWords, int width, int height, int depth, int offsetX, int offsetY) {
     }
 
-    final MemorySegment closeTask = SDL_MainThreadCallback.allocate((_) -> {
+    final SDL_MainThreadCallback.Function closeTask = (_) -> {
         stagingArena = null; // Just drop the reference so the GC can safely free the native memory
         if (!isNull(texture)) {
             SDL_DestroyTexture(texture);
@@ -256,13 +258,13 @@ public final class SqueakDisplay {
             SDL_DestroyWindow(window);
             window = MemorySegment.NULL;
         }
-    }, Arena.ofAuto());
+    };
 
-    private final MemorySegment setFullscreenTask = SDL_MainThreadCallback.allocate((isFullScreen) -> checkSdlError(SDL_SetWindowFullscreen(window, isFullScreen.address() == 1L)), Arena.ofAuto());
+    private final MemorySegment setFullscreenAsyncTask = mainThreadCallback((isFullScreen) -> checkSdlError(SDL_SetWindowFullscreen(window, isFullScreen.address() == 1L)));
 
-    private final MemorySegment resizeTask = SDL_MainThreadCallback.allocate((_) -> checkSdlError(SDL_SetWindowSize(window, logicalWindowWidth, logicalWindowHeight)), Arena.ofAuto());
+    private final SDL_MainThreadCallback.Function resizeTask = (_) -> checkSdlError(SDL_SetWindowSize(window, logicalWindowWidth, logicalWindowHeight));
 
-    private final MemorySegment getClipboardTextTask = SDL_MainThreadCallback.allocate((_) -> {
+    private final SDL_MainThreadCallback.Function getClipboardTextTask = (_) -> {
         if (SDL_HasClipboardText()) {
             final MemorySegment textPtr = SDL_GetClipboardText();
             if (!isNull(textPtr)) {
@@ -274,17 +276,17 @@ public final class SqueakDisplay {
             warning("Failed to get clipboard data");
         }
         clipboardText = "";
-    }, Arena.ofAuto());
+    };
 
-    private final MemorySegment setClipboardTextTask = SDL_MainThreadCallback.allocate((text) -> {
+    private final SDL_MainThreadCallback.Function setClipboardTextTask = (text) -> {
         if (!SDL_SetClipboardText(text)) {
             warning("Failed to set clipboard text");
         }
-    }, Arena.ofAuto());
+    };
 
-    private final MemorySegment updateTitleTask = SDL_MainThreadCallback.allocate((title) -> checkSdlError(SDL_SetWindowTitle(window, title)), Arena.ofAuto());
+    private final SDL_MainThreadCallback.Function updateTitleTask = (title) -> checkSdlError(SDL_SetWindowTitle(window, title));
 
-    private final MemorySegment setCursorTask = SDL_MainThreadCallback.allocate((_) -> {
+    private final MemorySegment setCursorAsyncTask = mainThreadCallback((_) -> {
         // Atomically read and clear the latest cursor data.
         final CursorData data = cursorData.getAndSet(null);
         if (data == null) {
@@ -377,9 +379,9 @@ public final class SqueakDisplay {
         } finally {
             SDL_DestroySurface(surface);
         }
-    }, Arena.ofAuto());
+    });
 
-    private final MemorySegment getPrimaryDisplayDimensionsTask = SDL_MainThreadCallback.allocate((_) -> {
+    private final SDL_MainThreadCallback.Function getPrimaryDisplayDimensionsTask = (_) -> {
         final int displayId = SDL_GetPrimaryDisplay();
         if (displayId != 0) {
             final MemorySegment mode = SDL_GetDesktopDisplayMode(displayId);
@@ -388,7 +390,7 @@ public final class SqueakDisplay {
                 primaryDisplayDimensions[1] = SDL_DisplayMode.h(mode);
             }
         }
-    }, Arena.ofAuto());
+    };
 
     private SqueakDisplay(final SqueakImageContext image) {
         this.image = image;
@@ -658,7 +660,7 @@ public final class SqueakDisplay {
 
     @TruffleBoundary
     public void close() {
-        SDL_RunOnMainThread(closeTask, MemorySegment.NULL, true);
+        runOnMainThread(closeTask, MemorySegment.NULL);
     }
 
     public int getLogicalWindowWidth() {
@@ -682,7 +684,7 @@ public final class SqueakDisplay {
         if (isNull(window)) {
             return;
         }
-        SDL_RunOnMainThread(setFullscreenTask, MemorySegment.ofAddress(fullscreen ? 1L : 0L), false);
+        runOnMainThreadAsync(setFullscreenAsyncTask, MemorySegment.ofAddress(fullscreen ? 1L : 0L));
     }
 
     @TruffleBoundary
@@ -710,38 +712,36 @@ public final class SqueakDisplay {
             final String imageFileName = new File(image.getImagePath()).getName();
             final String title = imageFileName.contains(SqueakLanguageConfig.IMPLEMENTATION_NAME) ? imageFileName
                             : imageFileName + " running on " + SqueakLanguageConfig.IMPLEMENTATION_NAME;
-            try (Arena arena = Arena.ofConfined()) {
-                /*
-                 * Creating the window: We create it hidden so the user doesn't see
-                 * a black screen during image start up. We use the saved dimensions from
-                 * the image header for the size. The window will be explicitly unhidden
-                 * later in the render loop once the Smalltalk UI is fully drawn.
-                 */
-                SDL_RunOnMainThread(SDL_MainThreadCallback.allocate((_) -> {
-                    // The window is initially hidden. It will be shown when rendered at full size.
-                    isWindowHidden = true;
-                    final long windowFlags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN | SDL_WINDOW_HIGH_PIXEL_DENSITY;
+            /*
+             * Creating the window: We create it hidden so the user doesn't see
+             * a black screen during image start up. We use the saved dimensions from
+             * the image header for the size. The window will be explicitly unhidden
+             * later in the render loop once the Smalltalk UI is fully drawn.
+             */
+            runOnMainThread((_) -> {
+                // The window is initially hidden. It will be shown when rendered at full size.
+                isWindowHidden = true;
+                final long windowFlags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN | SDL_WINDOW_HIGH_PIXEL_DENSITY;
 
-                    try (Arena windowTitleArena = Arena.ofConfined()) {
-                        window = checkSdlError(SDL_CreateWindow(windowTitleArena.allocateFrom(title), logicalWindowWidth, logicalWindowHeight, windowFlags));
-                    }
+                try (Arena windowTitleArena = Arena.ofConfined()) {
+                    window = checkSdlError(SDL_CreateWindow(windowTitleArena.allocateFrom(title), logicalWindowWidth, logicalWindowHeight, windowFlags));
+                }
 
-                    renderer = checkSdlError(SDL_CreateRenderer(window, MemorySegment.NULL));
+                renderer = checkSdlError(SDL_CreateRenderer(window, MemorySegment.NULL));
 
                     setWindowIcon(window);
 
-                    scaleFactor = checkSdlError(SDL_GetWindowDisplayScale(window));
+                scaleFactor = checkSdlError(SDL_GetWindowDisplayScale(window));
 
-                    checkSdlError(SDL_StartTextInput(window));
-                    fullDamage();
-                    if (cursorData != null) {
-                        SDL_RunOnMainThread(setCursorTask, MemorySegment.NULL, false);
-                    }
-                    if (OS.isMacOS()) {
-                        MacMenuShortcutDisabler.disableSystemShortcuts();
-                    }
-                }, arena), MemorySegment.NULL, true);
-            }
+                checkSdlError(SDL_StartTextInput(window));
+                fullDamage();
+                if (cursorData != null) {
+                    runOnMainThreadAsync(setCursorAsyncTask, MemorySegment.NULL);
+                }
+                if (OS.isMacOS()) {
+                    MacMenuShortcutDisabler.disableSystemShortcuts();
+                }
+            }, MemorySegment.NULL);
         }
     }
 
@@ -796,7 +796,7 @@ public final class SqueakDisplay {
         image.flags.setScreenSize(getLogicalWindowWidth(), getLogicalWindowHeight());
 
         if (!isNull(window)) {
-            SDL_RunOnMainThread(resizeTask, MemorySegment.NULL, true);
+            runOnMainThread(resizeTask, MemorySegment.NULL);
         }
 
         fullDamage();
@@ -821,7 +821,7 @@ public final class SqueakDisplay {
         if (isNull(window)) {
             return;
         }
-        SDL_RunOnMainThread(setCursorTask, MemorySegment.NULL, false);
+        runOnMainThreadAsync(setCursorAsyncTask, MemorySegment.NULL);
     }
 
     public void processEvent(final MemorySegment event) {
@@ -1207,7 +1207,7 @@ public final class SqueakDisplay {
             return;
         }
         try (Arena arena = Arena.ofConfined()) {
-            SDL_RunOnMainThread(updateTitleTask, arena.allocateFrom(title), true);
+            runOnMainThread(updateTitleTask, arena.allocateFrom(title));
         }
     }
 
@@ -1218,20 +1218,20 @@ public final class SqueakDisplay {
 
     @TruffleBoundary
     public String getClipboardData() {
-        SDL_RunOnMainThread(getClipboardTextTask, MemorySegment.NULL, true);
+        runOnMainThread(getClipboardTextTask, MemorySegment.NULL);
         return clipboardText;
     }
 
     @TruffleBoundary
     public void setClipboardData(final String text) {
         try (Arena arena = Arena.ofConfined()) {
-            SDL_RunOnMainThread(setClipboardTextTask, arena.allocateFrom(text), true);
+            runOnMainThread(setClipboardTextTask, arena.allocateFrom(text));
         }
     }
 
     @TruffleBoundary
     public int[] getPrimaryDisplayDimensions() {
-        SDL_RunOnMainThread(getPrimaryDisplayDimensionsTask, MemorySegment.NULL, true);
+        runOnMainThread(getPrimaryDisplayDimensionsTask, MemorySegment.NULL);
         return primaryDisplayDimensions;
     }
 }
