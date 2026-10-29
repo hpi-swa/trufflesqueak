@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import static de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.AbstractArithmeticPrimitiveNode.ensureFinite;
 
+import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -533,6 +534,22 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
         }
     }
 
+    @Operation(storeBytecodeIndex = false)
+    public static final class BooleanValue {
+        @Specialization
+        static boolean perform(final boolean value) {
+            return value;
+        }
+
+        @Fallback
+        @StoreBytecodeIndex
+        static boolean mustBeBoolean(final VirtualFrame frame, final Object value, @Bind final SqueakImageContext image) {
+            CompilerDirectives.transferToInterpreter();
+            image.mustBeBooleanSelector.executeAsSymbolSlow(image, frame, value);
+            throw SqueakException.create("mustBeBoolean returned");
+        }
+    }
+
     @CompilerDirectives.TruffleBoundary
     public static SmalltalkSistaV1Interpreter build(final CompiledCodeObject code) {
         final var rootNodes = SmalltalkSistaV1InterpreterGen.create(SqueakLanguage.get(null), BytecodeConfig.WITH_SOURCE, new SistaV1BytecodeParser(code, -1, -1));
@@ -569,6 +586,15 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
         private final Map<Integer, Integer> jumpStackPointers = new HashMap<>();
         private Map<Integer, Integer> loopLocations;
         private Map<Integer, BytecodeLabel> jumpLocations;
+        private final Map<Integer, Jump> jumps = new HashMap<>();
+        private final Map<Integer, Integer> loopConditions = new HashMap<>();
+        private final Map<Integer, Integer> conditionLoops = new HashMap<>();
+        private final Map<Integer, Jump> structuredConditionals = new HashMap<>();
+        private final ArrayDeque<Integer> conditionalEnds = new ArrayDeque<>();
+
+        private record Jump(int target, boolean conditional, boolean onTrue) {
+        }
+
         private BytecodeLocal resuming;
 
         private EmissionState emissionState;
@@ -594,6 +620,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
             b.beginSource(Source.newBuilder("smalltalk", " ".repeat(code.getBytes().length + 1), code.toString()).build());
             b.beginBlock();
             detectJumps(b);
+            detectStructures();
             if (resumePC >= 0) {
                 jumpLocations.putIfAbsent(resumePC, null);
                 for (final int loopStart : loopLocations.keySet()) {
@@ -644,6 +671,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
             final int trailerPosition = code.getMaxPCZeroBased();
 
             while (index < trailerPosition) {
+                finishConditionals(b);
                 final boolean isLoopStart = loopLocations.containsKey(index);
                 if (isLoopStart || jumpLocations.containsKey(index)) {
                     spillStack(b);
@@ -653,17 +681,15 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                     finishResumeEntry(b);
                 }
                 if (isLoopStart) {
-                    /*
-                     * Keep the original Sista control flow inside an infinite structured loop.
-                     * Forward conditional jumps leave the loop through their regular labels; the
-                     * backward jump itself is represented by endWhile(). A Sista loop condition
-                     * may span several bytecodes, so it must not be inferred from the first
-                     * bytecode at the back-jump target.
-                     */
                     b.beginWhile();
-                    b.emitLoadConstant(true);
-                    b.beginBlock();
-                    createLabels(b, index);
+                    if (loopConditions.containsKey(index)) {
+                        // Accumulate the Sista condition into the While condition block.
+                        b.beginBlock();
+                    } else {
+                        b.emitLoadConstant(true);
+                        b.beginBlock();
+                        createLabels(b, index);
+                    }
                     if (resumePC > index && resumePC < loopLocations.get(index)) {
                         b.beginIfThen();
                         b.emitLoadLocal(resuming);
@@ -683,9 +709,14 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                 final int size = instructionSize(index);
                 final int start = index;
                 observedSP = -1;
-                b.beginSourceSection(index, size);
+                final boolean structured = structuredConditionals.containsKey(index) || conditionLoops.containsKey(index);
+                if (!structured) {
+                    b.beginSourceSection(index, size);
+                }
                 index += translateBytecode(b, 0, 0, 0, 0);
-                b.endSourceSection();
+                if (!structured) {
+                    b.endSourceSection();
+                }
                 locations.putIfAbsent(start, new SistaV1Frame.Location(index, observedSP < 0 ? sp : observedSP));
                 final boolean isLoopEnd = loopLocations.containsValue(index);
                 if (isLoopEnd) {
@@ -702,6 +733,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                     b.endWhile();
                 }
             }
+            finishConditionals(b);
             b.endBlock();
             b.endSource();
             final SmalltalkSistaV1Interpreter root = b.endRoot();
@@ -798,7 +830,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                 case 0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7 -> recordUnconditionalJump(b, 1 + InterpreterSistaV1Node.calculateShortOffset(op));
                 case 0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE, 0xBF, /* JumpOnTrue */
                     0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7 /* JumpOnFalse */
-                    -> recordConditionalJump(b, 1 + InterpreterSistaV1Node.calculateShortOffset(op));
+                    -> recordConditionalJump(b, 1 + InterpreterSistaV1Node.calculateShortOffset(op), op < 0xC0);
 
                 case 0xE0 -> {
                     return detectJumps(b, extBytes + 2, (extA << 8) + getUnsignedInt(indexWithExt + 1), extB, numExtB);
@@ -809,7 +841,8 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                 }
 
                 case 0xED -> recordUnconditionalJump(b, 2 + extBytes + InterpreterSistaV1Node.calculateLongExtendedOffset(getByte(indexWithExt + 1), extB));
-                case 0xEE /* JumpOnTrue */, 0xEF /* JumpOnFalse */ -> recordConditionalJump(b, 2 + extBytes + InterpreterSistaV1Node.calculateLongExtendedOffset(getByte(indexWithExt + 1), extB));
+                case 0xEE /* JumpOnTrue */, 0xEF /* JumpOnFalse */ -> recordConditionalJump(b, 2 + extBytes + InterpreterSistaV1Node.calculateLongExtendedOffset(getByte(indexWithExt + 1), extB),
+                                op == 0xEE);
                 case 0xFA -> {
                     final int blockSize = getUnsignedInt(indexWithExt + 2) + (extB << 8);
                     return 3 + extBytes + blockSize;
@@ -830,6 +863,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
         private void recordUnconditionalJump(final SmalltalkSistaV1InterpreterGen.Builder b, final int offset) {
             assert offset != 0;
             final int jumpTarget = index + offset;
+            jumps.put(index, new Jump(jumpTarget, false, false));
             if (jumpTarget > index) {
                 if (!jumpLocations.containsKey(jumpTarget)) {
 
@@ -841,12 +875,110 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
             }
         }
 
-        private void recordConditionalJump(final SmalltalkSistaV1InterpreterGen.Builder b, final int offset) {
+        private void recordConditionalJump(final SmalltalkSistaV1InterpreterGen.Builder b, final int offset, final boolean onTrue) {
             assert offset > 0;
             final int jumpTarget = index + offset;
+            jumps.put(index, new Jump(jumpTarget, true, onTrue));
             if (!jumpLocations.containsKey(jumpTarget)) {
 
                 jumpLocations.put(jumpTarget, null);
+            }
+        }
+
+        /** Optimize only single-entry regions; resumed roots retain the general entry machinery. */
+        private void detectStructures() {
+            if (resumePC >= 0) {
+                return;
+            }
+            for (final var loop : loopLocations.entrySet()) {
+                for (int pc = loop.getKey(); pc < loop.getValue(); pc += instructionSize(pc)) {
+                    final Jump jump = jumps.get(pc);
+                    if (jump != null) {
+                        if (jump.conditional && jump.target == loop.getValue() && !hasTargetInside(loop.getKey(), pc + instructionSize(pc))) {
+                            loopConditions.put(loop.getKey(), pc);
+                            conditionLoops.put(pc, loop.getKey());
+                        }
+                        break;
+                    }
+                    final int op = getUnsignedInt(pc);
+                    if (op >= 0x58 && op <= 0x5E || loopLocations.containsKey(pc) && pc != loop.getKey()) {
+                        break;
+                    }
+                }
+            }
+            for (final var entry : jumps.entrySet()) {
+                final int pc = entry.getKey();
+                final Jump jump = entry.getValue();
+                final int scope = loopLocations.containsKey(pc) ? pc : enclosingLoop(pc);
+                if (jump.conditional && !conditionLoops.containsKey(pc) && jump.target > pc &&
+                                scope == enclosingLoop(jump.target) && !hasTargetInside(pc, jump.target)) {
+                    structuredConditionals.put(pc, jump);
+                }
+            }
+        }
+
+        private boolean hasTargetInside(final int start, final int end) {
+            for (final int target : jumpLocations.keySet()) {
+                if (start < target && target < end) {
+                    return true;
+                }
+            }
+            for (final int target : loopLocations.keySet()) {
+                if (start < target && target < end) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private void finishConditionals(final SmalltalkSistaV1InterpreterGen.Builder b) {
+            while (!conditionalEnds.isEmpty() && conditionalEnds.peek() == index) {
+                spillStack(b);
+                b.endBlock();
+                b.endIfThen();
+                conditionalEnds.pop();
+            }
+        }
+
+        private void emitConditionalJump(final SmalltalkSistaV1InterpreterGen.Builder b) {
+            final Jump jump = jumps.get(index);
+            final int target = jump.target;
+            final boolean onTrue = jump.onTrue;
+            final StackEntry condition = popStackEntry(b);
+            spillStack(b);
+            recordJumpStackPointer(target);
+            final boolean loopCondition = conditionLoops.containsKey(index);
+            final boolean structured = structuredConditionals.containsKey(index);
+            if (!loopCondition) {
+                b.beginIfThen();
+            }
+            if (loopCondition || structured) {
+                b.beginSourceSection(index, instructionSize(index));
+            }
+            // Structured regions execute the fallthrough path; the general case takes the jump.
+            final boolean negate = loopCondition || structured ? onTrue : !onTrue;
+            if (negate) {
+                b.beginNot();
+                condition.operation.perform();
+                b.endNot();
+            } else {
+                b.beginBooleanValue();
+                condition.operation.perform();
+                b.endBooleanValue();
+            }
+            if (loopCondition || structured) {
+                b.endSourceSection();
+            }
+            if (loopCondition) {
+                b.endBlock();
+                b.beginBlock();
+                createLabels(b, conditionLoops.get(index));
+            } else if (structured) {
+                b.beginBlock();
+                conditionalEnds.push(target);
+            } else {
+                b.emitBranch(jumpLocations.get(target));
+                b.endIfThen();
             }
         }
 
@@ -1054,32 +1186,8 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                         b.emitBranch(jumpLocations.get(jumpTarget));
                     }
                 }
-                case 0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE, 0xBF -> {
-                    final int jumpTarget = index + 1 + InterpreterSistaV1Node.calculateShortOffset(op);
-                    final StackEntry condition = popStackEntry(b);
-                    spillStack(b);
-                    b.beginIfThen();
-                    b.beginNot();
-                    b.beginNot();
-                    condition.operation.perform();
-                    b.endNot();
-                    b.endNot();
-                    recordJumpStackPointer(jumpTarget);
-                    b.emitBranch(jumpLocations.get(jumpTarget));
-                    b.endIfThen();
-                }
-                case 0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7 -> {
-                    final int jumpTarget = index + 1 + InterpreterSistaV1Node.calculateShortOffset(op);
-                    final StackEntry condition = popStackEntry(b);
-                    spillStack(b);
-                    b.beginIfThen();
-                    b.beginNot();
-                    condition.operation.perform();
-                    b.endNot();
-                    recordJumpStackPointer(jumpTarget);
-                    b.emitBranch(jumpLocations.get(jumpTarget));
-                    b.endIfThen();
-                }
+                case 0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE, 0xBF -> emitConditionalJump(b);
+                case 0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7 -> emitConditionalJump(b);
                 case 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF -> emitStoreIntoReceiverVariable(b, op & 7, true);
                 case 0xD0, 0xD1, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7 -> emitStoreIntoTemporaryLocation(b, op & 7, true);
                 case 0xD8 -> {
@@ -1134,32 +1242,8 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                         b.emitBranch(jumpLocations.get(jumpTarget));
                     }
                 }
-                case 0xEE -> {
-                    final int jumpTarget = index + 2 + extBytes + InterpreterSistaV1Node.calculateLongExtendedOffset(getByte(indexWithExt + 1), extB);
-                    final StackEntry condition = popStackEntry(b);
-                    spillStack(b);
-                    b.beginIfThen();
-                    b.beginNot();
-                    b.beginNot();
-                    condition.operation.perform();
-                    b.endNot();
-                    b.endNot();
-                    recordJumpStackPointer(jumpTarget);
-                    b.emitBranch(jumpLocations.get(jumpTarget));
-                    b.endIfThen();
-                }
-                case 0xEF -> {
-                    final int jumpTarget = index + 2 + extBytes + InterpreterSistaV1Node.calculateLongExtendedOffset(getByte(indexWithExt + 1), extB);
-                    final StackEntry condition = popStackEntry(b);
-                    spillStack(b);
-                    b.beginIfThen();
-                    b.beginNot();
-                    condition.operation.perform();
-                    b.endNot();
-                    recordJumpStackPointer(jumpTarget);
-                    b.emitBranch(jumpLocations.get(jumpTarget));
-                    b.endIfThen();
-                }
+                case 0xEE -> emitConditionalJump(b);
+                case 0xEF -> emitConditionalJump(b);
                 case 0xF0 -> emitStoreIntoReceiverVariable(b, getUnsignedInt(indexWithExt + 1) + (extA << 8), true);
                 case 0xF1 -> emitStoreIntoLiteralVariable(b, getUnsignedInt(indexWithExt + 1) + (extA << 8), true);
                 case 0xF2 -> emitStoreIntoTemporaryLocation(b, getUnsignedInt(indexWithExt + 1) + (extA << 8), true);
