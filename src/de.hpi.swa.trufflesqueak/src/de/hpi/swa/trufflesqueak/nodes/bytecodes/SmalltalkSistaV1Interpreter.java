@@ -25,7 +25,6 @@ import com.oracle.truffle.api.bytecode.BytecodeRootNode;
 import com.oracle.truffle.api.bytecode.ConstantOperand;
 import com.oracle.truffle.api.bytecode.GenerateBytecode;
 import com.oracle.truffle.api.bytecode.Operation;
-import com.oracle.truffle.api.bytecode.StackValue;
 import com.oracle.truffle.api.bytecode.Variadic;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
@@ -321,6 +320,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
         private final CompiledCodeObject code;
         private final BytecodeLocal[] temporarySlots;
         private final StackEntry[] stackSlots;
+        private BytecodeLocal[] mergeSlots;
         private final Map<Integer, Integer> jumpStackPointers = new HashMap<>();
         private Map<Integer, Integer> loopLocations;
         private EconomicMap<Integer, BytecodeLabel> jumpLocations;
@@ -344,6 +344,15 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                 temporarySlots[i] = b.createLocal();
             }
 
+            mergeSlots = new BytecodeLocal[stackSlots.length];
+            for (int i = code.getInitialSP(); i < mergeSlots.length; i++) {
+                mergeSlots[i] = b.createLocal();
+            }
+            for (int i = 0; i < code.getNumArgs(); i++) {
+                b.beginStoreLocal(temporarySlots[i]);
+                b.emitLoadArgument(FrameAccess.getArgumentStartIndex() + i);
+                b.endStoreLocal();
+            }
             index = code.getStartPCZeroBased();
             sp = code.getInitialSP();
             final int trailerPosition = code.getMaxPCZeroBased();
@@ -368,9 +377,16 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                     assert !isLoopStart;
                     final Integer jumpStackPointer = jumpStackPointers.get(index);
                     assert jumpStackPointer != null;
+                    if (sp == jumpStackPointer) {
+                        materializeStack(b);
+                        recordJumpStackPointer(b, index);
+                    }
                     sp = jumpStackPointer;
-                    materializeStack(b);
                     b.emitLabel(jumpLabel);
+                    for (int i = code.getInitialSP(); i < sp; i++) {
+                        final BytecodeLocal slot = mergeSlots[i];
+                        stackSlots[i] = new StackEntry(() -> b.emitLoadLocal(slot));
+                    }
                 }
                 index += translateBytecode(b, 0, 0, 0, 0);
                 final boolean isLoopEnd = loopLocations.containsValue(index);
@@ -465,9 +481,14 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
             }
         }
 
-        private void recordJumpStackPointer(final int jumpTarget) {
+        private void recordJumpStackPointer(final SmalltalkSistaV1InterpreterGen.Builder b, final int jumpTarget) {
             final Integer previousStackPointer = jumpStackPointers.putIfAbsent(jumpTarget, sp);
             assert previousStackPointer == null || previousStackPointer == sp : "Inconsistent stack depth at jump target";
+            for (int i = code.getInitialSP(); i < sp; i++) {
+                b.beginStoreLocal(mergeSlots[i]);
+                stackSlots[i].emit(b);
+                b.endStoreLocal();
+            }
         }
 
         private int translateBytecode(final SmalltalkSistaV1InterpreterGen.Builder b, final int extBytes, final int extA, final int extB, final int numExtB) {
@@ -693,7 +714,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                     final int jumpTarget = index + 1 + InterpreterSistaV1Node.calculateShortOffset(op);
                     if (jumpTarget > index) {
                         materializeStack(b);
-                        recordJumpStackPointer(jumpTarget);
+                        recordJumpStackPointer(b, jumpTarget);
                         b.emitBranch(jumpLocations.get(jumpTarget));
                     }
                 }
@@ -702,7 +723,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                     final StackEntry condition = popAndMaterializeStack(b);
                     b.beginIfThen();
                     condition.emit(b);
-                    recordJumpStackPointer(jumpTarget);
+                    recordJumpStackPointer(b, jumpTarget);
                     b.emitBranch(jumpLocations.get(jumpTarget));
                     b.endIfThen();
                 }
@@ -713,7 +734,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                     b.beginNot();
                     condition.emit(b);
                     b.endNot();
-                    recordJumpStackPointer(jumpTarget);
+                    recordJumpStackPointer(b, jumpTarget);
                     b.emitBranch(jumpLocations.get(jumpTarget));
                     b.endIfThen();
                 }
@@ -760,7 +781,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                     final int jumpTarget = index + 2 + extBytes + InterpreterSistaV1Node.calculateLongExtendedOffset(getByte(indexWithExt + 1), extB);
                     if (jumpTarget > index) {
                         materializeStack(b);
-                        recordJumpStackPointer(jumpTarget);
+                        recordJumpStackPointer(b, jumpTarget);
                         b.emitBranch(jumpLocations.get(jumpTarget));
                     }
                 }
@@ -769,7 +790,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                     final StackEntry condition = popAndMaterializeStack(b);
                     b.beginIfThen();
                     condition.emit(b);
-                    recordJumpStackPointer(jumpTarget);
+                    recordJumpStackPointer(b, jumpTarget);
                     b.emitBranch(jumpLocations.get(jumpTarget));
                     b.endIfThen();
                 }
@@ -780,7 +801,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                     b.beginNot();
                     condition.emit(b);
                     b.endNot();
-                    recordJumpStackPointer(jumpTarget);
+                    recordJumpStackPointer(b, jumpTarget);
                     b.emitBranch(jumpLocations.get(jumpTarget));
                     b.endIfThen();
                 }
@@ -847,7 +868,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
         /** A deferred expression that is only bound to a StackValue when it crosses a control-flow boundary or is duplicated. */
         private static final class StackEntry {
             private PushOperation operation;
-            private StackValue stackValue;
+            private BytecodeLocal stackValue;
 
             private StackEntry(final PushOperation operation) {
                 this.operation = operation;
@@ -857,15 +878,16 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                 if (stackValue == null) {
                     operation.perform();
                 } else {
-                    b.emitLoadStackValue(stackValue);
+                    b.emitLoadLocal(stackValue);
                 }
             }
 
             private void materialize(final SmalltalkSistaV1InterpreterGen.Builder b) {
                 if (stackValue == null) {
-                    b.beginBindStackValue();
+                    stackValue = b.createLocal();
+                    b.beginStoreLocal(stackValue);
                     operation.perform();
-                    stackValue = b.endBindStackValue();
+                    b.endStoreLocal();
                     operation = null;
                 }
             }
