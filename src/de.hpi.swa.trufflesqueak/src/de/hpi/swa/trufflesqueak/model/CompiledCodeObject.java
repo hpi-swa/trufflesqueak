@@ -35,6 +35,8 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS_BINDING;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.ResumeContextRootNode;
 import de.hpi.swa.trufflesqueak.nodes.StartContextRootNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SmalltalkSistaV1Interpreter;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SistaV1ResumeRootNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchPrimitiveNode;
@@ -283,7 +285,8 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     @TruffleBoundary
     private void initializeCallTarget() {
         assert !(hasPrimitive() && PrimitiveNodeFactory.isNonFailing(this)) : "Should not create rood node for non failing primitives";
-        executionData.callTarget = new StartContextRootNode(SqueakImageContext.getSlow(), this).getCallTarget();
+        executionData.callTarget = getHasV3PlusClosuresBytecodes() ? new StartContextRootNode(SqueakImageContext.getSlow(), this).getCallTarget()
+                        : SmalltalkSistaV1Interpreter.build(this).getCallTarget();
     }
 
     private void invalidateCallTarget() {
@@ -351,6 +354,14 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     @TruffleBoundary
     public RootCallTarget getResumptionCallTarget(final ContextObject context) {
+        if (!getHasV3PlusClosuresBytecodes()) {
+            if (getExecutionData().resumptionCallTarget == null) {
+                executionData.resumptionCallTarget = new SistaV1ResumeRootNode(context).getCallTarget();
+            } else {
+                ((SistaV1ResumeRootNode) executionData.resumptionCallTarget.getRootNode()).setActiveContext(context);
+            }
+            return executionData.resumptionCallTarget;
+        }
         if (getExecutionData().resumptionCallTarget == null) {
             executionData.resumptionCallTarget = new ResumeContextRootNode(SqueakImageContext.getSlow(), context).getCallTarget();
         } else {

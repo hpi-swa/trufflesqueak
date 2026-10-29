@@ -7,11 +7,16 @@
 package de.hpi.swa.trufflesqueak.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+
+import com.oracle.truffle.api.Truffle;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SistaV1ResumeRootNode;
 
 import org.junit.Test;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SmalltalkSistaV1Interpreter;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -63,12 +68,24 @@ public final class SistaV1BytecodeDSLTest extends AbstractSqueakTestCaseWithDumm
     }
 
     @Test
-    public void indexedAccessUsesOneBasedIndicesAndReturnsStoredValue() {
-        final ArrayObject array = ArrayObject.createWithStorage(image.arrayClass, new Object[]{10L, 20L});
-        assertEquals(10L, execute(method(0, 0, 0x4C, 0x51, 0x70, 0x5C), array));
-        assertEquals(20L, execute(method(0, 0, 0x4C, 0xE8, 2, 0x70, 0x5C), array));
-        assertEquals(42L, execute(method(0, 0, 0x4C, 0x51, 0xE8, 42, 0x71, 0x5C), array));
-        assertEquals(42L, execute(method(0, 0, 0x4C, 0x51, 0x70, 0x5C), array));
+    public void materializesNativeDSLContext() {
+        final CompiledCodeObject code = method(0, 0, 0x52, 0x5C);
+        final ContextObject result = (ContextObject) execute(code, 42L);
+        assertSame(code, result.getCodeObject());
+        assertEquals(42L, result.getReceiver());
+        assertTrue(result.isDead());
+    }
+
+    @Test
+    public void resumesSnapshotInsideLoop() {
+        final CompiledCodeObject code = method(0, 1, 0x4C, 0xD0, 0x40, 0x50, 0x63, 0xC7, 0x40, 0x51, 0x61, 0xD0, 0xE1, 0xFF, 0xED, 0xF4, 0x40, 0x5C);
+        final var frame = Truffle.getRuntime().createMaterializedFrame(FrameAccess.newWith(NilObject.SINGLETON, null, 99L), code.getFrameDescriptor());
+        FrameAccess.setInstructionPointer(frame, 6);
+        FrameAccess.setStackPointer(frame, 1);
+        FrameAccess.setStackValue(frame, 0, 3L);
+        final ContextObject suspended = new ContextObject(frame);
+        assertEquals(0L, new SistaV1ResumeRootNode(suspended).getCallTarget().call());
+        assertTrue(suspended.isDead());
     }
 
     @Test

@@ -11,11 +11,9 @@ import static de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitive
 import java.util.HashMap;
 import java.util.Map;
 
-import org.graalvm.collections.EconomicMap;
-
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.HostCompilerDirectives.InliningCutoff;
 import com.oracle.truffle.api.bytecode.BytecodeConfig;
 import com.oracle.truffle.api.bytecode.BytecodeLabel;
 import com.oracle.truffle.api.bytecode.BytecodeLocal;
@@ -23,30 +21,36 @@ import com.oracle.truffle.api.bytecode.BytecodeNode;
 import com.oracle.truffle.api.bytecode.BytecodeParser;
 import com.oracle.truffle.api.bytecode.BytecodeRootNode;
 import com.oracle.truffle.api.bytecode.ConstantOperand;
+import com.oracle.truffle.api.bytecode.EpilogReturn;
 import com.oracle.truffle.api.bytecode.GenerateBytecode;
 import com.oracle.truffle.api.bytecode.Operation;
+import com.oracle.truffle.api.bytecode.StoreBytecodeIndex;
 import com.oracle.truffle.api.bytecode.Variadic;
 import com.oracle.truffle.api.dsl.Bind;
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.ControlFlowException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
+import com.oracle.truffle.api.source.Source;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
+import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
-import de.hpi.swa.trufflesqueak.exceptions.Returns;
+import de.hpi.swa.trufflesqueak.exceptions.Returns.AbstractStandardSendReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.CannotReturnToTarget;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
+import de.hpi.swa.trufflesqueak.exceptions.Returns;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
@@ -57,35 +61,200 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts;
 import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
+import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes;
-import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNode;
-import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectNewNode;
-import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.trufflesqueak.nodes.context.GetOrCreateContextWithFrameNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0Node.Dispatch0Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1Node.Dispatch1Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2Node.Dispatch2Node;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchDirectedSuperNaryNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchNaryNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchSuperNaryNode;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.InterpreterSistaV1Node;
+import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsNode.CheckForInterruptsInLoopNode;
+import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsNode.CheckForInterruptsQuickNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
-/**
- * Open questions: - How do I access pc/sp? - Can I use/preallocate any frame slots or are they
- * exclusively managed by Bytecode DSL? - How would I add support for unstructured backjumps? Would
- * Bytecode DSL need to reconstruct loops or is this purely a security check?
- */
-@ImportStatic(SqueakGuards.class)
+/** SistaV1 translation using DSL-managed locals, structured loops, and bytecode locations. */
+@ImportStatic({SqueakGuards.class, SmalltalkSistaV1Interpreter.class})
 @GenerateBytecode(//
                 languageClass = SqueakLanguage.class, //
                 defaultLocalValue = "defaultLocalValue()", //
                 enableUncachedInterpreter = true, //
+                enableBlockScoping = false, //
+                storeBytecodeIndexInFrame = true, //
                 boxingEliminationTypes = {long.class, double.class, boolean.class})
 public abstract class SmalltalkSistaV1Interpreter extends RootNode implements BytecodeRootNode {
-    protected SmalltalkSistaV1Interpreter(final SqueakLanguage language, final FrameDescriptor frameDescriptor) {
-        super(language, frameDescriptor);
+    private final SistaV1Frame frameInfo;
+    @CompilerDirectives.CompilationFinal private boolean isBlock;
+    @CompilerDirectives.CompilationFinal private int countableLocal;
+    @CompilerDirectives.CompilationFinal private Assumption doesNotNeedThisContext;
+    @CompilerDirectives.CompilationFinal(dimensions = 1) private Object[] restoredValues;
+    @CompilerDirectives.CompilationFinal private ContextObject resumedContext;
+    @Child private CheckForInterruptsQuickNode interruptNode;
+    @Child private CheckForInterruptsInLoopNode loopInterruptNode;
+
+    protected SmalltalkSistaV1Interpreter(final SqueakLanguage language, final FrameDescriptor.Builder descriptor) {
+        super(language, descriptor.info(new SistaV1Frame()).build());
+        frameInfo = (SistaV1Frame) getFrameDescriptor().getInfo();
+    }
+
+    @Override
+    public String getName() {
+        return frameInfo.code() == null ? "SistaV1" : frameInfo.code().toString();
+    }
+
+    @Override
+    public Object interceptControlFlowException(final ControlFlowException exception, final VirtualFrame frame, final BytecodeNode bytecode, final int bci) throws Throwable {
+        GetOrCreateContextWithFrameNode.executeUncached(frame);
+        if (exception instanceof Returns.NonLocalReturn) {
+            frameInfo.state(frame).dead = true;
+        }
+        leave(frame);
+        throw exception;
+    }
+
+    @Override
+    public Throwable interceptInternalException(final Throwable exception, final VirtualFrame frame, final BytecodeNode bytecode, final int bci) {
+        leave(frame);
+        return exception;
+    }
+
+    private void leave(final VirtualFrame frame) {
+        if (Boolean.TRUE.equals(getBytecodeNode().getLocalValue(0, frame, countableLocal))) {
+            getBytecodeNode().setLocalValue(0, frame, countableLocal, false);
+            SqueakImageContext.get(this).exitingContext();
+        }
+    }
+
+    private Object returnValue(final VirtualFrame frame, final Object value, final boolean local) {
+        if (!local && isBlock) {
+            final ContextObject home = FrameAccess.getClosure(frame).getHomeContext();
+            if (home.canReturnToSender()) {
+                AbstractSqueakObject link = FrameAccess.getSender(frame);
+                ContextObject unwind = null;
+                while (link instanceof final ContextObject context) {
+                    if (context == home) {
+                        if (unwind == null) {
+                            throw new Returns.NonLocalReturn(value, home);
+                        }
+                        CompilerDirectives.transferToInterpreter();
+                        SqueakImageContext.get(this).aboutToReturnSelector.executeAsSymbolSlow(SqueakImageContext.get(this), frame,
+                                        GetOrCreateContextWithFrameNode.executeUncached(frame), value, unwind);
+                        break;
+                    }
+                    if (unwind == null && context.isUnwindMarked()) {
+                        unwind = context;
+                    }
+                    link = context.getFrameSender();
+                }
+            }
+            throw new CannotReturnToTarget(value, GetOrCreateContextWithFrameNode.executeUncached(frame));
+        }
+        if (FrameAccess.hasModifiedSender(frame)) {
+            final AbstractSqueakObject sender = FrameAccess.getSender(frame);
+            if (sender instanceof final ContextObject context && !context.isDead()) {
+                throw new NonVirtualReturn(value, sender);
+            }
+            throw new CannotReturnToTarget(value, GetOrCreateContextWithFrameNode.executeUncached(frame));
+        }
+        final SistaV1Frame.ContextState state = frameInfo.existingState(frame);
+        if (state != null) {
+            state.dead = true;
+        }
+        FrameAccess.setSender(frame, NilObject.SINGLETON);
+        return value;
+    }
+
+    private static Object followForwarded(final Object value) {
+        if (value instanceof final AbstractSqueakObjectWithClassAndHash object && !object.isNotForwarded()) {
+            CompilerDirectives.transferToInterpreter();
+            return object.resolveForwardingPointer();
+        }
+        return value;
+    }
+
+    private static Object handleSendReturn(final VirtualFrame frame, final AbstractStandardSendReturn result) {
+        if (result.targetIsFrame(frame)) {
+            return followForwarded(result.getReturnValue());
+        }
+        throw result;
+    }
+
+    @EpilogReturn(storeBytecodeIndex = false)
+    public static final class Leave {
+        @Specialization
+        static Object perform(final VirtualFrame frame, final Object result, @Bind final SmalltalkSistaV1Interpreter root) {
+            root.leave(frame);
+            return result;
+        }
+    }
+
+    @Operation(storeBytecodeIndex = true)
+    public static final class CheckLoop {
+        @Specialization
+        static void perform(final VirtualFrame frame, @Bind final SmalltalkSistaV1Interpreter root) {
+            if (root.loopInterruptNode != null) {
+                root.loopInterruptNode.execute(frame);
+            }
+        }
+    }
+
+    @Operation(storeBytecodeIndex = true)
+    public static final class CheckContextMutation {
+        @Specialization
+        static void perform(final VirtualFrame frame, @Bind final SmalltalkSistaV1Interpreter root) {
+            if (FrameAccess.getReceiver(frame) instanceof final ContextObject context && context.isPotentiallyActiveOnTruffleStack()) {
+                context.markAsInactiveOnTruffleStack();
+                if (context.isActuallyActiveOnTruffleStack()) {
+                    final SqueakImageContext image = SqueakImageContext.get(root);
+                    AbstractPointersObjectWriteNode.executeUncached(image.getActiveProcessSlow(), PROCESS.SUSPENDED_CONTEXT,
+                                    GetOrCreateContextWithFrameNode.executeUncached(frame));
+                    throw ProcessSwitch.SINGLETON;
+                }
+            }
+        }
+    }
+
+    @Operation(storeBytecodeIndex = false)
+    public static final class IsCountable {
+        @Specialization
+        static boolean perform() {
+            return CompilerDirectives.inInterpreter() || CompilerDirectives.inCompilationRoot();
+        }
+    }
+
+    @Operation(storeBytecodeIndex = true)
+    public static final class Enter {
+        @Specialization
+        static void perform(final VirtualFrame frame, final boolean countable, @Bind final SmalltalkSistaV1Interpreter root) {
+            if (root.resumedContext != null) {
+                root.frameInfo.state(frame).context = root.resumedContext;
+                root.resumedContext.resumeWithTruffleFrame(frame.materialize());
+                root.resumedContext.markAsPotentiallyActiveOnTruffleStack();
+                root.resumedContext.clearModifiedSender();
+            }
+            if (!root.doesNotNeedThisContext.isValid()) {
+                GetOrCreateContextWithFrameNode.executeUncached(frame);
+            }
+            final SqueakImageContext image = SqueakImageContext.get(root);
+            if (countable) {
+                if (image.enteringContextExceedsDepth()) {
+                    final ContextObject context = GetOrCreateContextWithFrameNode.executeUncached(frame);
+                    AbstractPointersObjectWriteNode.executeUncached(image.getActiveProcessSlow(), PROCESS.SUSPENDED_CONTEXT, context);
+                    throw ProcessSwitch.SINGLETON;
+                }
+            }
+            root.interruptNode.execute(frame);
+        }
     }
 
     static Object defaultLocalValue() {
@@ -93,17 +262,20 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
         return NilObject.SINGLETON;
     }
 
-    @Operation
+    @Operation(storeBytecodeIndex = false)
     @ConstantOperand(type = int.class)
     public static final class InitialTemporary {
         @Specialization
-        static Object perform(final VirtualFrame frame, final int index) {
+        static Object perform(final VirtualFrame frame, final int index, @Bind final SmalltalkSistaV1Interpreter root) {
+            if (root.restoredValues != null) {
+                return root.restoredValues[index];
+            }
             final int argumentIndex = FrameAccess.getArgumentStartIndex() + index;
             return argumentIndex < frame.getArguments().length ? frame.getArguments()[argumentIndex] : NilObject.SINGLETON;
         }
     }
 
-    @Operation
+    @Operation(storeBytecodeIndex = true)
     @ConstantOperand(type = int.class)
     public static final class StoreIntoReceiverVariable {
         @Specialization
@@ -116,7 +288,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
         }
     }
 
-    @Operation
+    @Operation(storeBytecodeIndex = true)
     @ConstantOperand(type = Object.class)
     @ConstantOperand(type = int.class)
     public static final class StoreIntoLiteralVariable {
@@ -130,7 +302,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
         }
     }
 
-    @Operation
+    @Operation(storeBytecodeIndex = true)
     @ConstantOperand(type = int.class)
     public static final class LoadRemoteTemp {
         @Specialization
@@ -138,11 +310,11 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                         final Object temp,
                         @Bind final Node inlineTarget,
                         @Cached(inline = true) final SqueakObjectAt0Node at0Node) {
-            return at0Node.execute(inlineTarget, temp, indexInArray);
+            return followForwarded(at0Node.execute(inlineTarget, temp, indexInArray));
         }
     }
 
-    @Operation
+    @Operation(storeBytecodeIndex = true)
     @ConstantOperand(type = int.class)
     public static final class StoreIntoRemoteTemp {
         @Specialization
@@ -155,7 +327,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
         }
     }
 
-    @Operation
+    @Operation(storeBytecodeIndex = true)
     @ConstantOperand(type = int.class)
     public static final class ReceiverVariable {
         @Specialization
@@ -163,22 +335,22 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                         final int variableIndex,
                         @Bind final Node node,
                         @Cached(inline = true) final SqueakObjectAt0Node at0Node) {
-            return at0Node.execute(node, FrameAccess.getReceiver(frame), variableIndex);
+            return followForwarded(at0Node.execute(node, FrameAccess.getReceiver(frame), variableIndex));
         }
     }
 
-    @Operation
+    @Operation(storeBytecodeIndex = true)
     @ConstantOperand(type = Object.class)
     public static final class LiteralVariable {
         @Specialization
         static Object perform(final Object literal,
                         @Bind final Node node,
                         @Cached(inline = true) final SqueakObjectAt0Node at0Node) {
-            return at0Node.execute(node, literal, ObjectLayouts.ASSOCIATION.VALUE);
+            return followForwarded(at0Node.execute(node, literal, ObjectLayouts.ASSOCIATION.VALUE));
         }
     }
 
-    @Operation(forceCached = true)
+    @Operation(forceCached = true, storeBytecodeIndex = true)
     public static final class ActiveContext {
         @Specialization
         static ContextObject perform(final VirtualFrame frame,
@@ -188,7 +360,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
         }
     }
 
-    @Operation
+    @Operation(storeBytecodeIndex = false)
     @ConstantOperand(type = CompiledCodeObject.class)
     public static final class FullClosure {
         @Specialization
@@ -198,7 +370,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
         }
     }
 
-    @Operation(forceCached = true)
+    @Operation(forceCached = true, storeBytecodeIndex = true)
     @ConstantOperand(type = CompiledCodeObject.class)
     public static final class Closure {
         @Specialization
@@ -210,54 +382,23 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
         }
     }
 
-    @Operation
+    @Operation(storeBytecodeIndex = true)
     public static final class ReturnTopFromMethod {
         @Specialization
-        static Object perform(final VirtualFrame frame, final Object returnValue,
-                        @Bind final Node location,
-                        @Cached final InlinedConditionProfile hasModifiedSenderProfile) {
-            assert !FrameAccess.hasClosure(frame);
-            if (false) { // (hasModifiedSenderProfile.profile(location, FrameAccess.hasModifiedSender(frame))) {
-                final AbstractSqueakObject sender = FrameAccess.getSender(frame);
-                if (sender instanceof final ContextObject context && !context.isDead()) {
-                    throw new NonVirtualReturn(returnValue, sender);
-                } else {
-                    CompilerDirectives.transferToInterpreter();
-                    throw new CannotReturnToTarget(returnValue, GetOrCreateContextWithFrameNode.executeUncached(frame));
-                }
-            } else {
-                // FIXME: FrameAccess.terminateFrame(frame);
-                return returnValue;
-            }
+        static Object perform(final VirtualFrame frame, final Object value, @Bind final SmalltalkSistaV1Interpreter root) {
+            return root.returnValue(frame, value, false);
         }
     }
 
-    @Operation
+    @Operation(storeBytecodeIndex = true)
     public static final class ReturnTopFromClosure {
         @Specialization
-        static Object perform(final VirtualFrame frame, final Object returnValue) {
-            assert FrameAccess.hasClosure(frame);
-            // Target is sender of closure's home context.
-            final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
-            if (homeContext.canReturnToSender()) {
-                throw new Returns.NonLocalReturn(returnValue, homeContext);
-            } else {
-                CompilerDirectives.transferToInterpreter();
-                final ContextObject contextObject = GetOrCreateContextWithFrameNode.executeUncached(frame);
-                throw new CannotReturnToTarget(returnValue, contextObject);
-            }
+        static Object perform(final VirtualFrame frame, final Object value, @Bind final SmalltalkSistaV1Interpreter root) {
+            return root.returnValue(frame, value, true);
         }
     }
 
-    @Operation
-    public static final class ReturnNilFromClosure {
-        @Specialization
-        static Object perform(final VirtualFrame frame) {
-            return ReturnTopFromClosure.perform(frame, NilObject.SINGLETON);
-        }
-    }
-
-    @Operation
+    @Operation(storeBytecodeIndex = false)
     @ConstantOperand(type = int.class)
     public static final class NewArray {
         @Specialization
@@ -268,7 +409,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
         }
     }
 
-    @Operation
+    @Operation(storeBytecodeIndex = false)
     public static final class NewArrayFromStack {
         @Specialization
         static ArrayObject perform(@Variadic final Object[] values,
@@ -277,53 +418,141 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
         }
     }
 
-    @Operation
+    @Operation(forceCached = true, storeBytecodeIndex = true)
     @ConstantOperand(type = NativeObject.class)
     public static final class SelfSendNilary {
         @Specialization
-        @InliningCutoff
         static Object perform(final VirtualFrame frame, final NativeObject selector, final Object receiver,
-                        @Bind final Node location,
-                        @Bind final BytecodeNode bytecode) {
-            return null; // FIXME
+                        @Cached("create(selector)") final Dispatch0Node dispatch) {
+            try {
+                return followForwarded(dispatch.execute(frame, receiver));
+            } catch (final AbstractStandardSendReturn result) {
+                return handleSendReturn(frame, result);
+            }
         }
     }
 
-    @Operation
+    @Operation(forceCached = true, storeBytecodeIndex = true)
     @ConstantOperand(type = NativeObject.class)
     public static final class SelfSendUnary {
         @Specialization
-        @InliningCutoff
         static Object perform(final VirtualFrame frame, final NativeObject selector, final Object receiver, final Object arg1,
-                        @Bind final Node location,
-                        @Bind final BytecodeNode bytecode) {
-            return null; // FIXME
+                        @Cached("create(selector)") final Dispatch1Node dispatch) {
+            try {
+                return followForwarded(dispatch.execute(frame, receiver, arg1));
+            } catch (final AbstractStandardSendReturn result) {
+                return handleSendReturn(frame, result);
+            }
         }
     }
 
-    @Operation
+    @Operation(forceCached = true, storeBytecodeIndex = true)
     @ConstantOperand(type = NativeObject.class)
     public static final class SelfSendBinary {
         @Specialization
-        @InliningCutoff
         static Object perform(final VirtualFrame frame, final NativeObject selector, final Object receiver, final Object arg1, final Object arg2,
-                        @Bind final Node location,
-                        @Bind final BytecodeNode bytecode) {
-            return null; // FIXME
+                        @Cached("create(selector)") final Dispatch2Node dispatch) {
+            try {
+                return followForwarded(dispatch.execute(frame, receiver, arg1, arg2));
+            } catch (final AbstractStandardSendReturn result) {
+                return handleSendReturn(frame, result);
+            }
         }
     }
 
-    @Operation
+    static NativeObject getSpecialSelector(final int index) {
+        return SqueakImageContext.getSlow().getSpecialSelector(index);
+    }
+
+    @Operation(forceCached = true, storeBytecodeIndex = true)
+    @ConstantOperand(type = NativeObject.class)
+    public static final class SelfSendNary {
+        @Specialization
+        static Object perform(final VirtualFrame frame, final NativeObject selector, final Object receiver, @Variadic final Object[] args,
+                        @Cached("create(selector)") final DispatchNaryNode dispatch) {
+            try {
+                return followForwarded(dispatch.execute(frame, receiver, args));
+            } catch (final AbstractStandardSendReturn result) {
+                return handleSendReturn(frame, result);
+            }
+        }
+    }
+
+    @Operation(forceCached = true, storeBytecodeIndex = true)
+    @ConstantOperand(type = CompiledCodeObject.class)
+    @ConstantOperand(type = NativeObject.class)
+    public static final class SuperSend {
+        @Specialization
+        static Object perform(final VirtualFrame frame, final CompiledCodeObject code, final NativeObject selector, final Object receiver, @Variadic final Object[] args,
+                        @Cached("create(code, selector)") final DispatchSuperNaryNode dispatch) {
+            try {
+                return followForwarded(dispatch.execute(frame, receiver, args));
+            } catch (final AbstractStandardSendReturn result) {
+                return handleSendReturn(frame, result);
+            }
+        }
+    }
+
+    @Operation(forceCached = true, storeBytecodeIndex = true)
+    @ConstantOperand(type = NativeObject.class)
+    public static final class DirectedSuperSend {
+        @Specialization
+        static Object perform(final VirtualFrame frame, final NativeObject selector, final ClassObject lookupClass, final Object receiver, @Variadic final Object[] args,
+                        @Cached("create(selector)") final DispatchDirectedSuperNaryNode dispatch) {
+            try {
+                return followForwarded(dispatch.execute(frame, lookupClass.getResolvedSuperclass(), receiver, args));
+            } catch (final AbstractStandardSendReturn result) {
+                return handleSendReturn(frame, result);
+            }
+        }
+    }
+
+    @Operation(storeBytecodeIndex = false)
+    public static final class PrimitiveError {
+        @Specialization
+        static Object perform(@Bind final SqueakImageContext image) {
+            final int error = image.getPrimFailCode();
+            return error < image.primitiveErrorTable.getObjectLength() ? image.primitiveErrorTable.getObject(error) : (long) error;
+        }
+    }
+
+    @Operation(storeBytecodeIndex = false)
     public static final class Not {
         @Specialization
-        static boolean perform(final VirtualFrame frame, final boolean value) {
+        static boolean perform(final boolean value) {
             return !value;
+        }
+
+        @Fallback
+        @StoreBytecodeIndex
+        static boolean mustBeBoolean(final VirtualFrame frame, final Object value, @Bind final SqueakImageContext image) {
+            CompilerDirectives.transferToInterpreter();
+            image.mustBeBooleanSelector.executeAsSymbolSlow(image, frame, value);
+            throw SqueakException.create("mustBeBoolean returned");
         }
     }
 
+    @CompilerDirectives.TruffleBoundary
     public static SmalltalkSistaV1Interpreter build(final CompiledCodeObject code) {
-        final var rootNodes = SmalltalkSistaV1InterpreterGen.create(SqueakLanguage.get(null), BytecodeConfig.DEFAULT, new SistaV1BytecodeParser(code));
+        final var rootNodes = SmalltalkSistaV1InterpreterGen.create(SqueakLanguage.get(null), BytecodeConfig.WITH_SOURCE, new SistaV1BytecodeParser(code, -1, -1));
         return rootNodes.getNode(0);
+    }
+
+    @CompilerDirectives.TruffleBoundary
+    public static SmalltalkSistaV1Interpreter resume(final ContextObject context) {
+        final CompiledCodeObject code = context.getMethodOrBlock();
+        final int pc = context.getInstructionPointerForBytecodeLoop();
+        final int sp = context.getStackPointer();
+        final Object[] values = new Object[code.getMaxNumStackSlots()];
+        java.util.Arrays.fill(values, NilObject.SINGLETON);
+        for (int i = 0; i < sp; i++) {
+            values[i] = FrameAccess.getStackValue(context.getTruffleFrame(), i);
+        }
+        final SmalltalkSistaV1Interpreter root = SmalltalkSistaV1InterpreterGen.create(SqueakLanguage.get(null), BytecodeConfig.WITH_SOURCE,
+                        new SistaV1BytecodeParser(code, pc, sp)).getNode(0);
+        root.restoredValues = values;
+        root.resumedContext = context;
+        return root;
     }
 
     static class SistaV1BytecodeParser implements BytecodeParser<SmalltalkSistaV1InterpreterGen.Builder> {
@@ -332,25 +561,44 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
         private final BytecodeLocal[] stackSlots;
         private final Map<Integer, Integer> jumpStackPointers = new HashMap<>();
         private Map<Integer, Integer> loopLocations;
-        private EconomicMap<Integer, BytecodeLabel> jumpLocations;
+        private Map<Integer, BytecodeLabel> jumpLocations;
+        private BytecodeLocal resuming;
 
         private EmissionState emissionState;
         private int index;
         private int sp;
+        private int observedSP;
+        private final int resumePC;
+        private final int resumeSP;
+        private final Map<Integer, SistaV1Frame.Location> locations = new HashMap<>();
 
-        SistaV1BytecodeParser(final CompiledCodeObject code) {
+        SistaV1BytecodeParser(final CompiledCodeObject code, final int resumePC, final int resumeSP) {
             this.code = code;
+            this.resumePC = resumePC;
+            this.resumeSP = resumeSP;
             temporarySlots = new BytecodeLocal[code.getInitialSP()];
-            stackSlots = new BytecodeLocal[code.getInitialSP() + code.getMaxNumStackSlots()];
+            stackSlots = new BytecodeLocal[code.getMaxNumStackSlots()];
         }
 
         @Override
         public void parse(final SmalltalkSistaV1InterpreterGen.Builder b) {
             b.beginRoot();
+            b.beginSource(Source.newBuilder("smalltalk", " ".repeat(code.getBytes().length + 1), code.toString()).build());
             b.beginBlock();
             detectJumps(b);
+            if (resumePC >= 0) {
+                jumpLocations.putIfAbsent(resumePC, null);
+                for (final int loopStart : loopLocations.keySet()) {
+                    if (loopStart <= resumePC && resumePC < loopLocations.get(loopStart)) {
+                        jumpLocations.putIfAbsent(loopStart, null);
+                    }
+                }
+            }
+            createLabels(b, -1);
+            final BytecodeLocal contextState = b.createLocal();
             for (int i = 0; i < temporarySlots.length; i++) {
                 temporarySlots[i] = b.createLocal();
+                stackSlots[i] = temporarySlots[i];
             }
 
             for (int i = code.getInitialSP(); i < stackSlots.length; i++) {
@@ -361,12 +609,38 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                 b.emitInitialTemporary(i);
                 b.endStoreLocal();
             }
+            if (resumePC >= 0) {
+                for (int i = code.getInitialSP(); i < stackSlots.length; i++) {
+                    b.beginStoreLocal(stackSlots[i]);
+                    b.emitInitialTemporary(i);
+                    b.endStoreLocal();
+                }
+            }
+            final BytecodeLocal countable = b.createLocal();
+            b.beginStoreLocal(countable);
+            b.emitIsCountable();
+            b.endStoreLocal();
+            b.beginEnter();
+            b.emitLoadLocal(countable);
+            b.endEnter();
+            if (resumePC >= 0) {
+                resuming = b.createLocal();
+                b.beginStoreLocal(resuming);
+                b.emitLoadConstant(true);
+                b.endStoreLocal();
+                jumpStackPointers.put(resumePC, resumeSP);
+                b.emitBranch(jumpLocations.get(entryTarget(-1)));
+            }
             index = code.getStartPCZeroBased();
             sp = code.getInitialSP();
             final int trailerPosition = code.getMaxPCZeroBased();
 
             while (index < trailerPosition) {
                 final boolean isLoopStart = loopLocations.containsKey(index);
+                if (isLoopStart && jumpLocations.containsKey(index)) {
+                    b.emitLabel(jumpLocations.get(index));
+                    finishResumeEntry(b);
+                }
                 if (isLoopStart) {
                     /*
                      * Keep the original Sista control flow inside an infinite structured loop.
@@ -378,26 +652,58 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                     b.beginWhile();
                     b.emitLoadConstant(true);
                     b.beginBlock();
+                    createLabels(b, index);
+                    if (resumePC > index && resumePC < loopLocations.get(index)) {
+                        b.beginIfThen();
+                        b.emitLoadLocal(resuming);
+                        b.emitBranch(jumpLocations.get(entryTarget(index)));
+                        b.endIfThen();
+                    }
                 }
                 final BytecodeLabel jumpLabel = jumpLocations.get(index);
-                if (jumpLabel != null) {
-                    assert !isLoopStart;
+                if (jumpLabel != null && !isLoopStart) {
                     final Integer jumpStackPointer = jumpStackPointers.get(index);
-                    assert jumpStackPointer != null;
-                    sp = jumpStackPointer;
+                    if (jumpStackPointer != null) {
+                        sp = jumpStackPointer;
+                    }
                     b.emitLabel(jumpLabel);
+                    finishResumeEntry(b);
                 }
+                final int size = instructionSize(index);
+                final int start = index;
+                observedSP = -1;
+                b.beginSourceSection(index, size);
                 index += translateBytecode(b, 0, 0, 0, 0);
+                b.endSourceSection();
+                locations.putIfAbsent(start, new SistaV1Frame.Location(index, observedSP < 0 ? sp : observedSP));
                 final boolean isLoopEnd = loopLocations.containsValue(index);
                 if (isLoopEnd) {
-                    assert !isLoopStart;
-
+                    for (final var loop : loopLocations.entrySet()) {
+                        if (loop.getValue() == index) {
+                            locations.put(start, new SistaV1Frame.Location(loop.getKey(), sp));
+                        }
+                    }
+                    b.beginSourceSection(start, instructionSize(start));
+                    b.emitCheckLoop();
+                    b.endSourceSection();
                     b.endBlock();
                     b.endWhile();
                 }
             }
             b.endBlock();
-            b.endRoot();
+            b.endSource();
+            final SmalltalkSistaV1Interpreter root = b.endRoot();
+            root.countableLocal = countable.getLocalOffset();
+            root.isBlock = code.isCompiledBlock() || code.isShadowBlock();
+            final int[] localOffsets = new int[stackSlots.length];
+            for (int i = 0; i < localOffsets.length; i++) {
+                localOffsets[i] = (i < temporarySlots.length ? temporarySlots[i] : stackSlots[i]).getLocalOffset();
+            }
+            root.frameInfo.initialize(root, code, localOffsets, locations, new SistaV1Frame.Location(resumePC >= 0 ? resumePC : code.getStartPCZeroBased(), resumeSP >= 0 ? resumeSP
+                            : code.getInitialSP()), contextState.getLocalOffset());
+            root.doesNotNeedThisContext = code.getDoesNotNeedThisContextAssumption();
+            root.interruptNode = CheckForInterruptsQuickNode.createForSend(code);
+            root.loopInterruptNode = CheckForInterruptsInLoopNode.createForLoop();
         }
 
         private void detectJumps(final SmalltalkSistaV1InterpreterGen.Builder b) {
@@ -405,12 +711,64 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                 return;
             }
             loopLocations = new HashMap<>();
-            jumpLocations = EconomicMap.create();
+            jumpLocations = new HashMap<>();
             index = code.getStartPCZeroBased();
             final int trailerPosition = code.getMaxPCZeroBased();
             while (index < trailerPosition) {
                 index += detectJumps(b, 0, 0, 0, 0);
             }
+        }
+
+        private int enclosingLoop(final int target) {
+            int enclosing = -1;
+            for (final var loop : loopLocations.entrySet()) {
+                if (loop.getKey() < target && target < loop.getValue() && loop.getKey() > enclosing) {
+                    enclosing = loop.getKey();
+                }
+            }
+            return enclosing;
+        }
+
+        private void createLabels(final SmalltalkSistaV1InterpreterGen.Builder b, final int scope) {
+            for (final int target : jumpLocations.keySet()) {
+                if (enclosingLoop(target) == scope) {
+                    jumpLocations.put(target, b.createLabel());
+                }
+            }
+        }
+
+        private int entryTarget(final int scope) {
+            int target = resumePC;
+            for (final var loop : loopLocations.entrySet()) {
+                if (loop.getKey() > scope && loop.getKey() < target && resumePC < loop.getValue() && enclosingLoop(loop.getKey()) == scope) {
+                    target = loop.getKey();
+                }
+            }
+            return target;
+        }
+
+        private void finishResumeEntry(final SmalltalkSistaV1InterpreterGen.Builder b) {
+            if (index == resumePC) {
+                b.beginStoreLocal(resuming);
+                b.emitLoadConstant(false);
+                b.endStoreLocal();
+            }
+        }
+
+        private int instructionSize(final int start) {
+            int pc = start;
+            int extB = 0;
+            int numExtB = 0;
+            while (getUnsignedInt(pc) == 0xE0 || getUnsignedInt(pc) == 0xE1) {
+                if (getUnsignedInt(pc) == 0xE1) {
+                    final int value = getUnsignedInt(pc + 1);
+                    extB = numExtB++ == 0 && value > 127 ? value - 256 : (extB << 8) + value;
+                }
+                pc += 2;
+            }
+            final int op = getUnsignedInt(pc);
+            final int size = op <= 223 ? 1 : op <= 247 ? 2 : 3;
+            return pc - start + size + (op == 0xFA ? getUnsignedInt(pc + 2) + (extB << 8) : 0);
         }
 
         private byte getByte(final int index) {
@@ -462,12 +820,12 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
             final int jumpTarget = index + offset;
             if (jumpTarget > index) {
                 if (!jumpLocations.containsKey(jumpTarget)) {
-                    assert !loopLocations.containsKey(jumpTarget) && !loopLocations.containsValue(jumpTarget);
-                    jumpLocations.put(jumpTarget, b.createLabel());
+
+                    jumpLocations.put(jumpTarget, null);
                 }
             } else {
-                assert !jumpLocations.containsKey(jumpTarget);
-                loopLocations.put(jumpTarget, index);
+
+                loopLocations.put(jumpTarget, index + instructionSize(index));
             }
         }
 
@@ -475,8 +833,8 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
             assert offset > 0;
             final int jumpTarget = index + offset;
             if (!jumpLocations.containsKey(jumpTarget)) {
-                assert !loopLocations.containsKey(jumpTarget) && !loopLocations.containsValue(jumpTarget);
-                jumpLocations.put(jumpTarget, b.createLabel());
+
+                jumpLocations.put(jumpTarget, null);
             }
         }
 
@@ -524,13 +882,21 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                     b.endReturnTopFromMethod();
                     b.endReturn();
                 }
-                case 0x5D -> b.emitReturnNilFromClosure();
+                case 0x5D -> {
+                    b.beginReturn();
+                    b.beginReturnTopFromClosure();
+                    b.emitLoadConstant(NilObject.SINGLETON);
+                    b.endReturnTopFromClosure();
+                    b.endReturn();
+                }
                 case 0x5E -> {
                     if (extA == 0) {
                         final BytecodeLocal returnValue = popStackEntry();
+                        b.beginReturn();
                         b.beginReturnTopFromClosure();
                         b.emitLoadLocal(returnValue);
                         b.endReturnTopFromClosure();
+                        b.endReturn();
                     } else {
                         fail(op); // shouldBeImplemented, see #genExtReturnTopFromBlock
                     }
@@ -594,8 +960,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                     emitPopN(b, 2);
                     b.endSendSpecialFloorMod();
                 });
-                case 0x6B /* #@ */
-                    -> fail(op);
+                case 0x6B -> emitSend(b, getSpecialSelector(11), 1);
                 case 0x6C /* #bitShift: */ -> emitPush(b, 2, () -> {
                     b.beginSendSpecialBitShift();
                     emitPopN(b, 2);
@@ -616,30 +981,12 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                     emitPopN(b, 2);
                     b.endSendSpecialBitOr();
                 });
-                case 0x70 /* #at: */ -> emitPush(b, 2, () -> {
-                    b.beginSendSpecialAt();
-                    emitPopN(b, 2);
-                    b.endSendSpecialAt();
-                });
-                case 0x71 /* #at:put: */ -> emitPush(b, 3, () -> {
-                    b.beginSendSpecialAtPut();
-                    emitPopN(b, 3);
-                    b.endSendSpecialAtPut();
-                });
-                case 0x72 /* #size */ -> emitPush(b, 1, () -> {
-                    b.beginSendSpecialSize();
-                    emitPop(b);
-                    b.endSendSpecialSize();
-                });
-                case 0x73 /* #next */ -> emitPush(b, 1, () -> {
-                    fail(op);
-                });
-                case 0x74 /* #nextPut: */ -> emitPush(b, 2, () -> {
-                    fail(op);
-                });
-                case 0x75 /* #atEnd */ -> emitPush(b, 1, () -> {
-                    fail(op);
-                });
+                case 0x70 -> emitSend(b, getSpecialSelector(16), 1);
+                case 0x71 -> emitSend(b, getSpecialSelector(17), 2);
+                case 0x72 -> emitSend(b, getSpecialSelector(18), 0);
+                case 0x73 -> emitSend(b, getSpecialSelector(19), 0);
+                case 0x74 -> emitSend(b, getSpecialSelector(20), 1);
+                case 0x75 -> emitSend(b, getSpecialSelector(21), 0);
                 case 0x76 /* #== */ -> emitPush(b, 2, () -> {
                     b.beginSendSpecialIdentical();
                     emitPopN(b, 2);
@@ -650,38 +997,14 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                     emitPop(b);
                     b.endSendSpecialClass();
                 });
-                case 0x78 /* #~~ */ -> emitPush(b, 2, () -> {
-                    fail(op);
-                });
-                case 0x79 /* #value */ -> emitPush(b, 1, () -> {
-                    fail(op);
-                });
-                case 0x7A /* #value: */ -> emitPush(b, 2, () -> {
-                    fail(op);
-                });
-                case 0x7B /* #do: */ -> emitPush(b, 2, () -> {
-                    fail(op);
-                });
-                case 0x7C /* #new */ -> emitPush(b, 1, () -> {
-                    b.beginSendSpecialNew();
-                    emitPop(b);
-                    b.endSendSpecialNew();
-                });
-                case 0x7D /* #new: */ -> emitPush(b, 2, () -> {
-                    b.beginSendSpecialNewWithArgument();
-                    emitPopN(b, 2);
-                    b.endSendSpecialNewWithArgument();
-                });
-                case 0x7E /* #x */ -> emitPush(b, 1, () -> {
-                    b.beginSendSpecialX();
-                    emitPop(b);
-                    b.endSendSpecialX();
-                });
-                case 0x7F /* #y */ -> emitPush(b, 1, () -> {
-                    b.beginSendSpecialY();
-                    emitPop(b);
-                    b.endSendSpecialY();
-                });
+                case 0x78 -> emitSend(b, getSpecialSelector(24), 1);
+                case 0x79 -> emitSend(b, getSpecialSelector(25), 0);
+                case 0x7A -> emitSend(b, getSpecialSelector(26), 1);
+                case 0x7B -> emitSend(b, getSpecialSelector(27), 1);
+                case 0x7C -> emitSend(b, getSpecialSelector(28), 0);
+                case 0x7D -> emitSend(b, getSpecialSelector(29), 1);
+                case 0x7E -> emitSend(b, getSpecialSelector(30), 0);
+                case 0x7F -> emitSend(b, getSpecialSelector(31), 0);
                 case 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E, 0x8F //
                     -> emitPush(b, 1, () -> {
                         b.beginSelfSendNilary((NativeObject) code.getAndResolveLiteral(op & 0xF));
@@ -711,7 +1034,11 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                     final int jumpTarget = index + 1 + InterpreterSistaV1Node.calculateShortOffset(op);
                     final BytecodeLocal condition = popStackEntry();
                     b.beginIfThen();
+                    b.beginNot();
+                    b.beginNot();
                     b.emitLoadLocal(condition);
+                    b.endNot();
+                    b.endNot();
                     recordJumpStackPointer(jumpTarget);
                     b.emitBranch(jumpLocations.get(jumpTarget));
                     b.endIfThen();
@@ -767,6 +1094,10 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                     final Object characterValue = CharacterObject.valueOf(getUnsignedInt(indexWithExt + 1) + (extA << 8));
                     emitPush(b, () -> b.emitLoadConstant(characterValue));
                 }
+                case 0xEA -> emitSend(b, (NativeObject) code.getAndResolveLiteral((getUnsignedInt(indexWithExt + 1) >> 3) + (extA << 5)),
+                                (getUnsignedInt(indexWithExt + 1) & 7) + (extB << 3));
+                case 0xEB -> emitSuperSend(b, (NativeObject) code.getAndResolveLiteral((getUnsignedInt(indexWithExt + 1) >> 3) + (extA << 5)),
+                                (getUnsignedInt(indexWithExt + 1) & 7) + ((extB & 63) << 3), extB >= 64);
                 // unused
                 case 0xED -> {
                     final int jumpTarget = index + 2 + extBytes + InterpreterSistaV1Node.calculateLongExtendedOffset(getByte(indexWithExt + 1), extB);
@@ -779,7 +1110,11 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                     final int jumpTarget = index + 2 + extBytes + InterpreterSistaV1Node.calculateLongExtendedOffset(getByte(indexWithExt + 1), extB);
                     final BytecodeLocal condition = popStackEntry();
                     b.beginIfThen();
+                    b.beginNot();
+                    b.beginNot();
                     b.emitLoadLocal(condition);
+                    b.endNot();
+                    b.endNot();
                     recordJumpStackPointer(jumpTarget);
                     b.emitBranch(jumpLocations.get(jumpTarget));
                     b.endIfThen();
@@ -803,15 +1138,10 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                 case 0xF5 -> emitStoreIntoTemporaryLocation(b, getUnsignedInt(indexWithExt + 1) + (extA << 8), false);
                 // unused
                 case 0xF8 -> {
-                    final int i = getUnsignedInt(indexWithExt + 1);
-                    final int j = getByte(indexWithExt + 2) & 31;
-                    final int primitiveIndex = i + (j << 8);
-                    assert 1 <= primitiveIndex && primitiveIndex < 32767 : "primitiveIndex out of range";
-                    if (primitiveIndex < 1000) {
-                        // FIXME
-                    } else {
-                        // TODO
-                        fail(op);
+                    if (indexWithExt + 3 < code.getMaxPCZeroBased() && getUnsignedInt(indexWithExt + 3) == 0xF5) {
+                        b.beginStoreLocal(temporarySlots[sp - 1]);
+                        b.emitPrimitiveError();
+                        b.endStoreLocal();
                     }
                 }
                 case 0xF9 -> emitFullClosure(b, extA, indexWithExt);
@@ -839,6 +1169,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
 
         private void emitPush(final SmalltalkSistaV1InterpreterGen.Builder b, final int numPopped, final PushOperation pushOperation) {
             final BytecodeLocal[] operands = popStackEntries(numPopped);
+            observedSP = sp;
             final EmissionState previousState = emissionState;
             emissionState = new EmissionState(operands);
             b.beginStoreLocal(stackSlots[sp]);
@@ -892,7 +1223,9 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
 
         private static void emitReturn(final SmalltalkSistaV1InterpreterGen.Builder b, final ReturnOperation returnOperation) {
             b.beginReturn();
+            b.beginReturnTopFromMethod();
             returnOperation.perform();
+            b.endReturnTopFromMethod();
             b.endReturn();
         }
 
@@ -919,6 +1252,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
             b.beginStoreIntoReceiverVariable(variableIndex);
             b.emitLoadLocal(value);
             b.endStoreIntoReceiverVariable();
+            b.emitCheckContextMutation();
         }
 
         private void emitStoreIntoLiteralVariable(final SmalltalkSistaV1InterpreterGen.Builder b, final int literalIndex, final boolean shouldPop) {
@@ -957,6 +1291,49 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
             b.emitLoadLocal(temporarySlots[indexOfArray]);
             b.emitLoadLocal(value);
             b.endStoreIntoRemoteTemp();
+        }
+
+        private void emitSend(final SmalltalkSistaV1InterpreterGen.Builder b, final NativeObject selector, final int numArgs) {
+            emitPush(b, numArgs + 1, () -> {
+                switch (numArgs) {
+                    case 0 -> {
+                        b.beginSelfSendNilary(selector);
+                        emitPopN(b, 1);
+                        b.endSelfSendNilary();
+                    }
+                    case 1 -> {
+                        b.beginSelfSendUnary(selector);
+                        emitPopN(b, 2);
+                        b.endSelfSendUnary();
+                    }
+                    case 2 -> {
+                        b.beginSelfSendBinary(selector);
+                        emitPopN(b, 3);
+                        b.endSelfSendBinary();
+                    }
+                    default -> {
+                        b.beginSelfSendNary(selector);
+                        emitPopN(b, numArgs + 1);
+                        b.endSelfSendNary();
+                    }
+                }
+            });
+        }
+
+        private void emitSuperSend(final SmalltalkSistaV1InterpreterGen.Builder b, final NativeObject selector, final int numArgs, final boolean directed) {
+            emitPush(b, numArgs + 1 + (directed ? 1 : 0), () -> {
+                if (directed) {
+                    b.beginDirectedSuperSend(selector);
+                    b.emitLoadLocal(emissionState.operands[numArgs + 1]);
+                    emitPopN(b, numArgs + 1);
+                    emissionState.index++;
+                    b.endDirectedSuperSend();
+                } else {
+                    b.beginSuperSend(code, selector);
+                    emitPopN(b, numArgs + 1);
+                    b.endSuperSend();
+                }
+            });
         }
 
         private void emitFullClosure(final SmalltalkSistaV1InterpreterGen.Builder b, final int extA, final int indexWithExt) {
@@ -1010,23 +1387,12 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
         }
     }
 
-    @Operation
+    @Operation(forceCached = true, storeBytecodeIndex = false)
     public static final class SendSpecialAdd {
         @Specialization(rewriteOn = ArithmeticException.class)
         static long doLong(final long lhs, final long rhs) {
             return Math.addExact(lhs, rhs);
         }
-
-//        @Specialization(replaces = "doLong")
-//        static Object doLongWithOverflow(final long lhs, final long rhs,
-//                        @Bind final SqueakImageContext image) {
-//            return LargeIntegerObject.add(image, lhs, rhs);
-//        }
-//
-//        @Specialization
-//        static Object doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-//            return rhs.add(lhs);
-//        }
 
         @Specialization(guards = "image.flags.numericPrimsMixArithmetic()")
         static double doLongDouble(final long lhs, final double rhs,
@@ -1034,31 +1400,25 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
             return lhs + rhs;
         }
 
-//        @Specialization
-//        static Object doLongFloat(final long lhs, final FloatObject rhs,
-//                        @Bind final Node node,
-//                        @Cached final FloatObjectNodes.AsFloatObjectIfNessaryNode boxNode) {
-//            return boxNode.execute(node, lhs + rhs.getValue());
-//        }
+        @Fallback
+        @StoreBytecodeIndex
+        static Object send(final VirtualFrame frame, final Object receiver, final Object argument,
+                        @Cached("create(getSpecialSelector(0))") final Dispatch1Node dispatch) {
+            try {
+                return followForwarded(dispatch.execute(frame, receiver, argument));
+            } catch (final AbstractStandardSendReturn result) {
+                return handleSendReturn(frame, result);
+            }
+        }
+
     }
 
-    @Operation
+    @Operation(forceCached = true, storeBytecodeIndex = false)
     public static final class SendSpecialSubtract {
         @Specialization(rewriteOn = ArithmeticException.class)
         static long doLong(final long lhs, final long rhs) {
             return Math.subtractExact(lhs, rhs);
         }
-
-//        @Specialization(replaces = "doLong")
-//        static Object doLongWithOverflow(final long lhs, final long rhs,
-//                        @Bind final SqueakImageContext image) {
-//            return LargeIntegerObject.subtract(image, lhs, rhs);
-//        }
-//
-//        @Specialization
-//        static Object doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-//            return LargeIntegerObject.subtract(lhs, rhs);
-//        }
 
         @Specialization(guards = "image.flags.numericPrimsMixArithmetic()")
         static double doLongDouble(final long lhs, final double rhs,
@@ -1066,25 +1426,25 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
             return lhs - rhs;
         }
 
-//        @Specialization
-//        static Object doLongFloat(final long lhs, final FloatObject rhs,
-//                        @Bind final Node node,
-//                        @Cached final FloatObjectNodes.AsFloatObjectIfNessaryNode boxNode) {
-//            return boxNode.execute(node, lhs - rhs.getValue());
-//        }
+        @Fallback
+        @StoreBytecodeIndex
+        static Object send(final VirtualFrame frame, final Object receiver, final Object argument,
+                        @Cached("create(getSpecialSelector(1))") final Dispatch1Node dispatch) {
+            try {
+                return followForwarded(dispatch.execute(frame, receiver, argument));
+            } catch (final AbstractStandardSendReturn result) {
+                return handleSendReturn(frame, result);
+            }
+        }
+
     }
 
-    @Operation
+    @Operation(forceCached = true, storeBytecodeIndex = false)
     public static final class SendSpecialLessThan {
         @Specialization
         static boolean doLong(final long lhs, final long rhs) {
             return BooleanObject.wrap(lhs < rhs);
         }
-
-//        @Specialization
-//        static boolean doLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-//            return BooleanObject.wrap(rhs.compareTo(lhs) >= 0);
-//        }
 
         @Specialization(guards = "image.flags.numericPrimsMixComparison()")
         static boolean doDouble(final long lhs, final double rhs,
@@ -1097,19 +1457,26 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                 return BooleanObject.wrap(lhs < rhs);
             }
         }
+
+        @Fallback
+        @StoreBytecodeIndex
+        static Object send(final VirtualFrame frame, final Object receiver, final Object argument,
+                        @Cached("create(getSpecialSelector(2))") final Dispatch1Node dispatch) {
+            try {
+                return followForwarded(dispatch.execute(frame, receiver, argument));
+            } catch (final AbstractStandardSendReturn result) {
+                return handleSendReturn(frame, result);
+            }
+        }
+
     }
 
-    @Operation
+    @Operation(forceCached = true, storeBytecodeIndex = false)
     public static final class SendSpecialGreaterThan {
         @Specialization
         static boolean doLong(final long lhs, final long rhs) {
             return BooleanObject.wrap(lhs > rhs);
         }
-
-//        @Specialization
-//        static boolean doLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-//            return BooleanObject.wrap(rhs.compareTo(lhs) <= 0);
-//        }
 
         @Specialization(guards = "image.flags.numericPrimsMixComparison()")
         static boolean doDouble(final long lhs, final double rhs,
@@ -1122,19 +1489,26 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                 return BooleanObject.wrap(lhs > rhs);
             }
         }
+
+        @Fallback
+        @StoreBytecodeIndex
+        static Object send(final VirtualFrame frame, final Object receiver, final Object argument,
+                        @Cached("create(getSpecialSelector(3))") final Dispatch1Node dispatch) {
+            try {
+                return followForwarded(dispatch.execute(frame, receiver, argument));
+            } catch (final AbstractStandardSendReturn result) {
+                return handleSendReturn(frame, result);
+            }
+        }
+
     }
 
-    @Operation
+    @Operation(forceCached = true, storeBytecodeIndex = false)
     public static final class SendSpecialLessOrEqual {
         @Specialization
         static boolean doLong(final long lhs, final long rhs) {
             return BooleanObject.wrap(lhs <= rhs);
         }
-
-//        @Specialization
-//        static boolean doLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-//            return BooleanObject.wrap(rhs.compareTo(lhs) > 0);
-//        }
 
         @Specialization(guards = "image.flags.numericPrimsMixComparison()")
         static boolean doDouble(final long lhs, final double rhs,
@@ -1147,19 +1521,26 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                 return BooleanObject.wrap(lhs <= rhs);
             }
         }
+
+        @Fallback
+        @StoreBytecodeIndex
+        static Object send(final VirtualFrame frame, final Object receiver, final Object argument,
+                        @Cached("create(getSpecialSelector(4))") final Dispatch1Node dispatch) {
+            try {
+                return followForwarded(dispatch.execute(frame, receiver, argument));
+            } catch (final AbstractStandardSendReturn result) {
+                return handleSendReturn(frame, result);
+            }
+        }
+
     }
 
-    @Operation
+    @Operation(forceCached = true, storeBytecodeIndex = false)
     public static final class SendSpecialGreaterOrEqual {
         @Specialization
         static boolean doLong(final long lhs, final long rhs) {
             return BooleanObject.wrap(lhs >= rhs);
         }
-
-//        @Specialization
-//        static boolean doLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-//            return BooleanObject.wrap(rhs.compareTo(lhs) < 0);
-//        }
 
         @Specialization(guards = "image.flags.numericPrimsMixComparison()")
         static boolean doDouble(final long lhs, final double rhs,
@@ -1172,19 +1553,26 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                 return BooleanObject.wrap(lhs >= rhs);
             }
         }
+
+        @Fallback
+        @StoreBytecodeIndex
+        static Object send(final VirtualFrame frame, final Object receiver, final Object argument,
+                        @Cached("create(getSpecialSelector(5))") final Dispatch1Node dispatch) {
+            try {
+                return followForwarded(dispatch.execute(frame, receiver, argument));
+            } catch (final AbstractStandardSendReturn result) {
+                return handleSendReturn(frame, result);
+            }
+        }
+
     }
 
-    @Operation
+    @Operation(forceCached = true, storeBytecodeIndex = false)
     public static final class SendSpecialEqual {
         @Specialization
         static boolean doLong(final long lhs, final long rhs) {
             return BooleanObject.wrap(lhs == rhs);
         }
-
-//        @Specialization
-//        static boolean doLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-//            return BooleanObject.wrap(rhs.compareTo(lhs) == 0);
-//        }
 
         @Specialization(guards = "image.flags.numericPrimsMixComparison()")
         static boolean doDouble(final long lhs, final double rhs,
@@ -1205,19 +1593,26 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                         @Bind final SqueakImageContext image) {
             return BooleanObject.FALSE;
         }
+
+        @Fallback
+        @StoreBytecodeIndex
+        static Object send(final VirtualFrame frame, final Object receiver, final Object argument,
+                        @Cached("create(getSpecialSelector(6))") final Dispatch1Node dispatch) {
+            try {
+                return followForwarded(dispatch.execute(frame, receiver, argument));
+            } catch (final AbstractStandardSendReturn result) {
+                return handleSendReturn(frame, result);
+            }
+        }
+
     }
 
-    @Operation
+    @Operation(forceCached = true, storeBytecodeIndex = false)
     public static final class SendSpecialNotEqual {
         @Specialization
         static boolean doLong(final long lhs, final long rhs) {
             return BooleanObject.wrap(lhs != rhs);
         }
-
-//        @Specialization
-//        static boolean doLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-//            return BooleanObject.wrap(rhs.compareTo(lhs) != 0);
-//        }
 
         @Specialization(guards = "image.flags.numericPrimsMixComparison()")
         static boolean doDouble(final long lhs, final double rhs,
@@ -1238,25 +1633,26 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                         @Bind final SqueakImageContext image) {
             return BooleanObject.TRUE;
         }
+
+        @Fallback
+        @StoreBytecodeIndex
+        static Object send(final VirtualFrame frame, final Object receiver, final Object argument,
+                        @Cached("create(getSpecialSelector(7))") final Dispatch1Node dispatch) {
+            try {
+                return followForwarded(dispatch.execute(frame, receiver, argument));
+            } catch (final AbstractStandardSendReturn result) {
+                return handleSendReturn(frame, result);
+            }
+        }
+
     }
 
-    @Operation
+    @Operation(forceCached = true, storeBytecodeIndex = false)
     public static final class SendSpecialMultiply {
         @Specialization(rewriteOn = ArithmeticException.class)
         static long doLong(final long lhs, final long rhs) {
             return Math.multiplyExact(lhs, rhs);
         }
-
-//        @Specialization(replaces = "doLong")
-//        static Object doLongWithOverflow(final long lhs, final long rhs,
-//                        @Bind final SqueakImageContext image) {
-//            return LargeIntegerObject.multiply(image, lhs, rhs);
-//        }
-//
-//        @Specialization
-//        static Object doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-//            return rhs.multiply(lhs);
-//        }
 
         @Specialization(guards = "image.flags.numericPrimsMixArithmetic()", rewriteOn = RespecializeException.class)
         static double doLongDoubleFinite(final long lhs, final double rhs,
@@ -1264,16 +1660,20 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
             return ensureFinite(lhs * rhs);
         }
 
-//        @Specialization(guards = "image.flags.isPrimitiveDoMixedArithmetic()", replaces = "doLongDoubleFinite")
-//        static Object doLongDouble(final long lhs, final double rhs,
-//                        @Bind final SqueakImageContext image,
-//                        @Bind final Node node,
-//                        @Cached final FloatObjectNodes.AsFloatObjectIfNessaryNode boxNode) {
-//            return boxNode.execute(node, lhs * rhs);
-//        }
+        @Fallback
+        @StoreBytecodeIndex
+        static Object send(final VirtualFrame frame, final Object receiver, final Object argument,
+                        @Cached("create(getSpecialSelector(8))") final Dispatch1Node dispatch) {
+            try {
+                return followForwarded(dispatch.execute(frame, receiver, argument));
+            } catch (final AbstractStandardSendReturn result) {
+                return handleSendReturn(frame, result);
+            }
+        }
+
     }
 
-    @Operation
+    @Operation(forceCached = true, storeBytecodeIndex = false)
     public static final class SendSpecialDivide {
         @Specialization(guards = {"rhs != 0", "!isOverflowDivision(lhs, rhs)", "isIntegralWhenDividedBy(lhs, rhs)"})
         static long doLong(final long lhs, final long rhs) {
@@ -1293,29 +1693,26 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
             }
         }
 
-//        @SuppressWarnings("unused")
-//        @Specialization(guards = {"isOverflowDivision(lhs, rhs)"})
-//        static LargeIntegerObject doLongOverflow(final long lhs, final long rhs,
-//                        @Bind final SqueakImageContext image) {
-//            return LargeIntegerObject.createLongMinOverflowResult(image);
-//        }
-
         @Specialization(guards = {"image.flags.numericPrimsMixArithmetic()", "!isZero(rhs)"}, rewriteOn = RespecializeException.class)
         static double doLongDoubleFinite(final long lhs, final double rhs,
                         @Bind final SqueakImageContext image) throws RespecializeException {
             return ensureFinite(lhs / rhs);
         }
 
-//        @Specialization(guards = {"image.flags.isPrimitiveDoMixedArithmetic()", "!isZero(rhs)"}, replaces = "doLongDoubleFinite")
-//        static Object doLongDouble(final long lhs, final double rhs,
-//                        @Bind final SqueakImageContext image,
-//                        @Bind final Node node,
-//                        @Cached final FloatObjectNodes.AsFloatObjectIfNessaryNode boxNode) {
-//            return boxNode.execute(node, lhs / rhs);
-//        }
+        @Fallback
+        @StoreBytecodeIndex
+        static Object send(final VirtualFrame frame, final Object receiver, final Object argument,
+                        @Cached("create(getSpecialSelector(9))") final Dispatch1Node dispatch) {
+            try {
+                return followForwarded(dispatch.execute(frame, receiver, argument));
+            } catch (final AbstractStandardSendReturn result) {
+                return handleSendReturn(frame, result);
+            }
+        }
+
     }
 
-    @Operation
+    @Operation(forceCached = true, storeBytecodeIndex = false)
     public static final class SendSpecialFloorMod {
         /** Profiled version of {@link Math#floorMod(long, long)}. */
         @Specialization(guards = "rhs != 0")
@@ -1331,28 +1728,25 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
             }
         }
 
-//        @Specialization(guards = "!rhs.isZero()")
-//        static Object doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-//            return rhs.floorModReverseOrder(lhs);
-//        }
+        @Fallback
+        @StoreBytecodeIndex
+        static Object send(final VirtualFrame frame, final Object receiver, final Object argument,
+                        @Cached("create(getSpecialSelector(10))") final Dispatch1Node dispatch) {
+            try {
+                return followForwarded(dispatch.execute(frame, receiver, argument));
+            } catch (final AbstractStandardSendReturn result) {
+                return handleSendReturn(frame, result);
+            }
+        }
+
     }
 
-    @Operation
+    @Operation(forceCached = true, storeBytecodeIndex = false)
     public static final class SendSpecialBitShift {
         @Specialization(guards = {"arg >= 0", "!isLShiftLongOverflow(receiver, arg)"})
         static long doLongPositive(final long receiver, final long arg) {
             return receiver << arg;
         }
-
-//        @Specialization(guards = {"arg >= 0", "isLShiftLongOverflow(receiver, arg)"})
-//        static Object doLongPositiveOverflow(final long receiver, final long arg,
-//                        @Bind final SqueakImageContext image) {
-//            /*
-//             * -1 in check needed, because we do not want to shift a positive long into negative
-//             * long (most significant bit indicates positive/negative).
-//             */
-//            return LargeIntegerObject.shiftLeftPositive(image, receiver, (int) arg);
-//        }
 
         @Specialization(guards = {"arg < 0", "inLongSizeRange(arg)"})
         static long doLongNegativeInLongSizeRange(final long receiver, final long arg) {
@@ -1375,9 +1769,21 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
         static boolean inLongSizeRange(final long arg) {
             return -Long.SIZE < arg;
         }
+
+        @Fallback
+        @StoreBytecodeIndex
+        static Object send(final VirtualFrame frame, final Object receiver, final Object argument,
+                        @Cached("create(getSpecialSelector(12))") final Dispatch1Node dispatch) {
+            try {
+                return followForwarded(dispatch.execute(frame, receiver, argument));
+            } catch (final AbstractStandardSendReturn result) {
+                return handleSendReturn(frame, result);
+            }
+        }
+
     }
 
-    @Operation
+    @Operation(forceCached = true, storeBytecodeIndex = false)
     public static final class SendSpecialFloorDivide {
         /** Profiled version of {@link Math#floorDiv(long, long)}. */
         @Specialization(guards = {"rhs != 0", "!isOverflowDivision(lhs, rhs)"})
@@ -1393,58 +1799,60 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
             }
         }
 
-//        @SuppressWarnings("unused")
-//        @Specialization(guards = {"isOverflowDivision(lhs, rhs)"})
-//        static LargeIntegerObject doLongOverflowDivision(final long lhs, final long rhs,
-//                        @Bind final SqueakImageContext image) {
-//            return LargeIntegerObject.createLongMinOverflowResult(image);
-//        }
-//
-//        @Specialization(guards = {"!rhs.isZero()"})
-//        static long doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-//            return LargeIntegerObject.floorDivide(lhs, rhs);
-//        }
+        @Fallback
+        @StoreBytecodeIndex
+        static Object send(final VirtualFrame frame, final Object receiver, final Object argument,
+                        @Cached("create(getSpecialSelector(13))") final Dispatch1Node dispatch) {
+            try {
+                return followForwarded(dispatch.execute(frame, receiver, argument));
+            } catch (final AbstractStandardSendReturn result) {
+                return handleSendReturn(frame, result);
+            }
+        }
+
     }
 
-    @Operation
+    @Operation(forceCached = true, storeBytecodeIndex = false)
     public static final class SendSpecialBitAnd {
         @Specialization
         static long doLong(final long receiver, final long arg) {
             return receiver & arg;
         }
 
-//        @Specialization(rewriteOn = ArithmeticException.class)
-//        static long doLongLargeQuick(final long receiver, final LargeIntegerObject arg,
-//                        @Bind final Node node,
-//                        @Cached final InlinedConditionProfile positiveProfile) {
-//            return receiver & (positiveProfile.profile(node, receiver >= 0) ? arg.longValue() : arg.longValueExact());
-//        }
-//
-//        @Specialization(replaces = "doLongLargeQuick")
-//        static Object doLongLarge(final long receiver, final LargeIntegerObject arg) {
-//            return arg.and(receiver);
-//        }
+        @Fallback
+        @StoreBytecodeIndex
+        static Object send(final VirtualFrame frame, final Object receiver, final Object argument,
+                        @Cached("create(getSpecialSelector(14))") final Dispatch1Node dispatch) {
+            try {
+                return followForwarded(dispatch.execute(frame, receiver, argument));
+            } catch (final AbstractStandardSendReturn result) {
+                return handleSendReturn(frame, result);
+            }
+        }
+
     }
 
-    @Operation
+    @Operation(forceCached = true, storeBytecodeIndex = false)
     public static final class SendSpecialBitOr {
         @Specialization
         static long doLong(final long receiver, final long arg) {
             return receiver | arg;
         }
 
-//        @Specialization(rewriteOn = ArithmeticException.class)
-//        static long doLongLargeQuick(final long receiver, final LargeIntegerObject arg) {
-//            return receiver | arg.longValueExact();
-//        }
-//
-//        @Specialization(replaces = "doLongLargeQuick")
-//        static Object doLongLarge(final long receiver, final LargeIntegerObject arg) {
-//            return arg.or(receiver);
-//        }
+        @Fallback
+        @StoreBytecodeIndex
+        static Object send(final VirtualFrame frame, final Object receiver, final Object argument,
+                        @Cached("create(getSpecialSelector(15))") final Dispatch1Node dispatch) {
+            try {
+                return followForwarded(dispatch.execute(frame, receiver, argument));
+            } catch (final AbstractStandardSendReturn result) {
+                return handleSendReturn(frame, result);
+            }
+        }
+
     }
 
-    @Operation
+    @Operation(storeBytecodeIndex = false)
     public static final class SendSpecialMakePoint {
         @Specialization
         static PointersObject doPoint(final Object xPos, final Object yPos,
@@ -1455,48 +1863,17 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
         }
     }
 
-    @Operation
-    public static final class SendSpecialAt {
-        @Specialization
-        static Object perform(final Object receiver, final long index,
-                        @Bind final Node node,
-                        @Cached(inline = true) final SqueakObjectAt0Node at0Node) {
-            return at0Node.execute(node, receiver, index - 1);
-        }
-    }
-
-    @Operation
-    public static final class SendSpecialAtPut {
-        @Specialization
-        static Object perform(final Object receiver, final long index, final Object value,
-                        @Bind final Node node,
-                        @Cached(inline = true) final SqueakObjectAtPut0Node atPut0Node) {
-            atPut0Node.execute(node, receiver, index - 1, value);
-            return value;
-        }
-    }
-
-    @Operation
-    public static final class SendSpecialSize {
-        @Specialization
-        static long perform(final Object receiver,
-                        @Bind final Node node,
-                        @Cached final SqueakObjectSizeNode sizeNode) {
-            return sizeNode.execute(node, receiver);
-        }
-    }
-
-    @Operation(forceCached = true)
+    @Operation(forceCached = true, storeBytecodeIndex = false)
     public static final class SendSpecialIdentical {
         @Specialization
         static boolean perform(final Object left, final Object right,
                         @Bind final Node node,
-                        @Cached final SqueakObjectIdentityNode identityNode) {
+                        @Cached(inline = true) final SqueakObjectIdentityNode identityNode) {
             return identityNode.execute(node, left, right);
         }
     }
 
-    @Operation
+    @Operation(storeBytecodeIndex = false)
     public static final class SendSpecialClass {
         @Specialization
         static Object performASO(final AbstractSqueakObject receiver,
@@ -1513,59 +1890,4 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
         }
     }
 
-    @Operation
-    public static final class SendSpecialNew {
-        @Specialization
-        static Object perform(final ClassObject receiver,
-                        @Bind final Node node,
-                        @Bind final SqueakImageContext image,
-                        @Shared("classNode") @Cached final SqueakObjectNewNode newNode) {
-            return newNode.execute(node, receiver);
-        }
-    }
-
-    @Operation
-    public static final class SendSpecialNewWithArgument {
-        @Specialization
-        static Object perform(final ClassObject receiver, final long extraSize,
-                        @Bind final Node node,
-                        @Bind final SqueakImageContext image,
-                        @Shared("classNode") @Cached final SqueakObjectNewNode newNode) {
-            return newNode.execute(node, receiver, /* FIXME: */ Math.toIntExact(extraSize));
-        }
-    }
-
-    @Operation
-    @ImportStatic(SqueakImageContext.class)
-    public static final class SendSpecialX {
-        @Specialization(guards = "receiver.getSqueakClass() == get(node).pointClass")
-        static Object performAPO(final AbstractPointersObject receiver,
-                        @Bind final Node node,
-                        @Cached final AbstractPointersObjectReadNode readNode) {
-            return readNode.execute(receiver, ObjectLayouts.POINT.X);
-        }
-
-        @Fallback
-        static Object perform(final Object receiver,
-                        @Bind final Node node) {
-            return null; // FIXME: Send #x
-        }
-    }
-
-    @Operation
-    @ImportStatic(SqueakImageContext.class)
-    public static final class SendSpecialY {
-        @Specialization(guards = "receiver.getSqueakClass() == get(node).pointClass")
-        static Object performAPO(final AbstractPointersObject receiver,
-                        @Bind final Node node,
-                        @Cached final AbstractPointersObjectReadNode readNode) {
-            return readNode.execute(receiver, ObjectLayouts.POINT.Y);
-        }
-
-        @Fallback
-        static Object perform(final Object receiver,
-                        @Bind final Node node) {
-            return null; // FIXME: Send #y
-        }
-    }
 }

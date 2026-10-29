@@ -23,8 +23,10 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageReader;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SmalltalkSistaV1Interpreter;
+import de.hpi.swa.trufflesqueak.nodes.StartContextRootNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 /** Differential checks against the established interpreter, using a SistaV1 development image. */
@@ -50,16 +52,38 @@ public final class SistaV1BytecodeDSLImageTest extends AbstractSqueakTestCase {
     }
 
     @Test
+    public void indexedAccessUsesOneBasedIndicesAndReturnsStoredValue() {
+        final ArrayObject receiver = ArrayObject.createWithStorage(image.arrayClass, new Object[]{10L, 20L});
+        assertEquals(10L, executeArrayMethod(receiver, 0x4C, 0x51, 0x70, 0x5C));
+        assertEquals(20L, executeArrayMethod(receiver, 0x4C, 0xE8, 2, 0x70, 0x5C));
+        assertEquals(42L, executeArrayMethod(receiver, 0x4C, 0x51, 0xE8, 42, 0x71, 0x5C));
+        assertEquals(42L, executeArrayMethod(receiver, 0x4C, 0x51, 0x70, 0x5C));
+    }
+
+    private static Object executeArrayMethod(final ArrayObject receiver, final int... bytecodes) {
+        final CompiledCodeObject reference = (CompiledCodeObject) LookupMethodByStringNode.executeUncached(image.smallIntegerClass, "odd");
+        final Object association = reference.getLiteral(reference.getNumLiterals() - 1);
+        final byte[] bytes = new byte[bytecodes.length + 1];
+        for (int i = 0; i < bytecodes.length; i++) {
+            bytes[i] = (byte) bytecodes[i];
+        }
+        final long header = CompiledCodeObject.CompiledCodeHeaderUtils.makeHeaderWord(false, 0, 0, 2, false, false);
+        final CompiledCodeObject code = new CompiledCodeObject(bytes, header, new Object[]{image.asByteString("DoIt"), association}, image.compiledMethodClass);
+        return SmalltalkSistaV1Interpreter.build(code).getCallTarget().call(FrameAccess.newWith(NilObject.SINGLETON, null, receiver));
+    }
+
+    @Test
     public void smallIntegerMethods() {
         final long[] receivers = {0, 1, 2, 3, 7, 8, 15, 16, 127, 128, 255, 256, 257, 65535, 65536, 1073741823, 1L << 40, (1L << 60) - 1};
         for (final String selector : new String[]{"odd", "isPowerOfTwo", "bitCount", "hashMultiply"}) {
             final CompiledCodeObject method = (CompiledCodeObject) LookupMethodByStringNode.executeUncached(image.smallIntegerClass, selector);
             assertFalse("Expected SistaV1 bytecodes in " + selector, method.getHasV3PlusClosuresBytecodes());
             final var target = SmalltalkSistaV1Interpreter.build(method).getCallTarget();
+            final var reference = new StartContextRootNode(image, method).getCallTarget();
             for (int iteration = 0; iteration < 2; iteration++) {
                 for (final long receiver : receivers) {
                     final Object[] arguments = FrameAccess.newWith(NilObject.SINGLETON, null, receiver);
-                    final Object expected = method.getCallTarget().call(arguments.clone());
+                    final Object expected = reference.call(arguments.clone());
                     assertEquals(selector + " for " + receiver, expected, target.call(arguments.clone()));
                 }
             }
