@@ -205,7 +205,7 @@ public final class FrameAccess {
 
     public static int getInstructionPointer(final Frame frame) {
         if (frame.getFrameDescriptor().getInfo() instanceof final SistaV1Frame info) {
-            return info.instructionPointer(frame);
+            return info.instructionPointer(frame.materialize());
         }
         return frame.getIntStatic(SlotIndices.INSTRUCTION_POINTER);
     }
@@ -225,7 +225,7 @@ public final class FrameAccess {
 
     public static int getStackPointer(final Frame frame) {
         if (frame.getFrameDescriptor().getInfo() instanceof final SistaV1Frame info) {
-            return info.stackPointer(frame);
+            return info.stackPointer(frame.materialize());
         }
         return frame.getIntStatic(SlotIndices.STACK_POINTER);
     }
@@ -276,9 +276,9 @@ public final class FrameAccess {
      */
     private static void clearStackSlots(final Frame frame) {
         if (frame.getFrameDescriptor().getInfo() instanceof final SistaV1Frame info) {
-            if (info.instructionPointer(frame) != ContextObject.NIL_PC_STACK_NIL_VALUE) {
+            if (info.instructionPointer(frame.materialize()) != ContextObject.NIL_PC_STACK_NIL_VALUE) {
                 for (int i = 0; i < info.stackSize(); i++) {
-                    info.write(frame, i, null);
+                    info.write(frame.materialize(), i, null);
                 }
                 info.state(frame).modifiedPC = ContextObject.NIL_PC_STACK_NIL_VALUE;
             }
@@ -350,13 +350,13 @@ public final class FrameAccess {
      */
     public static void iterateStackObjects(final Frame frame, final FrameHandling frameHandling, final Consumer<Object> action) {
         if (frame.getFrameDescriptor().getInfo() instanceof final SistaV1Frame info) {
-            final int limit = isDead(frame) ? 0 : info.stackPointer(frame);
+            final int limit = isDead(frame) ? 0 : info.stackPointer(frame.materialize());
             for (int i = 0; i < limit; i++) {
-                action.accept(info.read(frame, i));
+                action.accept(info.read(frame.materialize(), i));
             }
             if (frameHandling == FrameHandling.SCRUB) {
                 for (int i = limit; i < info.stackSize(); i++) {
-                    info.write(frame, i, null);
+                    info.write(frame.materialize(), i, null);
                 }
             }
             return;
@@ -402,11 +402,11 @@ public final class FrameAccess {
      */
     public static void iterateStackObjectsWithReplacement(final Frame frame, final boolean clearStackSlots, final Function<Object, Object> action) {
         if (frame.getFrameDescriptor().getInfo() instanceof final SistaV1Frame info) {
-            final int limit = isDead(frame) ? 0 : info.stackPointer(frame);
+            final int limit = isDead(frame) ? 0 : info.stackPointer(frame.materialize());
             for (int i = 0; i < limit; i++) {
-                final Object replacement = action.apply(info.read(frame, i));
+                final Object replacement = action.apply(info.read(frame.materialize(), i));
                 if (replacement != null) {
-                    info.write(frame, i, replacement);
+                    info.write(frame.materialize(), i, replacement);
                 }
             }
             if (isDead(frame) && clearStackSlots) {
@@ -435,14 +435,14 @@ public final class FrameAccess {
 
     public static Object getStackValue(final Frame frame, final int sp) {
         if (frame.getFrameDescriptor().getInfo() instanceof final SistaV1Frame info) {
-            return info.read(frame, sp);
+            return info.read(frame.materialize(), sp);
         }
         return frame.getObjectStatic(SlotIndices.STACK_START + sp);
     }
 
     public static void setStackValue(final Frame frame, final int sp, final Object value) {
         if (frame.getFrameDescriptor().getInfo() instanceof final SistaV1Frame info) {
-            info.write(frame, sp, value);
+            info.write(frame.materialize(), sp, value);
         } else {
             frame.setObjectStatic(SlotIndices.STACK_START + sp, value);
         }
