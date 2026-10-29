@@ -64,6 +64,42 @@ public final class SistaV1BytecodeDSLTest extends AbstractSqueakTestCaseWithDumm
     }
 
     @Test
+    public void nestedConditionalRegionsCanShareAnExit() {
+        final CompiledCodeObject code = method(0, 0, 0x4C, 0xC3, 0x4D, 0xC1, 0x51, 0x5C, 0x50, 0x5C);
+        assertEquals(1L, execute(code, true));
+        assertEquals(0L, execute(code, false));
+    }
+
+    @Test
+    public void loopConditionCanBranchOnTrue() {
+        // t := self. [t = 0] whileFalse: [t := t - 1]. ^t
+        final CompiledCodeObject code = method(0, 1, 0x4C, 0xD0, 0x40, 0x50, 0x66, 0xBF, 0x40, 0x51, 0x61, 0xD0, 0xE1, 0xFF, 0xED, 0xF4, 0x40, 0x5C);
+        assertEquals(0L, execute(code, 0L));
+        assertEquals(0L, execute(code, 10L));
+    }
+
+    @Test
+    public void loopConditionCanUseALongJump() {
+        final CompiledCodeObject code = method(0, 1, 0x4C, 0xD0, 0x40, 0x50, 0x63, 0xEF, 8, 0x40, 0x51, 0x61, 0xD0, 0xE1, 0xFF, 0xED, 0xF3, 0x40, 0x5C);
+        assertEquals(0L, execute(code, 0L));
+        assertEquals(0L, execute(code, 10L));
+    }
+
+    @Test
+    public void structuredLoopPreservesRetainedOperands() {
+        final CompiledCodeObject code = method(0, 0, 0x4C, 0x53, 0x50, 0x63, 0xC5, 0x51, 0x61, 0xE1, 0xFF, 0xED, 0xF6, 0x5C);
+        assertEquals(0L, execute(code, 0L));
+        assertEquals(0L, execute(code, 10L));
+    }
+
+    @Test
+    public void branchBeyondLoopExitKeepsGeneralTranslation() {
+        final CompiledCodeObject code = method(0, 0, 0x4C, 0xBD, 0x4D, 0xE1, 0xFF, 0xED, 0xFA, 0x5F, 0x51, 0x5C);
+        assertEquals(1L, execute(code, true));
+        assertEquals(1L, execute(code, false));
+    }
+
+    @Test
     public void initializesArgumentsAndTemporaries() {
         assertEquals(42L, execute(method(1, 2, 0x40, 0x5C), NilObject.SINGLETON, 42L));
         assertEquals(NilObject.SINGLETON, execute(method(1, 2, 0x41, 0x5C), NilObject.SINGLETON, 42L));
