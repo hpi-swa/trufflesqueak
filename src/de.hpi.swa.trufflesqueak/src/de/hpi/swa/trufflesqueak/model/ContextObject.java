@@ -80,9 +80,12 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         // Copy modified sender flag and the marked code flags.
         setAllBooleanBits(original.getAllBooleanBits());
         // Create shallow copy of Truffle frame
-        final FrameDescriptor frameDescriptor = FrameAccess.getCodeObject(original.getTruffleFrame()).getFrameDescriptor();
+        final FrameDescriptor frameDescriptor = original.getTruffleFrame().getFrameDescriptor();
         senderOrFrameOrSize = Truffle.getRuntime().createMaterializedFrame(original.getTruffleFrame().getArguments().clone(), frameDescriptor);
         FrameAccess.copyAllSlots(original.getTruffleFrame(), getTruffleFrame());
+        if (frameDescriptor.getInfo() instanceof de.hpi.swa.trufflesqueak.nodes.bytecodes.SistaV1Frame) {
+            FrameAccess.setContext(getTruffleFrame(), this);
+        }
     }
 
     @Override
@@ -459,9 +462,9 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         // Cannot use copyTo here as frame descriptors may be different
         // ToDo: This does not handle any stack slots held in auxiliarySlots.
         FrameAccess.iterateStackSlots(oldFrame, sp, slotIndex -> {
-            final Object stackValue = oldFrame.getObjectStatic(slotIndex);
+            final Object stackValue = FrameAccess.getStackValue(oldFrame, slotIndex - FrameAccess.getStackStart());
             if (stackValue != null) {
-                frame.setObjectStatic(slotIndex, stackValue);
+                FrameAccess.setStackValue(frame, slotIndex - FrameAccess.getStackStart(), stackValue);
             }
         });
     }
@@ -635,6 +638,12 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
 
     public void setTruffleFrame(final MaterializedFrame frame) {
         assert !hasTruffleFrame();
+        senderOrFrameOrSize = frame;
+    }
+
+    public void resumeWithTruffleFrame(final MaterializedFrame frame) {
+        assert hasTruffleFrame();
+        assert FrameAccess.getCodeObject(getTruffleFrame()) == FrameAccess.getCodeObject(frame);
         senderOrFrameOrSize = frame;
     }
 
