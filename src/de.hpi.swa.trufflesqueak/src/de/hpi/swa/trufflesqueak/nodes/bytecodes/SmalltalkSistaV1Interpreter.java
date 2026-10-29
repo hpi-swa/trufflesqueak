@@ -563,10 +563,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
         private final CompiledCodeObject code;
         private final BytecodeLocal[] temporarySlots;
         private final BytecodeLocal[] stackSlots;
-        private BytecodeLocal[] initialStackSlots;
-        private int[] currentLayout;
-        private final Map<Integer, BytecodeLocal[]> mergeSlots = new HashMap<>();
-        // A null entry means that the current value is already in its assigned spill local.
+        // A null entry means that the current value is already in its canonical stack local.
         private final StackEntry[] stackValues;
         private int currentOpcode;
         private final Map<Integer, Integer> jumpStackPointers = new HashMap<>();
@@ -615,22 +612,18 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
             for (int i = code.getInitialSP(); i < stackSlots.length; i++) {
                 stackSlots[i] = b.createLocal();
             }
-            initialStackSlots = stackSlots.clone();
             for (int i = 0; i < temporarySlots.length; i++) {
                 b.beginStoreLocal(temporarySlots[i]);
                 b.emitInitialTemporary(i);
                 b.endStoreLocal();
             }
             if (resumePC >= 0) {
-                final BytecodeLocal[] resumeSlots = mergeStack(b, resumePC, resumeSP);
-                for (int i = code.getInitialSP(); i < resumeSP; i++) {
-                    b.beginStoreLocal(resumeSlots[i]);
+                for (int i = code.getInitialSP(); i < stackSlots.length; i++) {
+                    b.beginStoreLocal(stackSlots[i]);
                     b.emitInitialTemporary(i);
                     b.endStoreLocal();
                 }
             }
-            final SistaV1Frame.Location entry = location(resumePC >= 0 ? resumePC : code.getStartPCZeroBased(),
-                            resumeSP >= 0 ? resumeSP : code.getInitialSP(), resumePC >= 0 ? mergeSlots.get(resumePC) : initialStackSlots);
             final BytecodeLocal countable = b.createLocal();
             b.beginStoreLocal(countable);
             b.emitIsCountable();
@@ -654,12 +647,6 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                 final boolean isLoopStart = loopLocations.containsKey(index);
                 if (isLoopStart || jumpLocations.containsKey(index)) {
                     spillStack(b);
-                    emitMerge(b, index);
-                    final int depth = jumpStackPointers.getOrDefault(index, sp);
-                    final BytecodeLocal[] merged = mergeStack(b, index, depth);
-                    System.arraycopy(merged, 0, stackSlots, 0, stackSlots.length);
-                    currentLayout = null;
-                    sp = depth;
                 }
                 if (isLoopStart && jumpLocations.containsKey(index)) {
                     b.emitLabel(jumpLocations.get(index));
@@ -699,17 +686,13 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                 b.beginSourceSection(index, size);
                 index += translateBytecode(b, 0, 0, 0, 0);
                 b.endSourceSection();
-                locations.putIfAbsent(start, location(index, observedSP < 0 ? sp : observedSP, stackSlots));
+                locations.putIfAbsent(start, new SistaV1Frame.Location(index, observedSP < 0 ? sp : observedSP));
                 final boolean isLoopEnd = loopLocations.containsValue(index);
                 if (isLoopEnd) {
                     spillStack(b);
                     for (final var loop : loopLocations.entrySet()) {
                         if (loop.getValue() == index) {
-                            emitMerge(b, loop.getKey());
-                            final BytecodeLocal[] merged = mergeStack(b, loop.getKey(), sp);
-                            System.arraycopy(merged, 0, stackSlots, 0, stackSlots.length);
-                            currentLayout = null;
-                            locations.put(start, location(loop.getKey(), sp, stackSlots));
+                            locations.put(start, new SistaV1Frame.Location(loop.getKey(), sp));
                         }
                     }
                     b.beginSourceSection(start, instructionSize(start));
@@ -724,7 +707,12 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
             final SmalltalkSistaV1Interpreter root = b.endRoot();
             root.countableLocal = countable.getLocalOffset();
             root.isBlock = code.isCompiledBlock() || code.isShadowBlock();
-            root.frameInfo.initialize(root, code, locations, entry, contextState.getLocalOffset());
+            final int[] localOffsets = new int[stackSlots.length];
+            for (int i = 0; i < localOffsets.length; i++) {
+                localOffsets[i] = (i < temporarySlots.length ? temporarySlots[i] : stackSlots[i]).getLocalOffset();
+            }
+            root.frameInfo.initialize(root, code, localOffsets, locations, new SistaV1Frame.Location(resumePC >= 0 ? resumePC : code.getStartPCZeroBased(), resumeSP >= 0 ? resumeSP
+                            : code.getInitialSP()), contextState.getLocalOffset());
             root.doesNotNeedThisContext = code.getDoesNotNeedThisContextAssumption();
             root.interruptNode = CheckForInterruptsQuickNode.createForSend(code);
             root.loopInterruptNode = CheckForInterruptsInLoopNode.createForLoop();
@@ -862,49 +850,9 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
             }
         }
 
-        private SistaV1Frame.Location location(final int pc, final int depth, final BytecodeLocal[] slots) {
-            if (slots == stackSlots && currentLayout != null) {
-                return new SistaV1Frame.Location(pc, depth, currentLayout);
-            }
-            final int[] offsets = new int[slots.length];
-            for (int i = 0; i < offsets.length; i++) {
-                offsets[i] = slots[i].getLocalOffset();
-            }
-            if (slots == stackSlots) {
-                currentLayout = offsets;
-            }
-            return new SistaV1Frame.Location(pc, depth, offsets);
-        }
-
-        /** Locals shared only by edges that meet at this particular control-flow target. */
-        private BytecodeLocal[] mergeStack(final SmalltalkSistaV1InterpreterGen.Builder b, final int target, final int depth) {
-            final BytecodeLocal[] merged = mergeSlots.computeIfAbsent(target, unused -> initialStackSlots.clone());
-            for (int i = code.getInitialSP(); i < depth; i++) {
-                if (merged[i] == initialStackSlots[i]) {
-                    merged[i] = b.createLocal();
-                }
-            }
-            return merged;
-        }
-
-        private void emitMerge(final SmalltalkSistaV1InterpreterGen.Builder b, final int target) {
-            final BytecodeLocal[] merged = mergeStack(b, target, sp);
-            for (int i = code.getInitialSP(); i < sp; i++) {
-                if (stackSlots[i] != merged[i]) {
-                    b.beginStoreLocal(merged[i]);
-                    b.emitLoadLocal(stackSlots[i]);
-                    b.endStoreLocal();
-                }
-            }
-        }
-
-        private void emitJump(final SmalltalkSistaV1InterpreterGen.Builder b, final int jumpTarget) {
+        private void recordJumpStackPointer(final int jumpTarget) {
             final Integer previousStackPointer = jumpStackPointers.putIfAbsent(jumpTarget, sp);
             assert previousStackPointer == null || previousStackPointer == sp : "Inconsistent stack depth at jump target";
-            b.beginBlock();
-            emitMerge(b, jumpTarget);
-            b.emitBranch(jumpLocations.get(jumpTarget));
-            b.endBlock();
         }
 
         private int translateBytecode(final SmalltalkSistaV1InterpreterGen.Builder b, final int extBytes, final int extA, final int extB, final int numExtB) {
@@ -1102,7 +1050,8 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                 case 0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7 -> {
                     final int jumpTarget = index + 1 + InterpreterSistaV1Node.calculateShortOffset(op);
                     if (jumpTarget > index) {
-                        emitJump(b, jumpTarget);
+                        recordJumpStackPointer(jumpTarget);
+                        b.emitBranch(jumpLocations.get(jumpTarget));
                     }
                 }
                 case 0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE, 0xBF -> {
@@ -1115,7 +1064,8 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                     condition.operation.perform();
                     b.endNot();
                     b.endNot();
-                    emitJump(b, jumpTarget);
+                    recordJumpStackPointer(jumpTarget);
+                    b.emitBranch(jumpLocations.get(jumpTarget));
                     b.endIfThen();
                 }
                 case 0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7 -> {
@@ -1126,7 +1076,8 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                     b.beginNot();
                     condition.operation.perform();
                     b.endNot();
-                    emitJump(b, jumpTarget);
+                    recordJumpStackPointer(jumpTarget);
+                    b.emitBranch(jumpLocations.get(jumpTarget));
                     b.endIfThen();
                 }
                 case 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF -> emitStoreIntoReceiverVariable(b, op & 7, true);
@@ -1179,7 +1130,8 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                 case 0xED -> {
                     final int jumpTarget = index + 2 + extBytes + InterpreterSistaV1Node.calculateLongExtendedOffset(getByte(indexWithExt + 1), extB);
                     if (jumpTarget > index) {
-                        emitJump(b, jumpTarget);
+                        recordJumpStackPointer(jumpTarget);
+                        b.emitBranch(jumpLocations.get(jumpTarget));
                     }
                 }
                 case 0xEE -> {
@@ -1192,7 +1144,8 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                     condition.operation.perform();
                     b.endNot();
                     b.endNot();
-                    emitJump(b, jumpTarget);
+                    recordJumpStackPointer(jumpTarget);
+                    b.emitBranch(jumpLocations.get(jumpTarget));
                     b.endIfThen();
                 }
                 case 0xEF -> {
@@ -1203,7 +1156,8 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                     b.beginNot();
                     condition.operation.perform();
                     b.endNot();
-                    emitJump(b, jumpTarget);
+                    recordJumpStackPointer(jumpTarget);
+                    b.emitBranch(jumpLocations.get(jumpTarget));
                     b.endIfThen();
                 }
                 case 0xF0 -> emitStoreIntoReceiverVariable(b, getUnsignedInt(indexWithExt + 1) + (extA << 8), true);
@@ -1292,12 +1246,9 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
             for (int i = code.getInitialSP(); i < sp; i++) {
                 final StackEntry value = stackValues[i];
                 if (value != null) {
-                    final BytecodeLocal spill = b.createLocal();
-                    b.beginStoreLocal(spill);
+                    b.beginStoreLocal(stackSlots[i]);
                     value.operation.perform();
                     b.endStoreLocal();
-                    stackSlots[i] = spill;
-                    currentLayout = null;
                     stackValues[i] = null;
                 }
             }
