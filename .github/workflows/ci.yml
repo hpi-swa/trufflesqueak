@@ -52,26 +52,26 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, ubuntu-22.04-arm, windows-2022, macos-14]
+        os: [ubuntu-22.04, ubuntu-22.04-arm, windows-2022, macos-15]
         type: [jvm]
     outputs:
       # Squeak timings
       squeak_ubuntu_22_04: ${{ steps.timer_squeak.outputs.squeak_ubuntu_22_04 }}
       squeak_ubuntu_22_04_arm: ${{ steps.timer_squeak.outputs.squeak_ubuntu_22_04_arm }}
-      squeak_macos_14: ${{ steps.timer_squeak.outputs.squeak_macos_14 }}
+      squeak_macos_15: ${{ steps.timer_squeak.outputs.squeak_macos_15 }}
       squeak_windows_2022: ${{ steps.timer_squeak_windows.outputs.squeak_windows_2022 }}
 
       # Cuis 7.3 timings
       cuis73_ubuntu_22_04: ${{ steps.timer_cuis73.outputs.cuis73_ubuntu_22_04 }}
       cuis73_ubuntu_22_04_arm: ${{ steps.timer_cuis73.outputs.cuis73_ubuntu_22_04_arm }}
-      cuis73_macos_14: ${{ steps.timer_cuis73.outputs.cuis73_macos_14 }}
+      cuis73_macos_15: ${{ steps.timer_cuis73.outputs.cuis73_macos_15 }}
       # NOTE: If a dedicated Windows step is added for Cuis 7.3, update the step ID below
       cuis73_windows_2022: ${{ steps.timer_cuis73.outputs.cuis73_windows_2022 }}
 
       # Cuis 7.5 timings
       cuis75_ubuntu_22_04: ${{ steps.timer_cuis75.outputs.cuis75_ubuntu_22_04 }}
       cuis75_ubuntu_22_04_arm: ${{ steps.timer_cuis75.outputs.cuis75_ubuntu_22_04_arm }}
-      cuis75_macos_14: ${{ steps.timer_cuis75.outputs.cuis75_macos_14 }}
+      cuis75_macos_15: ${{ steps.timer_cuis75.outputs.cuis75_macos_15 }}
       # NOTE: If a dedicated Windows step is added for Cuis 7.5, update the step ID below
       cuis75_windows_2022: ${{ steps.timer_cuis75.outputs.cuis75_windows_2022 }}
     env:
@@ -161,7 +161,7 @@ jobs:
         SAFE_OS=$(echo "${{ matrix.os }}" | tr '-' '_' | tr '.' '_')
         echo "cuis73_${SAFE_OS}=${FORMATTED_TIME}" >> "$GITHUB_OUTPUT"
       timeout-minutes: 10
-      if: ${{ matrix.os == 'macos-14' }}
+      if: ${{ matrix.os == 'macos-15' }}
     - &run_cuis75_tests
       name: Run Cuis 7.5 tests on TruffleSqueak standalone
       id: timer_cuis75
@@ -256,26 +256,26 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, ubuntu-22.04-arm, windows-2022, macos-14]
+        os: [ubuntu-22.04, ubuntu-22.04-arm, windows-2022, macos-15]
         type: [native]
     outputs:
       # Squeak timings
       squeak_ubuntu_22_04: ${{ steps.timer_squeak.outputs.squeak_ubuntu_22_04 }}
       squeak_ubuntu_22_04_arm: ${{ steps.timer_squeak.outputs.squeak_ubuntu_22_04_arm }}
-      squeak_macos_14: ${{ steps.timer_squeak.outputs.squeak_macos_14 }}
+      squeak_macos_15: ${{ steps.timer_squeak.outputs.squeak_macos_15 }}
       squeak_windows_2022: ${{ steps.timer_squeak_windows.outputs.squeak_windows_2022 }}
 
       # Cuis 7.3 timings
       cuis73_ubuntu_22_04: ${{ steps.timer_cuis73.outputs.cuis73_ubuntu_22_04 }}
       cuis73_ubuntu_22_04_arm: ${{ steps.timer_cuis73.outputs.cuis73_ubuntu_22_04_arm }}
-      cuis73_macos_14: ${{ steps.timer_cuis73.outputs.cuis73_macos_14 }}
+      cuis73_macos_15: ${{ steps.timer_cuis73.outputs.cuis73_macos_15 }}
       # NOTE: If a dedicated Windows step is added for Cuis 7.3, update the step ID below
       cuis73_windows_2022: ${{ steps.timer_cuis73.outputs.cuis73_windows_2022 }}
 
       # Cuis 7.5 timings
       cuis75_ubuntu_22_04: ${{ steps.timer_cuis75.outputs.cuis75_ubuntu_22_04 }}
       cuis75_ubuntu_22_04_arm: ${{ steps.timer_cuis75.outputs.cuis75_ubuntu_22_04_arm }}
-      cuis75_macos_14: ${{ steps.timer_cuis75.outputs.cuis75_macos_14 }}
+      cuis75_macos_15: ${{ steps.timer_cuis75.outputs.cuis75_macos_15 }}
       # NOTE: If a dedicated Windows step is added for Cuis 7.5, update the step ID below
       cuis75_windows_2022: ${{ steps.timer_cuis75.outputs.cuis75_windows_2022 }}
     env:
@@ -458,29 +458,29 @@ jobs:
           # Pass JVM timings
           JVM_SQUEAK_U22: ${{ needs.build-jvm-standalone.outputs.squeak_ubuntu_22_04 }}
           JVM_SQUEAK_ARM: ${{ needs.build-jvm-standalone.outputs.squeak_ubuntu_22_04_arm }}
-          JVM_SQUEAK_MAC: ${{ needs.build-jvm-standalone.outputs.squeak_macos_14 }}
+          JVM_SQUEAK_MAC: ${{ needs.build-jvm-standalone.outputs.squeak_macos_15 }}
           JVM_SQUEAK_WIN: ${{ needs.build-jvm-standalone.outputs.squeak_windows_2022 }}
           JVM_C73_U22: ${{ needs.build-jvm-standalone.outputs.cuis73_ubuntu_22_04 }}
           JVM_C73_ARM: ${{ needs.build-jvm-standalone.outputs.cuis73_ubuntu_22_04_arm }}
-          JVM_C73_MAC: ${{ needs.build-jvm-standalone.outputs.cuis73_macos_14 }}
+          JVM_C73_MAC: ${{ needs.build-jvm-standalone.outputs.cuis73_macos_15 }}
           JVM_C73_WIN: ${{ needs.build-jvm-standalone.outputs.cuis73_windows_2022 }}
           JVM_C75_U22: ${{ needs.build-jvm-standalone.outputs.cuis75_ubuntu_22_04 }}
           JVM_C75_ARM: ${{ needs.build-jvm-standalone.outputs.cuis75_ubuntu_22_04_arm }}
-          JVM_C75_MAC: ${{ needs.build-jvm-standalone.outputs.cuis75_macos_14 }}
+          JVM_C75_MAC: ${{ needs.build-jvm-standalone.outputs.cuis75_macos_15 }}
           JVM_C75_WIN: ${{ needs.build-jvm-standalone.outputs.cuis75_windows_2022 }}
 
           # Pass Native timings
           NAT_SQUEAK_U22: ${{ needs.build-native-standalone.outputs.squeak_ubuntu_22_04 }}
           NAT_SQUEAK_ARM: ${{ needs.build-native-standalone.outputs.squeak_ubuntu_22_04_arm }}
-          NAT_SQUEAK_MAC: ${{ needs.build-native-standalone.outputs.squeak_macos_14 }}
+          NAT_SQUEAK_MAC: ${{ needs.build-native-standalone.outputs.squeak_macos_15 }}
           NAT_SQUEAK_WIN: ${{ needs.build-native-standalone.outputs.squeak_windows_2022 }}
           NAT_C73_U22: ${{ needs.build-native-standalone.outputs.cuis73_ubuntu_22_04 }}
           NAT_C73_ARM: ${{ needs.build-native-standalone.outputs.cuis73_ubuntu_22_04_arm }}
-          NAT_C73_MAC: ${{ needs.build-native-standalone.outputs.cuis73_macos_14 }}
+          NAT_C73_MAC: ${{ needs.build-native-standalone.outputs.cuis73_macos_15 }}
           NAT_C73_WIN: ${{ needs.build-native-standalone.outputs.cuis73_windows_2022 }}
           NAT_C75_U22: ${{ needs.build-native-standalone.outputs.cuis75_ubuntu_22_04 }}
           NAT_C75_ARM: ${{ needs.build-native-standalone.outputs.cuis75_ubuntu_22_04_arm }}
-          NAT_C75_MAC: ${{ needs.build-native-standalone.outputs.cuis75_macos_14 }}
+          NAT_C75_MAC: ${{ needs.build-native-standalone.outputs.cuis75_macos_15 }}
           NAT_C75_WIN: ${{ needs.build-native-standalone.outputs.cuis75_windows_2022 }}
         shell: bash
         run: |
@@ -513,12 +513,12 @@ jobs:
           
             h_u22="Ubuntu 22.04"
             h_arm="Ubuntu ARM"
-            h_mac="macOS 14"
+            h_mac="macOS 15"
             h_win="Windows 2022"
           
             if [ "$(has_warnings "$type" "ubuntu-22.04")" == "true" ]; then h_u22="${h_u22} †"; FOOTNOTE_REQUIRED=true; fi
             if [ "$(has_warnings "$type" "ubuntu-22.04-arm")" == "true" ]; then h_arm="${h_arm} †"; FOOTNOTE_REQUIRED=true; fi
-            if [ "$(has_warnings "$type" "macos-14")" == "true" ]; then h_mac="${h_mac} †"; FOOTNOTE_REQUIRED=true; fi
+            if [ "$(has_warnings "$type" "macos-15")" == "true" ]; then h_mac="${h_mac} †"; FOOTNOTE_REQUIRED=true; fi
             if [ "$(has_warnings "$type" "windows-2022")" == "true" ]; then h_win="${h_win} †"; FOOTNOTE_REQUIRED=true; fi
           
             echo "| Test Suite | ${h_u22} | ${h_arm} | ${h_mac} | ${h_win} |" >> summary.md
