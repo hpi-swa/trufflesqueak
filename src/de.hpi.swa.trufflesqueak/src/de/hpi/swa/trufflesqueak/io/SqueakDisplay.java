@@ -515,11 +515,11 @@ public final class SqueakDisplay {
             frameRequested = false;
 
             // Exit if a render wasn't requested or if the staging buffer is invalid
-            if (!wasRequested
-                    || isNull(renderer) || isNull(stagingBuffer)
-                    || stagingPitchBytes != (long) width * Integer.BYTES
-                    || stagingHeight != height
-                    || stagingBuffer.byteSize() < (long) stagingPitchBytes * height) {
+            if (!wasRequested //
+                            || isNull(renderer) || isNull(stagingBuffer) //
+                            || stagingPitchBytes != (long) width * Integer.BYTES //
+                            || stagingHeight != height //
+                            || stagingBuffer.byteSize() < (long) stagingPitchBytes * height) {
                 return;
             }
 
@@ -606,9 +606,8 @@ public final class SqueakDisplay {
         final long rowBytes = (long) (safeRight - safeLeft) * Integer.BYTES;
         final int rows = safeBottom - safeTop;
 
-        if (preferTextureLocking
-                && rowBytes * rows >= TEXTURE_LOCK_MIN_BYTES
-                && SDL_LockTexture(texture, dirtyRect, texturePixelsPointer, texturePitchPointer)) {
+        if (preferTextureLocking && rowBytes * rows >= TEXTURE_LOCK_MIN_BYTES //
+                        && SDL_LockTexture(texture, dirtyRect, texturePixelsPointer, texturePitchPointer)) {
             try {
                 final int lockedPitch = texturePitchPointer.get(ValueLayout.JAVA_INT, 0);
                 final MemorySegment lockedPixels = checkSdlError(texturePixelsPointer.get(C_POINTER, 0)).asSlice(0, (long) lockedPitch * (rows - 1) + rowBytes);
@@ -929,10 +928,9 @@ public final class SqueakDisplay {
 
         // Use copies of the cursor and mask to prevent further changes by Squeak.
         cursorData.set(new CursorData(
-                cursorWords.clone(),
-                maskWords == null ? null : maskWords.clone(),
-                width, height, depth, offsetX, offsetY
-        ));
+                        cursorWords.clone(),
+                        maskWords == null ? null : maskWords.clone(),
+                        width, height, depth, offsetX, offsetY));
 
         if (isNull(window)) {
             return;
@@ -1353,7 +1351,7 @@ public final class SqueakDisplay {
     }
 
     private static boolean intersects(final int l1, final int t1, final int r1, final int b1,
-                                      final int l2, final int t2, final int r2, final int b2) {
+                    final int l2, final int t2, final int r2, final int b2) {
         return l1 < r2 && r1 > l2 && t1 < b2 && b1 > t2;
     }
 
