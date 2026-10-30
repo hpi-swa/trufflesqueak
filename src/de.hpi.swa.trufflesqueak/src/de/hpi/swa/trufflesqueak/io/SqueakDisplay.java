@@ -509,6 +509,11 @@ public final class SqueakDisplay {
         final int safeLeft;
         final int safeRight;
 
+        final int uploadWidth;
+        final int uploadHeight;
+        final int uploadPitchBytes;
+        final MemorySegment uploadStagingBuffer;
+
         // Lock briefly to read damage bounds and set the active upload rect
         synchronized (this) {
             final boolean wasRequested = frameRequested;
@@ -523,11 +528,17 @@ public final class SqueakDisplay {
                 return;
             }
 
+            // Capture stagingBuffer state.
+            uploadWidth = width;
+            uploadHeight = height;
+            uploadPitchBytes = stagingPitchBytes;
+            uploadStagingBuffer = stagingBuffer;
+
             // Clip damage against stagingBuffer dimensions.
             safeTop = Math.max(0, dirtyTop);
-            safeBottom = Math.min(height, dirtyBottom);
+            safeBottom = Math.min(uploadHeight, dirtyBottom);
             int tempLeft = Math.max(0, dirtyLeft);
-            int tempRight = Math.min(width, dirtyRight);
+            int tempRight = Math.min(uploadWidth, dirtyRight);
 
             resetDamage();
 
@@ -537,9 +548,9 @@ public final class SqueakDisplay {
             }
 
             // If damage is wider than 75% of screen, redraw full width.
-            if ((tempRight - tempLeft) >= (width * 3) / 4) {
+            if ((tempRight - tempLeft) >= (uploadWidth * 3) / 4) {
                 tempLeft = 0;
-                tempRight = width;
+                tempRight = uploadWidth;
             }
 
             safeLeft = tempLeft;
@@ -554,12 +565,12 @@ public final class SqueakDisplay {
         }
 
         // Texture creation/validation
-        if (textureWidth != width || textureHeight != height || isNull(texture)) {
+        if (textureWidth != uploadWidth || textureHeight != uploadHeight || isNull(texture)) {
             if (!isNull(texture)) {
                 SDL_DestroyTexture(texture);
             }
-            textureWidth = width;
-            textureHeight = height;
+            textureWidth = uploadWidth;
+            textureHeight = uploadHeight;
             texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, textureWidth, textureHeight);
             checkSdlError(texture);
             checkSdlError(SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_NONE));
@@ -574,7 +585,7 @@ public final class SqueakDisplay {
             SDL_Rect.w(dirtyRect, safeRight - safeLeft);
             SDL_Rect.h(dirtyRect, safeBottom - safeTop);
 
-            uploadTexture(dirtyRect, safeLeft, safeTop, safeRight, safeBottom);
+            uploadTexture(dirtyRect, safeLeft, safeTop, safeRight, safeBottom, uploadStagingBuffer, uploadPitchBytes);
         } finally {
             // Clear the active region and wake the interpreter thread if it was blocked
             synchronized (this) {
@@ -590,8 +601,8 @@ public final class SqueakDisplay {
         // Show the window and move it to the front, if needed.
         if (isWindowHidden) {
             final WindowMetrics metrics = windowMetrics;
-            final int currentLogicalWidth = metrics.logicalWidth(width);
-            final int currentLogicalHeight = metrics.logicalHeight(height);
+            final int currentLogicalWidth = metrics.logicalWidth(uploadWidth);
+            final int currentLogicalHeight = metrics.logicalHeight(uploadHeight);
             if (currentLogicalWidth == getLogicalWindowWidth() && currentLogicalHeight == getLogicalWindowHeight()) {
                 isWindowHidden = false;
                 checkSdlError(SDL_ShowWindow(window));
@@ -600,9 +611,10 @@ public final class SqueakDisplay {
         }
     }
 
-    private void uploadTexture(final MemorySegment dirtyRect, final int safeLeft, final int safeTop, final int safeRight, final int safeBottom) {
-        final long pixelStartOffsetBytes = ((long) safeTop * stagingPitchBytes) + ((long) safeLeft * Integer.BYTES);
-        final MemorySegment pixelPointer = stagingBuffer.asSlice(pixelStartOffsetBytes);
+    private void uploadTexture(final MemorySegment dirtyRect, final int safeLeft, final int safeTop, final int safeRight, final int safeBottom, final MemorySegment uploadStagingBuffer,
+                    final int uploadPitchBytes) {
+        final long pixelStartOffsetBytes = ((long) safeTop * uploadPitchBytes) + ((long) safeLeft * Integer.BYTES);
+        final MemorySegment pixelPointer = uploadStagingBuffer.asSlice(pixelStartOffsetBytes);
         final long rowBytes = (long) (safeRight - safeLeft) * Integer.BYTES;
         final int rows = safeBottom - safeTop;
 
@@ -612,18 +624,18 @@ public final class SqueakDisplay {
                 final int lockedPitch = texturePitchPointer.get(ValueLayout.JAVA_INT, 0);
                 final MemorySegment lockedPixels = checkSdlError(texturePixelsPointer.get(C_POINTER, 0)).asSlice(0, (long) lockedPitch * (rows - 1) + rowBytes);
 
-                if (rowBytes == stagingPitchBytes && rowBytes == lockedPitch) {
+                if (rowBytes == uploadPitchBytes && rowBytes == lockedPitch) {
                     MemorySegment.copy(pixelPointer, 0, lockedPixels, 0, rowBytes * rows);
                 } else {
                     for (int y = 0; y < rows; y++) {
-                        MemorySegment.copy(pixelPointer, (long) y * stagingPitchBytes, lockedPixels, (long) y * lockedPitch, rowBytes);
+                        MemorySegment.copy(pixelPointer, (long) y * uploadPitchBytes, lockedPixels, (long) y * lockedPitch, rowBytes);
                     }
                 }
             } finally {
                 SDL_UnlockTexture(texture);
             }
         } else {
-            checkSdlError(SDL_UpdateTexture(texture, dirtyRect, pixelPointer, stagingPitchBytes));
+            checkSdlError(SDL_UpdateTexture(texture, dirtyRect, pixelPointer, uploadPitchBytes));
         }
     }
 
