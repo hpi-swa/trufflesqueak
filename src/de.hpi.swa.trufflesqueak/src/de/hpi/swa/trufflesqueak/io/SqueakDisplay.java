@@ -72,6 +72,7 @@ import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDL_EVENT_WINDOW_FOCUS
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDL_EVENT_WINDOW_FOCUS_LOST;
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDL_EVENT_WINDOW_MINIMIZED;
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDL_EVENT_WINDOW_MOUSE_LEAVE;
+import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED;
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDL_EVENT_WINDOW_RESIZED;
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDL_KMOD_LALT;
 import static de.hpi.swa.trufflesqueak.sdl3.SDL3Constants.SDL_KMOD_LCTRL;
@@ -111,6 +112,8 @@ import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_GetDesktopDisplay
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_GetPrimaryDisplay;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_GetRendererName;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_GetWindowDisplayScale;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_GetWindowSize;
+import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_GetWindowSizeInPixels;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_HasClipboardText;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_HideCursor;
 import static de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_h.SDL_IOFromMem;
@@ -178,7 +181,6 @@ import de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_MouseWheelEvent;
 import de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_Rect;
 import de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_Surface;
 import de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_TextInputEvent;
-import de.hpi.swa.trufflesqueak.sdl3.bindings.SDL_WindowEvent;
 import de.hpi.swa.trufflesqueak.shared.PlatformEventLoop;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.OS;
@@ -237,7 +239,11 @@ public final class SqueakDisplay {
 
     private volatile int logicalWindowWidth;
     private volatile int logicalWindowHeight;
-    private volatile float scaleFactor;
+
+    private final MemorySegment windowWidthPointer;
+    private final MemorySegment windowHeightPointer;
+
+    private volatile WindowMetrics windowMetrics = new WindowMetrics(0, 0, 0, 0, 1.0f);
 
     private final ConcurrentLinkedDeque<long[]> deferredEvents = new ConcurrentLinkedDeque<>();
 
@@ -413,6 +419,12 @@ public final class SqueakDisplay {
 
     private SqueakDisplay(final SqueakImageContext image) {
         this.image = image;
+
+        // Allocate FFM pointers at runtime
+        final Arena uiArena = Arena.ofAuto();
+        this.windowWidthPointer = uiArena.allocate(ValueLayout.JAVA_INT);
+        this.windowHeightPointer = uiArena.allocate(ValueLayout.JAVA_INT);
+
         PlatformEventLoop.start(this::processEvent, this::performRenderIfNeeded);
 
         // Initial window size is obtained from the image header.
@@ -433,7 +445,6 @@ public final class SqueakDisplay {
 
     private static boolean isBlankMaskedCursor(final CursorData data) {
         return data.depth == 1 &&
-                        data.maskWords != null &&
                         data.width == SqueakIOConstants.CURSOR_WIDTH &&
                         data.height == SqueakIOConstants.CURSOR_HEIGHT &&
                         areAllWordsZero(data.cursorWords, data.height) &&
@@ -468,12 +479,27 @@ public final class SqueakDisplay {
         return changed;
     }
 
-    public double getDisplayScale() {
-        if (scaleFactor != 0.0f) {
-            return scaleFactor;
-        } else {
-            return 1.0d;
+    private void updateWindowMetrics() {
+        if (isNull(window)) {
+            return;
         }
+        checkSdlError(SDL_GetWindowSize(window, windowWidthPointer, windowHeightPointer));
+        final int windowWidth = windowWidthPointer.get(ValueLayout.JAVA_INT, 0);
+        final int windowHeight = windowHeightPointer.get(ValueLayout.JAVA_INT, 0);
+
+        checkSdlError(SDL_GetWindowSizeInPixels(window, windowWidthPointer, windowHeightPointer));
+        final int pixelWidth = windowWidthPointer.get(ValueLayout.JAVA_INT, 0);
+        final int pixelHeight = windowHeightPointer.get(ValueLayout.JAVA_INT, 0);
+
+        final float displayScale = checkSdlError(SDL_GetWindowDisplayScale(window));
+
+        logicalWindowWidth = windowWidth;
+        logicalWindowHeight = windowHeight;
+        windowMetrics = new WindowMetrics(windowWidth, windowHeight, pixelWidth, pixelHeight, displayScale);
+    }
+
+    public double getDisplayScale() {
+        return windowMetrics.displayScale;
     }
 
     // Called by the main thread at the end of the event loop
@@ -563,8 +589,9 @@ public final class SqueakDisplay {
 
         // Show the window and move it to the front, if needed.
         if (isWindowHidden) {
-            final int currentLogicalWidth = (int) Math.ceil(width / getDisplayScale());
-            final int currentLogicalHeight = (int) Math.ceil(height / getDisplayScale());
+            final WindowMetrics metrics = windowMetrics;
+            final int currentLogicalWidth = metrics.logicalWidth(width);
+            final int currentLogicalHeight = metrics.logicalHeight(height);
             if (currentLogicalWidth == getLogicalWindowWidth() && currentLogicalHeight == getLogicalWindowHeight()) {
                 isWindowHidden = false;
                 checkSdlError(SDL_ShowWindow(window));
@@ -748,11 +775,13 @@ public final class SqueakDisplay {
     }
 
     public int getWindowWidth() {
-        return logicalWindowWidth > 0 ? (int) Math.ceil(logicalWindowWidth * getDisplayScale()) : width;
+        final WindowMetrics metrics = windowMetrics;
+        return metrics.pixelWidth > 0 ? metrics.pixelWidth : getLogicalWindowWidth();
     }
 
     public int getWindowHeight() {
-        return logicalWindowHeight > 0 ? (int) Math.ceil(logicalWindowHeight * getDisplayScale()) : height;
+        final WindowMetrics metrics = windowMetrics;
+        return metrics.pixelHeight > 0 ? metrics.pixelHeight : getLogicalWindowHeight();
     }
 
     @TruffleBoundary
@@ -816,11 +845,11 @@ public final class SqueakDisplay {
 
                 setWindowIcon(window);
 
-                scaleFactor = checkSdlError(SDL_GetWindowDisplayScale(window));
+                updateWindowMetrics();
 
                 checkSdlError(SDL_StartTextInput(window));
                 fullDamage();
-                if (cursorData != null) {
+                if (cursorData.get() != null) {
                     runOnMainThreadAsync(setCursorAsyncTask, MemorySegment.NULL);
                 }
                 if (OS.isMacOS()) {
@@ -871,8 +900,9 @@ public final class SqueakDisplay {
             clampDamageToBounds();
         }
 
-        final int targetLogicalWidth = (int) Math.ceil(newWidth / getDisplayScale());
-        final int targetLogicalHeight = (int) Math.ceil(newHeight / getDisplayScale());
+        final WindowMetrics metrics = windowMetrics;
+        final int targetLogicalWidth = metrics.logicalWidth(newWidth);
+        final int targetLogicalHeight = metrics.logicalHeight(newHeight);
 
         logicalWindowWidth = targetLogicalWidth;
         logicalWindowHeight = targetLogicalHeight;
@@ -911,6 +941,9 @@ public final class SqueakDisplay {
 
     public void processEvent(final MemorySegment event) {
         final int type = SDL_Event.type(event);
+        final WindowMetrics metrics = windowMetrics;
+        final float scaleX = metrics.scaleX();
+        final float scaleY = metrics.scaleY();
 
         switch (type) {
             case SDL_EVENT_KEY_DOWN:
@@ -923,13 +956,13 @@ public final class SqueakDisplay {
                 processTextInput(SDL_TextInputEvent.text(event));
                 break;
             case SDL_EVENT_MOUSE_MOTION:
-                processMouseMotion(event, scaleFactor);
+                processMouseMotion(event, scaleX, scaleY);
                 break;
             case SDL_EVENT_MOUSE_BUTTON_DOWN:
-                processMouseButtonDown(event, scaleFactor);
+                processMouseButtonDown(event, scaleX, scaleY);
                 break;
             case SDL_EVENT_MOUSE_BUTTON_UP:
-                processMouseButtonUp(event, scaleFactor);
+                processMouseButtonUp(event, scaleX, scaleY);
                 break;
             case SDL_EVENT_MOUSE_WHEEL:
                 processMouseWheel(event);
@@ -940,8 +973,8 @@ public final class SqueakDisplay {
                 addDragEvent(DRAG.ENTER, 0, 0);
                 break;
             case SDL_EVENT_DROP_POSITION: {
-                final int x = (int) (SDL_DropEvent.x(event) * scaleFactor);
-                final int y = (int) (SDL_DropEvent.y(event) * scaleFactor);
+                final int x = Math.round(SDL_DropEvent.x(event) * scaleX);
+                final int y = Math.round(SDL_DropEvent.y(event) * scaleY);
                 addDragEvent(DRAG.MOVE, x, y);
                 break;
             }
@@ -956,8 +989,8 @@ public final class SqueakDisplay {
             case SDL_EVENT_DROP_COMPLETE: {
                 isDragActive = false;
                 image.dropPluginFileList = dropFilesAccumulator.toArray(new String[0]);
-                final int x = (int) (SDL_DropEvent.x(event) * scaleFactor);
-                final int y = (int) (SDL_DropEvent.y(event) * scaleFactor);
+                final int x = Math.round(SDL_DropEvent.x(event) * scaleX);
+                final int y = Math.round(SDL_DropEvent.y(event) * scaleY);
                 addDragEvent(DRAG.DROP, x, y);
                 dropFilesAccumulator.clear();
                 break;
@@ -971,8 +1004,8 @@ public final class SqueakDisplay {
             case SDL_EVENT_QUIT, SDL_EVENT_WINDOW_CLOSE_REQUESTED:
                 addWindowEvent(WINDOW.CLOSE);
                 break;
-            case SDL_EVENT_WINDOW_DISPLAY_CHANGED, SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED:
-                scaleFactor = checkSdlError(SDL_GetWindowDisplayScale(window));
+            case SDL_EVENT_WINDOW_DISPLAY_CHANGED, SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED, SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+                updateWindowMetrics();
                 addWindowEvent(WINDOW.CHANGED_SCREEN);
                 break;
             case SDL_EVENT_WINDOW_EXPOSED:
@@ -990,8 +1023,7 @@ public final class SqueakDisplay {
                 addWindowEvent(WINDOW.DEACTIVATED);
                 break;
             case SDL_EVENT_WINDOW_RESIZED:
-                logicalWindowWidth = SDL_WindowEvent.data1(event);
-                logicalWindowHeight = SDL_WindowEvent.data2(event);
+                updateWindowMetrics();
                 image.flags.setScreenSize(getLogicalWindowWidth(), getLogicalWindowHeight());
                 addWindowEvent(WINDOW.METRIC_CHANGE);
                 fullDamage();
@@ -1125,16 +1157,16 @@ public final class SqueakDisplay {
 
 // --- Mouse processing methods ---
 
-    public void processMouseMotion(final MemorySegment event, final float scale) {
-        recordMouseEvent(MOUSE_EVENT.MOVE, SDL_MouseMotionEvent.x(event) * scale, SDL_MouseMotionEvent.y(event) * scale, 0);
+    public void processMouseMotion(final MemorySegment event, final float scaleX, final float scaleY) {
+        recordMouseEvent(MOUSE_EVENT.MOVE, SDL_MouseMotionEvent.x(event) * scaleX, SDL_MouseMotionEvent.y(event) * scaleY, 0);
     }
 
-    public void processMouseButtonDown(final MemorySegment event, final float scale) {
-        recordMouseEvent(MOUSE_EVENT.DOWN, SDL_MouseButtonEvent.x(event) * scale, SDL_MouseButtonEvent.y(event) * scale, SDL_MouseButtonEvent.button(event));
+    public void processMouseButtonDown(final MemorySegment event, final float scaleX, final float scaleY) {
+        recordMouseEvent(MOUSE_EVENT.DOWN, SDL_MouseButtonEvent.x(event) * scaleX, SDL_MouseButtonEvent.y(event) * scaleY, SDL_MouseButtonEvent.button(event));
     }
 
-    public void processMouseButtonUp(final MemorySegment event, final float scale) {
-        recordMouseEvent(MOUSE_EVENT.UP, SDL_MouseButtonEvent.x(event) * scale, SDL_MouseButtonEvent.y(event) * scale, SDL_MouseButtonEvent.button(event));
+    public void processMouseButtonUp(final MemorySegment event, final float scaleX, final float scaleY) {
+        recordMouseEvent(MOUSE_EVENT.UP, SDL_MouseButtonEvent.x(event) * scaleX, SDL_MouseButtonEvent.y(event) * scaleY, SDL_MouseButtonEvent.button(event));
     }
 
     public void processMouseWheel(final MemorySegment event) {
@@ -1199,7 +1231,7 @@ public final class SqueakDisplay {
 
         buttons = newButtonState | (buttons & ~MOUSE.ALL);
 
-        addEvent(EVENT_TYPE.MOUSE, (int) x, (int) y, buttons & MOUSE.ALL, modifiersForEvent, 0L, type == MOUSE_EVENT.MOVE);
+        addEvent(EVENT_TYPE.MOUSE, Math.round(x), Math.round(y), buttons & MOUSE.ALL, modifiersForEvent, 0L, type == MOUSE_EVENT.MOVE);
     }
 
     // --- Event queue methods ---
@@ -1322,5 +1354,23 @@ public final class SqueakDisplay {
     private static boolean intersects(final int l1, final int t1, final int r1, final int b1,
                                       final int l2, final int t2, final int r2, final int b2) {
         return l1 < r2 && r1 > l2 && t1 < b2 && b1 > t2;
+    }
+
+    private record WindowMetrics(int width, int height, int pixelWidth, int pixelHeight, float displayScale) {
+        private float scaleX() {
+            return width > 0 && pixelWidth > 0 ? (float) pixelWidth / width : 1.0f;
+        }
+
+        private float scaleY() {
+            return height > 0 && pixelHeight > 0 ? (float) pixelHeight / height : 1.0f;
+        }
+
+        private int logicalWidth(final int pixels) {
+            return width > 0 && pixelWidth > 0 ? (int) Math.round((double) pixels * width / pixelWidth) : pixels;
+        }
+
+        private int logicalHeight(final int pixels) {
+            return height > 0 && pixelHeight > 0 ? (int) Math.round((double) pixels * height / pixelHeight) : pixels;
+        }
     }
 }
