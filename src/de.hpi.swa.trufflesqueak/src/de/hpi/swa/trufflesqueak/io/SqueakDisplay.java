@@ -216,8 +216,8 @@ public final class SqueakDisplay {
     private int activeUploadRight;
     private int activeUploadBottom;
 
-    // Metal SDL_LockTexture support
-    private static final int METAL_LOCK_MIN_BYTES = 64 * 1024;
+    // SDL_LockTexture support
+    private static final int TEXTURE_LOCK_MIN_BYTES = 64 * 1024;
 
     private MemorySegment texturePixelsPointer;
     private MemorySegment texturePitchPointer;
@@ -607,7 +607,7 @@ public final class SqueakDisplay {
         final int rows = safeBottom - safeTop;
 
         if (preferTextureLocking
-                && rowBytes * rows >= METAL_LOCK_MIN_BYTES
+                && rowBytes * rows >= TEXTURE_LOCK_MIN_BYTES
                 && SDL_LockTexture(texture, dirtyRect, texturePixelsPointer, texturePitchPointer)) {
             try {
                 final int lockedPitch = texturePitchPointer.get(ValueLayout.JAVA_INT, 0);
@@ -835,12 +835,13 @@ public final class SqueakDisplay {
                 renderer = checkSdlError(SDL_CreateRenderer(window, MemorySegment.NULL));
 
                 // Check backend and conditionally allocate FFM pointers
-                preferTextureLocking = "metal".equals(checkSdlError(SDL_GetRendererName(renderer)).getString(0));
+                final String backend = checkSdlError(SDL_GetRendererName(renderer)).getString(0);
+                preferTextureLocking = backend.equals("metal") || backend.startsWith("direct3d") || backend.equals("vulkan");
 
                 if (preferTextureLocking) {
-                    final Arena metalArena = Arena.ofAuto();
-                    texturePixelsPointer = metalArena.allocate(ValueLayout.ADDRESS);
-                    texturePitchPointer = metalArena.allocate(ValueLayout.JAVA_INT);
+                    final Arena textureLockArena = Arena.ofAuto();
+                    texturePixelsPointer = textureLockArena.allocate(ValueLayout.ADDRESS);
+                    texturePitchPointer = textureLockArena.allocate(ValueLayout.JAVA_INT);
                 }
 
                 setWindowIcon(window);
