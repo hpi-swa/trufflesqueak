@@ -150,6 +150,10 @@ jobs:
         Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
         echo "DISPLAY=:99" >> $GITHUB_ENV
       if: ${{ runner.os == 'Linux' }}
+    - &disable_macos_firewall
+      name: Disable macOS Firewall for broadcast packets
+      run: sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setglobalstate off
+      if: ${{ runner.os == 'macOS' }}
     - &run_cuis73_tests
       name: Run Cuis 7.3 tests on TruffleSqueak standalone
       id: timer_cuis73
@@ -336,6 +340,7 @@ jobs:
     - *deploy_standalone
     - *upload_standalone
     - *run_polyglot_smoketest
+    - *disable_macos_firewall
     - *run_cuis73_tests
     - *run_cuis75_tests
     - *run_squeak_tests_windows
