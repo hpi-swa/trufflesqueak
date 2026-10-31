@@ -1212,13 +1212,13 @@ public final class SqueakImageContext {
         return fractionClass;
     }
 
-    public PointersObject asFraction(final long numerator, final long denominator, final AbstractPointersObjectWriteNode writeNode) {
+    public PointersObject asFractionOrPrimFail(final long numerator, final long denominator, final AbstractPointersObjectWriteNode writeNode) {
         final long actualNumerator;
         final long actualDenominator;
         if (denominator < 0) { // "keep sign in numerator"
             if (numerator == Long.MIN_VALUE || denominator == Long.MIN_VALUE) {
                 // Negation would overflow; let Smalltalk normalize using LargeIntegers.
-                throw PrimitiveFailed.GENERIC_ERROR;
+                throw PrimitiveFailed.andTransferToInterpreter();
             }
             actualNumerator = -numerator;
             actualDenominator = -denominator;
@@ -1240,7 +1240,7 @@ public final class SqueakImageContext {
         return fraction;
     }
 
-    public static double fromFraction(final PointersObject fraction, final AbstractPointersObjectReadNode readNode, final Node inlineTarget) {
+    public static double fromFractionOrPrimFail(final PointersObject fraction, final AbstractPointersObjectReadNode readNode, final Node inlineTarget) {
         assert SqueakGuards.isFraction(fraction, inlineTarget);
         final Object numerator = readNode.execute(fraction, ObjectLayouts.FRACTION.NUMERATOR);
         final Object denominator = readNode.execute(fraction, ObjectLayouts.FRACTION.DENOMINATOR);

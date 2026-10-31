@@ -342,7 +342,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             } else if (isIntegralProfile.profile(node, SqueakGuards.isIntegralWhenDividedBy(lhs, rhs))) {
                 return lhs / rhs;
             } else {
-                return image.asFraction(lhs, rhs, writeNode);
+                return image.asFractionOrPrimFail(lhs, rhs, writeNode);
             }
         }
 
@@ -1383,7 +1383,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind final Node node,
                         @Exclusive @Cached final FloatObjectNormalizeNode normalizeNode,
                         @Cached final AbstractPointersObjectNodes.AbstractPointersObjectReadNode readNode) {
-            return normalizeNode.execute(node, lhs - SqueakImageContext.fromFraction(rhs, readNode, node));
+            return normalizeNode.execute(node, lhs - SqueakImageContext.fromFractionOrPrimFail(rhs, readNode, node));
         }
     }
 
