@@ -396,7 +396,7 @@ public final class SqueakImageContext {
     private static boolean isFileInFormat(final Source source) {
         final CharSequence firstLine = source.getCharacters(1);
         /* First line must end with an `!`. */
-        return firstLine.charAt(firstLine.length() - 1) == '!';
+        return !firstLine.isEmpty() && firstLine.charAt(firstLine.length() - 1) == '!';
     }
 
     @TruffleBoundary
