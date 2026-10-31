@@ -101,6 +101,21 @@ public final class CachedServicesResolver {
         initialized = true;
     }
 
+    /**
+     * Safely performs lazy initialization of the cache using double-checked locking.
+     * This prevents multiple threads from redundantly parsing the services file
+     * if they concurrently query ports before the cache is built.
+     */
+    private static void ensureInitialized() {
+        if (!initialized) {
+            synchronized (CachedServicesResolver.class) {
+                if (!initialized) {
+                    initializeCache(null);
+                }
+            }
+        }
+    }
+
     private static void parseServiceLine(final String line, final Map<ServiceKey, Integer> freshMap, final Map<Integer, String> freshReverseMap) {
         String processedLine = line.trim();
         if (processedLine.isEmpty() || processedLine.startsWith("#")) {
@@ -170,9 +185,7 @@ public final class CachedServicesResolver {
      * @return the port number, or -1 if not found
      */
     public static int resolvePort(final String serviceName, final String protocol) {
-        if (!initialized) {
-            initializeCache(null);
-        }
+        ensureInitialized();
 
         if (serviceName == null || protocol == null) {
             return -1;
@@ -187,9 +200,7 @@ public final class CachedServicesResolver {
      * @return the service name, or null if not found
      */
     public static String resolveServiceName(final int port) {
-        if (!initialized) {
-            initializeCache(null);
-        }
+        ensureInitialized();
         return REVERSE_CACHE.get(port);
     }
 }
