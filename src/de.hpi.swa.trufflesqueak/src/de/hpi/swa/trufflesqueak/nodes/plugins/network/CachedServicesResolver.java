@@ -29,6 +29,7 @@ public final class CachedServicesResolver {
 
     private static final Path DEFAULT_SERVICES_PATH = detectServicesPath();
     private static final Map<ServiceKey, Integer> CACHE = new ConcurrentHashMap<>();
+    private static final Map<Integer, String> REVERSE_CACHE = new ConcurrentHashMap<>();
     private static volatile boolean initialized;
 
     private CachedServicesResolver() {
@@ -74,12 +75,13 @@ public final class CachedServicesResolver {
     public static synchronized void initializeCache(final Path customPath) {
         final Path targetPath = (customPath != null) ? customPath : DEFAULT_SERVICES_PATH;
         final Map<ServiceKey, Integer> freshMap = new HashMap<>();
+        final Map<Integer, String> freshReverseMap = new HashMap<>();
 
         if (Files.exists(targetPath)) {
             try (BufferedReader reader = Files.newBufferedReader(targetPath)) {
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    parseServiceLine(line, freshMap);
+                    parseServiceLine(line, freshMap, freshReverseMap);
                 }
             } catch (IOException e) {
                 // Ignore exception and fall through to the empty-check below
@@ -89,15 +91,17 @@ public final class CachedServicesResolver {
         // If the file was missing, unreadable, or empty, load standard defaults
         if (freshMap.isEmpty()) {
             LogUtils.SOCKET.fine("Services file unreadable or empty; loading fallback standard ports.");
-            populateFallbackServices(freshMap);
+            populateFallbackServices(freshMap, freshReverseMap);
         }
 
         CACHE.clear();
         CACHE.putAll(freshMap);
+        REVERSE_CACHE.clear();
+        REVERSE_CACHE.putAll(freshReverseMap);
         initialized = true;
     }
 
-    private static void parseServiceLine(final String line, final Map<ServiceKey, Integer> freshMap) {
+    private static void parseServiceLine(final String line, final Map<ServiceKey, Integer> freshMap, final Map<Integer, String> freshReverseMap) {
         String processedLine = line.trim();
         if (processedLine.isEmpty() || processedLine.startsWith("#")) {
             return;
@@ -132,23 +136,31 @@ public final class CachedServicesResolver {
         // Map primary service name
         freshMap.putIfAbsent(new ServiceKey(canonicalName, protocol), port);
 
+        // Add reverse lookup for primary name
+        freshReverseMap.putIfAbsent(port, canonicalName);
+
         // Map all aliases listed in remaining columns
         for (int i = 2; i < tokens.length; i++) {
             freshMap.putIfAbsent(new ServiceKey(tokens[i], protocol), port);
         }
     }
 
-    private static void populateFallbackServices(final Map<ServiceKey, Integer> map) {
-        map.put(new ServiceKey("http", "tcp"), 80);
-        map.put(new ServiceKey("www", "tcp"), 80); // Alias
-        map.put(new ServiceKey("https", "tcp"), 443);
-        map.put(new ServiceKey("ftp", "tcp"), 21);
-        map.put(new ServiceKey("ssh", "tcp"), 22);
-        map.put(new ServiceKey("smtp", "tcp"), 25);
-        map.put(new ServiceKey("domain", "udp"), 53);
-        map.put(new ServiceKey("domain", "tcp"), 53);
-        map.put(new ServiceKey("pop3", "tcp"), 110);
-        map.put(new ServiceKey("imap", "tcp"), 143);
+    private static void populateFallbackServices(final Map<ServiceKey, Integer> map, final Map<Integer, String> reverseMap) {
+        addFallback(map, reverseMap, "http", "tcp", 80);
+        addFallback(map, reverseMap, "www", "tcp", 80); // Alias, reverseMap ignores since 80 is already "http"
+        addFallback(map, reverseMap, "https", "tcp", 443);
+        addFallback(map, reverseMap, "ftp", "tcp", 21);
+        addFallback(map, reverseMap, "ssh", "tcp", 22);
+        addFallback(map, reverseMap, "smtp", "tcp", 25);
+        addFallback(map, reverseMap, "domain", "udp", 53);
+        addFallback(map, reverseMap, "domain", "tcp", 53);
+        addFallback(map, reverseMap, "pop3", "tcp", 110);
+        addFallback(map, reverseMap, "imap", "tcp", 143);
+    }
+
+    private static void addFallback(final Map<ServiceKey, Integer> map, final Map<Integer, String> reverseMap, final String name, final String protocol, final int port) {
+        map.put(new ServiceKey(name, protocol), port);
+        reverseMap.putIfAbsent(port, name);
     }
 
     /**
@@ -167,5 +179,17 @@ public final class CachedServicesResolver {
         }
 
         return CACHE.getOrDefault(new ServiceKey(serviceName, protocol), -1);
+    }
+
+    /**
+     * Resolves a port number back to its primary service name.
+     *
+     * @return the service name, or null if not found
+     */
+    public static String resolveServiceName(final int port) {
+        if (!initialized) {
+            initializeCache(null);
+        }
+        return REVERSE_CACHE.get(port);
     }
 }
