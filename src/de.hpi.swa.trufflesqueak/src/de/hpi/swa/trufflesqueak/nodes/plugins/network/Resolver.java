@@ -232,40 +232,6 @@ public final class Resolver {
         return true;
     }
 
-    private static int parseServiceNameToPort(final String serviceName, final int type, final int protocol) throws UnknownHostException {
-        if (serviceName == null || serviceName.isEmpty()) {
-            return 0;
-        }
-        try {
-            return Integer.parseInt(serviceName);
-        } catch (NumberFormatException e) {
-            int port = -1;
-
-            final boolean isUdp = (protocol == SQ_PROTOCOL_UDP) || (type == SQ_TYPE_DGRAM);
-            final boolean isTcp = (protocol == SQ_PROTOCOL_TCP) || (type == SQ_TYPE_STREAM);
-
-            // Query exactly what Squeak asked for
-            if (isUdp && !isTcp) {
-                port = CachedServicesResolver.resolvePort(serviceName, "udp");
-            } else if (isTcp && !isUdp) {
-                port = CachedServicesResolver.resolvePort(serviceName, "tcp");
-            } else {
-                // If unspecified (0), try TCP first, then UDP
-                port = CachedServicesResolver.resolvePort(serviceName, "tcp");
-                if (port == -1) {
-                    port = CachedServicesResolver.resolvePort(serviceName, "udp");
-                }
-            }
-
-            if (port > 0) {
-                return port;
-            }
-
-            LogUtils.SOCKET.warning("Unresolvable service name: " + serviceName);
-            throw new UnknownHostException("Unknown service: " + serviceName);
-        }
-    }
-
     private InetAddress[] resolveAddresses(final String hostName, final int flags) throws UnknownHostException {
         // Resolve addresses based on hostName and SQ_SOCKET_PASSIVE flag
         final InetAddress[] addresses;
