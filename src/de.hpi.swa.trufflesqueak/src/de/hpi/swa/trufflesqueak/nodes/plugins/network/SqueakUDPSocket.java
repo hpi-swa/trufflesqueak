@@ -19,7 +19,6 @@ import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 
 final class SqueakUDPSocket extends SqueakSocket {
-
     private final DatagramChannel channel;
     private InetSocketAddress remoteAddress;
 
@@ -103,6 +102,7 @@ final class SqueakUDPSocket extends SqueakSocket {
     protected void bindTo(final String address, final int port) throws IOException {
         if (!channel.socket().isBound()) {
             channel.bind(socketAddressFor(address, port));
+            context.register(channel, SelectionKey.OP_READ | SelectionKey.OP_WRITE, this);
         }
     }
 
