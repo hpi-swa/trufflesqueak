@@ -71,9 +71,12 @@ public final class SqueakImageReader {
         }
         try (var channel = FileChannel.open(Path.of(image.getImagePath()), StandardOpenOption.READ)) {
             final MappedByteBuffer buffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size());
-            buffer.order(ByteOrder.LITTLE_ENDIAN);
-            readImage(buffer);
-            UnsafeUtils.invokeCleaner(buffer);
+            try {
+                buffer.order(ByteOrder.LITTLE_ENDIAN);
+                readImage(buffer);
+            } finally {
+                UnsafeUtils.invokeCleaner(buffer);
+            }
         } catch (final IOException e) {
             throw SqueakException.create("Failed to read Smalltalk image:", e.getMessage());
         }
