@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.image;
 
 import java.lang.foreign.SymbolLookup;
 import java.lang.ref.ReferenceQueue;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Map;
@@ -416,7 +417,8 @@ public final class SqueakImageContext {
             }
         }
 
-        final NativeObject smalltalkSource = asByteString(source);
+        // Parser input uses character codes, not UTF-8 bytes.
+        final NativeObject smalltalkSource = NativeObject.needsWideString(source) ? asWideString(source) : asByteString(source.getBytes(StandardCharsets.ISO_8859_1));
         if (requestorSharedInstanceOrNil != NilObject.SINGLETON) {
             ((AbstractSqueakObjectWithClassAndHash) requestorSharedInstanceOrNil).send(this, "currentSource:", smalltalkSource);
         }

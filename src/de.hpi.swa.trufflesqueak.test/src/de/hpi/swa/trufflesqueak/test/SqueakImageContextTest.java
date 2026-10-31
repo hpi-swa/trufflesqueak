@@ -35,4 +35,15 @@ public final class SqueakImageContextTest extends AbstractSqueakTestCaseWithImag
         assertEquals(3L, context.eval("smalltalk", "\n1 + 2").asLong());
         assertEquals(3L, context.eval("smalltalk", "\r\n1 + 2").asLong());
     }
+
+    @Test
+    public void testUnicodeSourceLiterals() {
+        assertEquals(1L, context.eval("smalltalk", "'\u00e9' size").asLong());
+        assertEquals(233L, context.eval("smalltalk", "'\u00e9' first asInteger").asLong());
+        assertEquals(1L, context.eval("smalltalk", "'\u03bb' size").asLong());
+        assertEquals(955L, context.eval("smalltalk", "'\u03bb' first asInteger").asLong());
+        assertEquals(1L, context.eval("smalltalk", "'\ud83d\ude00' size").asLong());
+        assertEquals(128512L, context.eval("smalltalk", "'\ud83d\ude00' first asInteger").asLong());
+        assertEquals(3L, context.eval("smalltalk", "'abc' size").asLong());
+    }
 }
