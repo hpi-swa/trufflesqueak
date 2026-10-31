@@ -101,7 +101,8 @@ public abstract class SqueakSocket {
     }
 
     protected boolean specifiesProtocolFamily() {
-        return (netType == SQ_FAMILY_INET6) || (netType == SQ_FAMILY_INET4);
+        // In OSVM, SQ_FAMILY_UNSPEC is treated the same as SQ_FAMILY_INET4
+        return (netType == SQ_FAMILY_INET6) || (netType == SQ_FAMILY_INET4) || (netType == SqueakSocketContext.SQ_FAMILY_UNSPEC);
     }
 
     protected ProtocolFamily getProtocolFamily() {

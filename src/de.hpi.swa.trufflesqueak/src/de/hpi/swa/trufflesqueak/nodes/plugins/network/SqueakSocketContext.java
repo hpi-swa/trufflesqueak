@@ -29,7 +29,7 @@ public final class SqueakSocketContext implements Closeable {
     public static final int SQ_SOCKET_PASSIVE = (1 << 1);
 
     // Squeak family constants
-    public static final int SQ_FAMILY_UNSPEC = 0;
+    public static final int SQ_FAMILY_UNSPEC = 0;   // OSVM considers this to be the same as INET4
     public static final int SQ_FAMILY_INET4 = 2;
     public static final int SQ_FAMILY_INET6 = 3;
 

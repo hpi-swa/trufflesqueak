@@ -262,7 +262,7 @@ public final class Resolver {
         }
     }
 
-    private ResolvedService resolveService(final String serviceName, final int type, final int protocol) throws UnknownHostException {
+    private static ResolvedService resolveService(final String serviceName, final int type, final int protocol) throws UnknownHostException {
         final boolean baseTcp = (type == 0 || type == SQ_TYPE_STREAM) && (protocol == 0 || protocol == SQ_PROTOCOL_TCP);
         final boolean baseUdp = (type == 0 || type == SQ_TYPE_DGRAM) && (protocol == 0 || protocol == SQ_PROTOCOL_UDP);
 
@@ -285,9 +285,9 @@ public final class Resolver {
 
             // Return the resolved port and mask off any protocol that didn't resolve
             return new ResolvedService(
-                    tcpPort != -1 ? tcpPort : udpPort,
-                    tcpPort != -1,
-                    udpPort != -1);
+                            tcpPort != -1 ? tcpPort : udpPort,
+                            tcpPort != -1,
+                            udpPort != -1);
         }
     }
 
