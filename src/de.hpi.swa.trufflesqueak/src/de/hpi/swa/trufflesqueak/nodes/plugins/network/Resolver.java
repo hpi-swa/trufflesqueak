@@ -201,16 +201,34 @@ public final class Resolver {
      * ------------------------------------------------------------------------- */
 
     private static boolean isIPLiteral(final String host) {
-        if (host == null) {
+        if (host == null || host.isEmpty()) {
             return false;
         }
-        for (int i = 0; i < host.length(); i++) {
-            final char c = host.charAt(i);
-            if (!Character.isDigit(c) && c != '.' && c != ':' &&
-                            !(c >= 'a' && c <= 'f') && !(c >= 'A' && c <= 'F')) {
+
+        final int scopeIndex = host.indexOf('%');
+        final int ipEnd = scopeIndex == -1 ? host.length() : scopeIndex;
+
+        // Validate the base IP address (hex, colons, dots)
+        for (int i = 0; i < ipEnd; i++) {
+            final char c = Character.toLowerCase(host.charAt(i));
+            final boolean isValidIPChar = Character.isDigit(c) || c == '.' || c == ':' || (c >= 'a' && c <= 'f');
+            if (!isValidIPChar) {
                 return false;
             }
         }
+
+        // Validate the scope identifier (alphanumeric, e.g., "eth0" or "3")
+        if (scopeIndex != -1) {
+            if (scopeIndex == host.length() - 1) {
+                return false; // Trailing % with no scope
+            }
+            for (int i = scopeIndex + 1; i < host.length(); i++) {
+                if (!Character.isLetterOrDigit(host.charAt(i))) {
+                    return false;
+                }
+            }
+        }
+
         return true;
     }
 
@@ -276,14 +294,38 @@ public final class Resolver {
             throw new UnknownHostException("Host is not numeric");
         }
 
-        // Parse service name to a port using the requested type and protocol
-        final int port = parseServiceNameToPort(serviceName, type, protocol);
+        boolean addTcp = (type == 0 || type == SQ_TYPE_STREAM) && (protocol == 0 || protocol == SQ_PROTOCOL_TCP);
+        boolean addUdp = (type == 0 || type == SQ_TYPE_DGRAM) && (protocol == 0 || protocol == SQ_PROTOCOL_UDP);
+
+        int port = 0;
+        if (serviceName != null && !serviceName.isEmpty()) {
+            try {
+                // Numeric ports naturally apply to whichever protocols were requested
+                port = Integer.parseInt(serviceName);
+            } catch (final NumberFormatException e) {
+                // If it's a name, query the cache for the requested protocols
+                final int tcpPort = addTcp ? CachedServicesResolver.resolvePort(serviceName, "tcp") : -1;
+                final int udpPort = addUdp ? CachedServicesResolver.resolvePort(serviceName, "udp") : -1;
+
+                if (tcpPort == -1 && udpPort == -1) {
+                    LogUtils.SOCKET.warning("Unresolvable service name: " + serviceName);
+                    throw new UnknownHostException("Unknown service: " + serviceName);
+                }
+
+                // Mask off any protocol that didn't actually resolve for this service
+                if (tcpPort == -1) {
+                    addTcp = false;
+                }
+                if (udpPort == -1) {
+                    addUdp = false;
+                }
+
+                port = tcpPort != -1 ? tcpPort : udpPort;
+            }
+        }
 
         // Resolve addresses based on hostName and SQ_SOCKET_PASSIVE flag
         final InetAddress[] addresses = resolveAddresses(hostName, flags);
-
-        final boolean addTcp = (type == 0 || type == SQ_TYPE_STREAM) && (protocol == 0 || protocol == SQ_PROTOCOL_TCP);
-        final boolean addUdp = (type == 0 || type == SQ_TYPE_DGRAM) && (protocol == 0 || protocol == SQ_PROTOCOL_UDP);
 
         final List<AddressInfo> results = new ArrayList<>();
         for (final InetAddress address : addresses) {
@@ -349,7 +391,14 @@ public final class Resolver {
             } else {
                 lastHostNameInfo = ip.getHostName();
             }
-            lastServiceInfo = String.valueOf(addr.getPort());
+
+            final int port = addr.getPort();
+            if ((flags & SQ_SOCKET_NUMERIC) != 0) {
+                lastServiceInfo = String.valueOf(port);
+            } else {
+                final String serviceName = CachedServicesResolver.resolveServiceName(port);
+                lastServiceInfo = serviceName != null ? serviceName : String.valueOf(port);
+            }
         } catch (Exception e) {
             lastHostNameInfo = "";
             lastServiceInfo = "";

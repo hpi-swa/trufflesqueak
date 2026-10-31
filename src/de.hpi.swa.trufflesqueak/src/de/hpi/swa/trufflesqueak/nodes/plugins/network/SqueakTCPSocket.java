@@ -189,7 +189,7 @@ final class SqueakTCPSocket extends SqueakSocket {
 
     @Override
     protected void connectTo(final String address, final long port) throws IOException {
-        if (boundAddress != null && clientChannel != null) {
+        if (boundAddress != null && clientChannel != null && !clientChannel.socket().isBound()) {
             clientChannel.bind(boundAddress);
         }
         context.register(clientChannel, SelectionKey.OP_CONNECT | SelectionKey.OP_WRITE | SelectionKey.OP_READ, this);
