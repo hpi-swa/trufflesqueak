@@ -22,7 +22,6 @@ import java.util.function.Function;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
-import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -30,6 +29,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.LINKED_LIST;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
+import de.hpi.swa.trufflesqueak.shared.SqueakImageLocator;
 import de.hpi.swa.trufflesqueak.util.DebugUtils;
 
 public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
@@ -113,7 +113,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
             }
             currentDirectory = currentDirectory.getParent();
         }
-        throw SqueakException.create("Unable to locate test image.");
+        return SqueakImageLocator.findImage(null, "trufflesqueak-test", true);
     }
 
     protected static Object evaluate(final String expression) {
