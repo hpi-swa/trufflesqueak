@@ -178,6 +178,20 @@ public final class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDum
         assertTrue(nan instanceof final FloatObject o && o.isNaN());
     }
 
+    @Test
+    public void testFloatChunkCaching() {
+        for (final double value : new double[]{0.0, -0.0, 1.25, Double.MIN_VALUE, Double.MAX_VALUE, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.NaN}) {
+            final SqueakImageChunk chunk = newFloatChunk(UnsafeUtils.toBytes(new long[]{Double.doubleToRawLongBits(value)}));
+            final Object object = chunk.asObject();
+            assertSame(object, chunk.asObject());
+            if (Double.isFinite(value)) {
+                assertEquals(Double.doubleToRawLongBits(value), Double.doubleToRawLongBits((double) object));
+            } else {
+                assertTrue(object instanceof FloatObject);
+            }
+        }
+    }
+
     private static SqueakImageChunk newFloatChunk(final byte[] data) {
         final SqueakImageChunk chunk = new SqueakImageChunk(
                         new SqueakImageReader(image),

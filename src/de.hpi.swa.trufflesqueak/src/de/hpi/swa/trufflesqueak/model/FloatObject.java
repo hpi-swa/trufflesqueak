@@ -78,7 +78,13 @@ public final class FloatObject extends AbstractSqueakObjectWithHash {
         final long lowValue = Integer.toUnsignedLong(VarHandleUtils.getInt(chunk.getBytes(), 0));
         final long highValue = Integer.toUnsignedLong(VarHandleUtils.getInt(chunk.getBytes(), 1));
         final double value = Double.longBitsToDouble(highValue << 32 | lowValue);
-        return Double.isFinite(value) ? value : new FloatObject(chunk, value);
+        if (Double.isFinite(value)) {
+            final Object object = value;
+            chunk.setObject(object);
+            return object;
+        } else {
+            return new FloatObject(chunk, value);
+        }
     }
 
     public long getHigh() {
