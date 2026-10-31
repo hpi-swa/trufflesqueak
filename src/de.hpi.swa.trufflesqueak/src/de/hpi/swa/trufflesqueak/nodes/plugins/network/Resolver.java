@@ -253,49 +253,53 @@ public final class Resolver {
         return addresses;
     }
 
-    private List<AddressInfo> performGetAddressInfo(final String hostName, final String serviceName, final int flags, final int family, final int type, final int protocol)
-                    throws UnknownHostException {
-        // Strict Numeric Validation
+    private record ResolvedService(int port, boolean addTcp, boolean addUdp) {
+    }
+
+    private static void validateNumericHost(final String hostName, final int flags) throws UnknownHostException {
         if ((flags & SQ_SOCKET_NUMERIC) != 0 && hostName != null && !hostName.isEmpty() && !isIPLiteral(hostName)) {
             throw new UnknownHostException("Host is not numeric");
         }
+    }
 
-        boolean addTcp = (type == 0 || type == SQ_TYPE_STREAM) && (protocol == 0 || protocol == SQ_PROTOCOL_TCP);
-        boolean addUdp = (type == 0 || type == SQ_TYPE_DGRAM) && (protocol == 0 || protocol == SQ_PROTOCOL_UDP);
+    private ResolvedService resolveService(final String serviceName, final int type, final int protocol) throws UnknownHostException {
+        final boolean baseTcp = (type == 0 || type == SQ_TYPE_STREAM) && (protocol == 0 || protocol == SQ_PROTOCOL_TCP);
+        final boolean baseUdp = (type == 0 || type == SQ_TYPE_DGRAM) && (protocol == 0 || protocol == SQ_PROTOCOL_UDP);
 
-        int port = 0;
-        if (serviceName != null && !serviceName.isEmpty()) {
-            try {
-                // Numeric ports naturally apply to whichever protocols were requested
-                port = Integer.parseInt(serviceName);
-            } catch (final NumberFormatException e) {
-                // If it's a name, query the cache for the requested protocols
-                final int tcpPort = addTcp ? CachedServicesResolver.resolvePort(serviceName, "tcp") : -1;
-                final int udpPort = addUdp ? CachedServicesResolver.resolvePort(serviceName, "udp") : -1;
-
-                if (tcpPort == -1 && udpPort == -1) {
-                    LogUtils.SOCKET.warning("Unresolvable service name: " + serviceName);
-                    throw new UnknownHostException("Unknown service: " + serviceName);
-                }
-
-                // Mask off any protocol that didn't actually resolve for this service
-                if (tcpPort == -1) {
-                    addTcp = false;
-                }
-                if (udpPort == -1) {
-                    addUdp = false;
-                }
-
-                port = tcpPort != -1 ? tcpPort : udpPort;
-            }
+        if (serviceName == null || serviceName.isEmpty()) {
+            return new ResolvedService(0, baseTcp, baseUdp);
         }
 
-        // Resolve addresses based on hostName and SQ_SOCKET_PASSIVE flag
+        try {
+            // Numeric ports naturally apply to whichever protocols were requested
+            return new ResolvedService(Integer.parseInt(serviceName), baseTcp, baseUdp);
+        } catch (final NumberFormatException e) {
+            // If it's a name, query the cache for the requested protocols
+            final int tcpPort = baseTcp ? CachedServicesResolver.resolvePort(serviceName, "tcp") : -1;
+            final int udpPort = baseUdp ? CachedServicesResolver.resolvePort(serviceName, "udp") : -1;
+
+            if (tcpPort == -1 && udpPort == -1) {
+                LogUtils.SOCKET.warning("Unresolvable service name: " + serviceName);
+                throw new UnknownHostException("Unknown service: " + serviceName);
+            }
+
+            // Return the resolved port and mask off any protocol that didn't resolve
+            return new ResolvedService(
+                    tcpPort != -1 ? tcpPort : udpPort,
+                    tcpPort != -1,
+                    udpPort != -1);
+        }
+    }
+
+    private List<AddressInfo> performGetAddressInfo(final String hostName, final String serviceName, final int flags, final int family, final int type, final int protocol)
+                    throws UnknownHostException {
+        validateNumericHost(hostName, flags);
+        final ResolvedService service = resolveService(serviceName, type, protocol);
         final InetAddress[] addresses = resolveAddresses(hostName, flags);
 
         final List<AddressInfo> results = new ArrayList<>();
         for (final InetAddress address : addresses) {
-            appendAddressInfo(results, address, port, family, type, protocol, addTcp, addUdp);
+            appendAddressInfo(results, address, service.port(), family, type, protocol, service.addTcp(), service.addUdp());
         }
 
         if (results.isEmpty()) {
