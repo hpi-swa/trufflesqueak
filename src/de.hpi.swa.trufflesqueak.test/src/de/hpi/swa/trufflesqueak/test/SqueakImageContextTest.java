@@ -28,4 +28,11 @@ public final class SqueakImageContextTest extends AbstractSqueakTestCaseWithImag
         assertTrue((boolean) evaluate("(2 / -9223372036854775808) denominator = 4611686018427387904"));
         assertTrue((boolean) evaluate("(-9223372036854775808 / 3) numerator = -9223372036854775808"));
     }
+
+    @Test
+    public void testParseEmptyFirstLine() {
+        assertTrue(context.eval("smalltalk", "").isNull());
+        assertEquals(3L, context.eval("smalltalk", "\n1 + 2").asLong());
+        assertEquals(3L, context.eval("smalltalk", "\r\n1 + 2").asLong());
+    }
 }
