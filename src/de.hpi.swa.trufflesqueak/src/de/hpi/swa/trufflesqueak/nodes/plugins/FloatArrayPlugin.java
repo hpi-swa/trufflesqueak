@@ -27,8 +27,8 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 
@@ -105,7 +105,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final double doFraction(final NativeObject receiver, final long index, final PointersObject value,
                         @Bind final Node node,
                         @Cached final AbstractPointersObjectNodes.AbstractPointersObjectReadNode readNode) {
-            return doDouble(receiver, index, SqueakImageContext.fromFraction(value, readNode, node));
+            return doDouble(receiver, index, SqueakImageContext.fromFractionOrPrimFail(value, readNode, node));
         }
 
         @SuppressWarnings("unused")
