@@ -485,6 +485,7 @@ public final class SqueakImageReader {
         public SqueakImageChunk get(final long address) {
             int slot = (int) (address % capacity);
             while (true) {
+                assert chunks[slot] != null;
                 if (addresses[slot] == address) {
                     return chunks[slot];
                 }

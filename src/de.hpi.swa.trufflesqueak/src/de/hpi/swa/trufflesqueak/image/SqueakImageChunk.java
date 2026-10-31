@@ -25,7 +25,6 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.VariablePointersObject;
 import de.hpi.swa.trufflesqueak.model.WeakVariablePointersObject;
 import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
-import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.VarHandleUtils;
 
@@ -208,13 +207,8 @@ public final class SqueakImageChunk {
         switch ((int) (ptr & 7)) {
             case SqueakImageConstants.OBJECT_TAG:
                 final SqueakImageChunk chunk = reader.chunkMap.get(ptr);
-                if (chunk == null) {
-                    LogUtils.IMAGE.warning(() -> "Bogus pointer: " + ptr + ". Treating as smallint.");
-                    return ptr >>> SqueakImageConstants.NUM_TAG_BITS;
-                } else {
-                    assert bytes != null : "Must not be an ignored object";
-                    return chunk.asObject();
-                }
+                assert bytes != null : "Must not be an ignored object";
+                return chunk.asObject();
             case SqueakImageConstants.SMALL_INTEGER_TAG: // SmallInteger
                 return ptr >> SqueakImageConstants.NUM_TAG_BITS;
             case SqueakImageConstants.CHARACTER_TAG: // Character
