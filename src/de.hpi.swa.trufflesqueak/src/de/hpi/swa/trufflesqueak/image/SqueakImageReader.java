@@ -470,7 +470,7 @@ public final class SqueakImageReader {
             if (size > threshold) {
                 resize();
             }
-            int slot = (int) (address % capacity);
+            int slot = getSlot(address);
             while (true) {
                 if (chunks[slot] == null) {
                     addresses[slot] = address;
@@ -483,7 +483,7 @@ public final class SqueakImageReader {
         }
 
         public SqueakImageChunk get(final long address) {
-            int slot = (int) (address % capacity);
+            int slot = getSlot(address);
             while (true) {
                 assert chunks[slot] != null;
                 if (addresses[slot] == address) {
@@ -491,6 +491,11 @@ public final class SqueakImageReader {
                 }
                 slot = (slot + COLLISION_OFFSET) % capacity;
             }
+        }
+
+        private int getSlot(final long address) {
+            /* Object addresses are word-aligned, so discard the alignment bits before hashing. */
+            return (int) ((address >>> SqueakImageConstants.NUM_TAG_BITS) % capacity);
         }
 
         private SqueakImageChunk[] getChunks() {
