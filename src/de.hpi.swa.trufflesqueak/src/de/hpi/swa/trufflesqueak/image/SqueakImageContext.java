@@ -1237,9 +1237,13 @@ public final class SqueakImageContext {
 
     public static double fromFraction(final PointersObject fraction, final AbstractPointersObjectReadNode readNode, final Node inlineTarget) {
         assert SqueakGuards.isFraction(fraction, inlineTarget);
-        final long numerator = readNode.executeLong(fraction, ObjectLayouts.FRACTION.NUMERATOR);
-        final double denominator = readNode.executeLong(fraction, ObjectLayouts.FRACTION.DENOMINATOR);
-        return numerator / denominator;
+        final Object numerator = readNode.execute(fraction, ObjectLayouts.FRACTION.NUMERATOR);
+        final Object denominator = readNode.execute(fraction, ObjectLayouts.FRACTION.DENOMINATOR);
+        if (numerator instanceof final Long n && denominator instanceof final Long d) {
+            return n / (double) d;
+        }
+        // Let Smalltalk handle fractions containing LargeIntegers, including overflow in asFloat.
+        throw PrimitiveFailed.GENERIC_ERROR;
     }
 
     public NativeObject asByteArray(final byte[] bytes) {
