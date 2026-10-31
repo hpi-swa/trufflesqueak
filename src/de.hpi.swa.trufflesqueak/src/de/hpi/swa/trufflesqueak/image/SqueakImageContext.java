@@ -728,7 +728,6 @@ public final class SqueakImageContext {
             final TruffleFile path;
             if (getLanguage().getTruffleLanguageHome() != null) {
                 path = getHomePath().resolve("resources");
-                assert path.exists();
             } else { /* Fallback to image directory. */
                 path = env.getInternalTruffleFile(getImagePath()).getParent();
                 if (path == null) {
