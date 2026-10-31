@@ -1215,6 +1215,10 @@ public final class SqueakImageContext {
         final long actualNumerator;
         final long actualDenominator;
         if (denominator < 0) { // "keep sign in numerator"
+            if (numerator == Long.MIN_VALUE || denominator == Long.MIN_VALUE) {
+                // Negation would overflow; let Smalltalk normalize using LargeIntegers.
+                throw PrimitiveFailed.GENERIC_ERROR;
+            }
             actualNumerator = -numerator;
             actualDenominator = -denominator;
         } else {
