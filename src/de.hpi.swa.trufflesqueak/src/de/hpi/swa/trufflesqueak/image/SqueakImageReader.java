@@ -70,7 +70,12 @@ public final class SqueakImageReader {
             throw SqueakException.create(MiscUtils.format("Image at '%s' does not exist.", image.getImagePath()));
         }
         try (var channel = FileChannel.open(Path.of(image.getImagePath()), StandardOpenOption.READ)) {
-            final MappedByteBuffer buffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size());
+            final long fileSize = channel.size();
+            if (fileSize > Integer.MAX_VALUE) {
+                throw SqueakException.create(MiscUtils.format("Image at '%s' is too large (%s bytes). Maximum supported size is %s bytes (less than 2 GiB).",
+                                image.getImagePath(), fileSize, Integer.MAX_VALUE));
+            }
+            final MappedByteBuffer buffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, fileSize);
             try {
                 buffer.order(ByteOrder.LITTLE_ENDIAN);
                 readImage(buffer);
