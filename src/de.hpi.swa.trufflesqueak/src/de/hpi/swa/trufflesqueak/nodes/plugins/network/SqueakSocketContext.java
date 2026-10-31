@@ -12,6 +12,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.channels.CancelledKeyException;
 import java.nio.channels.ClosedChannelException;
+import java.nio.channels.ClosedSelectorException;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -130,8 +131,8 @@ public final class SqueakSocketContext implements Closeable {
                 }
             }
             selector.selectedKeys().clear();
-        } catch (final IOException | CancelledKeyException e) {
-            // Safely ignore dropped connections or closed channels
+        } catch (final IOException | CancelledKeyException | ClosedSelectorException e) {
+            // Safely ignore dropped connections, closed channels, or concurrent selector shutdown
         }
     }
 
@@ -150,7 +151,9 @@ public final class SqueakSocketContext implements Closeable {
         try {
             final SelectionKey key = channel.keyFor(selector);
             if (key != null && key.isValid()) {
-                key.interestOps(key.interestOps() | (ops & channel.validOps()));
+                synchronized (key) {
+                    key.interestOps(key.interestOps() | (ops & channel.validOps()));
+                }
                 selector.wakeup();
             }
         } catch (final CancelledKeyException e) {

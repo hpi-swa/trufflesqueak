@@ -264,28 +264,31 @@ public abstract class SqueakSocket {
 
     protected void handleReadyOps(final SelectionKey key, final CheckForInterruptsState interrupts) {
         final int ready = key.readyOps();
-        int currentOps = key.interestOps();
 
-        if ((ready & (SelectionKey.OP_ACCEPT | SelectionKey.OP_CONNECT)) != 0 && statusSema > 0) {
-            interrupts.signalSemaphoreWithIndex((int) statusSema);
-            currentOps &= ~(SelectionKey.OP_ACCEPT | SelectionKey.OP_CONNECT);
-        }
-        if ((ready & SelectionKey.OP_READ) != 0) {
-            dataAvailable = true;
-            if (readSema > 0) {
-                interrupts.signalSemaphoreWithIndex((int) readSema);
-            }
-            currentOps &= ~SelectionKey.OP_READ;
-        }
-        if ((ready & SelectionKey.OP_WRITE) != 0) {
-            writeReady = true; // Buffer is ready for writing again
-            if (writeSema > 0) {
-                interrupts.signalSemaphoreWithIndex((int) writeSema);
-            }
-            currentOps &= ~SelectionKey.OP_WRITE;
-        }
+        synchronized (key) {
+            int currentOps = key.interestOps();
 
-        key.interestOps(currentOps);
+            if ((ready & (SelectionKey.OP_ACCEPT | SelectionKey.OP_CONNECT)) != 0 && statusSema > 0) {
+                interrupts.signalSemaphoreWithIndex((int) statusSema);
+                currentOps &= ~(SelectionKey.OP_ACCEPT | SelectionKey.OP_CONNECT);
+            }
+            if ((ready & SelectionKey.OP_READ) != 0) {
+                dataAvailable = true;
+                if (readSema > 0) {
+                    interrupts.signalSemaphoreWithIndex((int) readSema);
+                }
+                currentOps &= ~SelectionKey.OP_READ;
+            }
+            if ((ready & SelectionKey.OP_WRITE) != 0) {
+                writeReady = true; // Buffer is ready for writing again
+                if (writeSema > 0) {
+                    interrupts.signalSemaphoreWithIndex((int) writeSema);
+                }
+                currentOps &= ~SelectionKey.OP_WRITE;
+            }
+
+            key.interestOps(currentOps);
+        }
     }
 
     protected InetSocketAddress socketAddressFor(final String address, final long port) {
