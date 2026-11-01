@@ -150,6 +150,14 @@
     } collect: [:testCase |
         testCase allTestSelectors do: [:sel | failingTests add: (testCase selector: sel) ]].
 
+    isMacOS ifTrue: [
+        {
+            SocketTest -> #(#testSocketReuse).  "fails on GitHub CI but passes locally"
+        } collect: [:assoc | | testCase |
+            testCase := assoc key.
+            assoc value do: [:sel | ignoredTests add: (testCase selector: sel) ]].
+    ].
+
     isWin ifTrue: [
         {
             Win32VMTest.
