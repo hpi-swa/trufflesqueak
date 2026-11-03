@@ -62,22 +62,23 @@ final class SqueakUDPSocket extends SqueakSocket {
 
     @Override
     protected InetSocketAddress getRemoteSocketAddress() throws IOException {
-        if (listening || !channel.isConnected()) {
-            return socketAddressFor(null, 0);
+        if (remoteAddress != null) {
+            return remoteAddress;
         }
-        return castAddress(channel.getRemoteAddress());
+        if (channel.isConnected()) {
+            return castAddress(channel.getRemoteAddress());
+        }
+        return null;
     }
 
     @Override
     protected long getRemotePort() throws IOException {
-        if (listening) {
-            return 0L;
+        if (remoteAddress != null) {
+            return remoteAddress.getPort();
         }
-
         if (channel.isConnected()) {
             return castAddress(channel.getRemoteAddress()).getPort();
         }
-
         return 0L;
     }
 
@@ -147,18 +148,17 @@ final class SqueakUDPSocket extends SqueakSocket {
     @Override
     protected long receiveDataFrom(final ByteBuffer data) {
         final int initialPosition = data.position();
-
         try {
             final SocketAddress address = channel.receive(data);
             if (address == null) {
                 return 0; // Spurious wakeup, no bytes read
             }
+            remoteAddress = castAddress(address);
         } catch (IOException e) {
             // Absorb ICMP Port Unreachable and other connectionless errors.
             // Returning 0 clears the OS readable flag and breaks the Squeak spin-loop.
             return 0;
         }
-
         return data.position() - initialPosition;
     }
 

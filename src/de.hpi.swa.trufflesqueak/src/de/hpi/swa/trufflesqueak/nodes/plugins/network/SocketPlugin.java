@@ -292,6 +292,9 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         protected final Object doResult(final Object receiver, final PointersObject sd, final NativeObject address) {
             try {
                 final InetSocketAddress remoteAddr = getSocketOrPrimFail(sd).getRemoteSocketAddress();
+                if (remoteAddr == null) {
+                    throw PrimitiveFailed.andTransferToInterpreter(); // Match OSVM behavior: fail the result primitive
+                }
                 final AddressInfo info = new AddressInfo(remoteAddr.getAddress(), remoteAddr.getPort(), 0, 0, 0);
                 final byte[] opaqueBytes = info.toSockaddrBytes(getSocketContext().getSessionID());
                 System.arraycopy(opaqueBytes, 0, address.getByteStorage(), 0, Math.min(opaqueBytes.length, address.getByteLength()));
@@ -541,7 +544,12 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary(transferToInterpreterOnException = false)
         protected static final long doSize(@SuppressWarnings("unused") final Object receiver, final PointersObject sd) {
             try {
-                return SqueakOpaqueSocketAddress.getOpaqueAddressSize(getSocketOrPrimFail(sd).getRemoteAddress());
+                // Call getRemoteSocketAddress() directly to bypass the legacy wildcard synthesis
+                final InetSocketAddress remote = getSocketOrPrimFail(sd).getRemoteSocketAddress();
+                if (remote == null) {
+                    return -1L; // Match OSVM behavior: return -1 when no peer exists
+                }
+                return SqueakOpaqueSocketAddress.getOpaqueAddressSize(remote.getAddress().getAddress());
             } catch (final Exception e) {
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
