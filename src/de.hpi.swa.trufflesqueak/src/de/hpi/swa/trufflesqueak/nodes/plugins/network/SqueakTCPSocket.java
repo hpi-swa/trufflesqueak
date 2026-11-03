@@ -78,7 +78,7 @@ final class SqueakTCPSocket extends SqueakSocket {
     protected InetSocketAddress getRemoteSocketAddress() throws IOException {
         maybeCompleteConnection();
         if (listening || !clientIsConnected()) {
-            return socketAddressFor(null, 0);
+            return null;
         }
         return castAddress(clientChannel.getRemoteAddress());
     }
@@ -192,8 +192,8 @@ final class SqueakTCPSocket extends SqueakSocket {
         if (boundAddress != null && clientChannel != null && !clientChannel.socket().isBound()) {
             clientChannel.bind(boundAddress);
         }
-        context.register(clientChannel, SelectionKey.OP_CONNECT | SelectionKey.OP_WRITE | SelectionKey.OP_READ, this);
-        clientChannel.connect(new InetSocketAddress(address, (int) port));
+        connectedSynchronously = clientChannel.connect(new InetSocketAddress(address, (int) port));
+        context.register(clientChannel, SelectionKey.OP_CONNECT | SelectionKey.OP_READ | SelectionKey.OP_WRITE, this);
     }
 
     @Override
