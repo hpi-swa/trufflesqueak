@@ -77,6 +77,7 @@ public abstract class SqueakSocket {
 
     protected volatile boolean dataAvailable;
     protected volatile boolean writeReady = true;
+    protected volatile boolean connectedSynchronously = false;
 
     protected SqueakSocket(final SqueakSocketContext context, final long netType, final long statusSema, final long readSema, final long writeSema) {
         this.context = context;
@@ -124,7 +125,11 @@ public abstract class SqueakSocket {
     protected abstract InetSocketAddress getRemoteSocketAddress() throws IOException;
 
     protected final byte[] getRemoteAddress() throws IOException {
-        return getRemoteSocketAddress().getAddress().getAddress();
+        InetSocketAddress remote = getRemoteSocketAddress();
+        if (remote == null) {
+            remote = socketAddressFor(null, 0);
+        }
+        return remote.getAddress().getAddress();
     }
 
     protected abstract long getRemotePort() throws IOException;
@@ -269,9 +274,12 @@ public abstract class SqueakSocket {
         synchronized (key) {
             int currentOps = key.interestOps();
 
-            if ((ready & (SelectionKey.OP_ACCEPT | SelectionKey.OP_CONNECT)) != 0 && statusSema > 0) {
-                interrupts.signalSemaphoreWithIndex((int) statusSema);
+            if ((ready & (SelectionKey.OP_ACCEPT | SelectionKey.OP_CONNECT)) != 0 || connectedSynchronously) {
+                if (statusSema > 0) {
+                    interrupts.signalSemaphoreWithIndex((int) statusSema);
+                }
                 currentOps &= ~(SelectionKey.OP_ACCEPT | SelectionKey.OP_CONNECT);
+                connectedSynchronously = false;
             }
             if ((ready & SelectionKey.OP_READ) != 0) {
                 dataAvailable = true;
@@ -291,7 +299,6 @@ public abstract class SqueakSocket {
             key.interestOps(currentOps);
         }
     }
-
     protected InetSocketAddress socketAddressFor(final String address, final long port) {
         if (address == null || address.isEmpty()) {
             return new InetSocketAddress(getResolver().getAnyLocalInetAddress(netType), (int) port);
