@@ -299,6 +299,7 @@ public abstract class SqueakSocket {
             key.interestOps(currentOps);
         }
     }
+
     protected InetSocketAddress socketAddressFor(final String address, final long port) {
         if (address == null || address.isEmpty()) {
             return new InetSocketAddress(getResolver().getAnyLocalInetAddress(netType), (int) port);
