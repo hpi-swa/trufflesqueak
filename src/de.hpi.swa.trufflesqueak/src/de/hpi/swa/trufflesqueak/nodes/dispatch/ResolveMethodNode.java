@@ -48,12 +48,15 @@ public abstract class ResolveMethodNode extends AbstractNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "lookupResult == null")
-    protected static final CompiledCodeObject doDispatchFailure(final SqueakImageContext image, final int expectedNumArgs, final boolean canPrimFail, final NativeObject selector,
+    protected static final CompiledCodeObject doDispatchFailure(final SqueakImageContext image, final int expectedNumArgs, final boolean canPrimFail,
+                    final NativeObject selector,
                     final ClassObject receiverClass,
                     final Object lookupResult) {
         final MethodCacheEntry cacheEntry = image.findMethodCacheEntry(receiverClass, selector);
-        final CompiledCodeObject fallbackMethod = cacheEntry.getOrCreateFallbackMethod();
-        assert fallbackMethod.getNumArgs() == 1 : "Fallback method with unexpected number of arguments, got " + fallbackMethod.getNumArgs();
+        final ClassObject.DispatchFailureResult result = cacheEntry.getOrCreateDispatchFailureResult(expectedNumArgs);
+        final CompiledCodeObject fallbackMethod = result.fallbackMethod();
+        assert fallbackMethod.getNumArgs() == 1 || (result.convention() == ClassObject.FallbackConvention.SHORTCUT_DNU &&
+                        fallbackMethod.getNumArgs() == expectedNumArgs + 1) : "Fallback method with unexpected number of arguments";
         return fallbackMethod;
     }
 

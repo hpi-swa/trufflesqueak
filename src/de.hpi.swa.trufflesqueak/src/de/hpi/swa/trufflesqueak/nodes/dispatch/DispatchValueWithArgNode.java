@@ -70,11 +70,11 @@ public abstract class DispatchValueWithArgNode extends AbstractNode {
 
     @Fallback
     protected static final Object doSend(final VirtualFrame frame, final Object receiver, final Object arg1,
-                    @Cached("create(getValueWitArgSelector())") final DispatchSelector1Node.Dispatch1Node genericDispatchNode) {
+                    @Cached("create(getValueWithArgSelector())") final DispatchSelector1Node.Dispatch1Node genericDispatchNode) {
         return genericDispatchNode.execute(frame, receiver, arg1);
     }
 
-    protected static final NativeObject getValueWitArgSelector() {
+    protected static final NativeObject getValueWithArgSelector() {
         return SqueakImageContext.getSlow().getSpecialSelector(SPECIAL_SELECTOR.VALUE_WITH_ARG);
     }
 }

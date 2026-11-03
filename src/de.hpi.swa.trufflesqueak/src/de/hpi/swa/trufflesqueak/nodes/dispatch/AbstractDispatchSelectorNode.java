@@ -7,8 +7,9 @@
 package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 
-public abstract class DispatchSelectorNode {
+public abstract class AbstractDispatchSelectorNode extends AbstractNode {
     protected static final boolean checkArgumentCount(final CompiledCodeObject method, final int expectedNumArgs) {
         assert method.getNumArgs() == expectedNumArgs : "Unexpected number of arguments: " + method.getNumArgs();
         return true;
