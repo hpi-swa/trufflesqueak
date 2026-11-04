@@ -441,7 +441,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         ensureContextReceiverIsNotActive(frame, startPC, startSP);
 
         final LoopCounter loopCounter = CompilerDirectives.inCompiledCode() && CompilerDirectives.hasNextTier() ? new LoopCounter() : null;
-        int pc = startPC;
+        int pc = CompilerDirectives.mergeExplodeKey(startPC);
         final State state = new State(bc, loopCounter);
         final VirtualState vstate = new VirtualState(startSP);
 

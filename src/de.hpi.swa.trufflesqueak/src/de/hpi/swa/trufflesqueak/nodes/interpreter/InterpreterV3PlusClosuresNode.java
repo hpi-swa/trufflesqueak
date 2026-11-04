@@ -332,7 +332,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
         final SqueakImageContext image = getContext();
         final byte[] bc = ACCESS.uncheckedCast(code.getBytes(), byte[].class);
 
-        int pc = startPC;
+        int pc = CompilerDirectives.mergeExplodeKey(startPC);
         int sp = startSP;
 
         int counter = 0;
