@@ -61,7 +61,6 @@ import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrumentableNode implements BytecodeOSRNode, InstrumentableNode {
     private static final String[] READONLY_CLASSES = {"ClassBinding", "ReadOnlyVariableBinding"};
     protected static final BytecodeDSLAccess ACCESS = BytecodeDSLAccessProvider.getBytecodeDSLAccess(true);
-    protected static final int LOCAL_RETURN_PC = -2;
 
     protected static final Long BOXED_ZERO = 0L;
     protected static final Long BOXED_ONE = 1L;

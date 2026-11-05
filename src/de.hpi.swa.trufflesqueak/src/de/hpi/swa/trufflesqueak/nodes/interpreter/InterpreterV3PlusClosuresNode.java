@@ -338,9 +338,8 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
         int counter = 0;
         final LoopCounter loopCounter = CompilerDirectives.inCompiledCode() && CompilerDirectives.hasNextTier() ? new LoopCounter() : null;
 
-        Object returnValue = null;
         try {
-            while (pc != LOCAL_RETURN_PC) {
+            while (true) {
                 CompilerAsserts.partialEvaluationConstant(pc);
                 CompilerAsserts.partialEvaluationConstant(sp);
                 final int currentPC = pc++;
@@ -412,40 +411,28 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         break;
                     }
                     case BC.RETURN_RECEIVER: {
-                        returnValue = handleReturn(frame, currentPC, pc, sp, FrameAccess.getReceiver(frame),
+                        return handleReturn(frame, currentPC, pc, sp, FrameAccess.getReceiver(frame),
                                         CompilerDirectives.inCompiledCode() && CompilerDirectives.hasNextTier() ? loopCounter.value : counter);
-                        pc = LOCAL_RETURN_PC;
-                        break;
                     }
                     case BC.RETURN_TRUE: {
-                        returnValue = handleReturn(frame, currentPC, pc, sp, BooleanObject.TRUE,
+                        return handleReturn(frame, currentPC, pc, sp, BooleanObject.TRUE,
                                         CompilerDirectives.inCompiledCode() && CompilerDirectives.hasNextTier() ? loopCounter.value : counter);
-                        pc = LOCAL_RETURN_PC;
-                        break;
                     }
                     case BC.RETURN_FALSE: {
-                        returnValue = handleReturn(frame, currentPC, pc, sp, BooleanObject.FALSE,
+                        return handleReturn(frame, currentPC, pc, sp, BooleanObject.FALSE,
                                         CompilerDirectives.inCompiledCode() && CompilerDirectives.hasNextTier() ? loopCounter.value : counter);
-                        pc = LOCAL_RETURN_PC;
-                        break;
                     }
                     case BC.RETURN_NIL: {
-                        returnValue = handleReturn(frame, currentPC, pc, sp, NilObject.SINGLETON,
+                        return handleReturn(frame, currentPC, pc, sp, NilObject.SINGLETON,
                                         CompilerDirectives.inCompiledCode() && CompilerDirectives.hasNextTier() ? loopCounter.value : counter);
-                        pc = LOCAL_RETURN_PC;
-                        break;
                     }
                     case BC.RETURN_TOP_FROM_METHOD: {
-                        returnValue = handleReturn(frame, currentPC, pc, sp - 1, top(frame, sp),
+                        return handleReturn(frame, currentPC, pc, sp - 1, top(frame, sp),
                                         CompilerDirectives.inCompiledCode() && CompilerDirectives.hasNextTier() ? loopCounter.value : counter);
-                        pc = LOCAL_RETURN_PC;
-                        break;
                     }
                     case BC.RETURN_TOP_FROM_BLOCK: {
-                        returnValue = handleReturnFromBlock(frame, currentPC, pc, sp - 1, top(frame, sp),
+                        return handleReturnFromBlock(frame, currentPC, pc, sp - 1, top(frame, sp),
                                         CompilerDirectives.inCompiledCode() && CompilerDirectives.hasNextTier() ? loopCounter.value : counter);
-                        pc = LOCAL_RETURN_PC;
-                        break;
                     }
                     case BC.EXTENDED_PUSH: {
                         final byte descriptor = getByte(bc, pc++);
@@ -1012,8 +999,6 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
             CompilerDirectives.transferToInterpreter();
             throw image.tryToSignalLowSpace(frame, e);
         }
-        assert returnValue != null;
-        return returnValue;
     }
 
     private static int getBlockSize(final byte[] bc, final int highIndex, final int lowIndex) {

@@ -445,8 +445,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final State state = new State(bc, loopCounter);
         final VirtualState vstate = new VirtualState(startSP);
 
-        Object returnValue = null;
-        while (pc != LOCAL_RETURN_PC) {
+        while (true) {
             CompilerAsserts.partialEvaluationConstant(pc);
             CompilerAsserts.partialEvaluationConstant(vstate.sp);
             CompilerAsserts.partialEvaluationConstant(vstate.extBA);
@@ -791,45 +790,31 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     }
                     case BC.RETURN_RECEIVER: {
                         state.reportLoopCountOnReturn(this);
-                        returnValue = handleReturn(frame, pc, pc + 1, vstate.sp, FrameAccess.getReceiver(frame));
-                        pc = LOCAL_RETURN_PC;
-                        break;
+                        return handleReturn(frame, pc, pc + 1, vstate.sp, FrameAccess.getReceiver(frame));
                     }
                     case BC.RETURN_TRUE: {
                         state.reportLoopCountOnReturn(this);
-                        returnValue = handleReturn(frame, pc, pc + 1, vstate.sp, BooleanObject.TRUE);
-                        pc = LOCAL_RETURN_PC;
-                        break;
+                        return handleReturn(frame, pc, pc + 1, vstate.sp, BooleanObject.TRUE);
                     }
                     case BC.RETURN_FALSE: {
                         state.reportLoopCountOnReturn(this);
-                        returnValue = handleReturn(frame, pc, pc + 1, vstate.sp, BooleanObject.FALSE);
-                        pc = LOCAL_RETURN_PC;
-                        break;
+                        return handleReturn(frame, pc, pc + 1, vstate.sp, BooleanObject.FALSE);
                     }
                     case BC.RETURN_NIL: {
                         state.reportLoopCountOnReturn(this);
-                        returnValue = handleReturn(frame, pc, pc + 1, vstate.sp, NilObject.SINGLETON);
-                        pc = LOCAL_RETURN_PC;
-                        break;
+                        return handleReturn(frame, pc, pc + 1, vstate.sp, NilObject.SINGLETON);
                     }
                     case BC.RETURN_TOP_FROM_METHOD: {
                         state.reportLoopCountOnReturn(this);
-                        returnValue = handleReturn(frame, pc, pc + 1, vstate.sp - 1, top(frame, vstate.sp));
-                        pc = LOCAL_RETURN_PC;
-                        break;
+                        return handleReturn(frame, pc, pc + 1, vstate.sp - 1, top(frame, vstate.sp));
                     }
                     case BC.RETURN_NIL_FROM_BLOCK: {
                         state.reportLoopCountOnReturn(this);
-                        returnValue = handleNormalReturn(frame, pc, pc + 1, vstate.sp, NilObject.SINGLETON);
-                        pc = LOCAL_RETURN_PC;
-                        break;
+                        return handleNormalReturn(frame, pc, pc + 1, vstate.sp, NilObject.SINGLETON);
                     }
                     case BC.RETURN_TOP_FROM_BLOCK: {
                         state.reportLoopCountOnReturn(this);
-                        returnValue = handleNormalReturn(frame, pc, pc + 1, vstate.sp - 1, top(frame, vstate.sp));
-                        pc = LOCAL_RETURN_PC;
-                        break;
+                        return handleNormalReturn(frame, pc, pc + 1, vstate.sp - 1, top(frame, vstate.sp));
                     }
                     case BC.EXT_NOP: {
                         pc = handleNoOperation(frame, pc, vstate, state);
@@ -1207,8 +1192,6 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                 throw getContext().tryToSignalLowSpace(frame, e);
             }
         }
-        assert returnValue != null;
-        return returnValue;
     }
 
     @SuppressWarnings("serial")
