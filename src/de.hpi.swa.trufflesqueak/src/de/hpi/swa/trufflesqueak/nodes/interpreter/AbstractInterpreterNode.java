@@ -347,6 +347,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         return getByte(bc, pc) & 0xFF;
     }
 
+    @EarlyInline
     protected final Object handleReturn(final VirtualFrame frame, final int currentPC, final int pc, final int sp, final Object result, final int loopCounter) {
         if (loopCounter > 0) {
             LoopNode.reportLoopCount(this, loopCounter);
@@ -354,6 +355,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         return handleReturn(frame, currentPC, pc, sp, result);
     }
 
+    @EarlyInline
     protected final Object handleReturn(final VirtualFrame frame, final int currentPC, final int pc, final int sp, final Object result) {
         if (isBlock) {
             return handleBlockReturn(frame, currentPC, pc, sp, result);
@@ -362,6 +364,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         }
     }
 
+    @EarlyInline
     protected final Object handleReturnFromBlock(final VirtualFrame frame, final int currentPC, final int pc, final int sp, final Object result, final int loopCounter) {
         if (loopCounter > 0) {
             LoopNode.reportLoopCount(this, loopCounter);
@@ -369,6 +372,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         return handleNormalReturn(frame, currentPC, pc, sp, result);
     }
 
+    @EarlyInline
     protected final Object handleNormalReturn(final VirtualFrame frame, final int currentPC, final int pc, final int sp, final Object result) {
         final byte profile = getProfile(currentPC);
         if (FrameAccess.hasModifiedSender(frame)) {
@@ -386,6 +390,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         }
     }
 
+    @EarlyInline
     private Object handleBlockReturn(final VirtualFrame frame, final int currentPC, final int pc, final int sp, final Object result) {
         // Target is sender of closure's home context.
         final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
