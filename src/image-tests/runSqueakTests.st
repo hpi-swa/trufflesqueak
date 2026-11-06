@@ -1,5 +1,5 @@
 [
-    | repoPath isLinux isMacOS isWin alphabetically ignoredTests failingTests flakyTests testSuite result retries exitCode |
+    | fileEntry repoPath isLinux isMacOS isWin alphabetically ignoredTests failingTests flakyTests testSuite result retries exitCode |
 
     ToolSet default: CommandLineToolSet.
 
@@ -10,10 +10,12 @@
 
     FileStream stdout nextPutAll: 'Patching TestCase ...'; cr; flush.
     TestCase compile: 'run: aResult
+        | timeToRun |
         FileStream stdout nextPutAll: self asString; nextPutAll: '' ... ''; flush.
-        aResult runCase: self.
+        "Failures do not save the test duration; useful for debugging time outs."
+        timeToRun := [aResult runCase: self] timeToRunWithoutGC.
         FileStream stdout nextPutAll: ''('';
-                          nextPutAll: ((aResult durations at: self) ifNil: [0]) asString;
+                          nextPutAll: timeToRun asString;
                           nextPutAll: ''ms)''; cr; flush.'
             classified: 'patched'.
     TestCase compile: 'isLogging
@@ -22,6 +24,15 @@
     TestCase compile: 'failureLog
         ^ FileStream stdout'
             classified: 'patched'.
+
+    "Increase timeouts from 10 ms to 100 ms on some Socket tests. See https://github.com/squeak-smalltalk/squeak-object-memory/issues/179"
+    fileEntry := ((FileDirectory on: Smalltalk documentPath) containingDirectory containingDirectory) / 'image-tests' / 'patchSocketTests.st'.
+    fileEntry exists
+        ifTrue: [
+            FileStream stdout nextPutAll: 'Applying socket delay patches from "', fileEntry fullName, '" ...'; cr; flush.
+            (FileStream readOnlyFileNamed: fileEntry fullName) fileIn]
+        ifFalse: [
+            FileStream stdout cr; nextPutAll: 'Socket delay patch not found at "', fileEntry fullName, '". SKIPPING'; cr; flush].
 
     isLinux := Smalltalk platformName = 'unix'.
     isMacOS := Smalltalk platformName = 'Mac OS'.
