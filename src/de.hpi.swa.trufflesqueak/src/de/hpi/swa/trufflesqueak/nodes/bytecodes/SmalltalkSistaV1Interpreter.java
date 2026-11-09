@@ -12,8 +12,8 @@ import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.bytecode.BytecodeConfig;
 import com.oracle.truffle.api.bytecode.BytecodeLabel;
@@ -28,8 +28,8 @@ import com.oracle.truffle.api.bytecode.Operation;
 import com.oracle.truffle.api.bytecode.StoreBytecodeIndex;
 import com.oracle.truffle.api.bytecode.Variadic;
 import com.oracle.truffle.api.dsl.Bind;
-import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -40,14 +40,13 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 import com.oracle.truffle.api.source.Source;
-
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
+import de.hpi.swa.trufflesqueak.exceptions.Returns;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.AbstractStandardSendReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.CannotReturnToTarget;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
-import de.hpi.swa.trufflesqueak.exceptions.Returns;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
@@ -62,11 +61,11 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
-import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
-import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes;
+import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
@@ -250,6 +249,8 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
             final SqueakImageContext image = SqueakImageContext.get(root);
             if (countable) {
                 if (image.enteringContextExceedsDepth()) {
+                    CompilerDirectives.transferToInterpreter();
+                    // Suspend current context and throw ProcessSwitch to unwind Java stack and resume
                     final ContextObject context = GetOrCreateContextWithFrameNode.executeUncached(frame);
                     AbstractPointersObjectWriteNode.executeUncached(image.getActiveProcessSlow(), PROCESS.SUSPENDED_CONTEXT, context);
                     throw ProcessSwitch.SINGLETON;
@@ -424,7 +425,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
     @ConstantOperand(type = NativeObject.class)
     public static final class SelfSendNilary {
         @Specialization
-        static Object perform(final VirtualFrame frame, final NativeObject selector, final Object receiver,
+        static Object perform(final VirtualFrame frame, @SuppressWarnings("unused") final NativeObject selector, final Object receiver,
                         @Cached("create(selector)") final Dispatch0Node dispatch) {
             try {
                 return followForwarded(dispatch.execute(frame, receiver));
@@ -438,7 +439,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
     @ConstantOperand(type = NativeObject.class)
     public static final class SelfSendUnary {
         @Specialization
-        static Object perform(final VirtualFrame frame, final NativeObject selector, final Object receiver, final Object arg1,
+        static Object perform(final VirtualFrame frame, @SuppressWarnings("unused") final NativeObject selector, final Object receiver, final Object arg1,
                         @Cached("create(selector)") final Dispatch1Node dispatch) {
             try {
                 return followForwarded(dispatch.execute(frame, receiver, arg1));
@@ -452,7 +453,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
     @ConstantOperand(type = NativeObject.class)
     public static final class SelfSendBinary {
         @Specialization
-        static Object perform(final VirtualFrame frame, final NativeObject selector, final Object receiver, final Object arg1, final Object arg2,
+        static Object perform(final VirtualFrame frame, @SuppressWarnings("unused") final NativeObject selector, final Object receiver, final Object arg1, final Object arg2,
                         @Cached("create(selector)") final Dispatch2Node dispatch) {
             try {
                 return followForwarded(dispatch.execute(frame, receiver, arg1, arg2));
@@ -470,7 +471,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
     @ConstantOperand(type = NativeObject.class)
     public static final class SelfSendNary {
         @Specialization
-        static Object perform(final VirtualFrame frame, final NativeObject selector, final Object receiver, @Variadic final Object[] args,
+        static Object perform(final VirtualFrame frame, @SuppressWarnings("unused") final NativeObject selector, final Object receiver, @Variadic final Object[] args,
                         @Cached("create(selector)") final DispatchNaryNode dispatch) {
             try {
                 return followForwarded(dispatch.execute(frame, receiver, args));
@@ -485,7 +486,8 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
     @ConstantOperand(type = NativeObject.class)
     public static final class SuperSend {
         @Specialization
-        static Object perform(final VirtualFrame frame, final CompiledCodeObject code, final NativeObject selector, final Object receiver, @Variadic final Object[] args,
+        static Object perform(final VirtualFrame frame, @SuppressWarnings("unused") final CompiledCodeObject code, @SuppressWarnings("unused") final NativeObject selector, final Object receiver,
+                        @Variadic final Object[] args,
                         @Cached("create(code, selector)") final DispatchSuperNaryNode dispatch) {
             try {
                 return followForwarded(dispatch.execute(frame, receiver, args));
@@ -499,7 +501,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
     @ConstantOperand(type = NativeObject.class)
     public static final class DirectedSuperSend {
         @Specialization
-        static Object perform(final VirtualFrame frame, final NativeObject selector, final ClassObject lookupClass, final Object receiver, @Variadic final Object[] args,
+        static Object perform(final VirtualFrame frame, @SuppressWarnings("unused") final NativeObject selector, final ClassObject lookupClass, final Object receiver, @Variadic final Object[] args,
                         @Cached("create(selector)") final DispatchDirectedSuperNaryNode dispatch) {
             try {
                 return followForwarded(dispatch.execute(frame, lookupClass.getResolvedSuperclass(), receiver, args));
@@ -815,22 +817,22 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
             return pc - start + size + (op == 0xFA ? getUnsignedInt(pc + 2) + (extB << 8) : 0);
         }
 
-        private byte getByte(final int index) {
-            return code.getBytes()[index];
+        private byte getByte(final int byteIndex) {
+            return code.getBytes()[byteIndex];
         }
 
-        private int getUnsignedInt(final int index) {
-            return Byte.toUnsignedInt(getByte(index));
+        private int getUnsignedInt(final int byteIndex) {
+            return Byte.toUnsignedInt(getByte(byteIndex));
         }
 
         private int detectJumps(final SmalltalkSistaV1InterpreterGen.Builder b, final int extBytes, final int extA, final int extB, final int numExtB) {
             final int indexWithExt = index + extBytes;
             final int op = getUnsignedInt(indexWithExt);
             switch (op) {
-                case 0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7 -> recordUnconditionalJump(b, 1 + InterpreterSistaV1Node.calculateShortOffset(op));
+                case 0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7 -> recordUnconditionalJump(1 + InterpreterSistaV1Node.calculateShortOffset(op));
                 case 0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE, 0xBF, /* JumpOnTrue */
                     0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7 /* JumpOnFalse */
-                    -> recordConditionalJump(b, 1 + InterpreterSistaV1Node.calculateShortOffset(op), op < 0xC0);
+                    -> recordConditionalJump(1 + InterpreterSistaV1Node.calculateShortOffset(op), op < 0xC0);
 
                 case 0xE0 -> {
                     return detectJumps(b, extBytes + 2, (extA << 8) + getUnsignedInt(indexWithExt + 1), extB, numExtB);
@@ -840,8 +842,8 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                     return detectJumps(b, extBytes + 2, extA, numExtB == 0 && byteValue > 127 ? byteValue - 256 : (extB << 8) + byteValue, numExtB + 1);
                 }
 
-                case 0xED -> recordUnconditionalJump(b, 2 + extBytes + InterpreterSistaV1Node.calculateLongExtendedOffset(getByte(indexWithExt + 1), extB));
-                case 0xEE /* JumpOnTrue */, 0xEF /* JumpOnFalse */ -> recordConditionalJump(b, 2 + extBytes + InterpreterSistaV1Node.calculateLongExtendedOffset(getByte(indexWithExt + 1), extB),
+                case 0xED -> recordUnconditionalJump(2 + extBytes + InterpreterSistaV1Node.calculateLongExtendedOffset(getByte(indexWithExt + 1), extB));
+                case 0xEE /* JumpOnTrue */, 0xEF /* JumpOnFalse */ -> recordConditionalJump(2 + extBytes + InterpreterSistaV1Node.calculateLongExtendedOffset(getByte(indexWithExt + 1), extB),
                                 op == 0xEE);
                 case 0xFA -> {
                     final int blockSize = getUnsignedInt(indexWithExt + 2) + (extB << 8);
@@ -860,7 +862,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
             }
         }
 
-        private void recordUnconditionalJump(final SmalltalkSistaV1InterpreterGen.Builder b, final int offset) {
+        private void recordUnconditionalJump(final int offset) {
             assert offset != 0;
             final int jumpTarget = index + offset;
             jumps.put(index, new Jump(jumpTarget, false, false));
@@ -875,7 +877,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
             }
         }
 
-        private void recordConditionalJump(final SmalltalkSistaV1InterpreterGen.Builder b, final int offset, final boolean onTrue) {
+        private void recordConditionalJump(final int offset, final boolean onTrue) {
             assert offset > 0;
             final int jumpTarget = index + offset;
             jumps.put(index, new Jump(jumpTarget, true, onTrue));
@@ -1215,7 +1217,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                         final StackEntry[] values = popStackEntries(b, arraySize);
                         emitPush(b, () -> {
                             b.beginNewArrayFromStack();
-                            emitStackEntries(b, values);
+                            emitStackEntries(values);
                             b.endNewArrayFromStack();
                         });
                     } else {
@@ -1359,8 +1361,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
         private void emitPopN(final SmalltalkSistaV1InterpreterGen.Builder b, final int numPopped) {
             if (emissionState == null) {
                 final StackEntry[] entries = popStackEntries(b, numPopped);
-
-                emitStackEntries(b, entries);
+                emitStackEntries(entries);
             } else {
                 final int nextIndex = emissionState.index + numPopped;
                 assert nextIndex <= emissionState.operands.length;
@@ -1405,7 +1406,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
             return entries;
         }
 
-        private static void emitStackEntries(final SmalltalkSistaV1InterpreterGen.Builder b, final StackEntry[] entries) {
+        private static void emitStackEntries(final StackEntry[] entries) {
             for (final StackEntry entry : entries) {
                 entry.operation.perform();
             }
@@ -1526,7 +1527,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
                 } else {
                     b.emitActiveContext();
                 }
-                emitStackEntries(b, copiedValues);
+                emitStackEntries(copiedValues);
                 b.endFullClosure();
             });
         }
@@ -1543,7 +1544,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
             final StackEntry[] copiedValues = popStackEntries(b, numCopied);
             emitPush(b, () -> {
                 b.beginClosure(block);
-                emitStackEntries(b, copiedValues);
+                emitStackEntries(copiedValues);
                 b.endClosure();
             });
             return 3 + extBytes + blockSize;
@@ -1563,7 +1564,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
 
         @Specialization(guards = "image.flags.numericPrimsMixArithmetic()")
         static double doLongDouble(final long lhs, final double rhs,
-                        @Bind final SqueakImageContext image) {
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
             return lhs + rhs;
         }
 
@@ -1589,7 +1590,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
 
         @Specialization(guards = "image.flags.numericPrimsMixArithmetic()")
         static double doLongDouble(final long lhs, final double rhs,
-                        @Bind final SqueakImageContext image) {
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
             return lhs - rhs;
         }
 
@@ -1615,7 +1616,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
 
         @Specialization(guards = "image.flags.numericPrimsMixComparison()")
         static boolean doDouble(final long lhs, final double rhs,
-                        @Bind final SqueakImageContext image,
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image,
                         @Bind final Node node,
                         @Cached final InlinedConditionProfile isExactProfile) {
             if (isExactProfile.profile(node, lhs == rhs)) {
@@ -1647,7 +1648,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
 
         @Specialization(guards = "image.flags.numericPrimsMixComparison()")
         static boolean doDouble(final long lhs, final double rhs,
-                        @Bind final SqueakImageContext image,
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image,
                         @Bind final Node node,
                         @Cached final InlinedConditionProfile isExactProfile) {
             if (isExactProfile.profile(node, lhs == rhs)) {
@@ -1679,7 +1680,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
 
         @Specialization(guards = "image.flags.numericPrimsMixComparison()")
         static boolean doDouble(final long lhs, final double rhs,
-                        @Bind final SqueakImageContext image,
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image,
                         @Bind final Node node,
                         @Cached final InlinedConditionProfile isExactProfile) {
             if (isExactProfile.profile(node, lhs == rhs)) {
@@ -1711,7 +1712,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
 
         @Specialization(guards = "image.flags.numericPrimsMixComparison()")
         static boolean doDouble(final long lhs, final double rhs,
-                        @Bind final SqueakImageContext image,
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image,
                         @Bind final Node node,
                         @Cached final InlinedConditionProfile isExactProfile) {
             if (isExactProfile.profile(node, lhs == rhs)) {
@@ -1743,7 +1744,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
 
         @Specialization(guards = "image.flags.numericPrimsMixComparison()")
         static boolean doDouble(final long lhs, final double rhs,
-                        @Bind final SqueakImageContext image,
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image,
                         @Bind final Node node,
                         @Cached final InlinedConditionProfile isExactProfile) {
             if (isExactProfile.profile(node, lhs == rhs)) {
@@ -1757,7 +1758,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
         @SuppressWarnings("unused")
         @Specialization(guards = {"!isFloatObject(rhs)", "!isLargeIntegerObject(image, rhs)", "!isPointersObject(rhs)"})
         static boolean doQuickFalse(final long lhs, final AbstractSqueakObject rhs,
-                        @Bind final SqueakImageContext image) {
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
             return BooleanObject.FALSE;
         }
 
@@ -1783,7 +1784,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
 
         @Specialization(guards = "image.flags.numericPrimsMixComparison()")
         static boolean doDouble(final long lhs, final double rhs,
-                        @Bind final SqueakImageContext image,
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image,
                         @Bind final Node node,
                         @Cached final InlinedConditionProfile isExactProfile) {
             if (isExactProfile.profile(node, lhs == rhs)) {
@@ -1797,7 +1798,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
         @SuppressWarnings("unused")
         @Specialization(guards = {"!isFloatObject(rhs)", "!isLargeIntegerObject(image, rhs)", "!isPointersObject(rhs)"})
         static boolean doQuickTrue(final long lhs, final AbstractSqueakObject rhs,
-                        @Bind final SqueakImageContext image) {
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) {
             return BooleanObject.TRUE;
         }
 
@@ -1823,7 +1824,7 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
 
         @Specialization(guards = "image.flags.numericPrimsMixArithmetic()", rewriteOn = RespecializeException.class)
         static double doLongDoubleFinite(final long lhs, final double rhs,
-                        @Bind final SqueakImageContext image) throws RespecializeException {
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) throws RespecializeException {
             return ensureFinite(lhs * rhs);
         }
 
@@ -1856,13 +1857,13 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
             if (fractionProfile.profile(node, SqueakGuards.isIntegralWhenDividedBy(lhs, rhs))) {
                 return lhs / rhs;
             } else {
-                return image.asFraction(lhs, rhs, writeNode);
+                return image.asFractionOrPrimFail(lhs, rhs, writeNode);
             }
         }
 
         @Specialization(guards = {"image.flags.numericPrimsMixArithmetic()", "!isZero(rhs)"}, rewriteOn = RespecializeException.class)
         static double doLongDoubleFinite(final long lhs, final double rhs,
-                        @Bind final SqueakImageContext image) throws RespecializeException {
+                        @SuppressWarnings("unused") @Bind final SqueakImageContext image) throws RespecializeException {
             return ensureFinite(lhs / rhs);
         }
 
@@ -2024,7 +2025,6 @@ public abstract class SmalltalkSistaV1Interpreter extends RootNode implements By
         @Specialization
         static PointersObject doPoint(final Object xPos, final Object yPos,
                         @Bind final SqueakImageContext image,
-                        @Bind final Node node,
                         @Cached final AbstractPointersObjectNodes.AbstractPointersObjectWriteNode writeNode) {
             return image.asPoint(writeNode, xPos, yPos);
         }

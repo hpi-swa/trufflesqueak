@@ -315,7 +315,7 @@ public final class FrameAccess {
      * @param action the action to perform on each valid slot index
      */
     public static void iterateStackSlots(final Frame frame, final int sp, final Consumer<Integer> action) {
-        if (frame.getFrameDescriptor().getInfo() instanceof final SistaV1Frame info) {
+        if (frame.getFrameDescriptor().getInfo() instanceof SistaV1Frame) {
             for (int i = 0; i < sp; i++) {
                 action.accept(SlotIndices.STACK_START + i);
             }
