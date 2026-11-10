@@ -202,6 +202,9 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
                 assert oldLayoutNumObjectExtension == 0;
                 // ... objectExtension now needed
                 objectExtension = newLayout.getFreshObjectExtension();
+            } else if (newLayoutNumObjectExtension == 0) {
+                // ... objectExtension no longer needed
+                objectExtension = null;
             } else {
                 // ... resize objectExtension
                 objectExtension = Arrays.copyOf(objectExtension, newLayoutNumObjectExtension);
