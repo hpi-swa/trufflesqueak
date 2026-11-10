@@ -379,7 +379,7 @@ public final class SqueakImageWriter {
     }
 
     public void writeObjectIfTracedElseNil(final Object object) {
-        writeLong(toWord(object instanceof final AbstractSqueakObjectWithHash aso && oopMap.containsKey(aso) ? object : NilObject.SINGLETON));
+        writeLong(toWord(object instanceof final AbstractSqueakObjectWithHash aso && !oopMap.containsKey(aso) ? NilObject.SINGLETON : object));
     }
 
     private static long toTaggedCharacter(final long value) {
