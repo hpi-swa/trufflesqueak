@@ -278,6 +278,10 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
     public void trace(final SqueakImageWriter writer) {
         super.trace(writer);
         writer.traceIfNecessary(outerContext);
+        if (isAFullBlockClosure()) {
+            writer.traceIfNecessary(block);
+            writer.traceIfNecessary(receiver);
+        }
         writer.traceAllIfNecessary(copiedValues);
     }
 
