@@ -6,7 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
 import com.oracle.truffle.api.CompilerAsserts;
@@ -298,7 +297,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
 
     @TruffleBoundary
     public String asStringUnsafe() {
-        return StandardCharsets.UTF_8.decode(ByteBuffer.wrap((byte[]) storage)).toString();
+        return new String((byte[]) storage, StandardCharsets.UTF_8);
     }
 
     @TruffleBoundary
