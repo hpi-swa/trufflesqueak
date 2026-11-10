@@ -360,7 +360,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         assert SqueakImageContext.getSlow().isByteSymbolClass(getSqueakClass());
         final Object lookupResult = LookupMethodNode.executeUncached(SqueakObjectClassNode.executeUncached(receiver), this);
         if (lookupResult instanceof CompiledCodeObject method) {
-            final Object result = TryPrimitiveNaryNode.executeUncached(image.externalSenderFrame, method, this, arguments);
+            final Object result = TryPrimitiveNaryNode.executeUncached(image.externalSenderFrame, method, receiver, arguments);
             if (result != null) {
                 return result;
             } else {
