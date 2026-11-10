@@ -7,19 +7,20 @@
 package de.hpi.swa.trufflesqueak.image;
 
 import java.io.IOException;
+import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySegment;
+import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
-
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithHash;
@@ -35,7 +36,6 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectRead
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
-import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class SqueakImageReader {
     public SqueakImageChunk hiddenRootsChunk;
@@ -65,18 +65,18 @@ public final class SqueakImageReader {
         if (!truffleFile.isRegularFile()) {
             throw SqueakException.create(MiscUtils.format("Image at '%s' does not exist.", image.getImagePath()));
         }
-        try (var channel = FileChannel.open(Path.of(image.getImagePath()), StandardOpenOption.READ)) {
+        try (var channel = truffleFile.newByteChannel(EnumSet.of(StandardOpenOption.READ))) {
             final long fileSize = channel.size();
             if (fileSize > Integer.MAX_VALUE) {
                 throw SqueakException.create(MiscUtils.format("Image at '%s' is too large (%s bytes). Maximum supported size is %s bytes (less than 2 GiB).",
                                 image.getImagePath(), fileSize, Integer.MAX_VALUE));
             }
-            final MappedByteBuffer buffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, fileSize);
-            try {
+            try (var arena = Arena.ofConfined()) {
+                final MemorySegment segment = (MemorySegment) channel.map(FileChannel.MapMode.READ_ONLY, 0, fileSize, arena);
+                final ByteBuffer buffer = segment.asByteBuffer();
+                assert buffer.isDirect();
                 buffer.order(ByteOrder.LITTLE_ENDIAN);
                 readImage(buffer);
-            } finally {
-                UnsafeUtils.invokeCleaner(buffer);
             }
         } catch (final IOException e) {
             throw SqueakException.create("Failed to read Smalltalk image:", e.getMessage());
@@ -88,11 +88,11 @@ public final class SqueakImageReader {
         image.getSqueakImage();
     }
 
-    private static void skip(final MappedByteBuffer buffer, final int numBytes) {
+    private static void skip(final ByteBuffer buffer, final int numBytes) {
         buffer.position(buffer.position() + numBytes);
     }
 
-    private void readImage(final MappedByteBuffer buffer) {
+    private void readImage(final ByteBuffer buffer) {
         // Read header
         image.imageFormat = buffer.getInt();
         if (!ArrayUtils.contains(SqueakImageConstants.SUPPORTED_IMAGE_FORMATS, image.imageFormat)) {
@@ -158,7 +158,7 @@ public final class SqueakImageReader {
         assert buffer.position() == headerSize + dataSize;
     }
 
-    private SqueakImageChunk readObject(final MappedByteBuffer buffer) {
+    private SqueakImageChunk readObject(final ByteBuffer buffer) {
         int pos = buffer.position() - headerSize;
         assert pos % SqueakImageConstants.WORD_SIZE == 0 : "every object must be 64-bit aligned: " + pos % SqueakImageConstants.WORD_SIZE;
         long headerWord = buffer.getLong();
@@ -196,7 +196,7 @@ public final class SqueakImageReader {
         return chunk;
     }
 
-    private static byte[] nextObjectData(final MappedByteBuffer buffer, final int size, final int format) {
+    private static byte[] nextObjectData(final ByteBuffer buffer, final int size, final int format) {
         if (size == 0) {
             skip(buffer, SqueakImageConstants.WORD_SIZE); // skip trailing alignment word
             return ArrayUtils.EMPTY_BYTE_ARRAY;
