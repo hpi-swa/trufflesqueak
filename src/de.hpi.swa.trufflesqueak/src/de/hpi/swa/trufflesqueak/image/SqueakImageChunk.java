@@ -25,6 +25,7 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.VariablePointersObject;
 import de.hpi.swa.trufflesqueak.model.WeakVariablePointersObject;
 import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
+import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.VarHandleUtils;
 
@@ -196,6 +197,9 @@ public final class SqueakImageChunk {
 
     public Object[] getPointers(final int start, final int end) {
         final int numObjects = end - start;
+        if (numObjects == 0) {
+            return ArrayUtils.EMPTY_ARRAY;
+        }
         final Object[] result = new Object[numObjects];
         for (int i = 0; i < numObjects; i++) {
             result[i] = getPointer(start + i);
