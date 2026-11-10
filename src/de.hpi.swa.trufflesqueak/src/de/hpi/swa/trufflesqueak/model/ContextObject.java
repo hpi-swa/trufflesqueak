@@ -80,9 +80,10 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         // Copy modified sender flag and the marked code flags.
         setAllBooleanBits(original.getAllBooleanBits());
         // Create shallow copy of Truffle frame
-        final FrameDescriptor frameDescriptor = FrameAccess.getCodeObject(original.getTruffleFrame()).getFrameDescriptor();
+        final FrameDescriptor frameDescriptor = original.getTruffleFrame().getFrameDescriptor();
         senderOrFrameOrSize = Truffle.getRuntime().createMaterializedFrame(original.getTruffleFrame().getArguments().clone(), frameDescriptor);
-        FrameAccess.copyAllSlots(original.getTruffleFrame(), getTruffleFrame());
+        FrameAccess.copySlotsExceptContext(original.getTruffleFrame(), getTruffleFrame());
+        FrameAccess.setContext(getTruffleFrame(), this);
     }
 
     @Override

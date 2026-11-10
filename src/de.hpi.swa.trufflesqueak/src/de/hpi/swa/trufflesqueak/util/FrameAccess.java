@@ -9,6 +9,7 @@ package de.hpi.swa.trufflesqueak.util;
 import java.util.Arrays;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.IntConsumer;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -100,8 +101,9 @@ public final class FrameAccess {
         return builder.build();
     }
 
-    public static void copyAllSlots(final MaterializedFrame source, final MaterializedFrame destination) {
-        source.copyTo(0, destination, 0, source.getFrameDescriptor().getNumberOfSlots());
+    public static void copySlotsExceptContext(final MaterializedFrame source, final MaterializedFrame destination) {
+        final int start = SlotIndices.THIS_CONTEXT + 1;
+        source.copyTo(start, destination, start, source.getFrameDescriptor().getNumberOfSlots() - start);
     }
 
     /* Returns the code object matching the frame's descriptor. */
@@ -273,7 +275,7 @@ public final class FrameAccess {
      * @param sp the current stack pointer defining the upper boundary
      * @param action the action to perform on each valid slot index
      */
-    public static void iterateStackSlots(final Frame frame, final int sp, final Consumer<Integer> action) {
+    public static void iterateStackSlots(final Frame frame, final int sp, final IntConsumer action) {
         if (isDead(frame)) {
             clearStackSlots(frame);
         } else {

@@ -7,6 +7,7 @@
 package de.hpi.swa.trufflesqueak.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -36,6 +37,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.METHOD_DICT;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 @SuppressWarnings("static-method")
 public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
@@ -472,6 +474,21 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
         assertSame(receiver, result.getReceiver());
         assertSame(NilObject.SINGLETON, result.getSender());
         assertTrue(result.isDead());
+    }
+
+    @Test
+    public void testCopiedContextFrameIdentity() {
+        final Object receiver = image.specialObjectsArray;
+        final CompiledCodeObject method = makeMethod(makeHeaderWord(0, 0, 2, false, false), new Object[0], 137, 124);
+        final ContextObject original = (ContextObject) runMethod(method, receiver);
+        final ContextObject copy = new ContextObject(original);
+        assertNotSame(original.getTruffleFrame(), copy.getTruffleFrame());
+        assertSame(original, FrameAccess.getContext(original.getTruffleFrame()));
+        assertSame(copy, FrameAccess.getContext(copy.getTruffleFrame()));
+        assertSame(method, copy.getCodeObject());
+        assertSame(receiver, copy.getReceiver());
+        assertEquals(original.getInstructionPointerForBytecodeLoop(), copy.getInstructionPointerForBytecodeLoop());
+        assertEquals(original.getStackPointer(), copy.getStackPointer());
     }
 
     @Test
