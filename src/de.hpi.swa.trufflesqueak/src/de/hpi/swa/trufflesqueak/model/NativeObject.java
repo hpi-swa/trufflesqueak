@@ -166,7 +166,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public NativeObject shallowCopyBytes() {
-        return new NativeObject(this, getByteStorage());
+        return new NativeObject(this, getByteStorage().clone());
     }
 
     public void convertToBytesStorage(final byte[] bytes) {

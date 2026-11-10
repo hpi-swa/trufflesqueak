@@ -70,7 +70,7 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
         super(original);
         block = original.block;
         outerContext = original.outerContext;
-        copiedValues = original.copiedValues;
+        copiedValues = ArrayUtils.clone(original.copiedValues);
         numArgs = original.numArgs;
         receiver = original.receiver;
     }

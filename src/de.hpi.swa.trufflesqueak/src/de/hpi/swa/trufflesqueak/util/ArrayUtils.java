@@ -31,6 +31,10 @@ public final class ArrayUtils {
         }
     }
 
+    public static Object[] clone(final Object[] original) {
+        return original.length == 0 ? EMPTY_ARRAY : original.clone();
+    }
+
     public static boolean contains(final byte[] objects, final byte element) {
         for (final byte object : objects) {
             if (object == element) {
