@@ -43,7 +43,7 @@ public final class WeakVariablePointersObject extends AbstractVariablePointersOb
         variablePart = new Object[numVariableSlots];
         for (int i = 0; i < numVariableSlots; i++) {
             final Object value = chunk.getPointer(instSize + i);
-            variablePart[i] = value instanceof final AbstractSqueakObject o ? new WeakRef(o, image.weakPointersQueue) : value;
+            variablePart[i] = value != NilObject.SINGLETON && value instanceof final AbstractSqueakObject o ? new WeakRef(o, image.weakPointersQueue) : value;
         }
     }
 
@@ -58,7 +58,8 @@ public final class WeakVariablePointersObject extends AbstractVariablePointersOb
     }
 
     public void putIntoWeakVariablePart(final Node node, final long index, final Object value, final SqueakImageContext image, final InlinedConditionProfile profile) {
-        putObjectFromVariablePart(index, profile.profile(node, value instanceof AbstractSqueakObject) ? new WeakRef((AbstractSqueakObject) value, image.weakPointersQueue) : value);
+        putObjectFromVariablePart(index,
+                        profile.profile(node, value != NilObject.SINGLETON && value instanceof AbstractSqueakObject) ? new WeakRef((AbstractSqueakObject) value, image.weakPointersQueue) : value);
     }
 
     @Override
