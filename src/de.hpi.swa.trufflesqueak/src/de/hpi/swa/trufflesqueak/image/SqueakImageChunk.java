@@ -32,16 +32,14 @@ import de.hpi.swa.trufflesqueak.util.VarHandleUtils;
 public final class SqueakImageChunk {
     private final SqueakImageReader reader;
     private final long header;
-    private final int position;
     private final byte[] bytes;
 
     private Object object;
     private ClassObject squeakClass;
 
-    public SqueakImageChunk(final SqueakImageReader reader, final long header, final int position, final byte[] bytes) {
+    public SqueakImageChunk(final SqueakImageReader reader, final long header, final byte[] bytes) {
         this.reader = reader;
         this.header = header;
-        this.position = position;
         this.bytes = bytes;
         if (bytes == null) { /* Ignored object (see SqueakImageReader#ignoreObjectData) */
             assert SqueakImageReader.isHiddenObject(getClassIndex());
@@ -158,10 +156,6 @@ public final class SqueakImageChunk {
 
     public SqueakImageContext getImage() {
         return reader.image;
-    }
-
-    public int getPosition() {
-        return position;
     }
 
     public SqueakImageChunk getClassChunk() {

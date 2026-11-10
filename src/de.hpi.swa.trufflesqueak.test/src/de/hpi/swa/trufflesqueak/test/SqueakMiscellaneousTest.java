@@ -197,7 +197,6 @@ public final class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDum
         final SqueakImageChunk chunk = new SqueakImageChunk(
                         new SqueakImageReader(image),
                         ObjectHeader.getHeader(0, 3833906, 10, 34),
-                        0, // position
                         data // 2 words
         );
         chunk.setSqueakClass(image.floatClass);

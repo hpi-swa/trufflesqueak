@@ -138,8 +138,7 @@ public final class SqueakImageReader {
         long currentAddressSwizzle = oldBaseAddress;
         while (buffer.position() < segmentEnd) {
             while (buffer.position() < segmentEnd - SqueakImageConstants.IMAGE_BRIDGE_SIZE) {
-                final SqueakImageChunk chunk = readObject(buffer);
-                chunkMap.put(chunk.getPosition() + currentAddressSwizzle, chunk);
+                readObject(buffer, currentAddressSwizzle);
             }
             assert hiddenRootsChunk != null : "hiddenRootsChunk must be known from now on.";
             final long bridge = buffer.getLong();
@@ -158,7 +157,7 @@ public final class SqueakImageReader {
         assert buffer.position() == headerSize + dataSize;
     }
 
-    private SqueakImageChunk readObject(final ByteBuffer buffer) {
+    private void readObject(final ByteBuffer buffer, final long currentAddressSwizzle) {
         int pos = buffer.position() - headerSize;
         assert pos % SqueakImageConstants.WORD_SIZE == 0 : "every object must be 64-bit aligned: " + pos % SqueakImageConstants.WORD_SIZE;
         long headerWord = buffer.getLong();
@@ -182,7 +181,7 @@ public final class SqueakImageReader {
             final int format = SqueakImageConstants.ObjectHeader.getFormat(headerWord);
             objectData = nextObjectData(buffer, size, format);
         }
-        final SqueakImageChunk chunk = new SqueakImageChunk(this, headerWord, pos, objectData);
+        final SqueakImageChunk chunk = new SqueakImageChunk(this, headerWord, objectData);
         if (hiddenRootsChunk == null && isHiddenObject(classIndex)) {
             if (freePageList == null) {
                 assert classIndex == SqueakImageConstants.WORD_SIZE_CLASS_INDEX_PUN && size == SqueakImageConstants.NUM_FREE_LISTS;
@@ -193,7 +192,7 @@ public final class SqueakImageReader {
                 hiddenRootsChunk = chunk; /* Second hidden object. */
             }
         }
-        return chunk;
+        chunkMap.put(pos + currentAddressSwizzle, chunk);
     }
 
     private static byte[] nextObjectData(final ByteBuffer buffer, final int size, final int format) {
