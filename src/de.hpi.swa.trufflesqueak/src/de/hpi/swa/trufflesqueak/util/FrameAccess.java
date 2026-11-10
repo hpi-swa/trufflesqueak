@@ -60,15 +60,15 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
  * TruffleSqueak frame slot layout.
  *
  * <pre>
- *                       +-------------------------------+
- * thisContext        -> | ContextObject                 |
- *                       +-------------------------------+
- * instructionPointer -> | int (< 0 if terminated        |
- *                       +-------------------------------+
- * stackPointer       -> | int                           |
- *                       +-------------------------------+
- * stackSlots         -> | Object[] (specialized)        |
- *                       +-------------------------------+
+ *                       +---------------------------+
+ * thisContext        -> | ContextObject             |
+ *                       +---------------------------+
+ * instructionPointer -> | int (< 0 if terminated)   |
+ *                       +---------------------------+
+ * stackPointer       -> | int                       |
+ *                       +---------------------------+
+ * stackSlots         -> | Object[]                  |
+ *                       +---------------------------+
  * </pre>
  */
 public final class FrameAccess {
