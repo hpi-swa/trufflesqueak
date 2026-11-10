@@ -52,14 +52,10 @@ public final class SqueakImageReader {
         this.image = image;
     }
 
-    /*
-     * Image reading happens only once per TruffleSqueak instance and should therefore be excluded
-     * from Truffle compilation.
-     */
+    /** Image reading happens only once per TruffleSqueak instance and does not benefit from Truffle compilation. */
     @TruffleBoundary
     public static void load(final SqueakImageContext image) {
         new SqueakImageReader(image).run();
-        System.gc(); // Clean up after image loading
     }
 
     private void run() {
