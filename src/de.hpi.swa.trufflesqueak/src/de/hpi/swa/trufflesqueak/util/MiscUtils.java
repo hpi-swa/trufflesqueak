@@ -24,13 +24,14 @@ import java.util.Calendar;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.locks.LockSupport;
+import javax.management.MBeanServer;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLogger;
-
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.sun.management.HotSpotDiagnosticMXBean;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectGraphOperations;
 
 public final class MiscUtils {
@@ -61,6 +62,18 @@ public final class MiscUtils {
     @TruffleBoundary
     public static long currentTimeMillis() {
         return System.currentTimeMillis();
+    }
+
+    public static boolean dumpHeap(final String filePath, final boolean live) {
+        final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+        try {
+            final HotSpotDiagnosticMXBean mxBean = ManagementFactory.newPlatformMXBeanProxy(server, "com.sun.management:type=HotSpotDiagnostic", HotSpotDiagnosticMXBean.class);
+            mxBean.dumpHeap(filePath, live);
+            return true;
+        } catch (IOException e) {
+            LogUtils.MAIN.throwing(MiscUtils.class.getName(), "dumpHeap", e);
+            return false;
+        }
     }
 
     @TruffleBoundary
