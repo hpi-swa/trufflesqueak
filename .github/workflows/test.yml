@@ -38,7 +38,7 @@ jobs:
         uses: hpi-swa/setup-smalltalkCI@v1
         with:
           smalltalk-image: 'Squeak64-${{ env.SQUEAK_VERSION }}'
-      - run: smalltalkci -s Squeak64-${{ env.SQUEAK_VERSION }} --image TruffleSqueak-dev.image
+      - run: smalltalkci -s Squeak64-${{ env.SQUEAK_VERSION }} --vm $(which squeak) --image TruffleSqueak-dev.image
         timeout-minutes: 15
       - name: Upload TruffleSqueak image
         uses: actions/upload-artifact@v7
