@@ -148,7 +148,6 @@ public final class ObjectLayoutTest extends AbstractSqueakTestCaseWithDummyImage
         }
         assertEquals(firstValue, obj.primitive0);
         assertEquals(firstValue + 1, obj.primitive1);
-        assertEquals(firstValue + 2, obj.primitive2);
         assertEquals(obj.getNumSlots() - SlotLocation.NUM_PRIMITIVE_INLINE_LOCATIONS, obj.primitiveExtension.length);
         for (int i = 0; i < obj.primitiveExtension.length; i++) {
             assertEquals(obj.primitiveExtension[i], SlotLocation.NUM_PRIMITIVE_INLINE_LOCATIONS + i + firstValue);
@@ -185,6 +184,28 @@ public final class ObjectLayoutTest extends AbstractSqueakTestCaseWithDummyImage
             assertEquals(expectedExtension, obj.getLayout().getNumPrimitiveExtension());
             assertEquals(expectedExtension, obj.primitiveExtension == null ? 0 : obj.primitiveExtension.length);
             for (int i = 0; i < obj.getNumSlots(); i++) {
+                assertEquals(value, AbstractPointersObjectReadNode.executeUncached(obj, i));
+            }
+        }
+    }
+
+    @Test
+    public void testPackedInlineBoundary() {
+        for (final Object value : new Object[]{true, '\uffff', 42L, Long.MAX_VALUE, -0.0D}) {
+            final PointersObject obj = instantiate(createFreshTestClass());
+            final int byteSize = value instanceof Boolean ? Byte.BYTES
+                            : value instanceof Character ? Character.BYTES : value instanceof final Long v && v == (int) (long) v ? Integer.BYTES : Long.BYTES;
+            final int inlineCapacity = SlotLocation.NUM_PRIMITIVE_INLINE_LOCATIONS * Long.BYTES / byteSize;
+            for (int i = 0; i < inlineCapacity; i++) {
+                writeAndValidate(obj, i, value);
+                assertNull(obj.primitiveExtension);
+            }
+            writeAndValidate(obj, inlineCapacity, value);
+            assertEquals(1, obj.primitiveExtension.length);
+            // Generalizing one slot lets the extension value move back into inline storage.
+            writeAndValidate(obj, 0, NilObject.SINGLETON);
+            assertNull(obj.primitiveExtension);
+            for (int i = 1; i <= inlineCapacity; i++) {
                 assertEquals(value, AbstractPointersObjectReadNode.executeUncached(obj, i));
             }
         }
@@ -349,7 +370,6 @@ public final class ObjectLayoutTest extends AbstractSqueakTestCaseWithDummyImage
     private static void assertUnsetPrimitiveFields(final AbstractPointersObject obj) {
         assertEquals(0L, obj.primitive0);
         assertEquals(0L, obj.primitive1);
-        assertEquals(0L, obj.primitive2);
         assertNull(obj.primitiveExtension);
     }
 

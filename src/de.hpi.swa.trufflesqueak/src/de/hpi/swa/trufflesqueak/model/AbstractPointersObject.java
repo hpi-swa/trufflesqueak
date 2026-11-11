@@ -36,7 +36,6 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
     public static final long PRIMITIVE_USED_MAP_ADDRESS = UnsafeUtils.getAddress(AbstractPointersObject.class, "primitiveUsedMap");
     public static final long PRIMITIVE_0_ADDRESS = UnsafeUtils.getAddress(AbstractPointersObject.class, "primitive0");
     public static final long PRIMITIVE_1_ADDRESS = UnsafeUtils.getAddress(AbstractPointersObject.class, "primitive1");
-    public static final long PRIMITIVE_2_ADDRESS = UnsafeUtils.getAddress(AbstractPointersObject.class, "primitive2");
     public static final long OBJECT_0_ADDRESS = UnsafeUtils.getAddress(AbstractPointersObject.class, "object0");
     public static final long OBJECT_1_ADDRESS = UnsafeUtils.getAddress(AbstractPointersObject.class, "object1");
     public static final long OBJECT_2_ADDRESS = UnsafeUtils.getAddress(AbstractPointersObject.class, "object2");
@@ -46,7 +45,6 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
     public int primitiveUsedMap;
     public long primitive0;
     public long primitive1;
-    public long primitive2;
 
     public Object object0 = NilObject.SINGLETON;
     public Object object1 = NilObject.SINGLETON;
@@ -78,7 +76,6 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         primitiveUsedMap = original.primitiveUsedMap;
         primitive0 = original.primitive0;
         primitive1 = original.primitive1;
-        primitive2 = original.primitive2;
 
         object0 = original.object0;
         object1 = original.object1;
@@ -97,7 +94,6 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         primitiveUsedMap = anotherObject.primitiveUsedMap;
         primitive0 = anotherObject.primitive0;
         primitive1 = anotherObject.primitive1;
-        primitive2 = anotherObject.primitive2;
         object0 = anotherObject.object0;
         object1 = anotherObject.object1;
         object2 = anotherObject.object2;
@@ -241,7 +237,6 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         final int otherPrimitiveUsedMap = other.primitiveUsedMap;
         final long otherPrimitive0 = other.primitive0;
         final long otherPrimitive1 = other.primitive1;
-        final long otherPrimitive2 = other.primitive2;
 
         final Object otherObject0 = other.object0;
         final Object otherObject1 = other.object1;
@@ -256,7 +251,6 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         other.primitiveUsedMap = primitiveUsedMap;
         other.primitive0 = primitive0;
         other.primitive1 = primitive1;
-        other.primitive2 = primitive2;
 
         other.object0 = object0;
         other.object1 = object1;
@@ -271,7 +265,6 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         primitiveUsedMap = otherPrimitiveUsedMap;
         primitive0 = otherPrimitive0;
         primitive1 = otherPrimitive1;
-        primitive2 = otherPrimitive2;
 
         object0 = otherObject0;
         object1 = otherObject1;
