@@ -34,11 +34,12 @@ build.xml
 /coverage
 jacoco.exec
 
-# Diagnostic output directory
+# Diagnostic output
 dumps/
 graal_dumps/
+*.hprof
 
-# Profile output directory
+# Profile output
 profiles/
 *.iprof
 
