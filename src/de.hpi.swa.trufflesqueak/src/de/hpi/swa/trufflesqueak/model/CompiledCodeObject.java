@@ -68,8 +68,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     @CompilationFinal(dimensions = 1) private Object[] literals;
     @CompilationFinal(dimensions = 1) private byte[] bytes;
 
-    private DispatchPrimitiveNode primitiveNodeOrNull = UNINITIALIZED_PRIMITIVE_NODE;
-
     private ExecutionData executionData;
 
     /**
@@ -78,6 +76,8 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
      * instance that is not actually executed.
      */
     static final class ExecutionData {
+        private DispatchPrimitiveNode primitiveNodeOrNull = UNINITIALIZED_PRIMITIVE_NODE;
+
         private FrameDescriptor frameDescriptor;
 
         private ShadowBlockMetadata shadowBlockMetadata;
@@ -157,11 +157,11 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     public CompiledCodeObject(final CompiledCodeObject original) {
         super(original);
+        setLiteralsAndBytes(original.internalHeader, original.literals.clone(), original.bytes.clone());
         if (original.hasExecutionData()) {
             getExecutionData().frameDescriptor = original.executionData.frameDescriptor;
+            executionData.primitiveNodeOrNull = original.executionData.primitiveNodeOrNull;
         }
-        setLiteralsAndBytes(original.internalHeader, original.literals.clone(), original.bytes.clone());
-        primitiveNodeOrNull = original.primitiveNodeOrNull;
     }
 
     private CompiledCodeObject(final CompiledCodeObject outerCode, final ShadowBlockMetadata shadowBlockMetadata) {
@@ -240,7 +240,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         this.internalHeader = internalHeader;
         this.literals = literals;
         this.bytes = bytes;
-        this.primitiveNodeOrNull = UNINITIALIZED_PRIMITIVE_NODE;
+        invalidatePrimitiveNode();
         invalidateCallTargetStable("new literals and bytes");
     }
 
@@ -472,7 +472,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
             final int oldPrimitiveIndex = canHavePrimitive ? primitiveIndex() : -1;
             bytes[byteIndex] = (byte) value;
             if (canHavePrimitive && oldPrimitiveIndex != primitiveIndex()) {
-                primitiveNodeOrNull = UNINITIALIZED_PRIMITIVE_NODE;
+                invalidatePrimitiveNode();
             }
             invalidateCallTarget();
         }
@@ -487,7 +487,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         final int oldPrimitiveIndex = canHavePrimitive ? primitiveIndex() : -1;
         System.arraycopy(source.bytes, sourceIndex, bytes, destinationIndex, length);
         if (canHavePrimitive && oldPrimitiveIndex != primitiveIndex()) {
-            primitiveNodeOrNull = UNINITIALIZED_PRIMITIVE_NODE;
+            invalidatePrimitiveNode();
         }
         invalidateCallTarget();
     }
@@ -526,10 +526,10 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     @Idempotent
     @TruffleBoundary
     public DispatchPrimitiveNode getPrimitiveNodeOrNull() {
-        if (primitiveNodeOrNull == UNINITIALIZED_PRIMITIVE_NODE) {
+        if (getExecutionData().primitiveNodeOrNull == UNINITIALIZED_PRIMITIVE_NODE) {
             initializePrimitiveNodeOrNull();
         }
-        return primitiveNodeOrNull;
+        return executionData.primitiveNodeOrNull;
     }
 
     @TruffleBoundary
@@ -537,12 +537,18 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         if (hasPrimitive()) {
             final AbstractPrimitiveNode nodeOrNull = PrimitiveNodeFactory.getOrCreateIndexedOrNamed(this);
             if (nodeOrNull != null) {
-                primitiveNodeOrNull = DispatchPrimitiveNode.create(nodeOrNull, getNumArgs());
+                executionData.primitiveNodeOrNull = DispatchPrimitiveNode.create(nodeOrNull, getNumArgs());
             } else {
-                primitiveNodeOrNull = null;
+                executionData.primitiveNodeOrNull = null;
             }
         } else {
-            primitiveNodeOrNull = null;
+            executionData.primitiveNodeOrNull = null;
+        }
+    }
+
+    private void invalidatePrimitiveNode() {
+        if (hasExecutionData()) {
+            executionData.primitiveNodeOrNull = UNINITIALIZED_PRIMITIVE_NODE;
         }
     }
 
@@ -759,7 +765,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         internalHeader = CompiledCodeHeaderUtils.fromSmallIntegerValue(value);
         assert getNumLiterals() == oldNumLiterals;
         if (oldHasPrimitive != hasPrimitive()) {
-            primitiveNodeOrNull = UNINITIALIZED_PRIMITIVE_NODE;
+            invalidatePrimitiveNode();
         }
         invalidateCallTarget();
     }
