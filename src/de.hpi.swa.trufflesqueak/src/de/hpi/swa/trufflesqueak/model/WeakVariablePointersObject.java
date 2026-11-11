@@ -9,6 +9,8 @@ package de.hpi.swa.trufflesqueak.model;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 
+import org.graalvm.collections.EconomicMap;
+import org.graalvm.collections.Equivalence;
 import org.graalvm.collections.UnmodifiableEconomicMap;
 
 import com.oracle.truffle.api.CompilerAsserts;
@@ -41,9 +43,20 @@ public final class WeakVariablePointersObject extends AbstractVariablePointersOb
         final SqueakImageContext image = chunk.getImage();
         final int numVariableSlots = chunk.getWordSize() - instSize;
         variablePart = new Object[numVariableSlots];
+        /* Share weak-reference wrappers for repeated references to the same Smalltalk object. */
+        final EconomicMap<AbstractSqueakObjectWithHash, WeakRef> weakRefs = EconomicMap.create(Equivalence.IDENTITY);
         for (int i = 0; i < numVariableSlots; i++) {
             final Object value = chunk.getPointer(instSize + i);
-            variablePart[i] = value instanceof final AbstractSqueakObjectWithHash o ? new WeakRef(o, image.weakPointersQueue) : value;
+            if (value instanceof final AbstractSqueakObjectWithHash o) {
+                WeakRef weakRef = weakRefs.get(o);
+                if (weakRef == null) {
+                    weakRef = new WeakRef(o, image.weakPointersQueue);
+                    weakRefs.put(o, weakRef);
+                }
+                variablePart[i] = weakRef;
+            } else {
+                variablePart[i] = value;
+            }
         }
     }
 
