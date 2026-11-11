@@ -125,7 +125,7 @@ public final class UnsafeUtils {
         }
     }
 
-    public static boolean getBoolAt(final AbstractPointersObject object, final long address) {
+    public static boolean getBoolAt(final Object object, final long address) {
         return UNSAFE.getBoolean(object, address);
     }
 
@@ -164,7 +164,7 @@ public final class UnsafeUtils {
         return UNSAFE.getChar(storage, Unsafe.ARRAY_CHAR_BASE_OFFSET + index * Unsafe.ARRAY_CHAR_INDEX_SCALE);
     }
 
-    public static char getCharAt(final AbstractPointersObject object, final long address) {
+    public static char getCharAt(final Object object, final long address) {
         return UNSAFE.getChar(object, address);
     }
 
@@ -178,7 +178,7 @@ public final class UnsafeUtils {
         return UNSAFE.getDouble(storage, Unsafe.ARRAY_DOUBLE_BASE_OFFSET + index * Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
     }
 
-    public static double getDoubleAt(final AbstractPointersObject object, final long address) {
+    public static double getDoubleAt(final Object object, final long address) {
         return UNSAFE.getDouble(object, address);
     }
 
@@ -201,7 +201,7 @@ public final class UnsafeUtils {
         return UNSAFE.getLong(storage, Unsafe.ARRAY_LONG_BASE_OFFSET + index * Unsafe.ARRAY_LONG_INDEX_SCALE);
     }
 
-    public static long getLongAt(final AbstractPointersObject object, final long address) {
+    public static long getLongAt(final Object object, final long address) {
         return UNSAFE.getLong(object, address);
     }
 
@@ -262,7 +262,7 @@ public final class UnsafeUtils {
         }
     }
 
-    public static void putBoolAt(final AbstractPointersObject object, final long address, final boolean value) {
+    public static void putBoolAt(final Object object, final long address, final boolean value) {
         UNSAFE.putBoolean(object, address, value);
     }
 
@@ -281,7 +281,7 @@ public final class UnsafeUtils {
         UNSAFE.putChar(storage, Unsafe.ARRAY_CHAR_BASE_OFFSET + index * Unsafe.ARRAY_CHAR_INDEX_SCALE, value);
     }
 
-    public static void putCharAt(final AbstractPointersObject object, final long address, final char value) {
+    public static void putCharAt(final Object object, final long address, final char value) {
         UNSAFE.putChar(object, address, value);
     }
 
@@ -295,7 +295,7 @@ public final class UnsafeUtils {
         UNSAFE.putDouble(storage, Unsafe.ARRAY_DOUBLE_BASE_OFFSET + index * Unsafe.ARRAY_DOUBLE_INDEX_SCALE, value);
     }
 
-    public static void putDoubleAt(final AbstractPointersObject object, final long address, final double value) {
+    public static void putDoubleAt(final Object object, final long address, final double value) {
         UNSAFE.putDouble(object, address, value);
     }
 
@@ -318,7 +318,7 @@ public final class UnsafeUtils {
         UNSAFE.putLong(storage, Unsafe.ARRAY_LONG_BASE_OFFSET + index * Unsafe.ARRAY_LONG_INDEX_SCALE, value);
     }
 
-    public static void putLongAt(final AbstractPointersObject object, final long address, final long value) {
+    public static void putLongAt(final Object object, final long address, final long value) {
         UNSAFE.putLong(object, address, value);
     }
 
