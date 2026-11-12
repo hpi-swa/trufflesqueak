@@ -281,16 +281,22 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     /* primitiveNextInstance (#78) deprecated in favor of primitiveAllInstances (#177). */
 
     @GenerateNodeFactory
+    @ImportStatic(Integer.class)
     @SqueakPrimitive(indices = 79)
     protected abstract static class PrimNewMethodNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
-        @Specialization(guards = "receiver.isCompiledMethodClassType()")
+        @Specialization(guards = {"receiver.isCompiledMethodClassType()", "0 <= bytecodeCount", "bytecodeCount <= MAX_VALUE"})
         protected final CompiledCodeObject newMethod(final ClassObject receiver, final long bytecodeCount, final long header) {
             final SqueakImageContext image = getContext();
             assert receiver.getBasicInstanceSize() == 0;
             assert receiver.getSuperclassOrNull() == image.compiledMethodClass.getSuperclassOrNull() : "Receiver must be subclass of CompiledCode";
-            final CompiledCodeObject newMethod = CompiledCodeObject.newOfSize((int) bytecodeCount, receiver);
-            newMethod.initializeHeader(header);
-            return newMethod;
+            try {
+                final CompiledCodeObject newMethod = CompiledCodeObject.newOfSize((int) bytecodeCount, receiver);
+                newMethod.initializeHeader(header);
+                return newMethod;
+            } catch (final OutOfMemoryError e) {
+                CompilerDirectives.transferToInterpreter();
+                throw PrimitiveFailed.INSUFFICIENT_OBJECT_MEMORY;
+            }
         }
     }
 
