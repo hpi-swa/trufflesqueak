@@ -252,8 +252,8 @@ public final class DispatchSelector4Node extends DispatchSelectorNode {
 
         @GenerateInline(false)
         @ImportStatic(PrimitiveNodeFactory.class)
-        protected abstract static class TryPrimitive4Node extends AbstractNode {
-            abstract Object execute(VirtualFrame frame, CompiledCodeObject method, Object receiver, Object arg1, Object arg2, Object arg3, Object arg4);
+        public abstract static class TryPrimitive4Node extends AbstractNode {
+            public abstract Object execute(VirtualFrame frame, CompiledCodeObject method, Object receiver, Object arg1, Object arg2, Object arg3, Object arg4);
 
             @SuppressWarnings("unused")
             @Specialization(guards = "method.getPrimitiveNodeOrNull() == null")
