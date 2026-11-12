@@ -22,6 +22,7 @@ import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
+import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 import de.hpi.swa.trufflesqueak.nodes.accessing.FloatObjectNodes.FloatObjectNormalizeNode;
@@ -299,6 +300,12 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             return doAtPutInt(receiver, index, value);
         }
 
+        @Specialization(guards = {"receiver.isIntType()", "inBounds1(index, receiver.getIntLength())"})
+        protected static final FloatObject doAtPutIntFloat(final NativeObject receiver, final long index, final FloatObject value) {
+            doAtPutInt(receiver, index, value.getValue());
+            return value;
+        }
+
         @Specialization(guards = {"receiver.isLongType()", "inBounds1(index, receiver.getLongLength())"})
         protected static final double doAtPutLong(final NativeObject receiver, final long index, final double value) {
             receiver.setLong(index - 1, Double.doubleToRawLongBits(value));
@@ -308,6 +315,12 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         @Specialization(guards = {"receiver.isLongType()", "inBounds1(index, receiver.getLongLength())"})
         protected static final double doAtPutLongLong(final NativeObject receiver, final long index, final long value) {
             return doAtPutLong(receiver, index, value);
+        }
+
+        @Specialization(guards = {"receiver.isLongType()", "inBounds1(index, receiver.getLongLength())"})
+        protected static final FloatObject doAtPutLongFloat(final NativeObject receiver, final long index, final FloatObject value) {
+            doAtPutLong(receiver, index, value.getValue());
+            return value;
         }
     }
 }
