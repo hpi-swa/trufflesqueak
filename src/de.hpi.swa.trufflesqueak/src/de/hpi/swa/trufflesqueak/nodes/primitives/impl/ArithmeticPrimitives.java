@@ -570,7 +570,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"!isLong(receiver)", "!isLong(arg)"})
+        @Specialization(guards = {"!isLong(receiver) || !isLong(arg)"})
         protected static final Object doFallback(final Object receiver, final Object arg) {
             throw PrimitiveFailed.GENERIC_ERROR;
         }
