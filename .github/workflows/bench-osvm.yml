@@ -30,7 +30,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - name: Clone TruffleSqueak repository
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      uses: actions/checkout@v7.0.1
     - name: Download and set up OpenSmalltalkVM
       run: |
         curl -sSLO https://github.com/OpenSmalltalk/opensmalltalk-vm/releases/download/${{ inputs.osvm-version }}/${{ matrix.filename }}
