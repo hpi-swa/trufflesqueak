@@ -10,7 +10,6 @@ import static de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers.isZero;
 
 import java.util.List;
 
-import com.oracle.truffle.api.ExactMath;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Exclusive;
@@ -1155,8 +1154,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final long doFloat(final FloatObject receiver,
                         @Bind final Node node,
-                        @Cached final InlinedConditionProfile inSafeIntegerRangeProfile) {
-            return PrimSmallFloatTruncatedNode.doDouble(receiver.getValue(), node, inSafeIntegerRangeProfile);
+                        @Cached final InlinedConditionProfile inLongRangeProfile) {
+            return PrimSmallFloatTruncatedNode.doDouble(receiver.getValue(), node, inLongRangeProfile);
         }
     }
 
@@ -1628,9 +1627,10 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final long doDouble(final double receiver,
                         @Bind final Node node,
-                        @Cached final InlinedConditionProfile inSafeIntegerRangeProfile) {
-            if (inSafeIntegerRangeProfile.profile(node, inSafeIntegerRange(receiver))) {
-                return (long) ExactMath.truncate(receiver);
+                        @Cached final InlinedConditionProfile inLongRangeProfile) {
+            // The upper bound is exclusive because Long.MAX_VALUE rounds to 2^63 as a double.
+            if (inLongRangeProfile.profile(node, -0x1p63 <= receiver && receiver < 0x1p63)) {
+                return (long) receiver;
             } else {
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
