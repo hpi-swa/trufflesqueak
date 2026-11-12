@@ -391,11 +391,12 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         private static boolean inBounds(final int arrayLength, final long start, final long stop, final int replLength, final long replStart) {
-            return start >= 1 && start - 1 <= stop && stop <= arrayLength && replStart >= 1 && stop - start + replStart <= replLength;
+            // Subtract the source start from its capacity instead of adding it to the copy range.
+            return start >= 1 && start - 1 <= stop && stop <= arrayLength && replStart >= 1 && stop - start <= replLength - replStart;
         }
 
         private static boolean inBounds(final int arrayInstSize, final int arrayLength, final long start, final long stop, final int replInstSize, final int replLength, final long replStart) {
-            return start >= 1 && start - 1 <= stop && stop + arrayInstSize <= arrayLength && replStart >= 1 && stop - start + replStart + replInstSize <= replLength;
+            return inBounds(arrayLength - arrayInstSize, start, stop, replLength - replInstSize, replStart);
         }
 
         @GenerateInline
