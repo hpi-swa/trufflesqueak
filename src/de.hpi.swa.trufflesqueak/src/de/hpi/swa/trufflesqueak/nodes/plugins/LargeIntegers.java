@@ -9,7 +9,6 @@ package de.hpi.swa.trufflesqueak.nodes.plugins;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
 
@@ -1064,15 +1063,6 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     private static int cHighBit32(final long value) {
         return Long.SIZE - Long.numberOfLeadingZeros(value);
-    }
-
-    /*
-     * Large float operations
-     */
-
-    @TruffleBoundary
-    public static double fractionPart(final double value) {
-        return value - new BigDecimal(value).toBigInteger().doubleValue();
     }
 
     /*

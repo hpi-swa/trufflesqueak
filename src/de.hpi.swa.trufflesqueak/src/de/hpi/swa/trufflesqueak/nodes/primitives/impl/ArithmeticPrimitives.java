@@ -1647,7 +1647,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             if (inSafeIntegerRangeProfile.profile(node, inSafeIntegerRange(receiver))) {
                 return receiver - (long) receiver;
             } else {
-                return LargeIntegers.fractionPart(receiver);
+                // Finite doubles outside the safe integer range have no fractional bits.
+                return 0.0D;
             }
         }
     }
