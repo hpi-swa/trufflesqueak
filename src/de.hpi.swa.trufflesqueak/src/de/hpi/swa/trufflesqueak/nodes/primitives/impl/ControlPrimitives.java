@@ -751,7 +751,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @SuppressWarnings("unused") @Cached final ArrayObjectSizeNode sizeNode,
                         @SuppressWarnings("unused") @Bind("sizeNode.execute(node, argumentArray)") final int numArguments,
                         @SuppressWarnings("unused") @Cached("numArguments") final int cachedNumArguments,
-                        @Cached(value = "createOrNull(cachedPrimitiveIndex, cachedNumArguments)", adopt = false) final DispatchPrimitiveNode dispatchPrimitiveNode,
+                        @Cached(value = "createOrNull(cachedPrimitiveIndex, cachedNumArguments)") final DispatchPrimitiveNode dispatchPrimitiveNode,
                         @Cached final ArrayObjectToObjectArrayCopyNode toObjectArrayNode) {
             return primitiveWithArgs(frame, receiver, argumentArray, dispatchPrimitiveNode, toObjectArrayNode, node);
         }
@@ -774,7 +774,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @SuppressWarnings("unused") @Cached final ArrayObjectSizeNode sizeNode,
                         @SuppressWarnings("unused") @Bind("sizeNode.execute(node, argumentArray)") final int numArguments,
                         @SuppressWarnings("unused") @Cached("numArguments") final int cachedNumArguments,
-                        @Cached(value = "createOrNull(cachedPrimitiveIndex, cachedNumArguments)", adopt = false) final DispatchPrimitiveNode dispatchPrimitiveNode,
+                        @Cached(value = "createOrNull(cachedPrimitiveIndex, cachedNumArguments)") final DispatchPrimitiveNode dispatchPrimitiveNode,
                         @Cached final ArrayObjectToObjectArrayCopyNode toObjectArrayNode) {
             return primitiveWithArgs(frame, receiver, argumentArray, dispatchPrimitiveNode, toObjectArrayNode, node);
         }
@@ -1294,7 +1294,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached("methodObject") final CompiledCodeObject cachedMethodObject,
                         @SuppressWarnings("unused") @Exclusive @Cached final ArrayObjectSizeNode sizeNode,
                         @Bind("sizeNode.execute(node, argumentArray)") final int numArguments,
-                        @Cached(value = "createOrNull(cachedMethodObject)", adopt = false) final DispatchPrimitiveNode dispatchPrimitiveNode,
+                        @Cached(value = "createOrNull(cachedMethodObject)") final DispatchPrimitiveNode dispatchPrimitiveNode,
                         @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode toObjectArrayNode) {
             if (numArguments != cachedMethodObject.getNumArgs()) {
                 CompilerDirectives.transferToInterpreter();
