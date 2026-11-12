@@ -1091,9 +1091,19 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    protected abstract static class AbstractPrimExecuteMethodNode extends AbstractPrimitiveWithFrameNode {
+        protected static final CompiledCodeObject checkNumArguments(final CompiledCodeObject method, final int numArguments) {
+            if (method.getNumArgs() != numArguments) {
+                CompilerDirectives.transferToInterpreter();
+                throw PrimitiveFailed.BAD_NUMBER_OF_ARGUMENTS;
+            }
+            return method;
+        }
+    }
+
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 188)
-    protected abstract static class PrimExecuteMethodArgsArray3Node extends AbstractPrimitiveWithFrameNode implements Primitive2WithFallback {
+    protected abstract static class PrimExecuteMethodArgsArray3Node extends AbstractPrimExecuteMethodNode implements Primitive2WithFallback {
         /** Deprecated since Kernel-eem.1204. Kept for backward compatibility. */
         @Specialization(guards = {"method == cachedMethod", "guard.check(receiver)"}, assumptions = "dispatchNode.getAssumptions()", limit = "EXECUTE_METHOD_CACHE_LIMIT")
         protected static final Object doCached(final VirtualFrame frame, final Object receiver, final ArrayObject argArray,
@@ -1103,7 +1113,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind final Node node,
                         @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode arrayNode,
                         @Cached("create(cachedMethod, guard)") final DispatchDirectNaryNode dispatchNode) {
-            return dispatchNode.execute(frame, receiver, arrayNode.execute(node, argArray));
+            return dispatchNode.executeWithCheckedArguments(frame, receiver, arrayNode.execute(node, argArray));
         }
 
         @Megamorphic
@@ -1115,6 +1125,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final GetOrCreateContextWithoutFrameNode getOrCreateContextWithoutFrameNode,
                         @Cached final IndirectCallNode callNode) {
             final Object[] arguments = arrayNode.execute(node, argArray);
+            checkNumArguments(method, arguments.length);
             final Object result = tryPrimitiveNode.execute(frame, method, receiver, arguments);
             if (result != null) {
                 return result;
@@ -1126,7 +1137,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 188)
-    protected abstract static class PrimExecuteMethodArgsArray4Node extends AbstractPrimitiveWithFrameNode implements Primitive3WithFallback {
+    protected abstract static class PrimExecuteMethodArgsArray4Node extends AbstractPrimExecuteMethodNode implements Primitive3WithFallback {
         @Specialization(guards = {"method == cachedMethod", "guard.check(receiver)"}, assumptions = "dispatchNode.getAssumptions()", limit = "EXECUTE_METHOD_CACHE_LIMIT")
         protected static final Object doCached(final VirtualFrame frame, @SuppressWarnings("unused") final ClassObject compiledMethodClass, final Object receiver, final ArrayObject argArray,
                         @SuppressWarnings("unused") final CompiledCodeObject method,
@@ -1135,7 +1146,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind final Node node,
                         @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode arrayNode,
                         @Cached("create(cachedMethod, guard)") final DispatchDirectNaryNode dispatchNode) {
-            return dispatchNode.execute(frame, receiver, arrayNode.execute(node, argArray));
+            return dispatchNode.executeWithCheckedArguments(frame, receiver, arrayNode.execute(node, argArray));
         }
 
         @Megamorphic
@@ -1153,10 +1164,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 189)
-    protected abstract static class PrimExecuteMethod2Node extends AbstractPrimitiveWithFrameNode implements Primitive1WithFallback {
+    protected abstract static class PrimExecuteMethod2Node extends AbstractPrimExecuteMethodNode implements Primitive1WithFallback {
         @Specialization(guards = {"method == cachedMethod", "guard.check(receiver)"}, assumptions = "dispatchNode.getAssumptions()", limit = "EXECUTE_METHOD_CACHE_LIMIT")
         protected static final Object doCached(final VirtualFrame frame, final Object receiver, @SuppressWarnings("unused") final CompiledCodeObject method,
-                        @SuppressWarnings("unused") @Cached("method") final CompiledCodeObject cachedMethod,
+                        @SuppressWarnings("unused") @Cached("checkNumArguments(method, 0)") final CompiledCodeObject cachedMethod,
                         @SuppressWarnings("unused") @Cached("create(receiver)") final LookupClassGuard guard,
                         @Cached("create(cachedMethod, guard)") final DispatchDirect0Node dispatchNode) {
             return dispatchNode.execute(frame, receiver);
@@ -1168,6 +1179,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final TryPrimitive0Node tryPrimitiveNode,
                         @Cached final GetOrCreateContextWithoutFrameNode getOrCreateContextWithoutFrameNode,
                         @Cached final IndirectCallNode callNode) {
+            checkNumArguments(method, 0);
             final Object result = tryPrimitiveNode.execute(frame, method, receiver);
             if (result != null) {
                 return result;
@@ -1179,10 +1191,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 189)
-    protected abstract static class PrimExecuteMethod3Node extends AbstractPrimitiveWithFrameNode implements Primitive2WithFallback {
+    protected abstract static class PrimExecuteMethod3Node extends AbstractPrimExecuteMethodNode implements Primitive2WithFallback {
         @Specialization(guards = {"method == cachedMethod", "guard.check(receiver)"}, assumptions = "dispatchNode.getAssumptions()", limit = "EXECUTE_METHOD_CACHE_LIMIT")
         protected static final Object doCached(final VirtualFrame frame, final Object receiver, final Object arg1, @SuppressWarnings("unused") final CompiledCodeObject method,
-                        @SuppressWarnings("unused") @Cached("method") final CompiledCodeObject cachedMethod,
+                        @SuppressWarnings("unused") @Cached("checkNumArguments(method, 1)") final CompiledCodeObject cachedMethod,
                         @SuppressWarnings("unused") @Cached("create(receiver)") final LookupClassGuard guard,
                         @Cached("create(cachedMethod, guard)") final DispatchDirect1Node dispatchNode) {
             return dispatchNode.execute(frame, receiver, arg1);
@@ -1194,6 +1206,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final TryPrimitive1Node tryPrimitiveNode,
                         @Cached final GetOrCreateContextWithoutFrameNode getOrCreateContextWithoutFrameNode,
                         @Cached final IndirectCallNode callNode) {
+            checkNumArguments(method, 1);
             final Object result = tryPrimitiveNode.execute(frame, method, receiver, arg1);
             if (result != null) {
                 return result;
@@ -1205,10 +1218,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 189)
-    protected abstract static class PrimExecuteMethod4Node extends AbstractPrimitiveWithFrameNode implements Primitive3WithFallback {
+    protected abstract static class PrimExecuteMethod4Node extends AbstractPrimExecuteMethodNode implements Primitive3WithFallback {
         @Specialization(guards = {"method == cachedMethod", "guard.check(receiver)"}, assumptions = "dispatchNode.getAssumptions()", limit = "EXECUTE_METHOD_CACHE_LIMIT")
         protected static final Object doCached(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, @SuppressWarnings("unused") final CompiledCodeObject method,
-                        @SuppressWarnings("unused") @Cached("method") final CompiledCodeObject cachedMethod,
+                        @SuppressWarnings("unused") @Cached("checkNumArguments(method, 2)") final CompiledCodeObject cachedMethod,
                         @SuppressWarnings("unused") @Cached("create(receiver)") final LookupClassGuard guard,
                         @Cached("create(cachedMethod, guard)") final DispatchDirect2Node dispatchNode) {
             return dispatchNode.execute(frame, receiver, arg1, arg2);
@@ -1220,6 +1233,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final TryPrimitive2Node tryPrimitiveNode,
                         @Cached final GetOrCreateContextWithoutFrameNode getOrCreateContextWithoutFrameNode,
                         @Cached final IndirectCallNode callNode) {
+            checkNumArguments(method, 2);
             final Object result = tryPrimitiveNode.execute(frame, method, receiver, arg1, arg2);
             if (result != null) {
                 return result;
@@ -1231,11 +1245,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 189)
-    protected abstract static class PrimExecuteMethod5Node extends AbstractPrimitiveWithFrameNode implements Primitive4WithFallback {
+    protected abstract static class PrimExecuteMethod5Node extends AbstractPrimExecuteMethodNode implements Primitive4WithFallback {
         @Specialization(guards = {"method == cachedMethod", "guard.check(receiver)"}, assumptions = "dispatchNode.getAssumptions()", limit = "EXECUTE_METHOD_CACHE_LIMIT")
         protected static final Object doCached(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3,
                         @SuppressWarnings("unused") final CompiledCodeObject method,
-                        @SuppressWarnings("unused") @Cached("method") final CompiledCodeObject cachedMethod,
+                        @SuppressWarnings("unused") @Cached("checkNumArguments(method, 3)") final CompiledCodeObject cachedMethod,
                         @SuppressWarnings("unused") @Cached("create(receiver)") final LookupClassGuard guard,
                         @Cached("create(cachedMethod, guard)") final DispatchDirect3Node dispatchNode) {
             return dispatchNode.execute(frame, receiver, arg1, arg2, arg3);
@@ -1247,6 +1261,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final TryPrimitive3Node tryPrimitiveNode,
                         @Cached final GetOrCreateContextWithoutFrameNode getOrCreateContextWithoutFrameNode,
                         @Cached final IndirectCallNode callNode) {
+            checkNumArguments(method, 3);
             final Object result = tryPrimitiveNode.execute(frame, method, receiver, arg1, arg2, arg3);
             if (result != null) {
                 return result;
@@ -1258,11 +1273,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 189)
-    protected abstract static class PrimExecuteMethod6Node extends AbstractPrimitiveWithFrameNode implements Primitive5WithFallback {
+    protected abstract static class PrimExecuteMethod6Node extends AbstractPrimExecuteMethodNode implements Primitive5WithFallback {
         @Specialization(guards = {"method == cachedMethod", "guard.check(receiver)"}, assumptions = "dispatchNode.getAssumptions()", limit = "EXECUTE_METHOD_CACHE_LIMIT")
         protected static final Object doCached(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4,
                         @SuppressWarnings("unused") final CompiledCodeObject method,
-                        @SuppressWarnings("unused") @Cached("method") final CompiledCodeObject cachedMethod,
+                        @SuppressWarnings("unused") @Cached("checkNumArguments(method, 4)") final CompiledCodeObject cachedMethod,
                         @SuppressWarnings("unused") @Cached("create(receiver)") final LookupClassGuard guard,
                         @Cached("create(cachedMethod, guard)") final DispatchDirect4Node dispatchNode) {
             return dispatchNode.execute(frame, receiver, arg1, arg2, arg3, arg4);
@@ -1275,6 +1290,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final TryPrimitive4Node tryPrimitiveNode,
                         @Cached final GetOrCreateContextWithoutFrameNode getOrCreateContextWithoutFrameNode,
                         @Cached final IndirectCallNode callNode) {
+            checkNumArguments(method, 4);
             final Object result = tryPrimitiveNode.execute(frame, method, receiver, arg1, arg2, arg3, arg4);
             if (result != null) {
                 return result;
