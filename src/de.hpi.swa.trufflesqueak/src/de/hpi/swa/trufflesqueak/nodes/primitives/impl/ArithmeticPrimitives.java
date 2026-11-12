@@ -10,6 +10,7 @@ import static de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers.isZero;
 
 import java.util.List;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Exclusive;
@@ -543,6 +544,12 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind final Node node,
                         @Exclusive @Cached final InlinedConditionProfile isOverflowProfile) {
             if (isOverflowProfile.profile(node, SqueakGuards.isLShiftLongOverflow(receiver, arg))) {
+                if (receiver == 0) {
+                    return 0L;
+                } else if (arg > Integer.MAX_VALUE) {
+                    CompilerDirectives.transferToInterpreter();
+                    throw PrimitiveFailed.BAD_ARGUMENT;
+                }
                 return LargeIntegers.shiftLeftPositive(getContext(node), receiver, (int) arg);
             } else {
                 return receiver << arg;

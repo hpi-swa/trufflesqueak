@@ -11,12 +11,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import java.math.BigInteger;
 
 import org.junit.Test;
 
+import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.interop.WrapToSqueakNode;
 import de.hpi.swa.trufflesqueak.io.SqueakIOConstants;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
@@ -105,6 +107,25 @@ public final class SqueakPrimitiveTest extends AbstractSqueakTestCaseWithDummyIm
         assertEquals(String.valueOf(WrapToSqueakNode.executeUncached(Long.MAX_VALUE)),
                         String.valueOf(runPrimitive(22, WrapToSqueakNode.executeUncached(LargeIntegers.toNativeObject(image, BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE))),
                                         WrapToSqueakNode.executeUncached(1L))));
+    }
+
+    @Test
+    public void testBitShiftExcessiveCounts() {
+        final long[] shifts = {(long) Integer.MAX_VALUE + 1, 1L << 32, (1L << 32) + 1, (1L << 32) + 63, Long.MAX_VALUE};
+        for (final long receiver : new long[]{Long.MIN_VALUE, -1, 1, Long.MAX_VALUE}) {
+            for (final long shift : shifts) {
+                assertSame(PrimitiveFailed.BAD_ARGUMENT, assertThrows(PrimitiveFailed.class, () -> runPrimitive(17, receiver, shift)));
+            }
+        }
+        assertEquals(2L, runPrimitive(17, 1L, 1L));
+    }
+
+    @Test
+    public void testBitShiftZero() {
+        final long[] shifts = {Long.MIN_VALUE, -65, -64, -1, 0, 1, 63, 64, Integer.MAX_VALUE, (long) Integer.MAX_VALUE + 1, 1L << 32, (1L << 32) + 1, Long.MAX_VALUE};
+        for (final long shift : shifts) {
+            assertEquals(0L, runPrimitive(17, 0L, shift));
+        }
     }
 
     @Test
