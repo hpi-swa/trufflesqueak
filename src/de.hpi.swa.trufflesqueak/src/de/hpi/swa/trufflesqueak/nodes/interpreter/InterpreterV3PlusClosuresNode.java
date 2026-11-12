@@ -50,14 +50,12 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimG
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimLessOrEqualNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimLessThanNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimNotEqualNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatAddNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatEqualNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatGreaterOrEqualNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatGreaterThanNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatLessOrEqualNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatLessThanNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatNotEqualNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimSmallFloatSubtractNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
@@ -748,9 +746,9 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 enter(currentPC, profile, BRANCH4);
                                 result = r;
                             }
-                        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
+                        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs && Double.isFinite(lhs + rhs)) {
                             enter(currentPC, profile, BRANCH5);
-                            result = PrimSmallFloatAddNode.doDouble(lhs, rhs);
+                            result = lhs + rhs;
                         } else {
                             enter(currentPC, profile, BRANCH1);
                             FrameAccess.externalizePCAndSP(frame, pc, sp);
@@ -775,9 +773,9 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 enter(currentPC, profile, BRANCH4);
                                 result = r;
                             }
-                        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs) {
+                        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs && Double.isFinite(lhs - rhs)) {
                             enter(currentPC, profile, BRANCH5);
-                            result = PrimSmallFloatSubtractNode.doDouble(lhs, rhs);
+                            result = lhs - rhs;
                         } else {
                             enter(currentPC, profile, BRANCH1);
                             FrameAccess.externalizePCAndSP(frame, pc, sp);

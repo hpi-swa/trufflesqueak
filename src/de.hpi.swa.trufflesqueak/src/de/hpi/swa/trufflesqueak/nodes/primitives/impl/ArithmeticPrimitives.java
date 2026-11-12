@@ -1339,42 +1339,56 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 541)
     public abstract static class PrimSmallFloatAddNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
-        public static final double doDouble(final double lhs, final double rhs) {
-            return lhs + rhs;
+        @Specialization(rewriteOn = RespecializeException.class)
+        public static final double doDoubleFinite(final double lhs, final double rhs) throws RespecializeException {
+            return ensureFinite(lhs + rhs);
         }
 
-        @Specialization(guards = "numericPrimsMixArithmetic()")
-        public static final double doLong(final double lhs, final long rhs) {
-            return doDouble(lhs, rhs);
-        }
-
-        @Specialization
-        protected static final Object doFloat(final double lhs, final FloatObject rhs,
+        @Specialization(replaces = "doDoubleFinite")
+        public static final Object doDouble(final double lhs, final double rhs,
                         @Bind final Node node,
-                        @Cached final FloatObjectNormalizeNode normalizeNode) {
-            return normalizeNode.execute(node, lhs + rhs.getValue());
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 542)
-    public abstract static class PrimSmallFloatSubtractNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
-        public static final double doDouble(final double lhs, final double rhs) {
-            return lhs - rhs;
+                        @Exclusive @Cached final FloatObjectNormalizeNode normalizeNode) {
+            return normalizeNode.execute(node, lhs + rhs);
         }
 
         @Specialization(guards = "numericPrimsMixArithmetic()")
         public static final double doLong(final double lhs, final long rhs) {
-            return doDouble(lhs, rhs);
+            return lhs + rhs;
         }
 
         @Specialization
         protected static final Object doFloat(final double lhs, final FloatObject rhs,
                         @Bind final Node node,
                         @Exclusive @Cached final FloatObjectNormalizeNode normalizeNode) {
-            return normalizeNode.execute(node, lhs - rhs.getValue());
+            return doDouble(lhs, rhs.getValue(), node, normalizeNode);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 542)
+    public abstract static class PrimSmallFloatSubtractNode extends AbstractArithmeticPrimitiveNode implements Primitive1WithFallback {
+        @Specialization(rewriteOn = RespecializeException.class)
+        public static final double doDoubleFinite(final double lhs, final double rhs) throws RespecializeException {
+            return ensureFinite(lhs - rhs);
+        }
+
+        @Specialization(replaces = "doDoubleFinite")
+        public static final Object doDouble(final double lhs, final double rhs,
+                        @Bind final Node node,
+                        @Exclusive @Cached final FloatObjectNormalizeNode normalizeNode) {
+            return normalizeNode.execute(node, lhs - rhs);
+        }
+
+        @Specialization(guards = "numericPrimsMixArithmetic()")
+        public static final double doLong(final double lhs, final long rhs) {
+            return lhs - rhs;
+        }
+
+        @Specialization
+        protected static final Object doFloat(final double lhs, final FloatObject rhs,
+                        @Bind final Node node,
+                        @Exclusive @Cached final FloatObjectNormalizeNode normalizeNode) {
+            return doDouble(lhs, rhs.getValue(), node, normalizeNode);
         }
 
         @Specialization(guards = "isFraction(rhs, node)")
