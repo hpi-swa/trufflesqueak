@@ -317,7 +317,8 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                     numBecomes++;
                 } else {
                     failProfile.enter(node);
-                    for (int j = 0; j < numBecomes; j++) {
+                    // Overlapping pairs must be undone in reverse order.
+                    for (int j = numBecomes - 1; j >= 0; j--) {
                         becomeNode.execute(node, lefts[j], rights[j]);
                     }
                     throw PrimitiveFailed.GENERIC_ERROR;
