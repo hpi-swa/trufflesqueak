@@ -907,16 +907,17 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    @ImportStatic(NativeObject.class)
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 39)
     protected abstract static class PrimFloatAtPutNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
-        @Specialization(guards = "index == 1")
+        @Specialization(guards = {"index == 1", "value >= 0", "value <= INTEGER_MAX"})
         protected static final long doFloatHigh(final FloatObject receiver, @SuppressWarnings("unused") final long index, final long value) {
             receiver.setHigh(value);
             return value;
         }
 
-        @Specialization(guards = "index == 2")
+        @Specialization(guards = {"index == 2", "value >= 0", "value <= INTEGER_MAX"})
         protected static final long doFloatLow(final FloatObject receiver, @SuppressWarnings("unused") final long index, final long value) {
             receiver.setLow(value);
             return value;
