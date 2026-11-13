@@ -92,7 +92,7 @@ public final class CheckForInterruptsState {
                         SHOULD_TRIGGER.setOpaque(CheckForInterruptsState.this, true);
                         wakeupVM();
                     }
-                    LockSupport.parkNanos(interruptCheckNanos);
+                    image.squeakSocketContext.pollEvents(interruptCheckNanos, CheckForInterruptsState.this);
                 }
             } catch (Throwable t) {
                 LogUtils.severe("CheckForInterruptsThread FATAL CRASH", t);
