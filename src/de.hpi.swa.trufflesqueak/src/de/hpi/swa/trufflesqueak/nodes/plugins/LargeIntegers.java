@@ -386,7 +386,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
                         @Shared("fitsIntoLongProfile") @Cached final InlinedConditionProfile fitsIntoLongProfile) {
             if (fitsIntoLongProfile.profile(node, fitsIntoLong(rhs))) {
                 final long value = longValue(rhs);
-                return value == lhs ? 0L : value < lhs ? -1L : 1L;
+                return value == lhs ? 0L : value < lhs ? 1L : -1L;
             } else {
                 return isNegative(image, rhs) ? 1L : -1L;
             }

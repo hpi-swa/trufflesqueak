@@ -230,7 +230,7 @@ public final class JavaObjectWrapper implements TruffleObject {
 
     @Override
     public int hashCode() {
-        return System.identityHashCode(wrappedObject);
+        return wrappedObject.hashCode();
     }
 
     @Override

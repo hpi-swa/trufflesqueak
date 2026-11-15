@@ -968,7 +968,7 @@ public abstract class SlotLocation {
         private final long offset;
 
         private ObjectExtensionSlotLocation(final int index) {
-            offset = UnsafeUtils.toObjectsOffset(index - NUM_PRIMITIVE_INLINE_LOCATIONS);
+            offset = UnsafeUtils.toObjectsOffset(index - NUM_OBJECT_INLINE_LOCATIONS);
         }
 
         @Override

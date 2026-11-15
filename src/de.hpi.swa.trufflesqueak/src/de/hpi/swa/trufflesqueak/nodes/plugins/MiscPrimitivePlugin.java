@@ -279,7 +279,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             int i = (int) index - 1;
             final int end = ba.getByteLength();
             int k = 0;
-            final int pastEnd = bm.getIntLength() + 1;
+            final int pastEnd = bm.getIntLength();
             while (i < end) {
                 // Decode next run start N
                 int anInt = ba.getByteUnsigned(i++);
