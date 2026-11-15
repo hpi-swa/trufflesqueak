@@ -344,6 +344,11 @@ jobs:
 
   run-benchmarks:
     needs: build-native-standalone
+    defaults:
+      run:
+        # Unlike the default shell (`bash -e {0}`), an explicit `bash` enables `pipefail`, so
+        # piping benchmark output into `tee` no longer hides failures (e.g., due to ExitVM).
+        shell: bash
     strategy:
       fail-fast: false
       matrix:
