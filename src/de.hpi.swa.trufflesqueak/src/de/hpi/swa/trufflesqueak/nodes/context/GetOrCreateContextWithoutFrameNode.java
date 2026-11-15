@@ -6,14 +6,12 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.context;
 
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
@@ -34,14 +32,16 @@ public abstract class GetOrCreateContextWithoutFrameNode extends AbstractNode {
         return execute(frame, this);
     }
 
+    /*
+     * No profile: compiled code allocates contexts eagerly (see StartContextRootNode), so the null
+     * check folds away wherever that allocation is visible. A profile would only add deopts where
+     * compiled code finds a context but the interpreter, which allocates lazily, never did (e.g., in
+     * inlined callees). If such a deopt resumes before the callee is entered, the interpreter never
+     * updates the profile (deopt cycle). OSR code can still find no context, so keep the check.
+     */
     @Specialization
-    public static ContextObject getContext(final VirtualFrame frame, final Node node,
-                    @Cached final InlinedConditionProfile hasContextProfile) {
+    public static ContextObject getContext(final VirtualFrame frame) {
         final ContextObject context = FrameAccess.getContext(frame);
-        if (hasContextProfile.profile(node, context != null)) {
-            return context;
-        } else {
-            return new ContextObject(frame);
-        }
+        return context != null ? context : new ContextObject(frame);
     }
 }
