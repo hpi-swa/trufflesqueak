@@ -73,9 +73,14 @@ public class AbstractPointersObjectNodes {
             return accessorNode.executeRead(object);
         }
 
-        @TruffleBoundary
         @Specialization(guards = "!object.getLayout().isValid()", excludeForUncached = true)
         protected static final Object doReadInvalid(final AbstractPointersObject object, final long index) {
+            /*
+             * Migrating an object with an obsolete layout is rare (once per object after a layout
+             * change). Deoptimize instead of calling a boundary: a boundary call kills all memory
+             * and its merge back into the fast path prevents read elimination in compiled code.
+             */
+            CompilerDirectives.transferToInterpreter();
             object.updateLayout(); // ensure layout is updated
             return doReadGeneric(object, index);
         }
@@ -130,9 +135,10 @@ public class AbstractPointersObjectNodes {
             }
         }
 
-        @TruffleBoundary
         @Specialization(guards = "!object.getLayout().isValid()")
         protected static final void doWriteInvalid(final AbstractPointersObject object, final long index, final Object value) {
+            /* Rare; deoptimize to keep the boundary out of compiled code (see doReadInvalid). */
+            CompilerDirectives.transferToInterpreter();
             object.updateLayout();
             doWriteGeneric(object, index, value);
         }
