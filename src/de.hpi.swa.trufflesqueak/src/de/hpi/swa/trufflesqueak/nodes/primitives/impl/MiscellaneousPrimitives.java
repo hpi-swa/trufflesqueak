@@ -645,7 +645,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     public static final class PrimUTCClockNode extends AbstractSingletonPrimitiveNode implements Primitive0 {
         @Override
         public Object execute(final VirtualFrame frame, final Object receiver) {
-            return MiscUtils.toSqueakMicrosecondsUTC(MiscUtils.currentTimeMillis() * 1000);
+            return MiscUtils.toSqueakMicrosecondsUTC(MiscUtils.currentTimeMicros());
         }
     }
 
@@ -654,7 +654,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     public static final class PrimLocalMicrosecondsClockNode extends AbstractSingletonPrimitiveNode implements Primitive0 {
         @Override
         public Object execute(final VirtualFrame frame, final Object receiver) {
-            return MiscUtils.toSqueakMicrosecondsLocal(MiscUtils.currentTimeMillis() * 1000);
+            return MiscUtils.toSqueakMicrosecondsLocal(MiscUtils.currentTimeMicros());
         }
     }
 
