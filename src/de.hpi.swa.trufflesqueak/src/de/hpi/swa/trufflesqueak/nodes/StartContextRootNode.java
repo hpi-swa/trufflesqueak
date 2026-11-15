@@ -62,23 +62,34 @@ public final class StartContextRootNode extends AbstractRootNode {
         ensureInitialized(frame);
         initializeFrame(frame);
         final SqueakImageContext image = SqueakImageContext.get(this);
-        final boolean isCountableStackFrame = CompilerDirectives.inInterpreter() || CompilerDirectives.inCompilationRoot();
+        final boolean inInterpreterOrCompilationRoot = CompilerDirectives.inInterpreter() || CompilerDirectives.inCompilationRoot();
         try {
-            if (isCountableStackFrame && image.enteringContextExceedsDepth()) {
-                CompilerDirectives.transferToInterpreter();
-                // Suspend current context and throw ProcessSwitch to unwind Java stack and resume
-                final ContextObject activeContext = GetOrCreateContextWithFrameNode.executeUncached(frame);
-                AbstractPointersObjectWriteNode.executeUncached(image.getActiveProcessSlow(), PROCESS.SUSPENDED_CONTEXT, activeContext);
-                throw ProcessSwitch.SINGLETON;
+            if (inInterpreterOrCompilationRoot) {
+                if (image.enteringContextExceedsDepth()) {
+                    CompilerDirectives.transferToInterpreter();
+                    // Suspend current context and throw ProcessSwitch to unwind Java stack and resume
+                    final ContextObject activeContext = GetOrCreateContextWithFrameNode.executeUncached(frame);
+                    AbstractPointersObjectWriteNode.executeUncached(image.getActiveProcessSlow(), PROCESS.SUSPENDED_CONTEXT, activeContext);
+                    throw ProcessSwitch.SINGLETON;
+                } else {
+                    /*
+                     * Only check for interrupts when entering a non-inlined activation. The check
+                     * reads `shouldTrigger` with opaque semantics, which Graal models as a kill of
+                     * all memory locations. Doing this in every inlined activation prevents read
+                     * elimination across inlined calls (e.g., in recursive code). Interrupts are
+                     * still detected promptly: every compilation root performs the check, loops
+                     * check on back-edges, and recursion always reaches a non-inlined call.
+                     */
+                    interruptHandlerNode.execute(frame);
+                }
             }
-            interruptHandlerNode.execute(frame);
             return interpreterNode.execute(frame, initialPC, initialSP);
         } catch (final NonVirtualReturn | ProcessSwitch | CannotReturnToTarget nvr) {
             /* {@link getGetOrCreateContextNode()} acts as {@link BranchProfile} */
             getGetOrCreateContextNode().executeGet(frame);
             throw nvr;
         } finally {
-            if (isCountableStackFrame) {
+            if (inInterpreterOrCompilationRoot) {
                 image.exitingContext();
             }
         }
