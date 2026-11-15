@@ -61,7 +61,7 @@ public final class PrimitiveNodeFactory {
     public static final int PRIMITIVE_ENSURE_MARKER_INDEX = 198;
     public static final int PRIMITIVE_ON_DO_MARKER_INDEX = 199;
     private static final int PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX = 264;
-    private static final int PRIMITIVE_LOAD_INST_VAR_UPPER_INDEX = 520;
+    private static final int PRIMITIVE_LOAD_INST_VAR_UPPER_INDEX = 519;
     private static final int NAMED_PRIMITIVE_MODULE_NAME_INDEX = 0;
     private static final int NAMED_PRIMITIVE_FUNCTION_NAME_INDEX = 1;
     private static final int MAX_PRIMITIVE_INDEX = 578;

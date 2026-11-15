@@ -1254,17 +1254,16 @@ public final class B2D {
 
         /* Compute intermediate points */
         final int endY = bzEndY(index);
-        final int sharedX = leftViaX += (int) ((viaX - startX) * param);
-        int sharedY = leftViaY += (int) ((viaY - startY) * param);
-        rightViaX += (int) ((endX - viaX) * param);
+        leftViaX += (int) ((viaX - startX) * param);
+        leftViaY += (int) ((viaY - startY) * param);
+        int sharedX = rightViaX += (int) ((endX - viaX) * param);
+        int sharedY = rightViaY += (int) ((endY - viaY) * param);
 
-        /*
-         * Compute new shared point[] / rightViaY += ((long) ((((double) (endY - viaY))) * param));
-         * sharedX += ((long) ((((double) (rightViaX - leftViaX))) * param));
-         *
-         * /* Check the new via points
-         */
-        sharedY += (int) ((rightViaY - leftViaY) * param);
+        /* Compute new shared point */
+        sharedX += (int) ((leftViaX - rightViaX) * param);
+        sharedY += (int) ((leftViaY - rightViaY) * param);
+
+        /* Check the new via points */
         leftViaY = assureValuebetweenand(leftViaY, startY, sharedY);
         rightViaY = assureValuebetweenand(rightViaY, sharedY, endY);
         final int newIndex = allocateBezierStackEntry();

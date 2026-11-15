@@ -322,7 +322,8 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     protected abstract static class PrimSignalAtMillisecondsNode extends AbstractSignalAtPrimitiveNode implements Primitive2WithFallback {
         @Specialization(guards = "isSemaphore(semaphore)")
         protected final Object doSignal(final Object receiver, final PointersObject semaphore, final long msTime) {
-            signalAtMilliseconds(semaphore, msTime);
+            /* msTime is relative to VM start-up (see primitive 135), nextWakeupTick is absolute. */
+            signalAtMilliseconds(semaphore, msTime + getContext().startUpMillis);
             return receiver;
         }
 

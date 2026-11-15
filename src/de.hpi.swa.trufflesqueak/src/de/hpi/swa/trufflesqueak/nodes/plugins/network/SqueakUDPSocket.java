@@ -111,8 +111,9 @@ final class SqueakUDPSocket extends SqueakSocket {
     @Override
     protected long receiveDataFrom(final SelectionKey key, final ByteBuffer data) throws IOException {
         final DatagramChannel from = (DatagramChannel) key.channel();
+        final int startPosition = data.position();
         from.receive(data);
-        return data.position();
+        return data.position() - startPosition;
     }
 
     @Override
