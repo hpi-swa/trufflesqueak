@@ -6,15 +6,12 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.context;
 
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.InlinedBranchProfile;
-import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
@@ -30,7 +27,7 @@ public abstract class GetOrCreateContextWithFrameNode extends AbstractNode {
     }
 
     public static final ContextObject executeUncached(final VirtualFrame frame) {
-        return doGetOrCreate(frame, null, InlinedConditionProfile.getUncached(), InlinedBranchProfile.getUncached());
+        return doGetOrCreate(frame);
     }
 
     public abstract ContextObject executeGet(VirtualFrame frame, Node node);
@@ -39,19 +36,16 @@ public abstract class GetOrCreateContextWithFrameNode extends AbstractNode {
         return executeGet(frame, this);
     }
 
+    /* No profiles, see GetOrCreateContextWithoutFrameNode#getContext. */
     @Specialization
-    protected static final ContextObject doGetOrCreate(final VirtualFrame frame, final Node node,
-                    @Cached final InlinedConditionProfile hasContextProfile,
-                    @Cached final InlinedBranchProfile hasFrameProfile) {
+    protected static final ContextObject doGetOrCreate(final VirtualFrame frame) {
         final ContextObject context = FrameAccess.getContext(frame);
-        if (hasContextProfile.profile(node, context != null)) {
-            if (!context.hasTruffleFrame()) {
-                hasFrameProfile.enter(node);
-                context.setTruffleFrame(frame.materialize());
-            }
-            return context;
-        } else {
+        if (context == null) {
             return new ContextObject(frame.materialize());
         }
+        if (!context.hasTruffleFrame()) {
+            context.setTruffleFrame(frame.materialize());
+        }
+        return context;
     }
 }

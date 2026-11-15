@@ -116,6 +116,17 @@ public final class StartContextRootNode extends AbstractRootNode {
     private void initializeFrame(final VirtualFrame frame) {
         if (!doesNotNeedThisContext.isValid()) {
             getGetOrCreateContextNode().executeGet(frame);
+        } else if (CompilerDirectives.inCompiledCode()) {
+            /*
+             * Eagerly allocate a (frameless) context in compiled code. Otherwise, the first send
+             * lazily creates one and stores it in the frame, and at every control-flow merge or
+             * loop back-edge the context slot is either null or a virtual context, which forces
+             * partial escape analysis to materialize the context (even if all sends were inlined
+             * and the sender is never used). With an eager context, the slot holds the same virtual
+             * object on all paths, so it is only materialized on paths where it actually escapes.
+             */
+            final ContextObject context = new ContextObject(frame);
+            assert FrameAccess.getContext(frame) == context : "Constructor must store the context in the frame";
         }
         FrameAccess.setInstructionPointer(frame, initialPC);
         FrameAccess.setStackPointer(frame, initialSP);
