@@ -64,6 +64,13 @@ public final class MiscUtils {
         return System.currentTimeMillis();
     }
 
+    /** Current UTC time in microseconds since the Unix epoch (microsecond resolution). */
+    @TruffleBoundary
+    public static long currentTimeMicros() {
+        final java.time.Instant now = java.time.Instant.now();
+        return now.getEpochSecond() * 1_000_000L + now.getNano() / 1_000;
+    }
+
     public static boolean dumpHeap(final String filePath, final boolean live) {
         final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
         try {

@@ -111,7 +111,7 @@ public final class NullPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     private static long getUTCMicroseconds() {
-        return MiscUtils.currentTimeMillis() * 1000L;
+        return MiscUtils.currentTimeMicros();
     }
 
     @TruffleBoundary
