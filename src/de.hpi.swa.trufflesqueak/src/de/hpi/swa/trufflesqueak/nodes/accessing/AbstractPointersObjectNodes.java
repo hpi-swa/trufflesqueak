@@ -20,6 +20,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
+import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -73,21 +74,31 @@ public class AbstractPointersObjectNodes {
             return accessorNode.executeRead(object);
         }
 
+        /*
+         * Objects with obsolete layouts are usually migrated while still interpreting. Until one
+         * shows up in compiled code, keep the slow path out of it: a boundary call kills all memory
+         * and its merge back into the fast path prevents read elimination. Deoptimizing without
+         * invalidating on every hit, however, causes deopt storms when many objects need migration
+         * (e.g., in DeltaBlue). Therefore, invalidate once and use a boundary call from then on.
+         */
+        @Specialization(guards = "!object.getLayout().isValid()", rewriteOn = RespecializeException.class, excludeForUncached = true)
+        protected static final Object doReadInvalidInInterpreter(final AbstractPointersObject object, final long index) throws RespecializeException {
+            if (CompilerDirectives.inCompiledCode()) {
+                throw RespecializeException.transferToInterpreterInvalidateAndThrow();
+            }
+            return doReadInvalid(object, index);
+        }
+
+        @TruffleBoundary
         @Specialization(guards = "!object.getLayout().isValid()", excludeForUncached = true)
         protected static final Object doReadInvalid(final AbstractPointersObject object, final long index) {
-            /*
-             * Migrating an object with an obsolete layout is rare (once per object after a layout
-             * change). Deoptimize instead of calling a boundary: a boundary call kills all memory
-             * and its merge back into the fast path prevents read elimination in compiled code.
-             */
-            CompilerDirectives.transferToInterpreter();
             object.updateLayout(); // ensure layout is updated
             return doReadGeneric(object, index);
         }
 
         @TruffleBoundary
         @ReportPolymorphism.Megamorphic
-        @Specialization(replaces = {"doReadCached", "doReadInvalid"})
+        @Specialization(replaces = {"doReadCached", "doReadInvalidInInterpreter", "doReadInvalid"})
         protected static final Object doReadGeneric(final AbstractPointersObject object, final long index) {
             return object.getLayout().getLocation(index).read(object);
         }
@@ -135,17 +146,25 @@ public class AbstractPointersObjectNodes {
             }
         }
 
+        /* See AbstractPointersObjectReadNode#doReadInvalidInInterpreter. */
+        @Specialization(guards = "!object.getLayout().isValid()", rewriteOn = RespecializeException.class, excludeForUncached = true)
+        protected static final void doWriteInvalidInInterpreter(final AbstractPointersObject object, final long index, final Object value) throws RespecializeException {
+            if (CompilerDirectives.inCompiledCode()) {
+                throw RespecializeException.transferToInterpreterInvalidateAndThrow();
+            }
+            doWriteInvalid(object, index, value);
+        }
+
+        @TruffleBoundary
         @Specialization(guards = "!object.getLayout().isValid()")
         protected static final void doWriteInvalid(final AbstractPointersObject object, final long index, final Object value) {
-            /* Rare; deoptimize to keep the boundary out of compiled code (see doReadInvalid). */
-            CompilerDirectives.transferToInterpreter();
             object.updateLayout();
             doWriteGeneric(object, index, value);
         }
 
         @TruffleBoundary
         @ReportPolymorphism.Megamorphic
-        @Specialization(replaces = {"doWriteCached", "doWriteInvalid"})
+        @Specialization(replaces = {"doWriteCached", "doWriteInvalidInInterpreter", "doWriteInvalid"})
         protected static final void doWriteGeneric(final AbstractPointersObject object, final long index, final Object value) {
             try {
                 object.getLayout().getLocation(index).write(object, value);
