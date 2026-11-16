@@ -2,8 +2,11 @@
 	"class" : {
 		 },
 	"instance" : {
+		"osrNonLocalReturnFromBlock:" : "fn 11/16/2026 10:00",
 		"testAdoptInstanceArrays" : "fn 8/1/2026 13:32",
 		"testCannotInterpretFallback" : "sss 4/17/2026 19:45",
 		"testMethodDeletionFlushesPIC" : "fn 8/1/2026 14:02",
 		"testMutatingSuperSend" : "fn 8/1/2026 14:04",
+		"testOSRInBlock" : "fn 11/16/2026 10:00",
+		"testOSRWithStackWalk" : "fn 11/16/2026 10:00",
 		"testResumedContextReachability" : "sss 4/17/2026 19:41" } }
