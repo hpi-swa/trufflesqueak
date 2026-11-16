@@ -282,7 +282,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
             return context;
         } else {
             enter(currentPC, profile, BRANCH3);
-            return new ContextObject(frame.materialize());
+            return ContextObject.createMaterialized(frame.materialize());
         }
     }
 

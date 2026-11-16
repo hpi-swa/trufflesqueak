@@ -125,8 +125,7 @@ public final class StartContextRootNode extends AbstractRootNode {
              * and the sender is never used). With an eager context, the slot holds the same virtual
              * object on all paths, so it is only materialized on paths where it actually escapes.
              */
-            final ContextObject context = new ContextObject(frame);
-            assert FrameAccess.getContext(frame) == context : "Constructor must store the context in the frame";
+            ContextObject.createVirtual(frame);
         }
         FrameAccess.setInstructionPointer(frame, initialPC);
         FrameAccess.setStackPointer(frame, initialSP);

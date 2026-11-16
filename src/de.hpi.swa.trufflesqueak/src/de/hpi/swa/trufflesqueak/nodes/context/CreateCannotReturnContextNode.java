@@ -41,7 +41,7 @@ public final class CreateCannotReturnContextNode extends AbstractNode {
 
         final Object[] frameArgs = FrameAccess.newWith(returningContext, null, returningContext, returnValue);
         final MaterializedFrame truffleFrame = Truffle.getRuntime().createMaterializedFrame(frameArgs, cannotReturnMethodFrameDescriptor);
-        final ContextObject cannotReturnContext = new ContextObject(truffleFrame);
+        final ContextObject cannotReturnContext = ContextObject.createMaterialized(truffleFrame);
 
         FrameAccess.setInstructionPointer(truffleFrame, INITIAL_PC);
         FrameAccess.setStackPointer(truffleFrame, INITIAL_SP);

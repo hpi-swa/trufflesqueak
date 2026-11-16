@@ -14,7 +14,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
-
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
@@ -23,7 +22,6 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.nodes.LookupMethodNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectSizeNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
-import de.hpi.swa.trufflesqueak.nodes.context.GetOrCreateContextWithFrameNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchIndirectNaryNode.TryPrimitiveNaryNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -364,7 +362,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
             if (result != null) {
                 return result;
             } else {
-                return IndirectCallNode.getUncached().call(method.getCallTarget(), FrameAccess.newWith(GetOrCreateContextWithFrameNode.executeUncached(frame), null, receiver, arguments));
+                return IndirectCallNode.getUncached().call(method.getCallTarget(), FrameAccess.newWith(frame, null, receiver, arguments));
             }
         } else {
             throw SqueakException.create("Illegal uncached message send");

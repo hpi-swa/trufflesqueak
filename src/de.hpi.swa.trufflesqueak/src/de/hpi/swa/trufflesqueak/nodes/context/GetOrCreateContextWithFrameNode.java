@@ -41,7 +41,7 @@ public abstract class GetOrCreateContextWithFrameNode extends AbstractNode {
     protected static final ContextObject doGetOrCreate(final VirtualFrame frame) {
         final ContextObject context = FrameAccess.getContext(frame);
         if (context == null) {
-            return new ContextObject(frame.materialize());
+            return ContextObject.createMaterialized(frame.materialize());
         }
         if (!context.hasTruffleFrame()) {
             context.setTruffleFrame(frame.materialize());

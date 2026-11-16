@@ -186,6 +186,11 @@ public final class FrameAccess {
         return (ContextObject) frame.getObjectStatic(SlotIndices.THIS_CONTEXT);
     }
 
+    public static ContextObject getOrCreateContextWithoutFrame(final VirtualFrame frame) {
+        final ContextObject context = getContext(frame);
+        return context != null ? context : ContextObject.createVirtual(frame);
+    }
+
     public static boolean hasModifiedSender(final VirtualFrame frame) {
         final ContextObject context = getContext(frame);
         return context != null && context.hasModifiedSender();
@@ -397,6 +402,10 @@ public final class FrameAccess {
         return frameArguments;
     }
 
+    public static Object[] newWith(final VirtualFrame senderFrame, final BlockClosureObject closure, final Object receiver) {
+        return newWith(getOrCreateContextWithoutFrame(senderFrame), closure, receiver);
+    }
+
     public static Object[] newWith(final AbstractSqueakObject sender, final BlockClosureObject closure, final Object receiver) {
         assert sender != null && receiver != null : "Sender and receiver should never be null";
         final Object[] frameArguments = new Object[ArgumentIndices.ARGUMENTS_START];
@@ -404,6 +413,10 @@ public final class FrameAccess {
         frameArguments[ArgumentIndices.CLOSURE_OR_NULL] = closure;
         frameArguments[ArgumentIndices.RECEIVER] = receiver;
         return frameArguments;
+    }
+
+    public static Object[] newWith(final VirtualFrame senderFrame, final BlockClosureObject closure, final Object receiver, final Object arg1) {
+        return newWith(getOrCreateContextWithoutFrame(senderFrame), closure, receiver, arg1);
     }
 
     public static Object[] newWith(final AbstractSqueakObject sender, final BlockClosureObject closure, final Object receiver, final Object arg1) {
@@ -416,10 +429,10 @@ public final class FrameAccess {
         return frameArguments;
     }
 
-    public static Object[] newWith(final AbstractSqueakObject sender, final BlockClosureObject closure, final Object receiver, final Object arg1, final Object arg2) {
-        assert sender != null && receiver != null : "Sender and receiver should never be null";
+    public static Object[] newWith(final VirtualFrame senderFrame, final BlockClosureObject closure, final Object receiver, final Object arg1, final Object arg2) {
+        assert receiver != null : "Receiver should never be null";
         final Object[] frameArguments = new Object[ArgumentIndices.ARGUMENTS_START + 2];
-        frameArguments[ArgumentIndices.SENDER] = sender;
+        frameArguments[ArgumentIndices.SENDER] = getOrCreateContextWithoutFrame(senderFrame);
         frameArguments[ArgumentIndices.CLOSURE_OR_NULL] = closure;
         frameArguments[ArgumentIndices.RECEIVER] = receiver;
         frameArguments[ArgumentIndices.ARGUMENTS_START] = arg1;
@@ -427,10 +440,10 @@ public final class FrameAccess {
         return frameArguments;
     }
 
-    public static Object[] newWith(final AbstractSqueakObject sender, final BlockClosureObject closure, final Object receiver, final Object arg1, final Object arg2, final Object arg3) {
-        assert sender != null && receiver != null : "Sender and receiver should never be null";
+    public static Object[] newWith(final VirtualFrame senderFrame, final BlockClosureObject closure, final Object receiver, final Object arg1, final Object arg2, final Object arg3) {
+        assert receiver != null : "Receiver should never be null";
         final Object[] frameArguments = new Object[ArgumentIndices.ARGUMENTS_START + 3];
-        frameArguments[ArgumentIndices.SENDER] = sender;
+        frameArguments[ArgumentIndices.SENDER] = getOrCreateContextWithoutFrame(senderFrame);
         frameArguments[ArgumentIndices.CLOSURE_OR_NULL] = closure;
         frameArguments[ArgumentIndices.RECEIVER] = receiver;
         frameArguments[ArgumentIndices.ARGUMENTS_START] = arg1;
@@ -439,11 +452,11 @@ public final class FrameAccess {
         return frameArguments;
     }
 
-    public static Object[] newWith(final AbstractSqueakObject sender, final BlockClosureObject closure, final Object receiver, final Object arg1, final Object arg2, final Object arg3,
+    public static Object[] newWith(final VirtualFrame senderFrame, final BlockClosureObject closure, final Object receiver, final Object arg1, final Object arg2, final Object arg3,
                     final Object arg4) {
-        assert sender != null && receiver != null : "Sender and receiver should never be null";
+        assert receiver != null : "Receiver should never be null";
         final Object[] frameArguments = new Object[ArgumentIndices.ARGUMENTS_START + 4];
-        frameArguments[ArgumentIndices.SENDER] = sender;
+        frameArguments[ArgumentIndices.SENDER] = getOrCreateContextWithoutFrame(senderFrame);
         frameArguments[ArgumentIndices.CLOSURE_OR_NULL] = closure;
         frameArguments[ArgumentIndices.RECEIVER] = receiver;
         frameArguments[ArgumentIndices.ARGUMENTS_START] = arg1;
@@ -453,11 +466,11 @@ public final class FrameAccess {
         return frameArguments;
     }
 
-    public static Object[] newWith(final AbstractSqueakObject sender, final BlockClosureObject closure, final Object receiver, final Object arg1, final Object arg2, final Object arg3,
+    public static Object[] newWith(final VirtualFrame senderFrame, final BlockClosureObject closure, final Object receiver, final Object arg1, final Object arg2, final Object arg3,
                     final Object arg4, final Object arg5) {
-        assert sender != null && receiver != null : "Sender and receiver should never be null";
+        assert receiver != null : "Receiver should never be null";
         final Object[] frameArguments = new Object[ArgumentIndices.ARGUMENTS_START + 5];
-        frameArguments[ArgumentIndices.SENDER] = sender;
+        frameArguments[ArgumentIndices.SENDER] = getOrCreateContextWithoutFrame(senderFrame);
         frameArguments[ArgumentIndices.CLOSURE_OR_NULL] = closure;
         frameArguments[ArgumentIndices.RECEIVER] = receiver;
         frameArguments[ArgumentIndices.ARGUMENTS_START] = arg1;
@@ -466,6 +479,10 @@ public final class FrameAccess {
         frameArguments[ArgumentIndices.ARGUMENTS_START + 3] = arg4;
         frameArguments[ArgumentIndices.ARGUMENTS_START + 4] = arg5;
         return frameArguments;
+    }
+
+    public static Object[] newWith(final VirtualFrame senderFrame, final BlockClosureObject closure, final Object receiver, final Object[] arguments) {
+        return newWith(getOrCreateContextWithoutFrame(senderFrame), closure, receiver, arguments);
     }
 
     public static Object[] newWith(final AbstractSqueakObject sender, final BlockClosureObject closure, final Object receiver, final Object[] arguments) {
@@ -484,12 +501,12 @@ public final class FrameAccess {
         return frameArguments;
     }
 
-    public static Object[] newMessageFallbackWith(final AbstractSqueakObject sender, final Object receiver, final PointersObject message) {
-        return newWith(sender, null, receiver, message);
+    public static Object[] newMessageFallbackWith(final VirtualFrame senderFrame, final Object receiver, final PointersObject message) {
+        return newWith(senderFrame, null, receiver, message);
     }
 
-    public static Object[] newOAMWith(final AbstractSqueakObject sender, final Object object, final NativeObject selector, final ArrayObject arguments, final Object receiver) {
-        return newWith(sender, null, object, selector, arguments, receiver);
+    public static Object[] newOAMWith(final VirtualFrame senderFrame, final Object object, final NativeObject selector, final ArrayObject arguments, final Object receiver) {
+        return newWith(senderFrame, null, object, selector, arguments, receiver);
     }
 
     /* Template because closure arguments still need to be filled in. */

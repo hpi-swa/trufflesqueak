@@ -73,7 +73,6 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectChangeClassOfToNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNode;
-import de.hpi.swa.trufflesqueak.nodes.context.GetOrCreateContextWithoutFrameNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0Node.DispatchDirect0Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0Node.DispatchIndirect0Node;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0Node.DispatchIndirect0Node.TryPrimitive0Node;
@@ -485,7 +484,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected static final Object performGeneric(final VirtualFrame frame, final Object receiver, final NativeObject selector, final ArrayObject arguments, final ClassObject lookupClass,
                         final InheritsFromNode inheritsFromNode, final ResolveMethodNode methodNode, final ArrayObjectSizeNode sizeNode, final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
-                        final TryPrimitiveNaryNode tryPrimitiveNode, final GetOrCreateContextWithoutFrameNode senderNode, final CreateFrameArgumentsForIndirectCallNaryNode argumentsNode,
+                        final TryPrimitiveNaryNode tryPrimitiveNode, final CreateFrameArgumentsForIndirectCallNaryNode argumentsNode,
                         final IndirectCallNode callNode, final Node node) {
             if (inheritsFromNode.execute(node, receiver, lookupClass)) {
                 final Object lookupResult = getContext(node).lookup(lookupClass, selector);
@@ -495,7 +494,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 if (result != null) {
                     return result;
                 } else {
-                    final Object[] callArguments = argumentsNode.execute(node, senderNode.execute(frame, node), receiver, argumentArray, lookupClass, lookupResult, selector);
+                    final Object[] callArguments = argumentsNode.execute(node, frame, receiver, argumentArray, lookupClass, lookupResult, selector);
                     return callNode.call(method.getCallTarget(), callArguments);
                 }
             } else {
@@ -552,11 +551,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Exclusive @Cached final ArrayObjectSizeNode sizeNode,
                         @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
                         @Cached final TryPrimitiveNaryNode tryPrimitiveNode,
-                        @Cached final GetOrCreateContextWithoutFrameNode senderNode,
                         @Cached final CreateFrameArgumentsForIndirectCallNaryNode argumentsNode,
                         @Cached final IndirectCallNode callNode) {
-            return performGeneric(frame, receiver, selector, arguments, lookupClass, inheritsFromNode, methodNode, sizeNode, getObjectArrayNode, tryPrimitiveNode, senderNode, argumentsNode, callNode,
-                            node);
+            return performGeneric(frame, receiver, selector, arguments, lookupClass, inheritsFromNode, methodNode, sizeNode, getObjectArrayNode, tryPrimitiveNode, argumentsNode, callNode, node);
         }
     }
 
@@ -586,11 +583,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Exclusive @Cached final ArrayObjectSizeNode sizeNode,
                         @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
                         @Cached final TryPrimitiveNaryNode tryPrimitiveNode,
-                        @Cached final GetOrCreateContextWithoutFrameNode senderNode,
                         @Cached final CreateFrameArgumentsForIndirectCallNaryNode argumentsNode,
                         @Cached final IndirectCallNode callNode) {
-            return performGeneric(frame, target, selector, arguments, lookupClass, inheritsFromNode, methodNode, sizeNode, getObjectArrayNode, tryPrimitiveNode, senderNode, argumentsNode, callNode,
-                            node);
+            return performGeneric(frame, target, selector, arguments, lookupClass, inheritsFromNode, methodNode, sizeNode, getObjectArrayNode, tryPrimitiveNode, argumentsNode, callNode, node);
         }
     }
 
@@ -1122,7 +1117,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind final Node node,
                         @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode arrayNode,
                         @Cached final TryPrimitiveNaryNode tryPrimitiveNode,
-                        @Cached final GetOrCreateContextWithoutFrameNode getOrCreateContextWithoutFrameNode,
                         @Cached final IndirectCallNode callNode) {
             final Object[] arguments = arrayNode.execute(node, argArray);
             checkNumArguments(method, arguments.length);
@@ -1130,7 +1124,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             if (result != null) {
                 return result;
             } else {
-                return callNode.call(method.getCallTarget(), FrameAccess.newWith(getOrCreateContextWithoutFrameNode.execute(frame), null, receiver, arguments));
+                return callNode.call(method.getCallTarget(), FrameAccess.newWith(frame, null, receiver, arguments));
             }
         }
     }
@@ -1156,9 +1150,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind final Node node,
                         @Exclusive @Cached final ArrayObjectToObjectArrayCopyNode arrayNode,
                         @Cached final TryPrimitiveNaryNode tryPrimitiveNode,
-                        @Cached final GetOrCreateContextWithoutFrameNode senderNode,
                         @Cached final IndirectCallNode callNode) {
-            return PrimExecuteMethodArgsArray3Node.doExecute(frame, receiver, argArray, method, node, arrayNode, tryPrimitiveNode, senderNode, callNode);
+            return PrimExecuteMethodArgsArray3Node.doExecute(frame, receiver, argArray, method, node, arrayNode, tryPrimitiveNode, callNode);
         }
     }
 
@@ -1177,14 +1170,13 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(replaces = "doCached")
         protected static final Object doExecute(final VirtualFrame frame, final Object receiver, final CompiledCodeObject method,
                         @Cached final TryPrimitive0Node tryPrimitiveNode,
-                        @Cached final GetOrCreateContextWithoutFrameNode getOrCreateContextWithoutFrameNode,
                         @Cached final IndirectCallNode callNode) {
             checkNumArguments(method, 0);
             final Object result = tryPrimitiveNode.execute(frame, method, receiver);
             if (result != null) {
                 return result;
             } else {
-                return callNode.call(method.getCallTarget(), FrameAccess.newWith(getOrCreateContextWithoutFrameNode.execute(frame), null, receiver));
+                return callNode.call(method.getCallTarget(), FrameAccess.newWith(frame, null, receiver));
             }
         }
     }
@@ -1211,7 +1203,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             if (result != null) {
                 return result;
             } else {
-                return callNode.call(method.getCallTarget(), FrameAccess.newWith(getOrCreateContextWithoutFrameNode.execute(frame), null, receiver, arg1));
+                return callNode.call(method.getCallTarget(), FrameAccess.newWith(frame, null, receiver, arg1));
             }
         }
     }
@@ -1231,14 +1223,13 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(replaces = "doCached")
         protected static final Object doExecute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final CompiledCodeObject method,
                         @Cached final TryPrimitive2Node tryPrimitiveNode,
-                        @Cached final GetOrCreateContextWithoutFrameNode getOrCreateContextWithoutFrameNode,
                         @Cached final IndirectCallNode callNode) {
             checkNumArguments(method, 2);
             final Object result = tryPrimitiveNode.execute(frame, method, receiver, arg1, arg2);
             if (result != null) {
                 return result;
             } else {
-                return callNode.call(method.getCallTarget(), FrameAccess.newWith(getOrCreateContextWithoutFrameNode.execute(frame), null, receiver, arg1, arg2));
+                return callNode.call(method.getCallTarget(), FrameAccess.newWith(frame, null, receiver, arg1, arg2));
             }
         }
     }
@@ -1259,14 +1250,13 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(replaces = "doCached")
         protected static final Object doExecute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final CompiledCodeObject method,
                         @Cached final TryPrimitive3Node tryPrimitiveNode,
-                        @Cached final GetOrCreateContextWithoutFrameNode getOrCreateContextWithoutFrameNode,
                         @Cached final IndirectCallNode callNode) {
             checkNumArguments(method, 3);
             final Object result = tryPrimitiveNode.execute(frame, method, receiver, arg1, arg2, arg3);
             if (result != null) {
                 return result;
             } else {
-                return callNode.call(method.getCallTarget(), FrameAccess.newWith(getOrCreateContextWithoutFrameNode.execute(frame), null, receiver, arg1, arg2, arg3));
+                return callNode.call(method.getCallTarget(), FrameAccess.newWith(frame, null, receiver, arg1, arg2, arg3));
             }
         }
     }
@@ -1288,14 +1278,13 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final Object doExecute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4,
                         final CompiledCodeObject method,
                         @Cached final TryPrimitive4Node tryPrimitiveNode,
-                        @Cached final GetOrCreateContextWithoutFrameNode getOrCreateContextWithoutFrameNode,
                         @Cached final IndirectCallNode callNode) {
             checkNumArguments(method, 4);
             final Object result = tryPrimitiveNode.execute(frame, method, receiver, arg1, arg2, arg3, arg4);
             if (result != null) {
                 return result;
             } else {
-                return callNode.call(method.getCallTarget(), FrameAccess.newWith(getOrCreateContextWithoutFrameNode.execute(frame), null, receiver, arg1, arg2, arg3, arg4));
+                return callNode.call(method.getCallTarget(), FrameAccess.newWith(frame, null, receiver, arg1, arg2, arg3, arg4));
             }
         }
     }

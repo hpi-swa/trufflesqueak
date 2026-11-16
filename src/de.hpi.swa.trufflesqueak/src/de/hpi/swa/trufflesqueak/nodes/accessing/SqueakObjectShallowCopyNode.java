@@ -60,7 +60,7 @@ public abstract class SqueakObjectShallowCopyNode extends AbstractNode {
 
     @Specialization
     protected static final ContextObject doContext(final ContextObject receiver) {
-        return new ContextObject(receiver);
+        return ContextObject.createCopy(receiver);
     }
 
     @Specialization
