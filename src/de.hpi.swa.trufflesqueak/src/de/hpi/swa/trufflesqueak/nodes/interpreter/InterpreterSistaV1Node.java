@@ -1732,7 +1732,8 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @SuppressWarnings("static-method")
     @BytecodeInterpreterHandler(value = BC.PUSH_CONSTANT_ZERO, safepoint = false)
     private int handlePushConstantZero(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
-        push(frame, vstate.sp++, BOXED_ZERO);
+        /* Autoboxed via Long.valueOf, so partial escape analysis can virtualize the box. */
+        push(frame, vstate.sp++, 0L);
         return pc + 1;
     }
 
@@ -1740,7 +1741,8 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @SuppressWarnings("static-method")
     @BytecodeInterpreterHandler(value = BC.PUSH_CONSTANT_ONE, safepoint = false)
     private int handlePushConstantOne(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
-        push(frame, vstate.sp++, BOXED_ONE);
+        /* Autoboxed via Long.valueOf, so partial escape analysis can virtualize the box. */
+        push(frame, vstate.sp++, 1L);
         return pc + 1;
     }
 
