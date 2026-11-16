@@ -489,7 +489,22 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     }
 
     protected static final Object pop(final VirtualFrame frame, final int sp) {
-        return FrameAccess.getStackValue(frame, sp);
+        final Object value = FrameAccess.getStackValue(frame, sp);
+        clearStackSlot(frame, sp);
+        return value;
+    }
+
+    /**
+     * Clears a popped stack slot in compiled code. Otherwise, the last value popped from a slot
+     * stays alive in the frame, and boxed primitives (e.g., from arithmetic in loops) have to be
+     * allocated at loop back-edges and merges, where they meet the slot's value from before (e.g.,
+     * {@code null}). Slots above the stack pointer are dead and never read, so the interpreter can
+     * leave them untouched and avoid an extra write.
+     */
+    protected static final void clearStackSlot(final VirtualFrame frame, final int sp) {
+        if (CompilerDirectives.inCompiledCode()) {
+            FrameAccess.clearStackValue(frame, sp);
+        }
     }
 
     protected static final Object[] popN(final VirtualFrame frame, final int sp, final int numPop) {
@@ -502,6 +517,9 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         final Object[] stackValues = new Object[numPop];
         for (int i = 0; i < numPop; i++) {
             stackValues[i] = frame.getObjectStatic(firstSlotIndex + i);
+            if (CompilerDirectives.inCompiledCode()) {
+                frame.clearObjectStatic(firstSlotIndex + i);
+            }
         }
         return stackValues;
     }
