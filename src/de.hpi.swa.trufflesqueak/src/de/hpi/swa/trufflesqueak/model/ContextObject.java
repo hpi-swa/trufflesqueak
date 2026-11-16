@@ -59,14 +59,14 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         assert size == CONTEXT.SMALL_FRAMESIZE || size == CONTEXT.LARGE_FRAMESIZE || size == CONTEXT.HUGE_FRAMESIZE;
     }
 
-    public ContextObject(final VirtualFrame frame) {
+    private ContextObject(final VirtualFrame frame) {
         super();
         FrameAccess.assertSenderNotNull(frame);
         this.senderOrFrameOrSize = FrameAccess.getSender(frame);
         FrameAccess.setContext(frame, this);
     }
 
-    public ContextObject(final MaterializedFrame frame) {
+    private ContextObject(final MaterializedFrame frame) {
         super();
         FrameAccess.assertSenderNotNull(frame);
         this.senderOrFrameOrSize = frame;
@@ -75,7 +75,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     }
 
     @TruffleBoundary
-    public ContextObject(final ContextObject original) {
+    private ContextObject(final ContextObject original) {
         super(original);
         // Copy modified sender flag and the marked code flags.
         setAllBooleanBits(original.getAllBooleanBits());
@@ -84,6 +84,18 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         senderOrFrameOrSize = Truffle.getRuntime().createMaterializedFrame(original.getTruffleFrame().getArguments().clone(), frameDescriptor);
         FrameAccess.copySlotsExceptContext(original.getTruffleFrame(), getTruffleFrame());
         FrameAccess.setContext(getTruffleFrame(), this);
+    }
+
+    public static ContextObject createVirtual(final VirtualFrame frame) {
+        return new ContextObject(frame);
+    }
+
+    public static ContextObject createMaterialized(final MaterializedFrame frame) {
+        return new ContextObject(frame);
+    }
+
+    public static ContextObject createCopy(final ContextObject original) {
+        return new ContextObject(original);
     }
 
     @Override

@@ -481,7 +481,7 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
         final Object receiver = image.specialObjectsArray;
         final CompiledCodeObject method = makeMethod(makeHeaderWord(0, 0, 2, false, false), new Object[0], 137, 124);
         final ContextObject original = (ContextObject) runMethod(method, receiver);
-        final ContextObject copy = new ContextObject(original);
+        final ContextObject copy = ContextObject.createCopy(original);
         assertNotSame(original.getTruffleFrame(), copy.getTruffleFrame());
         assertSame(original, FrameAccess.getContext(original.getTruffleFrame()));
         assertSame(copy, FrameAccess.getContext(copy.getTruffleFrame()));
