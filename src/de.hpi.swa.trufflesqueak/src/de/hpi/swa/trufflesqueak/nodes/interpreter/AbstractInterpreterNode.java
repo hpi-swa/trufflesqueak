@@ -349,6 +349,20 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         return getByte(bc, pc) & 0xFF;
     }
 
+    /**
+     * Always {@code true} for valid pcs. Return bytecodes use {@code if (isValidPC(pc)) return ...;
+     * break;} instead of a plain {@code return}: javac cannot fold the condition, so the return
+     * handling stays inside the merge-exploded loop body, where {@code pc} is a PE constant, and
+     * partial evaluation folds the condition. A plain {@code return} would place the return handling
+     * behind a loop exit. MERGE_EXPLODE does not duplicate loop exits, so all return sites of the
+     * same kind would be merged and {@code pc} would become a phi (e.g., in
+     * {@link #handleBlockReturn}, which then fails to partially evaluate {@link #getData}).
+     */
+    @EarlyInline
+    protected static final boolean isValidPC(final int pc) {
+        return pc >= 0;
+    }
+
     @EarlyInline
     protected final Object handleReturn(final VirtualFrame frame, final int currentPC, final int pc, final int sp, final Object result, final int loopCounter) {
         if (loopCounter > 0) {

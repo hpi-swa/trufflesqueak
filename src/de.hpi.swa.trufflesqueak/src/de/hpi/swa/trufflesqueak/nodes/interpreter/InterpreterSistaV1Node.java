@@ -788,31 +788,59 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     }
                     case BC.RETURN_RECEIVER: {
                         state.reportLoopCountOnReturn(this);
-                        return handleReturn(frame, pc, pc + 1, vstate.sp, FrameAccess.getReceiver(frame));
+                        final Object result = handleReturn(frame, pc, pc + 1, vstate.sp, FrameAccess.getReceiver(frame));
+                        if (isValidPC(pc)) {
+                            return result;
+                        }
+                        break;
                     }
                     case BC.RETURN_TRUE: {
                         state.reportLoopCountOnReturn(this);
-                        return handleReturn(frame, pc, pc + 1, vstate.sp, BooleanObject.TRUE);
+                        final Object result = handleReturn(frame, pc, pc + 1, vstate.sp, BooleanObject.TRUE);
+                        if (isValidPC(pc)) {
+                            return result;
+                        }
+                        break;
                     }
                     case BC.RETURN_FALSE: {
                         state.reportLoopCountOnReturn(this);
-                        return handleReturn(frame, pc, pc + 1, vstate.sp, BooleanObject.FALSE);
+                        final Object result = handleReturn(frame, pc, pc + 1, vstate.sp, BooleanObject.FALSE);
+                        if (isValidPC(pc)) {
+                            return result;
+                        }
+                        break;
                     }
                     case BC.RETURN_NIL: {
                         state.reportLoopCountOnReturn(this);
-                        return handleReturn(frame, pc, pc + 1, vstate.sp, NilObject.SINGLETON);
+                        final Object result = handleReturn(frame, pc, pc + 1, vstate.sp, NilObject.SINGLETON);
+                        if (isValidPC(pc)) {
+                            return result;
+                        }
+                        break;
                     }
                     case BC.RETURN_TOP_FROM_METHOD: {
                         state.reportLoopCountOnReturn(this);
-                        return handleReturn(frame, pc, pc + 1, vstate.sp - 1, top(frame, vstate.sp));
+                        final Object result = handleReturn(frame, pc, pc + 1, vstate.sp - 1, top(frame, vstate.sp));
+                        if (isValidPC(pc)) {
+                            return result;
+                        }
+                        break;
                     }
                     case BC.RETURN_NIL_FROM_BLOCK: {
                         state.reportLoopCountOnReturn(this);
-                        return handleNormalReturn(frame, pc, pc + 1, vstate.sp, NilObject.SINGLETON);
+                        final Object result = handleNormalReturn(frame, pc, pc + 1, vstate.sp, NilObject.SINGLETON);
+                        if (isValidPC(pc)) {
+                            return result;
+                        }
+                        break;
                     }
                     case BC.RETURN_TOP_FROM_BLOCK: {
                         state.reportLoopCountOnReturn(this);
-                        return handleNormalReturn(frame, pc, pc + 1, vstate.sp - 1, top(frame, vstate.sp));
+                        final Object result = handleNormalReturn(frame, pc, pc + 1, vstate.sp - 1, top(frame, vstate.sp));
+                        if (isValidPC(pc)) {
+                            return result;
+                        }
+                        break;
                     }
                     case BC.EXT_NOP: {
                         pc = handleNoOperation(frame, pc, vstate, state);

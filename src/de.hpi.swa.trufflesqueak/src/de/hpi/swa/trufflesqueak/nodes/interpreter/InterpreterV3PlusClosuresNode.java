@@ -409,28 +409,52 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         break;
                     }
                     case BC.RETURN_RECEIVER: {
-                        return handleReturn(frame, currentPC, pc, sp, FrameAccess.getReceiver(frame),
+                        final Object result = handleReturn(frame, currentPC, pc, sp, FrameAccess.getReceiver(frame),
                                         CompilerDirectives.inCompiledCode() && CompilerDirectives.hasNextTier() ? loopCounter.value : counter);
+                        if (isValidPC(pc)) {
+                            return result;
+                        }
+                        break;
                     }
                     case BC.RETURN_TRUE: {
-                        return handleReturn(frame, currentPC, pc, sp, BooleanObject.TRUE,
+                        final Object result = handleReturn(frame, currentPC, pc, sp, BooleanObject.TRUE,
                                         CompilerDirectives.inCompiledCode() && CompilerDirectives.hasNextTier() ? loopCounter.value : counter);
+                        if (isValidPC(pc)) {
+                            return result;
+                        }
+                        break;
                     }
                     case BC.RETURN_FALSE: {
-                        return handleReturn(frame, currentPC, pc, sp, BooleanObject.FALSE,
+                        final Object result = handleReturn(frame, currentPC, pc, sp, BooleanObject.FALSE,
                                         CompilerDirectives.inCompiledCode() && CompilerDirectives.hasNextTier() ? loopCounter.value : counter);
+                        if (isValidPC(pc)) {
+                            return result;
+                        }
+                        break;
                     }
                     case BC.RETURN_NIL: {
-                        return handleReturn(frame, currentPC, pc, sp, NilObject.SINGLETON,
+                        final Object result = handleReturn(frame, currentPC, pc, sp, NilObject.SINGLETON,
                                         CompilerDirectives.inCompiledCode() && CompilerDirectives.hasNextTier() ? loopCounter.value : counter);
+                        if (isValidPC(pc)) {
+                            return result;
+                        }
+                        break;
                     }
                     case BC.RETURN_TOP_FROM_METHOD: {
-                        return handleReturn(frame, currentPC, pc, sp - 1, top(frame, sp),
+                        final Object result = handleReturn(frame, currentPC, pc, sp - 1, top(frame, sp),
                                         CompilerDirectives.inCompiledCode() && CompilerDirectives.hasNextTier() ? loopCounter.value : counter);
+                        if (isValidPC(pc)) {
+                            return result;
+                        }
+                        break;
                     }
                     case BC.RETURN_TOP_FROM_BLOCK: {
-                        return handleReturnFromBlock(frame, currentPC, pc, sp - 1, top(frame, sp),
+                        final Object result = handleReturnFromBlock(frame, currentPC, pc, sp - 1, top(frame, sp),
                                         CompilerDirectives.inCompiledCode() && CompilerDirectives.hasNextTier() ? loopCounter.value : counter);
+                        if (isValidPC(pc)) {
+                            return result;
+                        }
+                        break;
                     }
                     case BC.EXTENDED_PUSH: {
                         final byte descriptor = getByte(bc, pc++);
