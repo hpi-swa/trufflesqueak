@@ -135,17 +135,20 @@ public final class FrameAccess {
         frame.getArguments()[ArgumentIndices.CLOSURE_OR_NULL] = closure;
     }
 
+    /*
+     * Bytecode OSR: append the parent frame to a copy of the arguments, so that regular argument
+     * reads work in OSR frames (including the closure of block activations). Truffle may restore the
+     * parent frame several times (e.g., during stack walks), so restoring must not modify the array.
+     */
     public static Object[] storeParentFrameInArguments(final VirtualFrame parentFrame) {
-        assert !hasClosure(parentFrame);
-        final Object[] arguments = parentFrame.getArguments();
-        arguments[ArgumentIndices.CLOSURE_OR_NULL] = parentFrame;
+        final Object[] parentArguments = parentFrame.getArguments();
+        final Object[] arguments = Arrays.copyOf(parentArguments, parentArguments.length + 1);
+        arguments[parentArguments.length] = parentFrame;
         return arguments;
     }
 
     public static Frame restoreParentFrameFromArguments(final Object[] arguments) {
-        final Object frame = arguments[ArgumentIndices.CLOSURE_OR_NULL];
-        arguments[ArgumentIndices.CLOSURE_OR_NULL] = null;
-        return (Frame) frame;
+        return (Frame) arguments[arguments.length - 1];
     }
 
     public static Object getReceiver(final Frame frame) {
@@ -168,13 +171,15 @@ public final class FrameAccess {
         return ArgumentIndices.ARGUMENTS_START;
     }
 
+    /* Not derived from the arguments length, which includes the parent frame in OSR frames. */
     public static int getNumArguments(final Frame frame) {
-        return frame.getArguments().length - getArgumentStartIndex();
+        final BlockClosureObject closure = getClosure(frame);
+        return closure == null ? getCodeObject(frame).getNumArgs() : closure.getNumArgs() + closure.getNumCopied();
     }
 
     public static Object[] getReceiverAndArguments(final Frame frame) {
         CompilerAsserts.neverPartOfCompilation();
-        return Arrays.copyOfRange(frame.getArguments(), getReceiverStartIndex(), frame.getArguments().length);
+        return Arrays.copyOfRange(frame.getArguments(), getReceiverStartIndex(), getArgumentStartIndex() + getNumArguments(frame));
     }
 
     public static ContextObject getContext(final Frame frame) {
