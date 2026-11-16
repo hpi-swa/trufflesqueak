@@ -18,7 +18,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.trufflesqueak.util.OS;
 
-final class SqueakOpaqueSocketAddress {
+public final class SqueakOpaqueSocketAddress {
 
     private static final int SQUEAK_HEADER_SIZE = 8;
     private static final int IPV4_STRUCT_SIZE = 16;
@@ -44,14 +44,15 @@ final class SqueakOpaqueSocketAddress {
     }
 
     @TruffleBoundary
-    static long getOpaqueAddressSize(final byte[] rawIpAddress) {
+    public static long getOpaqueAddressSize(final byte[] rawIpAddress) {
         // 8 bytes for the addressHeader (sessionID + size)
         // 16 bytes for IPv4 sockaddr_in, 28 bytes for IPv6 sockaddr_in6
         return SQUEAK_HEADER_SIZE + (rawIpAddress.length == 4 ? IPV4_STRUCT_SIZE : IPV6_STRUCT_SIZE);
     }
 
     @TruffleBoundary
-    static byte[] pack(final InetAddress address, final int port, final int sessionID) {
+    public static byte[] pack(final InetAddress address, final int port, final int sessionID) {
+        validatePort(port);
         final boolean isIPv4 = address instanceof Inet4Address;
         final int structSize = isIPv4 ? IPV4_STRUCT_SIZE : IPV6_STRUCT_SIZE;
 
@@ -94,7 +95,7 @@ final class SqueakOpaqueSocketAddress {
     }
 
     @TruffleBoundary
-    static InetSocketAddress unpack(final byte[] opaqueArray, final int expectedSessionId) throws UnknownHostException {
+    public static InetSocketAddress unpack(final byte[] opaqueArray, final int expectedSessionId) throws UnknownHostException {
         if (opaqueArray.length < SQUEAK_HEADER_SIZE + IPV4_STRUCT_SIZE) {
             throw new IllegalArgumentException("Address array too small");
         }
@@ -146,7 +147,7 @@ final class SqueakOpaqueSocketAddress {
     }
 
     @TruffleBoundary
-    static int getPort(final byte[] opaqueArray, final int expectedSessionId) {
+    public static int getPort(final byte[] opaqueArray, final int expectedSessionId) {
         if (opaqueArray.length < MIN_PORT_CHECK_SIZE) {
             throw new IllegalArgumentException("Address array too small");
         }
@@ -168,7 +169,8 @@ final class SqueakOpaqueSocketAddress {
     }
 
     @TruffleBoundary
-    static void setPort(final byte[] opaqueArray, final int port, final int expectedSessionId) {
+    public static void setPort(final byte[] opaqueArray, final int port, final int expectedSessionId) {
+        validatePort(port);
         if (opaqueArray.length < MIN_PORT_CHECK_SIZE) {
             throw new IllegalArgumentException("Address array too small");
         }
@@ -190,7 +192,7 @@ final class SqueakOpaqueSocketAddress {
     }
 
     @TruffleBoundary
-    static String getIpAddressString(final byte[] bytes, final int expectedSessionId) {
+    public static String getIpAddressString(final byte[] bytes, final int expectedSessionId) {
         if (bytes == null) {
             return null;
         }
@@ -214,6 +216,12 @@ final class SqueakOpaqueSocketAddress {
             return addr.getHostAddress();
         } catch (final UnknownHostException e) {
             return null;
+        }
+    }
+
+    private static void validatePort(final int port) {
+        if (port < 0 || port > 0xFFFF) {
+            throw new IllegalArgumentException("Port out of range: " + port);
         }
     }
 

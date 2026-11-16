@@ -31,6 +31,7 @@ final class SqueakTCPSocket extends SqueakSocket {
     private InetSocketAddress boundAddress;
     private boolean remoteClosed;
 
+    private final ByteBuffer peekBuffer = ByteBuffer.allocate(1);
     private int peekedByte = -1; // -1 indicates no byte is currently peeked
 
     protected SqueakTCPSocket(final SqueakSocketContext context, final long netType, final long statusSema, final long readSema, final long writeSema) throws IOException {
@@ -59,7 +60,7 @@ final class SqueakTCPSocket extends SqueakSocket {
 
     @Override
     protected SelectableChannel asSelectableChannel() {
-        return listening ? serverChannel : clientChannel;
+        return clientChannel != null ? clientChannel : serverChannel;
     }
 
     @Override
@@ -121,7 +122,7 @@ final class SqueakTCPSocket extends SqueakSocket {
         clientChannel = serverChannel.accept();
         if (clientChannel != null) {
             configure(clientChannel);
-            context.register(clientChannel, SelectionKey.OP_READ | SelectionKey.OP_WRITE, this);
+            context.register(clientChannel, SelectionKey.OP_READ, this);
             return Status.Connected;
         }
 
@@ -176,15 +177,16 @@ final class SqueakTCPSocket extends SqueakSocket {
 
     @Override
     protected void bindTo(final String address, final int port) throws IOException {
-        boundAddress = socketAddressFor(address, port);
-        if (clientChannel != null && !clientChannel.socket().isBound()) {
-            clientChannel.bind(boundAddress);
-
-            // Capture the actual bound address. If port 0 was requested, this ensures
-            // the assigned ephemeral port is preserved for later when transitioning
-            // to a ServerSocketChannel during listenBacklog().
-            boundAddress = castAddress(clientChannel.getLocalAddress());
+        if (listening || clientChannel == null || clientChannel.socket().isBound()) {
+            throw new IOException("Socket is already bound");
         }
+        boundAddress = socketAddressFor(address, port);
+        clientChannel.bind(boundAddress);
+
+        // Capture the actual bound address. If port 0 was requested, this ensures
+        // the assigned ephemeral port is preserved for later when transitioning
+        // to a ServerSocketChannel during listenBacklog().
+        boundAddress = castAddress(clientChannel.getLocalAddress());
     }
 
     @Override
@@ -302,11 +304,11 @@ final class SqueakTCPSocket extends SqueakSocket {
     }
 
     private boolean tryPeekByte() {
-        final ByteBuffer buf = ByteBuffer.allocate(1);
+        peekBuffer.clear();
         try {
-            final int read = clientChannel.read(buf);
+            final int read = clientChannel.read(peekBuffer);
             if (read > 0) {
-                peekedByte = buf.get(0) & 0xFF; // Store the unsigned byte
+                peekedByte = peekBuffer.get(0) & 0xFF; // Store the unsigned byte
                 return true;
             }
 

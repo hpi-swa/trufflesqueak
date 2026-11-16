@@ -22,6 +22,7 @@ import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -51,6 +52,8 @@ public final class Resolver {
         }
     }
 
+    private static final byte[] EMPTY_BYTES = new byte[0];
+
     private final SqueakSocketContext context;
 
     private boolean initialized;
@@ -58,8 +61,8 @@ public final class Resolver {
     private Runnable statusChangeCallback;
 
     private List<AddressInfo> currentAddressInfoList;
-    private String lastHostNameInfo = "";
-    private String lastServiceInfo = "";
+    private byte[] lastHostNameInfoBytes = EMPTY_BYTES;
+    private byte[] lastServiceInfoBytes = EMPTY_BYTES;
 
     private final InetAddress[] wildcardAddresses;
     private final InetAddress[] loopbackAddresses;
@@ -112,7 +115,8 @@ public final class Resolver {
         initialized = true;
         statusChangeCallback = null;
         currentAddressInfoList = null;
-        lastHostNameInfo = "";
+        lastHostNameInfoBytes = EMPTY_BYTES;
+        lastServiceInfoBytes = EMPTY_BYTES;
     }
 
     void setStatusChangeCallback(final Runnable callback) {
@@ -208,19 +212,30 @@ public final class Resolver {
         final int scopeIndex = host.indexOf('%');
         final int ipEnd = scopeIndex == -1 ? host.length() : scopeIndex;
 
+        boolean hasDot = false;
+        boolean hasColon = false;
+
         // Validate the base IP address (hex, colons, dots)
         for (int i = 0; i < ipEnd; i++) {
             final char c = Character.toLowerCase(host.charAt(i));
-            final boolean isValidIPChar = Character.isDigit(c) || c == '.' || c == ':' || (c >= 'a' && c <= 'f');
-            if (!isValidIPChar) {
+            if (c == '.') {
+                hasDot = true;
+            } else if (c == ':') {
+                hasColon = true;
+            } else if (!Character.isDigit(c) && !(c >= 'a' && c <= 'f')) {
                 return false;
             }
         }
 
+        // Require at least one '.' or ':' so hex-only hostnames (e.g. "deadbeef") are rejected
+        if (!hasDot && !hasColon) {
+            return false;
+        }
+
         // Validate the scope identifier (alphanumeric, e.g., "eth0" or "3")
         if (scopeIndex != -1) {
-            if (scopeIndex == host.length() - 1) {
-                return false; // Trailing % with no scope
+            if (!hasColon || scopeIndex == host.length() - 1) {
+                return false; // Trailing % with no scope or scope on IPv4
             }
             for (int i = scopeIndex + 1; i < host.length(); i++) {
                 if (!Character.isLetterOrDigit(host.charAt(i))) {
@@ -352,26 +367,30 @@ public final class Resolver {
             final InetSocketAddress addr = SqueakOpaqueSocketAddress.unpack(opaqueArray, context.getSessionID());
             final InetAddress ip = addr.getAddress();
 
+            final String hostInfo;
             if ((flags & SQ_SOCKET_NUMERIC) != 0 || ip.isAnyLocalAddress()) {
                 if (ip.isAnyLocalAddress() && ip instanceof Inet6Address) {
-                    lastHostNameInfo = "::";
+                    hostInfo = "::";
                 } else {
-                    lastHostNameInfo = ip.getHostAddress();
+                    hostInfo = ip.getHostAddress();
                 }
             } else {
-                lastHostNameInfo = ip.getHostName();
+                hostInfo = ip.getHostName();
             }
 
             final int port = addr.getPort();
+            final String serviceInfo;
             if ((flags & SQ_SOCKET_NUMERIC) != 0) {
-                lastServiceInfo = String.valueOf(port);
+                serviceInfo = String.valueOf(port);
             } else {
                 final String serviceName = CachedServicesResolver.resolveServiceName(port);
-                lastServiceInfo = serviceName != null ? serviceName : String.valueOf(port);
+                serviceInfo = serviceName != null ? serviceName : String.valueOf(port);
             }
+            lastHostNameInfoBytes = hostInfo.getBytes(StandardCharsets.UTF_8);
+            lastServiceInfoBytes = serviceInfo.getBytes(StandardCharsets.UTF_8);
         } catch (Exception e) {
-            lastHostNameInfo = "";
-            lastServiceInfo = "";
+            lastHostNameInfoBytes = EMPTY_BYTES;
+            lastServiceInfoBytes = EMPTY_BYTES;
         } finally {
             triggerStatusChange();
         }
@@ -379,22 +398,22 @@ public final class Resolver {
 
     @TruffleBoundary
     int getNameInfoHostSize() {
-        return lastHostNameInfo.length();
+        return lastHostNameInfoBytes.length;
     }
 
     @TruffleBoundary
     byte[] getNameInfoHostResult() {
-        return lastHostNameInfo.getBytes();
+        return lastHostNameInfoBytes;
     }
 
     @TruffleBoundary
     int getNameInfoServiceSize() {
-        return lastServiceInfo.length();
+        return lastServiceInfoBytes.length;
     }
 
     @TruffleBoundary
     byte[] getNameInfoServiceResult() {
-        return lastServiceInfo.getBytes();
+        return lastServiceInfoBytes;
     }
 
     /* -------------------------------------------------------------------------

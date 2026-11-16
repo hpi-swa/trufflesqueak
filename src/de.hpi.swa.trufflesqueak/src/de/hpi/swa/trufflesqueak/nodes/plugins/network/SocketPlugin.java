@@ -33,6 +33,7 @@ import de.hpi.swa.trufflesqueak.nodes.plugins.network.SqueakOpaqueSocketAddress.
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
@@ -175,7 +176,10 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
             final byte[] buffer = socketAddress.getByteStorage();
-            System.arraycopy(bytes, 0, buffer, 0, Math.min(bytes.length, buffer.length));
+            if (buffer.length < bytes.length) {
+                throw PrimitiveFailed.andTransferToInterpreter();
+            }
+            System.arraycopy(bytes, 0, buffer, 0, bytes.length);
             return receiver;
         }
     }
@@ -276,7 +280,11 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 final InetSocketAddress localAddr = getSocketOrPrimFail(sd).getLocalSocketAddress();
                 final AddressInfo info = new AddressInfo(localAddr.getAddress(), localAddr.getPort(), 0, 0, 0);
                 final byte[] opaqueBytes = info.toSockaddrBytes(getSocketContext().getSessionID());
-                System.arraycopy(opaqueBytes, 0, address.getByteStorage(), 0, Math.min(opaqueBytes.length, address.getByteLength()));
+                final byte[] buffer = address.getByteStorage();
+                if (buffer.length < opaqueBytes.length) {
+                    throw PrimitiveFailed.andTransferToInterpreter();
+                }
+                System.arraycopy(opaqueBytes, 0, buffer, 0, opaqueBytes.length);
             } catch (final Exception e) {
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
@@ -297,7 +305,11 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 }
                 final AddressInfo info = new AddressInfo(remoteAddr.getAddress(), remoteAddr.getPort(), 0, 0, 0);
                 final byte[] opaqueBytes = info.toSockaddrBytes(getSocketContext().getSessionID());
-                System.arraycopy(opaqueBytes, 0, address.getByteStorage(), 0, Math.min(opaqueBytes.length, address.getByteLength()));
+                final byte[] buffer = address.getByteStorage();
+                if (buffer.length < opaqueBytes.length) {
+                    throw PrimitiveFailed.andTransferToInterpreter();
+                }
+                System.arraycopy(opaqueBytes, 0, buffer, 0, opaqueBytes.length);
             } catch (final Exception e) {
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
@@ -558,7 +570,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketAddressGetPort")
-    protected abstract static class PrimSocketAddressGetPortNode extends AbstractNetworkPrimitiveNode implements Primitive0 {
+    protected abstract static class PrimSocketAddressGetPortNode extends AbstractNetworkPrimitiveNode implements Primitive0WithFallback {
         @Specialization(guards = "address.isByteType()")
         @TruffleBoundary(transferToInterpreterOnException = false)
         protected final long doGetPort(final NativeObject address) {

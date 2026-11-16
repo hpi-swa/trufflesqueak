@@ -8,9 +8,12 @@ matchingRefs := OrderedCollection new.
 
 socketClasses do: [ :cls |
     cls selectorsAndMethodsDo: [ :selector :method |
-        ((method sendsSelector: #forMilliseconds:) or: [ method sendsSelector: #wait ])
+        ((method sendsSelector: #forMilliseconds:)
+            or: [ (method sendsSelector: #milliSeconds)
+            or: [ (method sendsSelector: #milliseconds)
+            or: [ method sendsSelector: #wait ] ] ])
             ifTrue: [
-                (method literals anySatisfy: [ :lit | lit isInteger and: [ lit < 100 ] ])
+                (method allLiterals anySatisfy: [ :lit | lit isInteger and: [ lit < 100 ] ])
                     ifTrue: [ matchingRefs add: (MethodReference class: cls selector: selector) ] ] ] ].
 
 "Uncomment to browse changed methods."

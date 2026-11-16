@@ -27,7 +27,6 @@ public final class CachedServicesResolver {
         }
     }
 
-    private static final Path DEFAULT_SERVICES_PATH = detectServicesPath();
     private static final Map<ServiceKey, Integer> CACHE = new ConcurrentHashMap<>();
     private static final Map<Integer, String> REVERSE_CACHE = new ConcurrentHashMap<>();
     private static volatile boolean initialized;
@@ -73,15 +72,16 @@ public final class CachedServicesResolver {
      * Safe to call multiple times or invoke concurrently.
      */
     public static synchronized void initializeCache(final Path customPath) {
-        final Path targetPath = (customPath != null) ? customPath : DEFAULT_SERVICES_PATH;
+        final Path targetPath = (customPath != null) ? customPath : detectServicesPath();
         final Map<ServiceKey, Integer> freshMap = new HashMap<>();
         final Map<Integer, String> freshReverseMap = new HashMap<>();
+        final Set<Integer> tcpReversePorts = new HashSet<>();
 
         if (Files.exists(targetPath)) {
             try (BufferedReader reader = Files.newBufferedReader(targetPath)) {
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    parseServiceLine(line, freshMap, freshReverseMap);
+                    parseServiceLine(line, freshMap, freshReverseMap, tcpReversePorts);
                 }
             } catch (IOException e) {
                 // Ignore exception and fall through to the empty-check below
@@ -116,7 +116,7 @@ public final class CachedServicesResolver {
         }
     }
 
-    private static void parseServiceLine(final String line, final Map<ServiceKey, Integer> freshMap, final Map<Integer, String> freshReverseMap) {
+    private static void parseServiceLine(final String line, final Map<ServiceKey, Integer> freshMap, final Map<Integer, String> freshReverseMap, final Set<Integer> tcpReversePorts) {
         String processedLine = line.trim();
         if (processedLine.isEmpty() || processedLine.startsWith("#")) {
             return;
@@ -151,8 +151,14 @@ public final class CachedServicesResolver {
         // Map primary service name
         freshMap.putIfAbsent(new ServiceKey(canonicalName, protocol), port);
 
-        // Add reverse lookup for primary name
-        freshReverseMap.putIfAbsent(port, canonicalName);
+        // Add reverse lookup for primary name, preferring TCP over non-TCP protocols
+        if ("tcp".equalsIgnoreCase(protocol)) {
+            if (tcpReversePorts.add(port)) {
+                freshReverseMap.put(port, canonicalName);
+            }
+        } else {
+            freshReverseMap.putIfAbsent(port, canonicalName);
+        }
 
         // Map all aliases listed in remaining columns
         for (int i = 2; i < tokens.length; i++) {

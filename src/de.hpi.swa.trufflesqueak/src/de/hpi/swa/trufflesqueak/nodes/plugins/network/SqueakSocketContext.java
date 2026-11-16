@@ -16,7 +16,10 @@ import java.nio.channels.ClosedSelectorException;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
+import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.concurrent.locks.LockSupport;
+import java.util.logging.Level;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsState;
@@ -76,15 +79,20 @@ public final class SqueakSocketContext implements Closeable {
     @Override
     public void close() {
         if (selector != null && selector.isOpen()) {
-            // Close all registered channels to release their OS file descriptors
-            for (final SelectionKey key : selector.keys()) {
-                try {
-                    if (key.channel().isOpen()) {
-                        key.channel().close();
+            selector.wakeup();
+            // Snapshot keys before closing channels to avoid ConcurrentModificationException with the poll thread
+            try {
+                for (final SelectionKey key : new ArrayList<>(selector.keys())) {
+                    try {
+                        if (key.channel().isOpen()) {
+                            key.channel().close();
+                        }
+                    } catch (final IOException ignored) {
+                        // Safely ignore errors during teardown
                     }
-                } catch (final IOException e) {
-                    // Safely ignore errors during teardown
                 }
+            } catch (final ClosedSelectorException | ConcurrentModificationException ignored) {
+                // Selector closed or modified concurrently during teardown
             }
 
             try {
@@ -131,8 +139,10 @@ public final class SqueakSocketContext implements Closeable {
                 }
             }
             selector.selectedKeys().clear();
-        } catch (final IOException | CancelledKeyException | ClosedSelectorException e) {
-            // Safely ignore dropped connections, closed channels, or concurrent selector shutdown
+        } catch (final CancelledKeyException | ClosedSelectorException ignored) {
+            // Safely ignore closed channels or concurrent selector shutdown
+        } catch (final IOException e) {
+            LogUtils.SOCKET.log(Level.FINE, "Selector poll failed", e);
         }
     }
 
@@ -140,8 +150,8 @@ public final class SqueakSocketContext implements Closeable {
         if (channel == null) {
             return;
         }
-        selector.wakeup();
         channel.register(selector, ops, socket);
+        selector.wakeup();
     }
 
     public void resumeInterest(final SelectableChannel channel, final int ops) {
