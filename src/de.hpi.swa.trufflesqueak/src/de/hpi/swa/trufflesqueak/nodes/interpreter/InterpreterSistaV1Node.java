@@ -2731,7 +2731,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                 final int counter = CompilerDirectives.inCompiledCode() ? ++state.loopCounter.value : ++state.interpreterLoopCounter;
                 if (CompilerDirectives.injectBranchProbability(LoopCounter.CHECK_LOOP_PROBABILITY, counter >= LoopCounter.CHECK_LOOP_STRIDE)) {
                     LoopNode.reportLoopCount(this, counter);
-                    if (CompilerDirectives.inInterpreter() && !isBlock && BytecodeOSRNode.pollOSRBackEdge(this, counter)) {
+                    if (CompilerDirectives.inInterpreter() && BytecodeOSRNode.pollOSRBackEdge(this, counter)) {
                         final Object osrReturnValue = BytecodeOSRNode.tryOSR(this, ((vstate.sp & 0xFF) << 16) | nextPC, null, null, frame);
                         if (osrReturnValue != null) {
                             assert !FrameAccess.hasModifiedSender(frame);
