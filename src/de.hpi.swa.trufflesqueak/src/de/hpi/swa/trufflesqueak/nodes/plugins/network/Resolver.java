@@ -204,47 +204,65 @@ public final class Resolver {
      * Asynchronous Parallel Address Lookup Engine
      * ------------------------------------------------------------------------- */
 
+    /**
+     * Performs a fast lexical check to verify that {@code host} is a numeric IP literal (IPv4, IPv6,
+     * or mixed IPv4-mapped IPv6 such as {@code ::ffff:127.0.0.1}) rather than a DNS hostname:
+     * <ul>
+     * <li>Must be non-null and non-empty.</li>
+     * <li>The base address (before any {@code '%'}) must contain only hex digits ({@code 0-9},
+     * {@code a-f}, {@code A-F}), {@code '.'}, and {@code ':'}.</li>
+     * <li>The base address must include at least one {@code '.'} or {@code ':'} so hex-only
+     * hostnames (e.g., {@code "deadbeef"}) are rejected; both may appear together in mixed IPv6
+     * literals.</li>
+     * <li>An optional {@code %<zone>} scope suffix is permitted only on IPv6 literals (requiring
+     * {@code ':'}) and must consist of one or more alphanumeric characters (e.g., {@code %eth0} or
+     * {@code %3}).</li>
+     * </ul>
+     * Full structural validation of octets and hextets is subsequently handled by
+     * {@link InetAddress#getAllByName(String)}.
+     */
     private static boolean isIPLiteral(final String host) {
         if (host == null || host.isEmpty()) {
             return false;
         }
-
         final int scopeIndex = host.indexOf('%');
-        final int ipEnd = scopeIndex == -1 ? host.length() : scopeIndex;
+        if (scopeIndex != -1) {
+            return isValidIPBase(host, scopeIndex, true) && isValidScope(host, scopeIndex);
+        }
+        return isValidIPBase(host, host.length(), false);
+    }
 
+    private static boolean isValidIPBase(final String host, final int end, final boolean requireColon) {
         boolean hasDot = false;
         boolean hasColon = false;
-
-        // Validate the base IP address (hex, colons, dots)
-        for (int i = 0; i < ipEnd; i++) {
-            final char c = Character.toLowerCase(host.charAt(i));
+        for (int i = 0; i < end; i++) {
+            final char c = host.charAt(i);
             if (c == '.') {
                 hasDot = true;
             } else if (c == ':') {
                 hasColon = true;
-            } else if (!Character.isDigit(c) && !(c >= 'a' && c <= 'f')) {
+            } else if (!isHexDigit(c)) {
                 return false;
             }
         }
+        // Require ':' when scoped (IPv6 only), or at least one '.' or ':' to reject hex-only hostnames
+        return requireColon ? hasColon : (hasDot || hasColon);
+    }
 
-        // Require at least one '.' or ':' so hex-only hostnames (e.g. "deadbeef") are rejected
-        if (!hasDot && !hasColon) {
+    private static boolean isValidScope(final String host, final int scopeIndex) {
+        if (scopeIndex == host.length() - 1) {
             return false;
         }
-
-        // Validate the scope identifier (alphanumeric, e.g., "eth0" or "3")
-        if (scopeIndex != -1) {
-            if (!hasColon || scopeIndex == host.length() - 1) {
-                return false; // Trailing % with no scope or scope on IPv4
-            }
-            for (int i = scopeIndex + 1; i < host.length(); i++) {
-                if (!Character.isLetterOrDigit(host.charAt(i))) {
-                    return false;
-                }
+        for (int i = scopeIndex + 1; i < host.length(); i++) {
+            if (!Character.isLetterOrDigit(host.charAt(i))) {
+                return false;
             }
         }
-
         return true;
+    }
+
+    private static boolean isHexDigit(final char c) {
+        return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
     }
 
     private InetAddress[] resolveAddresses(final String hostName, final int flags) throws UnknownHostException {

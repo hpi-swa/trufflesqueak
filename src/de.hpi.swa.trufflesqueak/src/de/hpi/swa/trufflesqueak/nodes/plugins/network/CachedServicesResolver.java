@@ -117,15 +117,9 @@ public final class CachedServicesResolver {
     }
 
     private static void parseServiceLine(final String line, final Map<ServiceKey, Integer> freshMap, final Map<Integer, String> freshReverseMap, final Set<Integer> tcpReversePorts) {
-        String processedLine = line.trim();
-        if (processedLine.isEmpty() || processedLine.startsWith("#")) {
+        final String processedLine = stripComment(line);
+        if (processedLine.isEmpty()) {
             return;
-        }
-
-        // Strip inline comments
-        final int commentIndex = processedLine.indexOf('#');
-        if (commentIndex != -1) {
-            processedLine = processedLine.substring(0, commentIndex).trim();
         }
 
         final String[] tokens = processedLine.split("\\s+");
@@ -133,7 +127,6 @@ public final class CachedServicesResolver {
             return;
         }
 
-        final String canonicalName = tokens[0];
         final String[] portAndProto = tokens[1].split("/");
         if (portAndProto.length != 2) {
             return;
@@ -142,27 +135,36 @@ public final class CachedServicesResolver {
         final int port;
         try {
             port = Integer.parseInt(portAndProto[0]);
-        } catch (NumberFormatException ignored) {
+        } catch (final NumberFormatException ignored) {
             return;
         }
 
+        final String canonicalName = tokens[0];
         final String protocol = portAndProto[1];
 
-        // Map primary service name
+        // Map primary service name and all aliases
         freshMap.putIfAbsent(new ServiceKey(canonicalName, protocol), port);
+        for (int i = 2; i < tokens.length; i++) {
+            freshMap.putIfAbsent(new ServiceKey(tokens[i], protocol), port);
+        }
 
         // Add reverse lookup for primary name, preferring TCP over non-TCP protocols
+        updateReverseCache(freshReverseMap, tcpReversePorts, protocol, port, canonicalName);
+    }
+
+    private static String stripComment(final String line) {
+        final int commentIndex = line.indexOf('#');
+        final String withoutComment = commentIndex == -1 ? line : line.substring(0, commentIndex);
+        return withoutComment.trim();
+    }
+
+    private static void updateReverseCache(final Map<Integer, String> freshReverseMap, final Set<Integer> tcpReversePorts, final String protocol, final int port, final String canonicalName) {
         if ("tcp".equalsIgnoreCase(protocol)) {
             if (tcpReversePorts.add(port)) {
                 freshReverseMap.put(port, canonicalName);
             }
         } else {
             freshReverseMap.putIfAbsent(port, canonicalName);
-        }
-
-        // Map all aliases listed in remaining columns
-        for (int i = 2; i < tokens.length; i++) {
-            freshMap.putIfAbsent(new ServiceKey(tokens[i], protocol), port);
         }
     }
 

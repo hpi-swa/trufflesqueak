@@ -77,7 +77,7 @@ public abstract class SqueakSocket {
 
     protected volatile boolean dataAvailable;
     protected volatile boolean writeReady = true;
-    protected volatile boolean connectedSynchronously = false;
+    protected volatile boolean connectedSynchronously;
 
     protected SqueakSocket(final SqueakSocketContext context, final long netType, final long statusSema, final long readSema, final long writeSema) {
         this.context = context;
