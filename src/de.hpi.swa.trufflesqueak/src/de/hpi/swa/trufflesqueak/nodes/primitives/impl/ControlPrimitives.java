@@ -11,7 +11,6 @@ import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.util.List;
 import java.util.logging.Level;
-
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanException;
 import javax.management.MBeanServer;
@@ -39,7 +38,6 @@ import com.oracle.truffle.api.nodes.DenyReplace;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
-
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
@@ -1196,7 +1194,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(replaces = "doCached")
         protected static final Object doExecute(final VirtualFrame frame, final Object receiver, final Object arg1, final CompiledCodeObject method,
                         @Cached final TryPrimitive1Node tryPrimitiveNode,
-                        @Cached final GetOrCreateContextWithoutFrameNode getOrCreateContextWithoutFrameNode,
                         @Cached final IndirectCallNode callNode) {
             checkNumArguments(method, 1);
             final Object result = tryPrimitiveNode.execute(frame, method, receiver, arg1);

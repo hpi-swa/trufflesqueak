@@ -24,7 +24,6 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeVisitor;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
-
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.AbstractStandardSendReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.CannotReturnToTarget;
@@ -45,7 +44,6 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0NodeGen;
-import de.hpi.swa.trufflesqueak.nodes.context.GetOrCreateContextWithFrameNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.AbstractDispatchNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector0NodeFactory.Dispatch0NodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector1NodeFactory.Dispatch1NodeGen;
@@ -269,20 +267,22 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
      * Contexts
      */
 
-    /** Inlined version of {@link GetOrCreateContextWithFrameNode}. */
+    /**
+     * Inlined version of {@link FrameAccess#getOrCreateContextWithFrame(VirtualFrame)}.
+     */
     protected final ContextObject getOrCreateContext(final VirtualFrame frame, final int currentPC) {
         final byte profile = getProfile(currentPC);
         final ContextObject context = FrameAccess.getContext(frame);
-        if (context != null) {
+        if (context == null) {
             enter(currentPC, profile, BRANCH1);
+            return ContextObject.createMaterialized(frame.materialize());
+        } else {
+            enter(currentPC, profile, BRANCH2);
             if (!context.hasTruffleFrame()) {
-                enter(currentPC, profile, BRANCH2);
+                enter(currentPC, profile, BRANCH3);
                 context.setTruffleFrame(frame.materialize());
             }
             return context;
-        } else {
-            enter(currentPC, profile, BRANCH3);
-            return ContextObject.createMaterialized(frame.materialize());
         }
     }
 
@@ -318,7 +318,9 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         }
     }
 
-    /** Profiled version of {@link CompiledCodeObject#getAndResolveLiteral(long)}. */
+    /**
+     * Profiled version of {@link CompiledCodeObject#getAndResolveLiteral(long)}.
+     */
     public final Object getAndResolveLiteral(final int currentPC, final long longIndex) {
         final Object litVar = code.getLiteral(longIndex);
         if (litVar instanceof final AbstractSqueakObjectWithClassAndHash obj) {
@@ -412,7 +414,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
      * Walk the sender chain starting at the given frame sender and terminating at homeContext.
      *
      * @return null if homeContext is not on sender chain; return first marked Context if found;
-     *         raise NLR otherwise
+     * raise NLR otherwise
      */
     private static ContextObject firstUnwindMarkedOrThrowNLR(final AbstractSqueakObject senderOrNil, final ContextObject homeContext, final Object returnValue) {
         AbstractSqueakObject currentLink = senderOrNil;
@@ -441,7 +443,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     private static CannotReturnToTarget cannotReturn(final VirtualFrame frame, final int pc, final int sp, final Object returnValue) {
         CompilerDirectives.transferToInterpreter();
         FrameAccess.externalizePCAndSP(frame, pc, sp);
-        throw new CannotReturnToTarget(returnValue, GetOrCreateContextWithFrameNode.executeUncached(frame));
+        throw new CannotReturnToTarget(returnValue, FrameAccess.getOrCreateContextWithFrame(frame));
     }
 
     protected final void ensureContextReceiverIsNotActive(final VirtualFrame frame, final int pc, final int sp) {
@@ -453,7 +455,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
                 // Truffle stack and force all contexts to the heap.
                 CompilerDirectives.transferToInterpreter();
                 FrameAccess.externalizePCAndSP(frame, pc, sp);
-                final ContextObject activeContext = GetOrCreateContextWithFrameNode.executeUncached(frame);
+                final ContextObject activeContext = FrameAccess.getOrCreateContextWithFrame(frame);
                 AbstractPointersObjectWriteNode.executeUncached(getContext().getActiveProcessSlow(), PROCESS.SUSPENDED_CONTEXT, activeContext);
                 throw ProcessSwitch.SINGLETON;
             }

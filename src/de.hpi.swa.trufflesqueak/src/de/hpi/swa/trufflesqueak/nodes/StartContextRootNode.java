@@ -14,7 +14,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.nodes.RootNode;
-
+import com.oracle.truffle.api.profiles.BranchProfile;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.CannotReturnToTarget;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
@@ -25,7 +25,6 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
-import de.hpi.swa.trufflesqueak.nodes.context.GetOrCreateContextWithFrameNode;
 import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsNode.CheckForInterruptsQuickNode;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -33,13 +32,14 @@ import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 @NodeInfo(language = SqueakLanguageConfig.ID)
 public final class StartContextRootNode extends AbstractRootNode {
+    private final BranchProfile getOrCreateContextProfile = BranchProfile.create();
+
     private final int initialPC;
     @CompilationFinal private int initialSP;
     @CompilationFinal private byte numArgs;
     @CompilationFinal private Assumption doesNotNeedThisContext;
 
     @Child private CheckForInterruptsQuickNode interruptHandlerNode;
-    @Child private GetOrCreateContextWithFrameNode getOrCreateContextNode;
 
     public StartContextRootNode(final SqueakImageContext image, final CompiledCodeObject code) {
         super(image, code);
@@ -54,7 +54,6 @@ public final class StartContextRootNode extends AbstractRootNode {
         numArgs = original.numArgs;
         doesNotNeedThisContext = original.doesNotNeedThisContext;
         interruptHandlerNode = CheckForInterruptsQuickNode.createForSend(getCode());
-        getOrCreateContextNode = null;
     }
 
     @Override
@@ -68,7 +67,7 @@ public final class StartContextRootNode extends AbstractRootNode {
                 if (image.enteringContextExceedsDepth()) {
                     CompilerDirectives.transferToInterpreter();
                     // Suspend current context and throw ProcessSwitch to unwind Java stack and resume
-                    final ContextObject activeContext = GetOrCreateContextWithFrameNode.executeUncached(frame);
+                    final ContextObject activeContext = FrameAccess.getOrCreateContextWithFrame(frame);
                     AbstractPointersObjectWriteNode.executeUncached(image.getActiveProcessSlow(), PROCESS.SUSPENDED_CONTEXT, activeContext);
                     throw ProcessSwitch.SINGLETON;
                 } else {
@@ -85,8 +84,8 @@ public final class StartContextRootNode extends AbstractRootNode {
             }
             return interpreterNode.execute(frame, initialPC, initialSP);
         } catch (final NonVirtualReturn | ProcessSwitch | CannotReturnToTarget nvr) {
-            /* {@link getGetOrCreateContextNode()} acts as {@link BranchProfile} */
-            getGetOrCreateContextNode().executeGet(frame);
+            getOrCreateContextProfile.enter();
+            FrameAccess.getOrCreateContextWithFrame(frame);
             throw nvr;
         } finally {
             if (inInterpreterOrCompilationRoot) {
@@ -115,7 +114,7 @@ public final class StartContextRootNode extends AbstractRootNode {
     @ExplodeLoop
     private void initializeFrame(final VirtualFrame frame) {
         if (!doesNotNeedThisContext.isValid()) {
-            getGetOrCreateContextNode().executeGet(frame);
+            ContextObject.createMaterialized(frame.materialize());
         } else if (CompilerDirectives.inCompiledCode()) {
             /*
              * Eagerly allocate a (frameless) context in compiled code. Otherwise, the first send
@@ -141,14 +140,6 @@ public final class StartContextRootNode extends AbstractRootNode {
         for (int i = 0; i < numTempSlots; i++) {
             frame.setObjectStatic(slotIndex++, NilObject.SINGLETON);
         }
-    }
-
-    private GetOrCreateContextWithFrameNode getGetOrCreateContextNode() {
-        if (getOrCreateContextNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            getOrCreateContextNode = insert(GetOrCreateContextWithFrameNode.create());
-        }
-        return getOrCreateContextNode;
     }
 
     @Override

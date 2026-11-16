@@ -22,7 +22,6 @@ import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
-
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
@@ -184,6 +183,18 @@ public final class FrameAccess {
     public static ContextObject getOrCreateContextWithoutFrame(final VirtualFrame frame) {
         final ContextObject context = getContext(frame);
         return context != null ? context : ContextObject.createVirtual(frame);
+    }
+
+    public static ContextObject getOrCreateContextWithFrame(final VirtualFrame frame) {
+        final ContextObject context = FrameAccess.getContext(frame);
+        if (context == null) {
+            return ContextObject.createMaterialized(frame.materialize());
+        } else {
+            if (!context.hasTruffleFrame()) {
+                context.setTruffleFrame(frame.materialize());
+            }
+            return context;
+        }
     }
 
     public static boolean hasModifiedSender(final VirtualFrame frame) {
