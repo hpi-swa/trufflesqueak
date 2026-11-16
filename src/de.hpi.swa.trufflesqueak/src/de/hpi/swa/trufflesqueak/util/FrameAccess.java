@@ -392,6 +392,10 @@ public final class FrameAccess {
         frame.setObjectStatic(SlotIndices.STACK_START + sp, value);
     }
 
+    public static void clearStackValue(final Frame frame, final int sp) {
+        frame.clearObjectStatic(SlotIndices.STACK_START + sp);
+    }
+
     public static void terminateFrame(final Frame frame) {
         setInstructionPointer(frame, ContextObject.NIL_PC_STACK_NOT_NIL_VALUE);
         setSender(frame, NilObject.SINGLETON);

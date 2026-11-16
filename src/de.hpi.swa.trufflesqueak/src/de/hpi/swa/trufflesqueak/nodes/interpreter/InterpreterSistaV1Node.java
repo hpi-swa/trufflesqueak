@@ -1998,8 +1998,8 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     @EarlyInline
     @SuppressWarnings("static-method")
     @BytecodeInterpreterHandler(value = BC.POP_STACK, safepoint = false)
-    private int handlePopStack(@SuppressWarnings("unused") final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
-        --vstate.sp;
+    private int handlePopStack(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        clearStackSlot(frame, --vstate.sp);
         return pc + 1;
     }
 
