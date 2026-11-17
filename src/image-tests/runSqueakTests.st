@@ -23,6 +23,11 @@
         ^ FileStream stdout'
             classified: 'patched'.
 
+    "Without mouse input (e.g., when headless), the last event of the hand remains at 0@0, where
+    tests create morphs. Move it away so that such morphs are not hovered (see
+    MorphicToolBuilderTests>>#testGetButtonColor)."
+    Project current world primaryHand lastEvent setPosition: -1 @ -1.
+
     isLinux := Smalltalk platformName = 'unix'.
     isMacOS := Smalltalk platformName = 'Mac OS'.
     isWin := Smalltalk platformName = 'Win32'.
@@ -175,7 +180,6 @@
         ArbitraryObjectSocketTestCase -> #(#testBasics). "delays too short, see https://github.com/squeak-smalltalk/squeak-object-memory/issues/179"
         BitBltSimulationTest -> #(#testAlphaCompositing2Simulated #testAlphaCompositingSimulated).
         DebuggerTests -> #(#test02UnhandledException #test19Abandon).
-        MorphicToolBuilderTests -> #(#testGetButtonColor).
         SHParserST80Test -> #(#testNumbers).
         StringSocketTestCase -> #(#testBogusInput1 #testBogusInput2). "delays too short, see https://github.com/squeak-smalltalk/squeak-object-memory/issues/179"
         StringTest ->#(#testFindSelector).
