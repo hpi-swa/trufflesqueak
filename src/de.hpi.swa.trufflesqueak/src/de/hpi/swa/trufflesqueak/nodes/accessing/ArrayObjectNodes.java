@@ -399,8 +399,26 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = {"obj.isEmptyType()"}, replaces = {"doEmptyArrayToBoolean", "doEmptyArrayToChar", "doEmptyArrayToLong", "doEmptyArrayToDouble"})
         protected static final void doEmptyArrayToObject(final ArrayObject obj, final long index, final Object value) {
-            obj.transitionFromEmptyToObjects();
-            doArrayOfObjects(obj, index, value);
+            /*
+             * This specialization is also the one used by the uncached version of this node, so it
+             * must pick the same storage strategies as the specializations it replaces.
+             */
+            if (value instanceof final Long longValue && !ArrayObject.isLongNilTag(longValue)) {
+                obj.transitionFromEmptyToLongs();
+                doArrayOfLongs(obj, index, longValue);
+            } else if (value instanceof final Character charValue && !ArrayObject.isCharNilTag(charValue)) {
+                obj.transitionFromEmptyToChars();
+                doArrayOfChars(obj, index, charValue);
+            } else if (value instanceof final Boolean booleanValue) {
+                obj.transitionFromEmptyToBooleans();
+                doArrayOfBooleans(obj, index, booleanValue);
+            } else if (value instanceof final Double doubleValue && !ArrayObject.isDoubleNilTag(doubleValue)) {
+                obj.transitionFromEmptyToDoubles();
+                doArrayOfDoubles(obj, index, doubleValue);
+            } else {
+                obj.transitionFromEmptyToObjects();
+                doArrayOfObjects(obj, index, value);
+            }
         }
 
         @Specialization(guards = "obj.isBooleanType()")
