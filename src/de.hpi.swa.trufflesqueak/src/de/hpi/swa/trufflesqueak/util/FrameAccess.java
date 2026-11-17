@@ -88,6 +88,8 @@ public final class FrameAccess {
         private static final int STACK_START = 3;
     }
 
+    @CompilationFinal private static boolean bytecodeDSLEnabled;
+
     private FrameAccess() {
     }
 
@@ -107,19 +109,79 @@ public final class FrameAccess {
         /** Number of DSL locals preceding the Squeak stack (context, pc and sp). */
         public static final int NUM_RESERVED_LOCALS = 2;
 
+        /** Set in the pc and sp slot if the virtual slots of the frame have been materialized. */
+        public static final long MATERIALIZED_FLAG = Long.MIN_VALUE;
+        /** Recipe for stack slots that hold the receiver of the frame. */
+        public static final Object RECEIVER_RECIPE = new Object();
+
+        @CompilationFinal private CompiledCodeObject code;
+        @CompilationFinal private int numStackSlots;
+        /**
+         * The Bytecode DSL interpreter does not store values into their stack slots if they can be
+         * recomputed at any time (the receiver and constants). This table maps the pc of a
+         * suspended frame to pairs of stack index and recipe (or constant) for such slots.
+         */
+        @CompilationFinal private java.util.HashMap<Integer, Object[]> virtualSlots;
+
+        /** Recipe for stack slots that hold a literal of the method. */
+        public record LiteralRecipe(int index) {
+        }
+
         public static long encodePCAndSP(final int pc, final int sp) {
             return (long) sp << 32 | pc & 0xFFFFFFFFL;
         }
 
-        @CompilationFinal private CompiledCodeObject code;
-        @CompilationFinal private int numStackSlots;
+        public static int decodeSP(final long pcAndSp) {
+            return (int) (pcAndSp >>> 32) & Integer.MAX_VALUE;
+        }
 
         /** Root nodes of the Bytecode DSL cannot receive constructor arguments. */
-        public void initialize(final CompiledCodeObject theCode, final int theNumStackSlots) {
+        public void initialize(final CompiledCodeObject theCode, final int theNumStackSlots, final java.util.HashMap<Integer, Object[]> theVirtualSlots) {
             CompilerAsserts.neverPartOfCompilation();
             assert code == null;
             code = theCode;
             numStackSlots = theNumStackSlots;
+            virtualSlots = theVirtualSlots;
+        }
+
+        /** Returns the value of a stack slot that is not stored in the frame, or null. */
+        private Object recomputeStackValue(final Frame frame, final int stackIndex) {
+            final Object recipe = findRecipe((int) frame.getLong(PC_AND_SP), stackIndex);
+            if (recipe == RECEIVER_RECIPE) {
+                return getReceiver(frame);
+            } else if (recipe instanceof final LiteralRecipe literal) {
+                return code.getAndResolveLiteral(literal.index);
+            } else {
+                return recipe;
+            }
+        }
+
+        @TruffleBoundary
+        private Object[] entriesAt(final int pc) {
+            return virtualSlots.get(pc);
+        }
+
+        private void materialize(final Frame frame, final int pc) {
+            final Object[] entries = entriesAt(pc);
+            if (entries != null) {
+                for (int i = 0; i < entries.length; i += 2) {
+                    final int stackIndex = (int) entries[i];
+                    frame.setObject(STACK_START + stackIndex, recomputeStackValue(frame, stackIndex));
+                }
+            }
+        }
+
+        @TruffleBoundary
+        private Object findRecipe(final int pc, final int stackIndex) {
+            final Object[] entries = virtualSlots.get(pc);
+            if (entries != null) {
+                for (int i = 0; i < entries.length; i += 2) {
+                    if ((int) entries[i] == stackIndex) {
+                        return entries[i + 1];
+                    }
+                }
+            }
+            return null;
         }
 
         public CompiledCodeObject getCode() {
@@ -130,8 +192,6 @@ public final class FrameAccess {
             return numStackSlots;
         }
     }
-
-    @CompilationFinal private static boolean bytecodeDSLEnabled;
 
     public static void enableBytecodeDSL() {
         CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -248,7 +308,7 @@ public final class FrameAccess {
     public static ContextObject getContext(final Frame frame) {
         if (isDSLFrame(frame)) {
             /* The slot holds the default value of locals (nil) if it has not been initialized. */
-            return frame.getObject(DSLFrameInfo.THIS_CONTEXT) instanceof final ContextObject context ? context : null;
+            return frame.isObject(DSLFrameInfo.THIS_CONTEXT) && frame.getObject(DSLFrameInfo.THIS_CONTEXT) instanceof final ContextObject context ? context : null;
         }
         return (ContextObject) frame.getObjectStatic(SlotIndices.THIS_CONTEXT);
     }
@@ -278,9 +338,14 @@ public final class FrameAccess {
         return getInstructionPointer(frame) < ContextObject.NIL_PC_THRESHOLD;
     }
 
+    /**
+     * Sets the pc of a frame from the outside (i.e., not by the code that executes in the frame).
+     */
     public static void setInstructionPointer(final Frame frame, final int value) {
         if (isDSLFrame(frame)) {
-            frame.setLong(DSLFrameInfo.PC_AND_SP, DSLFrameInfo.encodePCAndSP(value, (int) (frame.getLong(DSLFrameInfo.PC_AND_SP) >>> 32)));
+            materializeVirtualSlots(frame);
+            final long pcAndSp = frame.getLong(DSLFrameInfo.PC_AND_SP);
+            frame.setLong(DSLFrameInfo.PC_AND_SP, DSLFrameInfo.encodePCAndSP(value, DSLFrameInfo.decodeSP(pcAndSp)) | pcAndSp & DSLFrameInfo.MATERIALIZED_FLAG);
             return;
         }
         frame.setIntStatic(SlotIndices.INSTRUCTION_POINTER, value);
@@ -288,14 +353,16 @@ public final class FrameAccess {
 
     public static int getStackPointer(final Frame frame) {
         if (isDSLFrame(frame)) {
-            return (int) (frame.getLong(DSLFrameInfo.PC_AND_SP) >>> 32);
+            return DSLFrameInfo.decodeSP(frame.getLong(DSLFrameInfo.PC_AND_SP));
         }
         return frame.getIntStatic(SlotIndices.STACK_POINTER);
     }
 
     public static void setStackPointer(final Frame frame, final int value) {
         if (isDSLFrame(frame)) {
-            frame.setLong(DSLFrameInfo.PC_AND_SP, DSLFrameInfo.encodePCAndSP((int) frame.getLong(DSLFrameInfo.PC_AND_SP), value));
+            materializeVirtualSlots(frame);
+            final long pcAndSp = frame.getLong(DSLFrameInfo.PC_AND_SP);
+            frame.setLong(DSLFrameInfo.PC_AND_SP, DSLFrameInfo.encodePCAndSP((int) pcAndSp, value) | pcAndSp & DSLFrameInfo.MATERIALIZED_FLAG);
             return;
         }
         frame.setIntStatic(SlotIndices.STACK_POINTER, value);
@@ -303,6 +370,11 @@ public final class FrameAccess {
 
     @CompilerDirectives.EarlyInline
     public static void externalizePCAndSP(final VirtualFrame frame, final int pc, final int sp) {
+        if (isDSLFrame(frame)) {
+            /* Stored by the code that executes in the frame: virtual slots stay valid. */
+            frame.setLong(DSLFrameInfo.PC_AND_SP, DSLFrameInfo.encodePCAndSP(pc, sp));
+            return;
+        }
         setInstructionPointer(frame, pc);
         setStackPointer(frame, sp);
     }
@@ -462,8 +534,29 @@ public final class FrameAccess {
         }
     }
 
+    /**
+     * Stores the values of all virtual slots (see DSLFrameInfo) into the frame before the frame
+     * is modified from the outside, because the recipes are only valid for the state in which the
+     * code of the frame has left it. Afterwards, the frame is marked so that its slots are used.
+     */
+    private static void materializeVirtualSlots(final Frame frame) {
+        if (frame.getFrameDescriptor().getInfo() instanceof final DSLFrameInfo info && info.virtualSlots != null && frame.isLong(DSLFrameInfo.PC_AND_SP)) {
+            final long pcAndSp = frame.getLong(DSLFrameInfo.PC_AND_SP);
+            if (pcAndSp >= 0) {
+                info.materialize(frame, (int) pcAndSp);
+                frame.setLong(DSLFrameInfo.PC_AND_SP, pcAndSp | DSLFrameInfo.MATERIALIZED_FLAG);
+            }
+        }
+    }
+
     public static Object getStackValue(final Frame frame, final int sp) {
-        if (isDSLFrame(frame)) {
+        if (bytecodeDSLEnabled && frame.getFrameDescriptor().getInfo() instanceof final DSLFrameInfo info) {
+            if (info.virtualSlots != null && frame.isLong(DSLFrameInfo.PC_AND_SP) && frame.getLong(DSLFrameInfo.PC_AND_SP) >= 0) {
+                final Object value = info.recomputeStackValue(frame, sp);
+                if (value != null) {
+                    return value;
+                }
+            }
             return getDSLSlotValue(frame, DSLFrameInfo.STACK_START + sp);
         }
         return frame.getObjectStatic(SlotIndices.STACK_START + sp);
@@ -471,6 +564,7 @@ public final class FrameAccess {
 
     public static void setStackValue(final Frame frame, final int sp, final Object value) {
         if (isDSLFrame(frame)) {
+            materializeVirtualSlots(frame);
             frame.setObject(DSLFrameInfo.STACK_START + sp, value);
             return;
         }

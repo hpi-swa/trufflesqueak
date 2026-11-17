@@ -130,6 +130,7 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
     private static final int SLOT_OF_FIRST_LOCAL = DSLFrameInfo.STACK_START - DSLFrameInfo.NUM_RESERVED_LOCALS;
 
     private static final boolean USE_FUSED_SENDS = !Boolean.getBoolean("trufflesqueak.bytecode-dsl.no-fused-sends");
+    private static final boolean USE_VIRTUAL_SLOTS = !Boolean.getBoolean("trufflesqueak.bytecode-dsl.no-virtual-slots");
     private static final boolean USE_IF_REGIONS = !Boolean.getBoolean("trufflesqueak.bytecode-dsl.no-if-regions");
 
     /** For testing: translate all methods with the generic translation. */
@@ -183,6 +184,13 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
      * since its push, so reading the source later yields the same value.
      */
     private int[] deferredSource;
+    /**
+     * For deferred expressions that can be recomputed at any time (receiver and constants): how
+     * to recompute them (see DSLFrameInfo), otherwise null.
+     */
+    private Object[] deferredRecipe;
+    /** Per pc stored by an operation: slots and recipes of values that are not in the frame. */
+    private HashMap<Integer, Object[]> virtualSlots;
     private BytecodeLabel[] stateLabels;
     private BytecodeLabel continueLabel;
     private int currentState;
@@ -563,7 +571,7 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
 
     private static SqueakBytecodeRootNode createRoot(final SqueakLanguage language, final CompiledCodeObject code, final SqueakBytecodeTranslator translator) {
         final SqueakBytecodeRootNode root = SqueakBytecodeRootNodeGen.create(language, BytecodeConfig.DEFAULT, translator).getNode(0);
-        root.initialize(code, translator.modifiesContext, translator.getResumableStates());
+        root.initialize(code, translator.modifiesContext, translator.getResumableStates(), translator.virtualSlots);
         return root;
     }
 
@@ -669,6 +677,8 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
         deferred = new Runnable[numStackSlots];
         deferredTest = new TestEmitter[numStackSlots];
         deferredSource = new int[numStackSlots];
+        deferredRecipe = new Object[numStackSlots];
+        virtualSlots = new HashMap<>();
 
         b.beginBlock();
         if (isResumption) {
@@ -695,6 +705,7 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
         deferred = null;
         deferredTest = null;
         deferredSource = null;
+        deferredRecipe = null;
         stateLabels = null;
         continueLabel = null;
     }
@@ -945,6 +956,7 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
             deferred[slot] = null;
             deferredTest[slot] = null;
             deferredSource[slot] = 0;
+            deferredRecipe[slot] = null;
             return expression;
         } else {
             return () -> b.emitLoadLocal(stack[slot]);
@@ -965,14 +977,27 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
         }
     }
 
-    /** Spills all deferred values below the given slot into their stack slots. */
+    /**
+     * Spills the deferred values below the given slot into their stack slots, except for values
+     * that can be recomputed at any time (the receiver and constants). Those stay deferred.
+     */
     private void flush(final int limit) {
+        spill(limit, false);
+    }
+
+    /** Spills all deferred values below the given slot into their stack slots. */
+    private void spill(final int limit) {
+        spill(limit, true);
+    }
+
+    private void spill(final int limit, final boolean includeRecomputable) {
         for (int slot = 0; slot < limit; slot++) {
             final Runnable expression = deferred[slot];
-            if (expression != null) {
+            if (expression != null && (includeRecomputable || deferredRecipe[slot] == null)) {
                 deferred[slot] = null;
                 deferredTest[slot] = null;
-            deferredSource[slot] = 0;
+                deferredSource[slot] = 0;
+                deferredRecipe[slot] = null;
                 b.beginStoreLocal(stack[slot]);
                 expression.run();
                 b.endStoreLocal();
@@ -980,8 +1005,37 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
         }
     }
 
+    /**
+     * Spills the values below the operands of an operation during which the frame can be observed
+     * (the operation stores the given pc). Recomputable values are not spilled; instead, they are
+     * recorded so that observers of the frame can recompute them (see DSLFrameInfo).
+     */
+    private void flushBelowSend(final int limit, final int pc) {
+        flush(limit);
+        ArrayList<Object> entries = null;
+        for (int slot = 0; slot < limit; slot++) {
+            if (deferredRecipe[slot] != null) {
+                if (entries == null) {
+                    entries = new ArrayList<>();
+                }
+                entries.add(slot);
+                entries.add(deferredRecipe[slot]);
+            }
+        }
+        if (entries != null) {
+            virtualSlots.put(pc, entries.toArray());
+        }
+    }
+
     private void flushAll() {
-        flush(deferred.length);
+        spill(deferred.length);
+    }
+
+    private void pushRecomputable(final int slot, final Object recipe, final Runnable expression) {
+        push(slot, expression);
+        if (USE_VIRTUAL_SLOTS && deferred[slot] != null) {
+            deferredRecipe[slot] = recipe;
+        }
     }
 
     private boolean assertNoDeferredValues() {
@@ -995,28 +1049,50 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
         return SqueakBytecodeRootNode.encodePCAndSP(pc, sp);
     }
 
+    /**
+     * Makes sure that the value of a stack slot that is accessed as a temporary is in the frame.
+     * Compilers allocate temporaries by pushing nil, so the slot may still hold a deferred value.
+     */
+    private void materializeTemp(final int tempIndex) {
+        if (tempIndex < deferred.length && deferred[tempIndex] != null) {
+            spill(tempIndex + 1);
+        }
+    }
+
     private void emitInstruction(final int index, final Instruction insn, final int sp) {
+        switch (insn.kind) {
+            case SqueakBytecodeIR.PUSH_TEMPORARY, SqueakBytecodeIR.STORE_TEMPORARY -> materializeTemp(insn.a);
+            case SqueakBytecodeIR.PUSH_REMOTE_TEMP, SqueakBytecodeIR.STORE_REMOTE_TEMP -> materializeTemp(insn.b);
+            default -> {
+                // no temporaries accessed
+            }
+        }
         switch (insn.kind) {
             case SqueakBytecodeIR.PUSH_RECEIVER_VARIABLE -> pushSource(sp, SqueakBytecodeRootNode.SOURCE_RECEIVER_VARIABLE | insn.a, () -> b.emitPushReceiverVariable(insn.a));
             case SqueakBytecodeIR.PUSH_LITERAL_VARIABLE -> push(sp, () -> b.emitPushLiteralVariable(insn.a));
             case SqueakBytecodeIR.PUSH_LITERAL_CONSTANT -> {
                 final Object literal = code.getLiteral(insn.a);
                 if (literal instanceof Long || literal instanceof Double || literal instanceof Boolean || literal == NilObject.SINGLETON) {
-                    push(sp, () -> b.emitLoadConstant(literal));
+                    pushRecomputable(sp, literal, () -> b.emitLoadConstant(literal));
                 } else {
-                    push(sp, () -> b.emitPushLiteralConstant(insn.a));
+                    pushRecomputable(sp, new DSLFrameInfo.LiteralRecipe(insn.a), () -> b.emitPushLiteralConstant(insn.a));
                 }
             }
             case SqueakBytecodeIR.PUSH_TEMPORARY -> {
                 final int slot = stack[insn.a].getLocalOffset() + SLOT_OF_FIRST_LOCAL;
                 pushSource(sp, SqueakBytecodeRootNode.SOURCE_TEMP | slot, () -> b.emitPushTemp(slot));
             }
-            case SqueakBytecodeIR.PUSH_RECEIVER -> pushSource(sp, SqueakBytecodeRootNode.SOURCE_SELF, () -> b.emitPushReceiver());
-            case SqueakBytecodeIR.PUSH_CONSTANT -> push(sp, () -> b.emitLoadConstant(insn.constant));
+            case SqueakBytecodeIR.PUSH_RECEIVER -> {
+                pushSource(sp, SqueakBytecodeRootNode.SOURCE_SELF, () -> b.emitPushReceiver());
+                if (USE_VIRTUAL_SLOTS && deferred[sp] != null) {
+                    deferredRecipe[sp] = DSLFrameInfo.RECEIVER_RECIPE;
+                }
+            }
+            case SqueakBytecodeIR.PUSH_CONSTANT -> pushRecomputable(sp, insn.constant, () -> b.emitLoadConstant(insn.constant));
             case SqueakBytecodeIR.PUSH_ACTIVE_CONTEXT -> push(sp, () -> b.emitPushActiveContext());
             case SqueakBytecodeIR.DUP -> {
                 /* The duplicated value is needed twice: make sure it is in its stack slot. */
-                flush(sp);
+                spill(sp);
                 push(sp, () -> b.emitLoadLocal(stack[sp - 1]));
             }
             case SqueakBytecodeIR.POP -> {
@@ -1027,6 +1103,7 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
                     deferred[sp - 1] = null;
                     deferredTest[sp - 1] = null;
                     deferredSource[sp - 1] = 0;
+                    deferredRecipe[sp - 1] = null;
                     expression.run();
                 }
             }
@@ -1120,7 +1197,7 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
                      * The lookup class is on top of the stack but is the first operand of the
                      * operation: spill all operands to keep the order of evaluation.
                      */
-                    flush(sp);
+                    spill(sp);
                     final Runnable[] receiverAndArguments = take(receiverSlot, numArgs + 1);
                     final Runnable lookupClass = take(classSlot);
                     push(receiverSlot, () -> {
@@ -1131,7 +1208,7 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
                     });
                 } else {
                     final int receiverSlot = sp - numArgs - 1;
-                    flush(receiverSlot);
+                    flushBelowSend(receiverSlot, insn.nextPC);
                     final Runnable[] receiverAndArguments = take(receiverSlot, numArgs + 1);
                     push(receiverSlot, () -> {
                         b.beginSuperSend(selector, pcAndSp(insn.nextPC, receiverSlot));
@@ -1160,7 +1237,7 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
             }
             case SqueakBytecodeIR.JUMP_TRUE, SqueakBytecodeIR.JUMP_FALSE -> {
                 final int pcAndSp = pcAndSp(insn.nextPC, sp - 1);
-                flush(sp - 1);
+                spill(sp - 1);
                 final TestEmitter test = deferredTest[sp - 1];
                 final Runnable condition = take(sp - 1);
                 final Loop body = isGeneric ? null : ifRegionAt[index];
@@ -1202,7 +1279,7 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
             case SqueakBytecodeIR.RETURN_RECEIVER, SqueakBytecodeIR.RETURN_CONSTANT, SqueakBytecodeIR.RETURN_TOP -> {
                 final Runnable value;
                 if (insn.kind == SqueakBytecodeIR.RETURN_TOP) {
-                    flush(sp - 1);
+                    spill(sp - 1);
                     value = take(sp - 1);
                 } else {
                     flushAll();
@@ -1225,7 +1302,7 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
                 b.endNormalReturn();
             }
             case SqueakBytecodeIR.BLOCK_RETURN_TOP -> {
-                flush(sp - 1);
+                spill(sp - 1);
                 final Runnable value = take(sp - 1);
                 b.beginNormalReturn();
                 value.run();
@@ -1255,7 +1332,7 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
             flush(sp - 1);
             return take(sp - 1);
         } else {
-            flush(sp);
+            spill(sp);
             return () -> b.emitLoadLocal(stack[sp - 1]);
         }
     }
@@ -1264,7 +1341,7 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
         final int receiverSlot = sp - numArgs - 1;
         final int pcAndSp = pcAndSp(nextPC, receiverSlot);
         /* The frame can be observed during the send: spill everything below its operands. */
-        flush(receiverSlot);
+        flushBelowSend(receiverSlot, nextPC);
         final int receiverSource = numArgs <= 2 ? deferredSource[receiverSlot] : 0;
         final int argumentSource = numArgs == 1 && receiverSource != 0 ? deferredSource[receiverSlot + 1] : 0;
         final Runnable[] operands = take(receiverSlot, numArgs + 1);
@@ -1348,7 +1425,7 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
         }
         if (specialIndex != SPECIAL_IDENTICAL && specialIndex != SPECIAL_NOT_IDENTICAL && specialIndex != SPECIAL_CLASS) {
             /* May fall back to a real send. */
-            flush(receiverSlot);
+            flushBelowSend(receiverSlot, insn.nextPC);
         }
         final Runnable[] operands = take(receiverSlot, numArgs + 1);
         push(receiverSlot, () -> {
@@ -1448,7 +1525,7 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
         });
         if (deferred[receiverSlot] != null) {
             if (specialIndex == SPECIAL_IDENTICAL || specialIndex == SPECIAL_NOT_IDENTICAL) {
-                deferredTest[receiverSlot] = (expected, jumpPcAndSp) -> {
+                deferredTest[receiverSlot] = (final boolean expected, @SuppressWarnings("unused") final int jumpPcAndSp) -> {
                     if ((specialIndex == SPECIAL_IDENTICAL) == expected) {
                         b.beginPrimIdentical();
                         emitAll(operands);

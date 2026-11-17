@@ -88,8 +88,17 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess.DSLFrameInfo;
                 enableBlockScoping = false, //
                 enableTailCallHandlers = true)
 public abstract class SqueakBytecodeRootNode extends RootNode implements BytecodeRootNode {
-    protected static final Object NIL = NilObject.SINGLETON;
-    /* TODO: turn into a proper language option. */
+    /* Encoding of pc and sp in the int operands of operations. */
+    public static final int PC_BITS = 22;
+    public static final int MAX_PC = (1 << PC_BITS) - 1;
+    public static final int MAX_SP = (1 << 31 - PC_BITS) - 1;
+
+    /* Sources of fused operands (see loadSource). */
+    public static final int SOURCE_SELF = 1 << 24;
+    public static final int SOURCE_TEMP = 2 << 24;
+    public static final int SOURCE_RECEIVER_VARIABLE = 3 << 24;
+
+    /* To be turned into a language option. */
     protected static final int UNCACHED_THRESHOLD = Integer.getInteger("trufflesqueak.bytecode-dsl.uncached-threshold", 16);
 
     private static final int CONTEXT_SLOT = DSLFrameInfo.THIS_CONTEXT;
@@ -115,14 +124,14 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
         this.frameInfo = frameInfo;
     }
 
-    public final void initialize(final CompiledCodeObject theCode, final boolean couldModifyContext, final int[] theResumableStates) {
+    public final void initialize(final CompiledCodeObject theCode, final boolean couldModifyContext, final int[] theResumableStates, final java.util.HashMap<Integer, Object[]> virtualSlots) {
         CompilerAsserts.neverPartOfCompilation();
         code = theCode;
         resumableStates = theResumableStates;
         doesNotNeedThisContext = theCode.getDoesNotNeedThisContextAssumption();
         modifiesContext = couldModifyContext;
         /* Never let shadow blocks escape, use their outer method instead. */
-        frameInfo.initialize(theCode.getOuterMethod(), theCode.getMaxNumStackSlots());
+        frameInfo.initialize(theCode.getOuterMethod(), theCode.getMaxNumStackSlots(), virtualSlots == null || virtualSlots.isEmpty() ? null : virtualSlots);
     }
 
     public final CompiledCodeObject getCode() {
@@ -194,11 +203,6 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
     private static void externalizePCAndSP(final VirtualFrame frame, final int pcAndSp) {
         frame.setLong(PC_AND_SP_SLOT, DSLFrameInfo.encodePCAndSP(decodePC(pcAndSp), decodeSP(pcAndSp)));
     }
-
-    /* Encoding of pc and sp in the int operands of operations. */
-    private static final int PC_BITS = 22;
-    public static final int MAX_PC = (1 << PC_BITS) - 1;
-    public static final int MAX_SP = (1 << 31 - PC_BITS) - 1;
 
     public static int encodePCAndSP(final int pc, final int sp) {
         assert 0 <= pc && pc <= MAX_PC && 0 <= sp && sp <= MAX_SP;
@@ -365,7 +369,7 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
     private static int currentState(final VirtualFrame frame) {
         final long pcAndSp = frame.getLong(PC_AND_SP_SLOT);
         final int pc = (int) pcAndSp;
-        final int sp = (int) (pcAndSp >>> 32);
+        final int sp = DSLFrameInfo.decodeSP(pcAndSp);
         if (0 <= pc && pc <= MAX_PC && 0 <= sp && sp <= MAX_SP) {
             return encodePCAndSP(pc, sp);
         } else {
@@ -694,10 +698,6 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
      * operand stack. This saves the instructions that push these values. The translator only uses
      * them if nothing can change the source between the original push and the send.
      */
-
-    public static final int SOURCE_SELF = 1 << 24;
-    public static final int SOURCE_TEMP = 2 << 24;
-    public static final int SOURCE_RECEIVER_VARIABLE = 3 << 24;
 
     private static Object loadSource(final VirtualFrame frame, final int source, final Node node, final SqueakObjectAt0Node at0Node) {
         final int argument = source & 0xFFFFFF;
@@ -1361,7 +1361,7 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
                 }
             } else {
                 /* Terminate the frame (see FrameAccess#terminateFrame). */
-                frame.setLong(PC_AND_SP_SLOT, DSLFrameInfo.encodePCAndSP(ContextObject.NIL_PC_STACK_NOT_NIL_VALUE, (int) (frame.getLong(PC_AND_SP_SLOT) >>> 32)));
+                frame.setLong(PC_AND_SP_SLOT, DSLFrameInfo.encodePCAndSP(ContextObject.NIL_PC_STACK_NOT_NIL_VALUE, DSLFrameInfo.decodeSP(frame.getLong(PC_AND_SP_SLOT))));
                 FrameAccess.setSender(frame, NilObject.SINGLETON);
                 exitContext(root);
                 return value;
