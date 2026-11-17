@@ -9,6 +9,7 @@ package de.hpi.swa.trufflesqueak.nodes.context;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -22,6 +23,7 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 /* Gets context or lazily initializes one if necessary. */
 @GenerateInline
 @GenerateCached(true)
+@GenerateUncached
 public abstract class GetOrCreateContextWithoutFrameNode extends AbstractNode {
     @NeverDefault
     public static GetOrCreateContextWithoutFrameNode create() {

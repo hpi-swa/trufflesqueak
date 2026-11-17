@@ -96,7 +96,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
             try {
                 try {
                     image.resetContextStackDepth();
-                    final Object result = callNode.call(activeContext.getCallTarget());
+                    final Object result = callNode.call(activeContext.getCallTarget(), activeContext.getTruffleFrame().getArguments());
                     activeContext = returnTo(activeContext, sender, result);
                     LogUtils.SCHEDULING.log(Level.FINE, "Local Return on top-level: {0}", activeContext);
                 } catch (final NonLocalReturn nlr) {

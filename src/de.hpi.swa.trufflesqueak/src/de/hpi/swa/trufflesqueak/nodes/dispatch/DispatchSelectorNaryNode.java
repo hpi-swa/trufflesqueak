@@ -537,6 +537,7 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
     }
 
     @GenerateInline(false)
+    @GenerateUncached
     public abstract static class DispatchIndirectNaryNode extends AbstractNode {
         public abstract Object execute(VirtualFrame frame, boolean canPrimFail, NativeObject selector, Object receiver, Object[] arguments);
 
@@ -620,6 +621,7 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
 
         @GenerateInline
         @GenerateCached(false)
+        @GenerateUncached
         public abstract static class CreateFrameArgumentsForIndirectCallNaryNode extends AbstractNode {
             public abstract Object[] execute(Node node, AbstractSqueakObject sender, Object receiver, Object[] arguments, ClassObject receiverClass, Object lookupResult, NativeObject selector);
 

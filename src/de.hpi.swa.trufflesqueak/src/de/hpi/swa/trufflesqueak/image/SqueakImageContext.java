@@ -233,6 +233,9 @@ public final class SqueakImageContext {
     public SqueakImageContext(final SqueakLanguage squeakLanguage, final SqueakLanguage.Env environment) {
         language = squeakLanguage;
         options = SqueakContextOptions.create(environment.getOptions());
+        if (options.useBytecodeDSL()) {
+            FrameAccess.enableBytecodeDSL();
+        }
         isHeadless = options.isHeadless();
         maxContextStackDepth = options.maxContextStackDepth();
         patch(environment);

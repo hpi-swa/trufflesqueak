@@ -11,6 +11,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 
@@ -25,6 +26,7 @@ import de.hpi.swa.trufflesqueak.util.MethodCacheEntry;
 
 @GenerateInline
 @GenerateCached(false)
+@GenerateUncached
 public abstract class ResolveMethodNode extends AbstractNode {
 
     public abstract CompiledCodeObject execute(Node node, SqueakImageContext image, int expectedNumArgs, boolean canPrimFail, NativeObject selector, ClassObject receiverClass, Object lookupResult);

@@ -54,6 +54,9 @@ public final class SqueakOptions {
     @Option(name = SqueakLanguageOptions.STARTUP, category = OptionCategory.INTERNAL, stability = OptionStability.EXPERIMENTAL, help = SqueakLanguageOptions.STARTUP_HELP, usageSyntax = "false|true")//
     public static final OptionKey<Boolean> Startup = new OptionKey<>(false);
 
+    @Option(name = SqueakLanguageOptions.BYTECODE_DSL, category = OptionCategory.EXPERT, stability = OptionStability.EXPERIMENTAL, help = SqueakLanguageOptions.BYTECODE_DSL_HELP, usageSyntax = "false|true")//
+    public static final OptionKey<Boolean> BytecodeDSL = new OptionKey<>(false);
+
     @Option(name = SqueakLanguageOptions.TESTING, category = OptionCategory.INTERNAL, stability = OptionStability.STABLE, help = SqueakLanguageOptions.TESTING_HELP, usageSyntax = "false|true")//
     public static final OptionKey<Boolean> Testing = new OptionKey<>(false);
 
@@ -65,7 +68,7 @@ public final class SqueakOptions {
     }
 
     public record SqueakContextOptions(String imagePath, String[] imageArguments, boolean printResourceSummary, boolean isHeadless, boolean disableInterruptHandler,
-                    int maxContextStackDepth, boolean disableStartup, boolean isTesting, boolean signalInputSemaphore) {
+                    int maxContextStackDepth, boolean disableStartup, boolean isTesting, boolean signalInputSemaphore, boolean useBytecodeDSL) {
         public static SqueakContextOptions create(final OptionValues options) {
             return new SqueakContextOptions(
                             options.get(ImagePath).isEmpty() ? null : options.get(ImagePath),
@@ -76,7 +79,8 @@ public final class SqueakOptions {
                             Math.max(1, options.get(ContextStackDepth)),
                             options.get(Startup),
                             options.get(Testing),
-                            options.get(SignalInputSemaphore));
+                            options.get(SignalInputSemaphore),
+                            options.get(BytecodeDSL));
         }
     }
 }

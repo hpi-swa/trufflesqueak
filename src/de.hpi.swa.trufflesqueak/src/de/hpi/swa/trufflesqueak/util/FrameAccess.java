@@ -9,10 +9,10 @@ package de.hpi.swa.trufflesqueak.util;
 import java.util.Arrays;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.IntConsumer;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
@@ -92,6 +92,65 @@ public final class FrameAccess {
     }
 
     /**
+     * Frame descriptor info and slot layout for frames of the Bytecode DSL interpreter
+     * ({@code SqueakBytecodeRootNode}). The Bytecode DSL reserves slot 0 for its bytecode index;
+     * the first DSL locals hold the context and the externalized pc and sp, which are packed into
+     * a single long slot (sp in the upper half, pc in the lower half) because the generated
+     * interpreter only supports the frame slot kinds used for boxing elimination. Unlike legacy
+     * frames, slots are not static: stack values may be stored unboxed, so they must be read with
+     * {@link Frame#getValue(int)}.
+     */
+    public static final class DSLFrameInfo {
+        public static final int THIS_CONTEXT = 1;
+        public static final int PC_AND_SP = 2;
+        public static final int STACK_START = 3;
+        /** Number of DSL locals preceding the Squeak stack (context, pc and sp). */
+        public static final int NUM_RESERVED_LOCALS = 2;
+
+        public static long encodePCAndSP(final int pc, final int sp) {
+            return (long) sp << 32 | pc & 0xFFFFFFFFL;
+        }
+
+        @CompilationFinal private CompiledCodeObject code;
+        @CompilationFinal private int numStackSlots;
+
+        /** Root nodes of the Bytecode DSL cannot receive constructor arguments. */
+        public void initialize(final CompiledCodeObject theCode, final int theNumStackSlots) {
+            CompilerAsserts.neverPartOfCompilation();
+            assert code == null;
+            code = theCode;
+            numStackSlots = theNumStackSlots;
+        }
+
+        public CompiledCodeObject getCode() {
+            return code;
+        }
+
+        public int getNumStackSlots() {
+            return numStackSlots;
+        }
+    }
+
+    @CompilationFinal private static boolean bytecodeDSLEnabled;
+
+    public static void enableBytecodeDSL() {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        bytecodeDSLEnabled = true;
+    }
+
+    public static boolean isBytecodeDSLEnabled() {
+        return bytecodeDSLEnabled;
+    }
+
+    public static boolean isDSLFrame(final Frame frame) {
+        return bytecodeDSLEnabled && frame.getFrameDescriptor().getInfo() instanceof DSLFrameInfo;
+    }
+
+    private static Object getDSLSlotValue(final Frame frame, final int slotIndex) {
+        return frame.getTag(slotIndex) == FrameSlotKind.Illegal.tag ? NilObject.SINGLETON : frame.getValue(slotIndex);
+    }
+
+    /**
      * Creates a new {@link FrameDescriptor} according to {@link SlotIndices}.
      */
     public static FrameDescriptor newFrameDescriptor(final CompiledCodeObject code, final int numStackSlots) {
@@ -102,13 +161,17 @@ public final class FrameAccess {
     }
 
     public static void copySlotsExceptContext(final MaterializedFrame source, final MaterializedFrame destination) {
-        final int start = SlotIndices.THIS_CONTEXT + 1;
+        final int start = (isDSLFrame(source) ? DSLFrameInfo.THIS_CONTEXT : SlotIndices.THIS_CONTEXT) + 1;
         source.copyTo(start, destination, start, source.getFrameDescriptor().getNumberOfSlots() - start);
     }
 
     /* Returns the code object matching the frame's descriptor. */
     public static CompiledCodeObject getCodeObject(final Frame frame) {
-        return (CompiledCodeObject) frame.getFrameDescriptor().getInfo();
+        final Object info = frame.getFrameDescriptor().getInfo();
+        if (bytecodeDSLEnabled && info instanceof final DSLFrameInfo dslInfo) {
+            return dslInfo.code;
+        }
+        return (CompiledCodeObject) info;
     }
 
     public static AbstractSqueakObject getSender(final Frame frame) {
@@ -169,7 +232,12 @@ public final class FrameAccess {
     }
 
     public static int getNumArguments(final Frame frame) {
-        return frame.getArguments().length - getArgumentStartIndex();
+        final Object[] arguments = frame.getArguments();
+        if (bytecodeDSLEnabled && arguments[arguments.length - 1] instanceof Frame) {
+            /* OSR frames of the Bytecode DSL interpreter hold their parent frame as last argument. */
+            return arguments.length - 1 - getArgumentStartIndex();
+        }
+        return arguments.length - getArgumentStartIndex();
     }
 
     public static Object[] getReceiverAndArguments(final Frame frame) {
@@ -178,6 +246,10 @@ public final class FrameAccess {
     }
 
     public static ContextObject getContext(final Frame frame) {
+        if (isDSLFrame(frame)) {
+            /* The slot holds the default value of locals (nil) if it has not been initialized. */
+            return frame.getObject(DSLFrameInfo.THIS_CONTEXT) instanceof final ContextObject context ? context : null;
+        }
         return (ContextObject) frame.getObjectStatic(SlotIndices.THIS_CONTEXT);
     }
 
@@ -188,10 +260,17 @@ public final class FrameAccess {
 
     public static void setContext(final Frame frame, final ContextObject context) {
         assert getContext(frame) == null || getContext(frame) == context : "ContextObject already allocated";
+        if (isDSLFrame(frame)) {
+            frame.setObject(DSLFrameInfo.THIS_CONTEXT, context);
+            return;
+        }
         frame.setObjectStatic(SlotIndices.THIS_CONTEXT, context);
     }
 
     public static int getInstructionPointer(final Frame frame) {
+        if (isDSLFrame(frame)) {
+            return (int) frame.getLong(DSLFrameInfo.PC_AND_SP);
+        }
         return frame.getIntStatic(SlotIndices.INSTRUCTION_POINTER);
     }
 
@@ -200,14 +279,25 @@ public final class FrameAccess {
     }
 
     public static void setInstructionPointer(final Frame frame, final int value) {
+        if (isDSLFrame(frame)) {
+            frame.setLong(DSLFrameInfo.PC_AND_SP, DSLFrameInfo.encodePCAndSP(value, (int) (frame.getLong(DSLFrameInfo.PC_AND_SP) >>> 32)));
+            return;
+        }
         frame.setIntStatic(SlotIndices.INSTRUCTION_POINTER, value);
     }
 
     public static int getStackPointer(final Frame frame) {
+        if (isDSLFrame(frame)) {
+            return (int) (frame.getLong(DSLFrameInfo.PC_AND_SP) >>> 32);
+        }
         return frame.getIntStatic(SlotIndices.STACK_POINTER);
     }
 
     public static void setStackPointer(final Frame frame, final int value) {
+        if (isDSLFrame(frame)) {
+            frame.setLong(DSLFrameInfo.PC_AND_SP, DSLFrameInfo.encodePCAndSP((int) frame.getLong(DSLFrameInfo.PC_AND_SP), value));
+            return;
+        }
         frame.setIntStatic(SlotIndices.STACK_POINTER, value);
     }
 
@@ -222,6 +312,9 @@ public final class FrameAccess {
     }
 
     public static int getNumStackSlots(final Frame frame) {
+        if (bytecodeDSLEnabled && frame.getFrameDescriptor().getInfo() instanceof final DSLFrameInfo dslInfo) {
+            return dslInfo.numStackSlots;
+        }
         return frame.getFrameDescriptor().getNumberOfSlots() - SlotIndices.STACK_START;
     }
 
@@ -252,37 +345,20 @@ public final class FrameAccess {
          */
         if (slotsAreNotNilled(frame)) {
             setSlotsAreNilled(frame);
+            if (isDSLFrame(frame)) {
+                /*
+                 * Also clear the operand stack of the Bytecode DSL interpreter, which follows the
+                 * locals: it may still hold the value that the frame returned.
+                 */
+                final int numberOfSlots = frame.getFrameDescriptor().getNumberOfSlots();
+                for (int slotIndex = DSLFrameInfo.STACK_START; slotIndex < numberOfSlots; slotIndex++) {
+                    frame.clear(slotIndex);
+                }
+                return;
+            }
             final FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
             for (int slotIndex = SlotIndices.STACK_START; slotIndex < frameDescriptor.getNumberOfSlots(); slotIndex++) {
                 frame.setObjectStatic(slotIndex, null);
-            }
-        }
-    }
-
-    /**
-     * Iterates over the active stack slot indices of a given frame.
-     * <p>
-     * <strong>Important boundary:</strong> This method strictly iterates from the stack start up to
-     * the current stack pointer (exclusive). It <em>does not</em> yield indices at or beyond the
-     * active stack pointer.
-     * <p>
-     * <strong>Write Access Required:</strong> If the frame is dead (terminated), this method will
-     * modify the frame by explicitly clearing the remaining slots. Therefore, the {@code frame}
-     * must not be read-only in this state (e.g., it requires {@code READ_WRITE} access if obtained
-     * via a Truffle {@code FrameInstance}).
-     *
-     * @param frame the frame to inspect (must be writable if the frame is dead)
-     * @param sp the current stack pointer defining the upper boundary
-     * @param action the action to perform on each valid slot index
-     */
-    public static void iterateStackSlots(final Frame frame, final int sp, final IntConsumer action) {
-        if (isDead(frame)) {
-            clearStackSlots(frame);
-        } else {
-            /* Iterate defined stack slots only. */
-            final int slotLimit = Integer.min(SlotIndices.STACK_START + sp, frame.getFrameDescriptor().getNumberOfSlots());
-            for (int slotIndex = SlotIndices.STACK_START; slotIndex < slotLimit; slotIndex++) {
-                action.accept(slotIndex);
             }
         }
     }
@@ -307,6 +383,18 @@ public final class FrameAccess {
         if (isDead(frame)) {
             if (frameHandling == FrameHandling.SCRUB) {
                 clearStackSlots(frame);
+            }
+        } else if (isDSLFrame(frame)) {
+            final int numStackSlots = getNumStackSlots(frame);
+            final int limit = Integer.min(getStackPointer(frame), numStackSlots);
+            for (int i = 0; i < limit; i++) {
+                action.accept(getDSLSlotValue(frame, DSLFrameInfo.STACK_START + i));
+            }
+            /* Nil unreachable stack entries. */
+            if (frameHandling == FrameHandling.SCRUB) {
+                for (int i = limit; i < numStackSlots; i++) {
+                    frame.clear(DSLFrameInfo.STACK_START + i);
+                }
             }
         } else {
             /* Iterate defined stack slots only. */
@@ -348,6 +436,17 @@ public final class FrameAccess {
             if (clearStackSlots) {
                 clearStackSlots(frame);
             }
+        } else if (isDSLFrame(frame)) {
+            final int limit = Integer.min(getStackPointer(frame), getNumStackSlots(frame));
+            for (int i = 0; i < limit; i++) {
+                final int slotIndex = DSLFrameInfo.STACK_START + i;
+                if (frame.getTag(slotIndex) == FrameSlotKind.Object.tag) {
+                    final Object replacement = action.apply(frame.getObject(slotIndex));
+                    if (replacement != null) {
+                        frame.setObject(slotIndex, replacement);
+                    }
+                }
+            }
         } else {
             /* Iterate defined stack slots only. */
             final int sp = getStackPointer(frame);
@@ -364,10 +463,17 @@ public final class FrameAccess {
     }
 
     public static Object getStackValue(final Frame frame, final int sp) {
+        if (isDSLFrame(frame)) {
+            return getDSLSlotValue(frame, DSLFrameInfo.STACK_START + sp);
+        }
         return frame.getObjectStatic(SlotIndices.STACK_START + sp);
     }
 
     public static void setStackValue(final Frame frame, final int sp, final Object value) {
+        if (isDSLFrame(frame)) {
+            frame.setObject(DSLFrameInfo.STACK_START + sp, value);
+            return;
+        }
         frame.setObjectStatic(SlotIndices.STACK_START + sp, value);
     }
 
@@ -377,7 +483,8 @@ public final class FrameAccess {
     }
 
     public static boolean isTruffleSqueakFrame(final Frame frame) {
-        return frame.getFrameDescriptor().getInfo() instanceof CompiledCodeObject;
+        final Object info = frame.getFrameDescriptor().getInfo();
+        return info instanceof CompiledCodeObject || bytecodeDSLEnabled && info instanceof DSLFrameInfo;
     }
 
     public static Object[] newWith(final AbstractSqueakObject sender, final BlockClosureObject closure, final Object[] receiverAndArguments) {

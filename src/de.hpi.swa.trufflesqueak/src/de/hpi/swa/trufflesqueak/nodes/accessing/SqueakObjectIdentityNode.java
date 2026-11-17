@@ -9,6 +9,7 @@ package de.hpi.swa.trufflesqueak.nodes.accessing;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
@@ -23,6 +24,7 @@ import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 
 @GenerateInline
 @GenerateCached(true)
+@GenerateUncached
 public abstract class SqueakObjectIdentityNode extends AbstractNode {
 
     public abstract boolean execute(Node node, Object left, Object right);

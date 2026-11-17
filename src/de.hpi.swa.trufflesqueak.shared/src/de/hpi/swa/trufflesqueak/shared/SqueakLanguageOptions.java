@@ -27,6 +27,9 @@ public final class SqueakLanguageOptions {
     public static final String DOWNLOAD_IMAGE_HELP = "Download a specific default image or from a provided image URL";
     public static final String INTERCEPT_MESSAGES = "intercept-messages";
     public static final String INTERCEPT_MESSAGES_HELP = "Comma-separated list of messages to intercept with an instrument";
+    public static final String BYTECODE_DSL = "bytecode-dsl";
+    public static final String BYTECODE_DSL_FLAG = "--" + BYTECODE_DSL;
+    public static final String BYTECODE_DSL_HELP = "Use the Bytecode DSL interpreter";
     public static final String INTERRUPTS = "disable-interrupts";
     public static final String INTERRUPTS_FLAG = "--" + INTERRUPTS;
     public static final String INTERRUPTS_HELP = "Disable interrupt handler";

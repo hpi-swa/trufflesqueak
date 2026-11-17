@@ -459,12 +459,15 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         FrameAccess.setClosure(frame, value);
         // Cannot use copyTo here as frame descriptors may be different
         // ToDo: This does not handle any stack slots held in auxiliarySlots.
-        FrameAccess.iterateStackSlots(oldFrame, sp, slotIndex -> {
-            final Object stackValue = oldFrame.getObjectStatic(slotIndex);
-            if (stackValue != null) {
-                frame.setObjectStatic(slotIndex, stackValue);
+        if (!FrameAccess.isDead(oldFrame)) {
+            final int limit = Math.min(sp, Math.min(FrameAccess.getNumStackSlots(oldFrame), FrameAccess.getNumStackSlots(frame)));
+            for (int i = 0; i < limit; i++) {
+                final Object stackValue = FrameAccess.getStackValue(oldFrame, i);
+                if (stackValue != null) {
+                    FrameAccess.setStackValue(frame, i, stackValue);
+                }
             }
-        });
+        }
     }
 
     public Object getReceiver() {
@@ -636,6 +639,12 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
 
     public void setTruffleFrame(final MaterializedFrame frame) {
         assert !hasTruffleFrame();
+        senderOrFrameOrSize = frame;
+    }
+
+    /** Used when a context is resumed in a new frame (Bytecode DSL interpreter). */
+    public void replaceTruffleFrame(final MaterializedFrame frame) {
+        assert hasTruffleFrame() && FrameAccess.getContext(frame) == this;
         senderOrFrameOrSize = frame;
     }
 

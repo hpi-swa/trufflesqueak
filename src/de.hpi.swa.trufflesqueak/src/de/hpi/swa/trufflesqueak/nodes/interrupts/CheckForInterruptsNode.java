@@ -134,6 +134,11 @@ public abstract class CheckForInterruptsNode extends AbstractNode {
             return SINGLETON;
         }
 
+        /** For callers that have checked {@code interruptHandlerDisabled()} ahead of time. */
+        public static CheckForInterruptsInLoopNode createForLoopUnchecked() {
+            return SINGLETON;
+        }
+
         public void execute(final VirtualFrame frame, final int pc, final int sp) {
             final SqueakImageContext image = getContext();
             if (image.interrupt.shouldSkip()) {

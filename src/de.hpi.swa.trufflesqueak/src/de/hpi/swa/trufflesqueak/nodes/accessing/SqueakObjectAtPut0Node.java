@@ -12,6 +12,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
@@ -41,6 +42,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectWr
 @GenerateInline
 @GenerateCached
 @ImportStatic(NativeObject.class)
+@GenerateUncached
 public abstract class SqueakObjectAtPut0Node extends AbstractNode {
 
     public final void execute(final Node node, final Object object, final long index, final Object value) {

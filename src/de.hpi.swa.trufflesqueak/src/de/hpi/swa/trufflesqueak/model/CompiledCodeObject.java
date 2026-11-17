@@ -35,6 +35,9 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS_BINDING;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.ResumeContextRootNode;
 import de.hpi.swa.trufflesqueak.nodes.StartContextRootNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.dsl.SqueakBytecodeRootNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.dsl.SqueakBytecodeTranslator;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.dsl.SqueakBytecodeTranslator.UnsupportedBytecodeException;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchPrimitiveNode;
@@ -48,6 +51,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitives.Pr
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
+import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
@@ -283,7 +287,21 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     @TruffleBoundary
     private void initializeCallTarget() {
         assert !(hasPrimitive() && PrimitiveNodeFactory.isNonFailing(this)) : "Should not create rood node for non failing primitives";
-        executionData.callTarget = new StartContextRootNode(SqueakImageContext.getSlow(), this).getCallTarget();
+        final SqueakImageContext image = SqueakImageContext.getSlow();
+        if (FrameAccess.isBytecodeDSLEnabled()) {
+            try {
+                executionData.callTarget = SqueakBytecodeTranslator.createRoot(image.getLanguage(), image, this, false).getCallTarget();
+                return;
+            } catch (final UnsupportedBytecodeException e) {
+                LogUtils.BYTECODE_DSL.fine(() -> "Falling back to legacy interpreter for " + this + ": " + e.getMessage());
+            }
+        }
+        executionData.callTarget = new StartContextRootNode(image, this).getCallTarget();
+    }
+
+    /** Whether activations of this code object run in the Bytecode DSL interpreter. */
+    public boolean usesBytecodeDSL() {
+        return FrameAccess.isBytecodeDSLEnabled() && getCallTarget().getRootNode() instanceof SqueakBytecodeRootNode;
     }
 
     private void invalidateCallTarget() {
@@ -351,6 +369,14 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     @TruffleBoundary
     public RootCallTarget getResumptionCallTarget(final ContextObject context) {
+        if (usesBytecodeDSL()) {
+            if (executionData.resumptionCallTarget == null) {
+                final SqueakImageContext image = SqueakImageContext.getSlow();
+                executionData.resumptionCallTarget = SqueakBytecodeTranslator.createRoot(image.getLanguage(), image, this, true).getCallTarget();
+            }
+            ((SqueakBytecodeRootNode) executionData.resumptionCallTarget.getRootNode()).setActiveContext(context);
+            return executionData.resumptionCallTarget;
+        }
         if (getExecutionData().resumptionCallTarget == null) {
             executionData.resumptionCallTarget = new ResumeContextRootNode(SqueakImageContext.getSlow(), context).getCallTarget();
         } else {
