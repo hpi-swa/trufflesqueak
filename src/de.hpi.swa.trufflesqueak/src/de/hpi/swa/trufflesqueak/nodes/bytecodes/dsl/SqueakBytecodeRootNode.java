@@ -27,6 +27,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ControlFlowException;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
@@ -189,25 +190,6 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
     public static int encodePCAndSP(final int pc, final int sp) {
         assert 0 <= pc && pc <= 0xFFFF && 0 <= sp && sp <= 0x7FFF;
         return sp << 16 | pc;
-    }
-
-    private static Object followForwarded(final Object value) {
-        if (value instanceof final AbstractSqueakObjectWithClassAndHash object) {
-            return object.resolveForwardingPointer();
-        } else {
-            return value;
-        }
-    }
-
-    private static Object handleReturnException(final VirtualFrame frame, final AbstractStandardSendReturn returnException) {
-        if (returnException.targetIsFrame(frame)) {
-            return returnException.getReturnValue();
-        } else {
-            if (returnException instanceof NonLocalReturn) {
-                FrameAccess.terminateFrame(frame);
-            }
-            throw returnException;
-        }
     }
 
     private static CannotReturnToTarget cannotReturn(final VirtualFrame frame, final Object returnValue) {
@@ -388,16 +370,20 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
         }
 
         @Specialization(replaces = {"doLong", "doDouble", "doBoolean"})
-        static Object doObject(final Object value) {
-            return followForwarded(value);
+        static Object doObject(final Object value,
+                        @Bind final Node node,
+                        @Cached final InlinedConditionProfile followProfile) {
+            return DSLSendNodes.followForwarded(value, node, followProfile);
         }
     }
 
     @Operation
     public static final class PushReceiver {
         @Specialization
-        static Object doPush(final VirtualFrame frame) {
-            return followForwarded(FrameAccess.getReceiver(frame));
+        static Object doPush(final VirtualFrame frame,
+                        @Bind final Node node,
+                        @Cached final InlinedConditionProfile followProfile) {
+            return DSLSendNodes.followForwarded(FrameAccess.getReceiver(frame), node, followProfile);
         }
     }
 
@@ -407,8 +393,9 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
         @Specialization
         static Object doPush(final VirtualFrame frame, final int index,
                         @Bind final Node node,
-                        @Cached(inline = true) final SqueakObjectAt0Node at0Node) {
-            return followForwarded(at0Node.execute(node, FrameAccess.getReceiver(frame), index));
+                        @Cached(inline = true) final SqueakObjectAt0Node at0Node,
+                        @Cached final InlinedConditionProfile followProfile) {
+            return DSLSendNodes.followForwarded(at0Node.execute(node, FrameAccess.getReceiver(frame), index), node, followProfile);
         }
     }
 
@@ -433,6 +420,7 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
             final Object literal = root.code.getAndResolveLiteral(index);
             final Object value = at0Node.execute(node, literal, ASSOCIATION.VALUE);
             if (value instanceof final AbstractSqueakObjectWithClassAndHash obj && !obj.isNotForwarded()) {
+                CompilerDirectives.transferToInterpreter();
                 return resolveAndPatch(literal, obj);
             }
             return value;
@@ -481,8 +469,9 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
         @Specialization
         static Object doPush(final int indexInVector, final Object tempVector,
                         @Bind final Node node,
-                        @Cached(inline = true) final SqueakObjectAt0Node at0Node) {
-            return followForwarded(at0Node.execute(node, tempVector, indexInVector));
+                        @Cached(inline = true) final SqueakObjectAt0Node at0Node,
+                        @Cached final InlinedConditionProfile followProfile) {
+            return DSLSendNodes.followForwarded(at0Node.execute(node, tempVector, indexInVector), node, followProfile);
         }
     }
 
@@ -595,11 +584,7 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
         static Object doSend(final VirtualFrame frame, final NativeObject selector, final int pcAndSp, final Object receiver,
                         @Cached final DSLSend0Node sendNode) {
             externalizePCAndSP(frame, pcAndSp);
-            try {
-                return followForwarded(sendNode.execute(frame, selector, receiver));
-            } catch (final AbstractStandardSendReturn r) {
-                return followForwarded(handleReturnException(frame, r));
-            }
+            return sendNode.execute(frame, selector, receiver);
         }
     }
 
@@ -616,11 +601,7 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
 
     private static Object send1(final VirtualFrame frame, final NativeObject selector, final int pcAndSp, final Object receiver, final Object arg1, final DSLSend1Node sendNode) {
         externalizePCAndSP(frame, pcAndSp);
-        try {
-            return followForwarded(sendNode.execute(frame, selector, receiver, arg1));
-        } catch (final AbstractStandardSendReturn r) {
-            return followForwarded(handleReturnException(frame, r));
-        }
+        return sendNode.execute(frame, selector, receiver, arg1);
     }
 
     @Operation
@@ -631,11 +612,7 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
         static Object doSend(final VirtualFrame frame, final NativeObject selector, final int pcAndSp, final Object receiver, final Object arg1, final Object arg2,
                         @Cached final DSLSend2Node sendNode) {
             externalizePCAndSP(frame, pcAndSp);
-            try {
-                return followForwarded(sendNode.execute(frame, selector, receiver, arg1, arg2));
-            } catch (final AbstractStandardSendReturn r) {
-                return followForwarded(handleReturnException(frame, r));
-            }
+            return sendNode.execute(frame, selector, receiver, arg1, arg2);
         }
     }
 
@@ -647,11 +624,7 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
         static Object doSend(final VirtualFrame frame, final NativeObject selector, final int pcAndSp, final Object receiver, @Variadic final Object[] arguments,
                         @Cached final DSLSendNaryNode sendNode) {
             externalizePCAndSP(frame, pcAndSp);
-            try {
-                return followForwarded(sendNode.execute(frame, selector, receiver, arguments));
-            } catch (final AbstractStandardSendReturn r) {
-                return followForwarded(handleReturnException(frame, r));
-            }
+            return sendNode.execute(frame, selector, receiver, arguments);
         }
     }
 
@@ -664,11 +637,7 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
                         @Bind final SqueakBytecodeRootNode root,
                         @Cached final DSLSuperSendNode sendNode) {
             externalizePCAndSP(frame, pcAndSp);
-            try {
-                return followForwarded(sendNode.execute(frame, root.code, selector, receiver, arguments));
-            } catch (final AbstractStandardSendReturn r) {
-                return followForwarded(handleReturnException(frame, r));
-            }
+            return sendNode.execute(frame, root.code, selector, receiver, arguments);
         }
     }
 
@@ -680,11 +649,7 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
         static Object doSend(final VirtualFrame frame, final NativeObject selector, final int pcAndSp, final Object lookupClass, final Object receiver, @Variadic final Object[] arguments,
                         @Cached final DSLDirectedSuperSendNode sendNode) {
             externalizePCAndSP(frame, pcAndSp);
-            try {
-                return followForwarded(sendNode.execute(frame, selector, ((ClassObject) lookupClass).getResolvedSuperclass(), receiver, arguments));
-            } catch (final AbstractStandardSendReturn r) {
-                return followForwarded(handleReturnException(frame, r));
-            }
+            return sendNode.execute(frame, selector, ((ClassObject) lookupClass).getResolvedSuperclass(), receiver, arguments);
         }
     }
 
@@ -696,11 +661,7 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
         static Object doSend(final VirtualFrame frame, final NativeObject selector, final int pcAndSp, final Object receiver,
                         @Cached final DSLSendValueNode sendNode) {
             externalizePCAndSP(frame, pcAndSp);
-            try {
-                return followForwarded(sendNode.execute(frame, selector, receiver));
-            } catch (final AbstractStandardSendReturn r) {
-                return followForwarded(handleReturnException(frame, r));
-            }
+            return sendNode.execute(frame, selector, receiver);
         }
     }
 
@@ -712,11 +673,7 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
         static Object doSend(final VirtualFrame frame, final NativeObject selector, final int pcAndSp, final Object receiver, final Object arg1,
                         @Cached final DSLSendValueWithArgNode sendNode) {
             externalizePCAndSP(frame, pcAndSp);
-            try {
-                return followForwarded(sendNode.execute(frame, selector, receiver, arg1));
-            } catch (final AbstractStandardSendReturn r) {
-                return followForwarded(handleReturnException(frame, r));
-            }
+            return sendNode.execute(frame, selector, receiver, arg1);
         }
     }
 
@@ -995,11 +952,7 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
         static Object doSend(final VirtualFrame frame, final NativeObject selector, final int pcAndSp, final Object receiver,
                         @Cached final DSLSend0Node sendNode) {
             externalizePCAndSP(frame, pcAndSp);
-            try {
-                return followForwarded(sendNode.execute(frame, selector, receiver));
-            } catch (final AbstractStandardSendReturn r) {
-                return followForwarded(handleReturnException(frame, r));
-            }
+            return sendNode.execute(frame, selector, receiver);
         }
 
         static boolean isByteString(final SqueakBytecodeRootNode root, final NativeObject receiver) {
