@@ -1030,13 +1030,13 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
             }
             case SqueakBytecodeIR.PUSH_REMOTE_TEMP -> push(sp, () -> {
                 b.beginPushRemoteTemp(insn.a);
-                b.emitLoadLocal(stack[insn.b]);
+                b.emitPushTemp(stack[insn.b].getLocalOffset() + SLOT_OF_FIRST_LOCAL);
                 b.endPushRemoteTemp();
             });
             case SqueakBytecodeIR.STORE_REMOTE_TEMP -> {
                 final Runnable value = takeForStore(sp, insn.c != 0);
                 b.beginStoreRemoteTemp(insn.a);
-                b.emitLoadLocal(stack[insn.b]);
+                b.emitPushTemp(stack[insn.b].getLocalOffset() + SLOT_OF_FIRST_LOCAL);
                 value.run();
                 b.endStoreRemoteTemp();
             }

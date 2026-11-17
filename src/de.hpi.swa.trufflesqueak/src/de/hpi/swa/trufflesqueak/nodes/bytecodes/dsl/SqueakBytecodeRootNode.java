@@ -86,8 +86,7 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess.DSLFrameInfo;
                 defaultUncachedThreshold = "UNCACHED_THRESHOLD", //
                 boxingEliminationTypes = {long.class, double.class, boolean.class}, //
                 enableBlockScoping = false, //
-                enableTailCallHandlers = true, //
-                defaultLocalValue = "NIL")
+                enableTailCallHandlers = true)
 public abstract class SqueakBytecodeRootNode extends RootNode implements BytecodeRootNode {
     protected static final Object NIL = NilObject.SINGLETON;
     /* TODO: turn into a proper language option. */
