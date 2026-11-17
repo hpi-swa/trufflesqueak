@@ -546,6 +546,12 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         }
     }
 
+    /** Forces a new lookup of the primitive of this method (see primitive 89). */
+    public void flushPrimitive() {
+        invalidatePrimitiveNode();
+        invalidateCallTarget("primitive 89");
+    }
+
     private void invalidatePrimitiveNode() {
         if (hasExecutionData()) {
             executionData.primitiveNodeOrNull = UNINITIALIZED_PRIMITIVE_NODE;

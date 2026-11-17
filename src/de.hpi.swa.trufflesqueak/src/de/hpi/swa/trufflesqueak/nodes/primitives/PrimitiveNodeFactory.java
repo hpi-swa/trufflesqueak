@@ -15,6 +15,7 @@ import org.graalvm.collections.EconomicMap;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.NodeFactory;
 
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -64,6 +65,7 @@ public final class PrimitiveNodeFactory {
     private static final int PRIMITIVE_LOAD_INST_VAR_UPPER_INDEX = 519;
     private static final int NAMED_PRIMITIVE_MODULE_NAME_INDEX = 0;
     private static final int NAMED_PRIMITIVE_FUNCTION_NAME_INDEX = 1;
+    private static final int NAMED_PRIMITIVE_FUNCTION_INDEX_INDEX = 3;
     private static final int MAX_PRIMITIVE_INDEX = 578;
     private static final String NULL_MODULE_NAME = NullPlugin.class.getSimpleName();
 
@@ -172,8 +174,13 @@ public final class PrimitiveNodeFactory {
 
     public static AbstractPrimitiveNode getOrCreateNamed(final CompiledCodeObject method, final int numReceiverAndArguments) {
         assert method.primitiveIndex() == PRIMITIVE_EXTERNAL_CALL_INDEX;
+        SqueakImageContext.getSlow().registerNamedPrimitiveMethod(method);
         final Object[] values = ((ArrayObject) method.getLiteral(0)).getObjectStorage();
         if (values[NAMED_PRIMITIVE_FUNCTION_NAME_INDEX] == NilObject.SINGLETON) {
+            return null;
+        }
+        /* Like primitiveExternalCall, fail if the lookup failed before or the call was disabled. */
+        if (values.length > NAMED_PRIMITIVE_FUNCTION_INDEX_INDEX && values[NAMED_PRIMITIVE_FUNCTION_INDEX_INDEX] instanceof final Long index && index < 0) {
             return null;
         }
         final String moduleName = values[NAMED_PRIMITIVE_MODULE_NAME_INDEX] instanceof final NativeObject m ? m.asStringUnsafe() : NULL_MODULE_NAME;

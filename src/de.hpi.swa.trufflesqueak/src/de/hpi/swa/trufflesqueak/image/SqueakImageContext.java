@@ -10,8 +10,11 @@ import java.lang.foreign.SymbolLookup;
 import java.lang.ref.ReferenceQueue;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.logging.Level;
 
 import de.hpi.swa.trufflesqueak.nodes.plugins.network.SqueakSocketContext;
@@ -170,6 +173,8 @@ public final class SqueakImageContext {
     private static final int METHOD_CACHE_REPROBES = 4;
     private int methodCacheRandomish;
     @CompilationFinal(dimensions = 1) private final MethodCacheEntry[] methodCache = new MethodCacheEntry[METHOD_CACHE_SIZE];
+    /* Methods with a named primitive, which is looked up again after primitive 89. */
+    private final Set<CompiledCodeObject> namedPrimitiveMethods = Collections.newSetFromMap(new WeakHashMap<>());
 
     /* Interpreter state */
     private int primFailCode = 0;
@@ -1078,6 +1083,20 @@ public final class SqueakImageContext {
             cachedEntry.setResult(receiverClass.lookupInMethodDictSlow(selector));
         }
         return cachedEntry.getResult();
+    }
+
+    @TruffleBoundary
+    public void registerNamedPrimitiveMethod(final CompiledCodeObject method) {
+        namedPrimitiveMethods.add(method);
+    }
+
+    /* Look up all named primitives again (prim 89). */
+    @TruffleBoundary
+    public void flushNamedPrimitives() {
+        for (final CompiledCodeObject method : namedPrimitiveMethods) {
+            method.flushPrimitive();
+        }
+        namedPrimitiveMethods.clear();
     }
 
     /* Clear all cache entries (prim 89). */
