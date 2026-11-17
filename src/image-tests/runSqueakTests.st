@@ -181,9 +181,11 @@
         BitBltSimulationTest -> #(#testAlphaCompositing2Simulated #testAlphaCompositingSimulated). "simulated primitive fails if the JVM collects garbage while loading BitBlt state (see BitBltSimulation>>#loadBitBltFrom:warping:)"
         DebuggerTests -> #(#test02UnhandledException). "fails on most CI jobs except on Linux aarch64, cause unknown"
         DebuggerTests -> #(#test19Abandon). "fails sometimes on Windows native"
+        MorphicToolBuilderTests -> #(#testGetButtonColor). "with a display (e.g., on macOS), mouse events can move the hand back over morphs that tests create at 0@0"
         SHParserST80Test -> #(#testNumbers). "fails rarely, cause unknown"
         StringSocketTestCase -> #(#testBogusInput1 #testBogusInput2). "delays too short, see https://github.com/squeak-smalltalk/squeak-object-memory/issues/179"
         StringTest ->#(#testFindSelector). "fails rarely, cause unknown"
+        WeakSetInspectorTest -> #(#testSymbolTableM6812). "symbol table can shrink between garbage collections, fails sometimes on Windows native"
         WideStringTest -> #(#testAsIntegerSignedUsingRandomNumbers). "takes up to several seconds, may exceed the default timeout of 5s on non-ARM platforms (see TestCase>>#defaultTimeout)"
 
         "failing on some platforms"
