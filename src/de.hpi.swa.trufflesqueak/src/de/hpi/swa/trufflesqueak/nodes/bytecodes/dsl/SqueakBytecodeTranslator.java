@@ -129,6 +129,7 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
     /** Frame slot of the local with offset 0 (slot 0 holds the bytecode index). */
     private static final int SLOT_OF_FIRST_LOCAL = DSLFrameInfo.STACK_START - DSLFrameInfo.NUM_RESERVED_LOCALS;
 
+    private static final boolean USE_FUSED_SENDS = !Boolean.getBoolean("trufflesqueak.bytecode-dsl.no-fused-sends");
     private static final boolean USE_IF_REGIONS = !Boolean.getBoolean("trufflesqueak.bytecode-dsl.no-if-regions");
 
     /** For testing: translate all methods with the generic translation. */
@@ -175,6 +176,13 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
      * conditional jump, which saves the conversion of the value into a condition.
      */
     private TestEmitter[] deferredTest;
+    /**
+     * For deferred expressions that only read the receiver, a temporary, or an instance variable:
+     * the encoded source (see SqueakBytecodeRootNode#loadSource), otherwise 0. Sends can read such
+     * operands directly. A value is only deferred as long as nothing with side effects happened
+     * since its push, so reading the source later yields the same value.
+     */
+    private int[] deferredSource;
     private BytecodeLabel[] stateLabels;
     private BytecodeLabel continueLabel;
     private int currentState;
@@ -660,6 +668,7 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
         labels = new BytecodeLabel[instructions.length];
         deferred = new Runnable[numStackSlots];
         deferredTest = new TestEmitter[numStackSlots];
+        deferredSource = new int[numStackSlots];
 
         b.beginBlock();
         if (isResumption) {
@@ -685,6 +694,7 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
         labels = null;
         deferred = null;
         deferredTest = null;
+        deferredSource = null;
         stateLabels = null;
         continueLabel = null;
     }
@@ -921,12 +931,20 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
         }
     }
 
+    private void pushSource(final int slot, final int source, final Runnable expression) {
+        push(slot, expression);
+        if (USE_FUSED_SENDS && deferred[slot] != null) {
+            deferredSource[slot] = source;
+        }
+    }
+
     /** Removes the value in the given slot from the abstract stack and returns its expression. */
     private Runnable take(final int slot) {
         final Runnable expression = deferred[slot];
         if (expression != null) {
             deferred[slot] = null;
             deferredTest[slot] = null;
+            deferredSource[slot] = 0;
             return expression;
         } else {
             return () -> b.emitLoadLocal(stack[slot]);
@@ -954,6 +972,7 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
             if (expression != null) {
                 deferred[slot] = null;
                 deferredTest[slot] = null;
+            deferredSource[slot] = 0;
                 b.beginStoreLocal(stack[slot]);
                 expression.run();
                 b.endStoreLocal();
@@ -978,7 +997,7 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
 
     private void emitInstruction(final int index, final Instruction insn, final int sp) {
         switch (insn.kind) {
-            case SqueakBytecodeIR.PUSH_RECEIVER_VARIABLE -> push(sp, () -> b.emitPushReceiverVariable(insn.a));
+            case SqueakBytecodeIR.PUSH_RECEIVER_VARIABLE -> pushSource(sp, SqueakBytecodeRootNode.SOURCE_RECEIVER_VARIABLE | insn.a, () -> b.emitPushReceiverVariable(insn.a));
             case SqueakBytecodeIR.PUSH_LITERAL_VARIABLE -> push(sp, () -> b.emitPushLiteralVariable(insn.a));
             case SqueakBytecodeIR.PUSH_LITERAL_CONSTANT -> {
                 final Object literal = code.getLiteral(insn.a);
@@ -988,8 +1007,11 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
                     push(sp, () -> b.emitPushLiteralConstant(insn.a));
                 }
             }
-            case SqueakBytecodeIR.PUSH_TEMPORARY -> push(sp, () -> b.emitPushTemp(stack[insn.a].getLocalOffset() + SLOT_OF_FIRST_LOCAL));
-            case SqueakBytecodeIR.PUSH_RECEIVER -> push(sp, () -> b.emitPushReceiver());
+            case SqueakBytecodeIR.PUSH_TEMPORARY -> {
+                final int slot = stack[insn.a].getLocalOffset() + SLOT_OF_FIRST_LOCAL;
+                pushSource(sp, SqueakBytecodeRootNode.SOURCE_TEMP | slot, () -> b.emitPushTemp(slot));
+            }
+            case SqueakBytecodeIR.PUSH_RECEIVER -> pushSource(sp, SqueakBytecodeRootNode.SOURCE_SELF, () -> b.emitPushReceiver());
             case SqueakBytecodeIR.PUSH_CONSTANT -> push(sp, () -> b.emitLoadConstant(insn.constant));
             case SqueakBytecodeIR.PUSH_ACTIVE_CONTEXT -> push(sp, () -> b.emitPushActiveContext());
             case SqueakBytecodeIR.DUP -> {
@@ -1004,6 +1026,7 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
                     flush(sp - 1);
                     deferred[sp - 1] = null;
                     deferredTest[sp - 1] = null;
+                    deferredSource[sp - 1] = 0;
                     expression.run();
                 }
             }
@@ -1242,23 +1265,44 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
         final int pcAndSp = pcAndSp(nextPC, receiverSlot);
         /* The frame can be observed during the send: spill everything below its operands. */
         flush(receiverSlot);
+        final int receiverSource = numArgs <= 2 ? deferredSource[receiverSlot] : 0;
+        final int argumentSource = numArgs == 1 && receiverSource != 0 ? deferredSource[receiverSlot + 1] : 0;
         final Runnable[] operands = take(receiverSlot, numArgs + 1);
         push(receiverSlot, () -> {
             switch (numArgs) {
                 case 0 -> {
-                    b.beginSend0(selector, pcAndSp);
-                    emitAll(operands);
-                    b.endSend0();
+                    if (receiverSource != 0) {
+                        b.emitSend0From(selector, pcAndSp, receiverSource);
+                    } else {
+                        b.beginSend0(selector, pcAndSp);
+                        emitAll(operands);
+                        b.endSend0();
+                    }
                 }
                 case 1 -> {
-                    b.beginSend1(selector, pcAndSp);
-                    emitAll(operands);
-                    b.endSend1();
+                    if (argumentSource != 0) {
+                        b.emitSend1From2(selector, pcAndSp, receiverSource, argumentSource);
+                    } else if (receiverSource != 0) {
+                        b.beginSend1From(selector, pcAndSp, receiverSource);
+                        operands[1].run();
+                        b.endSend1From();
+                    } else {
+                        b.beginSend1(selector, pcAndSp);
+                        emitAll(operands);
+                        b.endSend1();
+                    }
                 }
                 case 2 -> {
-                    b.beginSend2(selector, pcAndSp);
-                    emitAll(operands);
-                    b.endSend2();
+                    if (receiverSource != 0) {
+                        b.beginSend2From(selector, pcAndSp, receiverSource);
+                        operands[1].run();
+                        operands[2].run();
+                        b.endSend2From();
+                    } else {
+                        b.beginSend2(selector, pcAndSp);
+                        emitAll(operands);
+                        b.endSend2();
+                    }
                 }
                 default -> {
                     b.beginSendN(selector, pcAndSp);
@@ -1270,9 +1314,19 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
         if (deferred[receiverSlot] != null && numArgs <= 1) {
             deferredTest[receiverSlot] = (expected, jumpPcAndSp) -> {
                 if (numArgs == 0) {
-                    b.beginSend0Test(selector, pcAndSp, jumpPcAndSp, expected);
-                    emitAll(operands);
-                    b.endSend0Test();
+                    if (receiverSource != 0) {
+                        b.emitSend0TestFrom(selector, pcAndSp, jumpPcAndSp, expected, receiverSource);
+                    } else {
+                        b.beginSend0Test(selector, pcAndSp, jumpPcAndSp, expected);
+                        emitAll(operands);
+                        b.endSend0Test();
+                    }
+                } else if (argumentSource != 0) {
+                    b.emitSend1TestFrom2(selector, pcAndSp, jumpPcAndSp, expected, receiverSource, argumentSource);
+                } else if (receiverSource != 0) {
+                    b.beginSend1TestFrom(selector, pcAndSp, jumpPcAndSp, expected, receiverSource);
+                    operands[1].run();
+                    b.endSend1TestFrom();
                 } else {
                     b.beginSend1Test(selector, pcAndSp, jumpPcAndSp, expected);
                     emitAll(operands);

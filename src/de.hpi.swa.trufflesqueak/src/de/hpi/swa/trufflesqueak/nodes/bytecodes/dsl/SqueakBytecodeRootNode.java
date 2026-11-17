@@ -438,6 +438,12 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
          * The frame slot is read directly (and not through a LocalAccessor) because stack slots
          * are also written from outside of the bytecode (arguments, context modifications).
          */
+        @Specialization(guards = "frame.isObject(slot)")
+        static Object doObject(final VirtualFrame frame, final int slot) {
+            final Object value = frame.getObject(slot);
+            return value == null ? NilObject.SINGLETON : DSLSendNodes.followForwardedRarely(value);
+        }
+
         @Specialization(guards = "frame.isLong(slot)")
         static long doLong(final VirtualFrame frame, final int slot) {
             return frame.getLong(slot);
@@ -454,8 +460,8 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
         }
 
         @Fallback
-        static Object doObject(final VirtualFrame frame, final int slot) {
-            return DSLSendNodes.followForwardedRarely(FrameAccess.getDSLSlotValue(frame, slot));
+        static Object doUnset(final VirtualFrame frame, final int slot) {
+            return FrameAccess.getDSLSlotValue(frame, slot);
         }
     }
 
@@ -680,6 +686,147 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
     private static Object send1(final VirtualFrame frame, final NativeObject selector, final int pcAndSp, final Object receiver, final Object arg1, final DSLSend1Node sendNode) {
         externalizePCAndSP(frame, pcAndSp);
         return sendNode.execute(frame, selector, receiver, arg1);
+    }
+
+    /*
+     * Sends that read their receiver (and argument) directly from a simple source (the receiver
+     * of the frame, a temporary, or an instance variable of the receiver) instead of from the
+     * operand stack. This saves the instructions that push these values. The translator only uses
+     * them if nothing can change the source between the original push and the send.
+     */
+
+    public static final int SOURCE_SELF = 1 << 24;
+    public static final int SOURCE_TEMP = 2 << 24;
+    public static final int SOURCE_RECEIVER_VARIABLE = 3 << 24;
+
+    private static Object loadSource(final VirtualFrame frame, final int source, final Node node, final SqueakObjectAt0Node at0Node) {
+        final int argument = source & 0xFFFFFF;
+        return DSLSendNodes.followForwardedRarely(switch (source >>> 24) {
+            case 1 -> FrameAccess.getReceiver(frame);
+            case 2 -> FrameAccess.getDSLSlotValue(frame, argument);
+            default -> at0Node.execute(node, FrameAccess.getReceiver(frame), argument);
+        });
+    }
+
+    @Operation
+    @ConstantOperand(type = NativeObject.class, name = "selector")
+    @ConstantOperand(type = int.class, name = "pcAndSp")
+    @ConstantOperand(type = int.class, name = "receiverSource")
+    public static final class Send0From {
+        @Specialization
+        static Object doSend(final VirtualFrame frame, final NativeObject selector, final int pcAndSp, final int receiverSource,
+                        @Bind final Node node,
+                        @Cached(inline = true) final SqueakObjectAt0Node at0Node,
+                        @Cached final DSLSend0Node sendNode) {
+            final Object receiver = loadSource(frame, receiverSource, node, at0Node);
+            externalizePCAndSP(frame, pcAndSp);
+            return sendNode.execute(frame, selector, receiver);
+        }
+    }
+
+    @Operation
+    @ConstantOperand(type = NativeObject.class, name = "selector")
+    @ConstantOperand(type = int.class, name = "pcAndSp")
+    @ConstantOperand(type = int.class, name = "receiverSource")
+    public static final class Send1From {
+        @Specialization
+        static Object doSend(final VirtualFrame frame, final NativeObject selector, final int pcAndSp, final int receiverSource, final Object arg1,
+                        @Bind final Node node,
+                        @Cached(inline = true) final SqueakObjectAt0Node at0Node,
+                        @Cached final DSLSend1Node sendNode) {
+            return send1(frame, selector, pcAndSp, loadSource(frame, receiverSource, node, at0Node), arg1, sendNode);
+        }
+    }
+
+    @Operation
+    @ConstantOperand(type = NativeObject.class, name = "selector")
+    @ConstantOperand(type = int.class, name = "pcAndSp")
+    @ConstantOperand(type = int.class, name = "receiverSource")
+    @ConstantOperand(type = int.class, name = "argumentSource")
+    public static final class Send1From2 {
+        @Specialization
+        static Object doSend(final VirtualFrame frame, final NativeObject selector, final int pcAndSp, final int receiverSource, final int argumentSource,
+                        @Bind final Node node,
+                        @Cached(inline = true) final SqueakObjectAt0Node at0Node,
+                        @Cached final DSLSend1Node sendNode) {
+            final Object receiver = loadSource(frame, receiverSource, node, at0Node);
+            final Object arg1 = loadSource(frame, argumentSource, node, at0Node);
+            return send1(frame, selector, pcAndSp, receiver, arg1, sendNode);
+        }
+    }
+
+    @Operation
+    @ConstantOperand(type = NativeObject.class, name = "selector")
+    @ConstantOperand(type = int.class, name = "pcAndSp")
+    @ConstantOperand(type = int.class, name = "receiverSource")
+    public static final class Send2From {
+        @Specialization
+        static Object doSend(final VirtualFrame frame, final NativeObject selector, final int pcAndSp, final int receiverSource, final Object arg1, final Object arg2,
+                        @Bind final Node node,
+                        @Cached(inline = true) final SqueakObjectAt0Node at0Node,
+                        @Cached final DSLSend2Node sendNode) {
+            final Object receiver = loadSource(frame, receiverSource, node, at0Node);
+            externalizePCAndSP(frame, pcAndSp);
+            return sendNode.execute(frame, selector, receiver, arg1, arg2);
+        }
+    }
+
+    @Operation
+    @ConstantOperand(type = NativeObject.class, name = "selector")
+    @ConstantOperand(type = int.class, name = "pcAndSp")
+    @ConstantOperand(type = int.class, name = "jumpPcAndSp")
+    @ConstantOperand(type = boolean.class, name = "expected")
+    @ConstantOperand(type = int.class, name = "receiverSource")
+    public static final class Send0TestFrom {
+        @Specialization
+        static boolean doSend(final VirtualFrame frame, final NativeObject selector, final int pcAndSp, final int jumpPcAndSp, final boolean expected, final int receiverSource,
+                        @Bind final SqueakBytecodeRootNode root,
+                        @Bind final Node node,
+                        @Cached(inline = true) final SqueakObjectAt0Node at0Node,
+                        @Cached final DSLSend0Node sendNode) {
+            final Object receiver = loadSource(frame, receiverSource, node, at0Node);
+            externalizePCAndSP(frame, pcAndSp);
+            return testBoolean(frame, jumpPcAndSp, expected, sendNode.execute(frame, selector, receiver), root);
+        }
+    }
+
+    @Operation
+    @ConstantOperand(type = NativeObject.class, name = "selector")
+    @ConstantOperand(type = int.class, name = "pcAndSp")
+    @ConstantOperand(type = int.class, name = "jumpPcAndSp")
+    @ConstantOperand(type = boolean.class, name = "expected")
+    @ConstantOperand(type = int.class, name = "receiverSource")
+    public static final class Send1TestFrom {
+        @Specialization
+        static boolean doSend(final VirtualFrame frame, final NativeObject selector, final int pcAndSp, final int jumpPcAndSp, final boolean expected, final int receiverSource, final Object arg1,
+                        @Bind final SqueakBytecodeRootNode root,
+                        @Bind final Node node,
+                        @Cached(inline = true) final SqueakObjectAt0Node at0Node,
+                        @Cached final DSLSend1Node sendNode) {
+            final Object receiver = loadSource(frame, receiverSource, node, at0Node);
+            return testBoolean(frame, jumpPcAndSp, expected, send1(frame, selector, pcAndSp, receiver, arg1, sendNode), root);
+        }
+    }
+
+    @Operation
+    @ConstantOperand(type = NativeObject.class, name = "selector")
+    @ConstantOperand(type = int.class, name = "pcAndSp")
+    @ConstantOperand(type = int.class, name = "jumpPcAndSp")
+    @ConstantOperand(type = boolean.class, name = "expected")
+    @ConstantOperand(type = int.class, name = "receiverSource")
+    @ConstantOperand(type = int.class, name = "argumentSource")
+    public static final class Send1TestFrom2 {
+        @Specialization
+        static boolean doSend(final VirtualFrame frame, final NativeObject selector, final int pcAndSp, final int jumpPcAndSp, final boolean expected, final int receiverSource,
+                        final int argumentSource,
+                        @Bind final SqueakBytecodeRootNode root,
+                        @Bind final Node node,
+                        @Cached(inline = true) final SqueakObjectAt0Node at0Node,
+                        @Cached final DSLSend1Node sendNode) {
+            final Object receiver = loadSource(frame, receiverSource, node, at0Node);
+            final Object arg1 = loadSource(frame, argumentSource, node, at0Node);
+            return testBoolean(frame, jumpPcAndSp, expected, send1(frame, selector, pcAndSp, receiver, arg1, sendNode), root);
+        }
     }
 
     @Operation
@@ -1205,7 +1352,7 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
         @Specialization
         static Object doReturn(final VirtualFrame frame, final Object value,
                         @Bind final SqueakBytecodeRootNode root) {
-            if (FrameAccess.hasModifiedSender(frame)) {
+            if (frame.getObject(CONTEXT_SLOT) instanceof final ContextObject context && context.hasModifiedSender()) {
                 final AbstractSqueakObject sender = FrameAccess.getSender(frame);
                 if (sender instanceof final ContextObject ctx && !ctx.isDead()) {
                     throw new NonVirtualReturn(value, sender);
@@ -1213,7 +1360,9 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
                     throw cannotReturn(frame, value);
                 }
             } else {
-                FrameAccess.terminateFrame(frame);
+                /* Terminate the frame (see FrameAccess#terminateFrame). */
+                frame.setLong(PC_AND_SP_SLOT, DSLFrameInfo.encodePCAndSP(ContextObject.NIL_PC_STACK_NOT_NIL_VALUE, (int) (frame.getLong(PC_AND_SP_SLOT) >>> 32)));
+                FrameAccess.setSender(frame, NilObject.SINGLETON);
                 exitContext(root);
                 return value;
             }
