@@ -10,9 +10,11 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.EarlyInline;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.bytecode.BytecodeDSLAccess;
 import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.InstrumentableNode;
 import com.oracle.truffle.api.instrumentation.StandardTags;
@@ -464,13 +466,21 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
             if (context.isActuallyActiveOnTruffleStack()) {
                 // The context was actually active. Throwing ProcessSwitch will unwind the
                 // Truffle stack and force all contexts to the heap.
-                CompilerDirectives.transferToInterpreter();
                 FrameAccess.externalizePCAndSP(frame, pc, sp);
-                final ContextObject activeContext = FrameAccess.getOrCreateContextWithFrame(frame);
-                AbstractPointersObjectWriteNode.executeUncached(getContext().getActiveProcessSlow(), PROCESS.SUSPENDED_CONTEXT, activeContext);
-                throw ProcessSwitch.SINGLETON;
+                throw suspendActiveProcess(getContext(), frame.materialize());
             }
         }
+    }
+
+    /*
+     * This can happen repeatedly (e.g., when a Generator switches between contexts), so do not
+     * deoptimize. The resulting ProcessSwitch unwinds the Truffle stack anyway.
+     */
+    @TruffleBoundary
+    private static ProcessSwitch suspendActiveProcess(final SqueakImageContext image, final MaterializedFrame frame) {
+        final ContextObject activeContext = FrameAccess.getOrCreateContextWithFrame(frame);
+        AbstractPointersObjectWriteNode.executeUncached(image.getActiveProcessSlow(), PROCESS.SUSPENDED_CONTEXT, activeContext);
+        return ProcessSwitch.SINGLETON;
     }
 
     /*
