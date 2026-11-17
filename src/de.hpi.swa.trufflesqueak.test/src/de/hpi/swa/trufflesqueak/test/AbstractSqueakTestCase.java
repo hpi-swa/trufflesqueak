@@ -101,9 +101,11 @@ public abstract class AbstractSqueakTestCase {
         contextBuilder.option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.TESTING, "true");
         contextBuilder.option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.RESOURCE_SUMMARY, Boolean.toString(spec.showStatistics));
 
-        if (Boolean.getBoolean("trufflesqueak.test.bytecode-dsl")) {
+        /* The Bytecode DSL interpreter is the default; this allows testing the legacy interpreters. */
+        final String useBytecodeDSL = System.getProperty("trufflesqueak.test.bytecode-dsl");
+        if (useBytecodeDSL != null) {
             contextBuilder.allowExperimentalOptions(true);
-            contextBuilder.option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.BYTECODE_DSL, "true");
+            contextBuilder.option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.BYTECODE_DSL, useBytecodeDSL);
         }
 
         final String logLevel = System.getProperty("log.level");

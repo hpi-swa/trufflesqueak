@@ -55,7 +55,7 @@ public final class SqueakOptions {
     public static final OptionKey<Boolean> Startup = new OptionKey<>(false);
 
     @Option(name = SqueakLanguageOptions.BYTECODE_DSL, category = OptionCategory.EXPERT, stability = OptionStability.EXPERIMENTAL, help = SqueakLanguageOptions.BYTECODE_DSL_HELP, usageSyntax = "false|true")//
-    public static final OptionKey<Boolean> BytecodeDSL = new OptionKey<>(false);
+    public static final OptionKey<Boolean> BytecodeDSL = new OptionKey<>(true);
 
     @Option(name = SqueakLanguageOptions.TESTING, category = OptionCategory.INTERNAL, stability = OptionStability.STABLE, help = SqueakLanguageOptions.TESTING_HELP, usageSyntax = "false|true")//
     public static final OptionKey<Boolean> Testing = new OptionKey<>(false);
