@@ -178,7 +178,7 @@
     flakyTests := OrderedCollection new.
     {
         ArbitraryObjectSocketTestCase -> #(#testBasics). "delays too short, see https://github.com/squeak-smalltalk/squeak-object-memory/issues/179"
-        BitBltSimulationTest -> #(#testAlphaCompositing2Simulated #testAlphaCompositingSimulated).
+        BitBltSimulationTest -> #(#testAlphaCompositing2Simulated #testAlphaCompositingSimulated). "simulated primitive fails if the JVM collects garbage while loading BitBlt state (see BitBltSimulation>>#loadBitBltFrom:warping:)"
         DebuggerTests -> #(#test02UnhandledException #test19Abandon).
         SHParserST80Test -> #(#testNumbers).
         StringSocketTestCase -> #(#testBogusInput1 #testBogusInput2). "delays too short, see https://github.com/squeak-smalltalk/squeak-object-memory/issues/179"
