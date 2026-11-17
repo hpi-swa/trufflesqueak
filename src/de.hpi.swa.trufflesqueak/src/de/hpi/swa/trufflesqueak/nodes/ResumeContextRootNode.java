@@ -31,44 +31,45 @@ public final class ResumeContextRootNode extends AbstractRootNode {
     public ResumeContextRootNode(final ResumeContextRootNode original) {
         super(original);
         activeContext = original.activeContext;
-        assert !activeContext.isDead() : "Terminated contexts cannot be resumed";
     }
 
     @Override
     public Object execute(final VirtualFrame frame) {
-        assert !activeContext.isDead() : "Terminated contexts cannot be resumed";
+        final ContextObject context = activeContext;
+        /*
+         * This root node is cached per method and outlives the context it resumes. Release the
+         * context so that it, and all objects referenced from its frame, can be garbage collected
+         * once it has returned.
+         */
+        activeContext = null;
+        assert context != null && !context.isDead() : "Terminated contexts cannot be resumed";
         /*
          * Make it so ObjectGraphUtils can find the active context when executing strictly within
          * the active context.
          */
-        FrameAccess.setContext(frame, activeContext);
+        FrameAccess.setContext(frame, context);
         /*
          * Reset the fast-path flag to indicate this Context has resumed execution. Future external
          * modifications to this Context's instruction pointer will now trigger a proper stack
          * check. See AbstractInterpreterNode#ensureContextReceiverIsNotActive
          */
-        activeContext.markAsPotentiallyActiveOnTruffleStack();
-        activeContext.clearModifiedSender();
-        final int pc = instructionPointerProfile.profile(activeContext.getInstructionPointerForBytecodeLoop());
-        final int sp = stackPointerProfile.profile(activeContext.getStackPointer());
+        context.markAsPotentiallyActiveOnTruffleStack();
+        context.clearModifiedSender();
+        final int pc = instructionPointerProfile.profile(context.getInstructionPointerForBytecodeLoop());
+        final int sp = stackPointerProfile.profile(context.getStackPointer());
         if (CompilerDirectives.isPartialEvaluationConstant(pc) && CompilerDirectives.isPartialEvaluationConstant(sp)) {
-            return interpreterNode.execute(activeContext.getTruffleFrame(), pc, sp);
+            return interpreterNode.execute(context.getTruffleFrame(), pc, sp);
         } else {
-            return interpretBytecodeWithBoundary(pc, sp);
+            return interpretBytecodeWithBoundary(context, pc, sp);
         }
     }
 
     @TruffleBoundary
-    private Object interpretBytecodeWithBoundary(final int pc, final int sp) {
-        return interpreterNode.execute(activeContext.getTruffleFrame(), pc, sp);
-    }
-
-    public ContextObject getActiveContext() {
-        return activeContext;
+    private Object interpretBytecodeWithBoundary(final ContextObject context, final int pc, final int sp) {
+        return interpreterNode.execute(context.getTruffleFrame(), pc, sp);
     }
 
     public void setActiveContext(final ContextObject newActiveContext) {
-        assert activeContext.getCodeObject() == newActiveContext.getCodeObject();
         assert getFrameDescriptor() == newActiveContext.getMethodOrBlock().getFrameDescriptor();
         activeContext = newActiveContext;
     }
@@ -86,6 +87,6 @@ public final class ResumeContextRootNode extends AbstractRootNode {
     @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
-        return activeContext.toString();
+        return getCode().toString();
     }
 }
