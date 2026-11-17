@@ -10,6 +10,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.EarlyInline;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.bytecode.BytecodeDSLAccess;
 import com.oracle.truffle.api.frame.Frame;
@@ -464,13 +465,16 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
             if (context.isActuallyActiveOnTruffleStack()) {
                 // The context was actually active. Throwing ProcessSwitch will unwind the
                 // Truffle stack and force all contexts to the heap.
-                CompilerDirectives.transferToInterpreter();
                 FrameAccess.externalizePCAndSP(frame, pc, sp);
-                final ContextObject activeContext = FrameAccess.getOrCreateContextWithFrame(frame);
-                AbstractPointersObjectWriteNode.executeUncached(getContext().getActiveProcessSlow(), PROCESS.SUSPENDED_CONTEXT, activeContext);
+                suspendActiveProcess(getContext(), FrameAccess.getOrCreateContextWithFrame(frame));
                 throw ProcessSwitch.SINGLETON;
             }
         }
+    }
+
+    @TruffleBoundary
+    private static void suspendActiveProcess(final SqueakImageContext image, final ContextObject activeContext) {
+        AbstractPointersObjectWriteNode.executeUncached(image.getActiveProcessSlow(), PROCESS.SUSPENDED_CONTEXT, activeContext);
     }
 
     /*
