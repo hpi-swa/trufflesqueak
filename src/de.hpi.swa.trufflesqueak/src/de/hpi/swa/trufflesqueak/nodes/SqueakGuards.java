@@ -13,6 +13,7 @@ import com.oracle.truffle.api.nodes.Node;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
+import de.hpi.swa.trufflesqueak.model.AbstractVariablePointersObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
@@ -153,6 +154,12 @@ public final class SqueakGuards {
     @Idempotent
     public static boolean isMacOS() {
         return OS.isMacOS();
+    }
+
+    /** Answers whether the object has indexable fields (as opposed to formats 0, 1, 5, and 7). */
+    public static boolean isIndexable(final AbstractSqueakObject object) {
+        return object instanceof ArrayObject || object instanceof NativeObject || object instanceof AbstractVariablePointersObject || object instanceof ContextObject ||
+                        object instanceof BlockClosureObject || object instanceof CompiledCodeObject || object instanceof FloatObject;
     }
 
     public static boolean isNativeObject(final Object object) {

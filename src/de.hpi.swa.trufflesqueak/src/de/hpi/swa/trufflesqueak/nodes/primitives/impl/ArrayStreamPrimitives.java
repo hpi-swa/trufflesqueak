@@ -136,7 +136,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 62)
     protected abstract static class PrimSize1Node extends AbstractPrimitiveNode implements Primitive0WithFallback {
-        @Specialization
+        @Specialization(guards = "isIndexable(receiver)")
         protected static final long doSqueakObject(final AbstractSqueakObject receiver,
                         @Bind final Node node,
                         @Cached final SqueakObjectSizeNode sizeNode,
@@ -148,7 +148,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 62)
     protected abstract static class PrimSize2Node extends AbstractPrimitiveNode implements Primitive1WithFallback {
-        @Specialization
+        @Specialization(guards = "isIndexable(target)")
         protected static final long doSqueakObject(@SuppressWarnings("unused") final Object receiver, final AbstractSqueakObject target,
                         @Bind final Node node,
                         @Cached final SqueakObjectSizeNode sizeNode,

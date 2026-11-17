@@ -164,7 +164,6 @@
         ObjectTest -> #(#testEvaluateWheneverChangeIn #testEvaluateWheneverChangeInTransparent "become EmptyObject->PointersObject not yet supported" #testPinning "not yet supported").
         PackageDependencyTest -> #(#testBalloon #testPreferenceBrowser #testSUnit).
         SequenceableCollectionTest -> #(#testDoWithIndexDeprecation).
-        SetInspectorTest -> #(#testUninitialized). "failing"
         SmallIntegerTest -> #(#testMaxVal #testMinVal #testPrintString). "assume SmallIntegers are 31 or 61 bit rather than 64 bit (long)."
         WorldStateTest -> #(#testActiveVariablesObsoletion #testWorldVariableObsoletion).
     } collect: [:assoc | | testCase |
@@ -181,7 +180,6 @@
         SHParserST80Test -> #(#testNumbers).
         StringSocketTestCase -> #(#testBogusInput1 #testBogusInput2). "delays too short, see https://github.com/squeak-smalltalk/squeak-object-memory/issues/179"
         StringTest ->#(#testFindSelector).
-        WeakSetInspectorTest -> #(#testUninitialized).
         WideStringTest -> #(#testAsIntegerSignedUsingRandomNumbers). "sometimes hitting timeout due to slow becomeForward:"
 
         "failing on some platforms"
