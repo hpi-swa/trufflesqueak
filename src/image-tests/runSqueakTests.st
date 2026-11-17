@@ -23,11 +23,6 @@
         ^ FileStream stdout'
             classified: 'patched'.
 
-    "Without mouse input (e.g., when headless), the last event of the hand remains at 0@0, where
-    tests create morphs. Move it away so that such morphs are not hovered (see
-    MorphicToolBuilderTests>>#testGetButtonColor)."
-    Project current world primaryHand lastEvent setPosition: -1 @ -1.
-
     isLinux := Smalltalk platformName = 'unix'.
     isMacOS := Smalltalk platformName = 'Mac OS'.
     isWin := Smalltalk platformName = 'Win32'.
@@ -181,7 +176,7 @@
         BitBltSimulationTest -> #(#testAlphaCompositing2Simulated #testAlphaCompositingSimulated). "simulated primitive fails if the JVM collects garbage while loading BitBlt state (see BitBltSimulation>>#loadBitBltFrom:warping:)"
         DebuggerTests -> #(#test02UnhandledException). "fails on most CI jobs except on Linux aarch64, cause unknown"
         DebuggerTests -> #(#test19Abandon). "fails sometimes on Windows native"
-        MorphicToolBuilderTests -> #(#testGetButtonColor). "with a display (e.g., on macOS), mouse events can move the hand back over morphs that tests create at 0@0"
+        MorphicToolBuilderTests -> #(#testGetButtonColor). "fails if the hand is over 0@0, where tests create morphs (e.g., when headless or depending on mouse events)"
         SHParserST80Test -> #(#testNumbers). "fails rarely, cause unknown"
         StringSocketTestCase -> #(#testBogusInput1 #testBogusInput2). "delays too short, see https://github.com/squeak-smalltalk/squeak-object-memory/issues/179"
         StringTest ->#(#testFindSelector). "fails rarely, cause unknown"
