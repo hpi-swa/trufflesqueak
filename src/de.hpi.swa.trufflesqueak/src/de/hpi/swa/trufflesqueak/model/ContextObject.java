@@ -419,6 +419,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         return truffleFrame;
     }
 
+    @TruffleBoundary
     public boolean isActuallyActiveOnTruffleStack() {
         if (!hasTruffleFrame()) {
             return false; // No Truffle frame means the receiver is not yet executing.
