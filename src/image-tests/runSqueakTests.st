@@ -176,14 +176,12 @@
         ArbitraryObjectSocketTestCase -> #(#testBasics). "delays too short, see https://github.com/squeak-smalltalk/squeak-object-memory/issues/179"
         BitBltSimulationTest -> #(#testAlphaCompositing2Simulated #testAlphaCompositingSimulated).
         DebuggerTests -> #(#test02UnhandledException #test19Abandon).
-        MCSnapshotTest -> #(#testInstanceReuse).
         MorphicToolBuilderTests -> #(#testGetButtonColor).
         PCCByLiteralsTest -> #(#testSwitchPrimCallOffOn).
         SHParserST80Test -> #(#testNumbers).
         StringSocketTestCase -> #(#testBogusInput1 #testBogusInput2). "delays too short, see https://github.com/squeak-smalltalk/squeak-object-memory/issues/179"
         StringTest ->#(#testFindSelector).
-        TestValueWithinFix -> #(#testValueWithinTimingRepeat).
-        WeakSetInspectorTest -> #(#testSymbolTableM6812 #testUninitialized).
+        WeakSetInspectorTest -> #(#testUninitialized).
         WideStringTest -> #(#testAsIntegerSignedUsingRandomNumbers). "sometimes hitting timeout due to slow becomeForward:"
 
         "failing on some platforms"
