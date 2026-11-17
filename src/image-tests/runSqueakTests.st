@@ -184,7 +184,7 @@
         SHParserST80Test -> #(#testNumbers). "fails rarely, cause unknown"
         StringSocketTestCase -> #(#testBogusInput1 #testBogusInput2). "delays too short, see https://github.com/squeak-smalltalk/squeak-object-memory/issues/179"
         StringTest ->#(#testFindSelector). "fails rarely, cause unknown"
-        WideStringTest -> #(#testAsIntegerSignedUsingRandomNumbers). "sometimes hitting timeout due to slow becomeForward:"
+        WideStringTest -> #(#testAsIntegerSignedUsingRandomNumbers). "takes up to several seconds, may exceed the default timeout of 5s on non-ARM platforms (see TestCase>>#defaultTimeout)"
 
         "failing on some platforms"
         GIFReadWriterTest -> #(#testAnimatedColorsOutIn).
