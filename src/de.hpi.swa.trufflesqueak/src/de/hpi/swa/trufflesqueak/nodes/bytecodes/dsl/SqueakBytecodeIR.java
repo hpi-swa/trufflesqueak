@@ -179,12 +179,35 @@ public final class SqueakBytecodeIR {
         } else {
             decodeSistaV1(image, code.getBytes(), startPC, endPC, builder);
         }
-        final Instruction[] instructions = builder.toArray();
-        computeStackPointers(instructions, startPC, endPC, code.getInitialSP());
-        return instructions;
+        return builder.toArray();
     }
 
-    private static void computeStackPointers(final Instruction[] instructions, final int startPC, final int endPC, final int initialSP) {
+    /**
+     * Decodes the single instruction at the given pc, which does not have to be an instruction
+     * boundary of the linear decoding (hand-crafted bytecode may jump anywhere).
+     */
+    public static Instruction decodeAt(final CompiledCodeObject code, final int pc) {
+        final SqueakImageContext image = code.getSqueakClass().getImage();
+        final Builder builder = new Builder();
+        try {
+            if (code.getHasV3PlusClosuresBytecodes()) {
+                decodeV3PlusClosures(image, code.getBytes(), pc, pc + 1, builder);
+            } else {
+                decodeSistaV1(image, code.getBytes(), pc, pc + 1, builder);
+            }
+        } catch (final ArrayIndexOutOfBoundsException e) {
+            return new Instruction(pc, pc + 1, UNKNOWN, -1, 0, 0, null, -1);
+        }
+        return builder.instructions.get(0);
+    }
+
+    /**
+     * Computes the stack depth of each instruction, assuming that the depth is the same on all
+     * paths to an instruction.
+     *
+     * @throws UnsupportedBytecodeException if this is not the case
+     */
+    static void computeStackPointers(final Instruction[] instructions, final int startPC, final int endPC, final int initialSP) {
         /* Stack depth at jump targets, indexed by pc - startPC; 0 = unknown, otherwise sp + 1. */
         final int[] targetSP = new int[endPC - startPC + 1];
         int sp = initialSP;

@@ -16,6 +16,7 @@ import com.oracle.truffle.api.bytecode.BytecodeRootNode;
 import com.oracle.truffle.api.bytecode.ConstantOperand;
 import com.oracle.truffle.api.bytecode.GenerateBytecode;
 import com.oracle.truffle.api.bytecode.Operation;
+import com.oracle.truffle.api.bytecode.Return;
 import com.oracle.truffle.api.bytecode.Variadic;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
@@ -27,7 +28,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ControlFlowException;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
@@ -86,6 +86,7 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess.DSLFrameInfo;
                 defaultUncachedThreshold = "UNCACHED_THRESHOLD", //
                 boxingEliminationTypes = {long.class, double.class, boolean.class}, //
                 enableBlockScoping = false, //
+                enableTailCallHandlers = true, //
                 defaultLocalValue = "NIL")
 public abstract class SqueakBytecodeRootNode extends RootNode implements BytecodeRootNode {
     protected static final Object NIL = NilObject.SINGLETON;
@@ -103,6 +104,8 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
     @CompilationFinal private boolean modifiesContext;
     /* Only used for resumption roots. */
     private ContextObject activeContext;
+    /** Sorted pc/sp states (see encodePCAndSP) at which this root can continue execution. */
+    private int[] resumableStates;
 
     protected SqueakBytecodeRootNode(final SqueakLanguage language, final FrameDescriptor.Builder builder) {
         this(language, builder, new DSLFrameInfo());
@@ -113,9 +116,10 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
         this.frameInfo = frameInfo;
     }
 
-    public final void initialize(final CompiledCodeObject theCode, final boolean couldModifyContext) {
+    public final void initialize(final CompiledCodeObject theCode, final boolean couldModifyContext, final int[] theResumableStates) {
         CompilerAsserts.neverPartOfCompilation();
         code = theCode;
+        resumableStates = theResumableStates;
         doesNotNeedThisContext = theCode.getDoesNotNeedThisContextAssumption();
         modifiesContext = couldModifyContext;
         /* Never let shadow blocks escape, use their outer method instead. */
@@ -128,6 +132,11 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
 
     public final ContextObject getActiveContext() {
         return activeContext;
+    }
+
+    /** Whether this root has code for the given pc and sp (resumption roots only). */
+    public final boolean canResumeAt(final int pc, final int sp) {
+        return 0 <= pc && pc <= MAX_PC && 0 <= sp && sp <= MAX_SP && java.util.Arrays.binarySearch(resumableStates, encodePCAndSP(pc, sp)) >= 0;
     }
 
     public final void setActiveContext(final ContextObject context) {
@@ -184,12 +193,25 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
      */
 
     private static void externalizePCAndSP(final VirtualFrame frame, final int pcAndSp) {
-        frame.setLong(PC_AND_SP_SLOT, DSLFrameInfo.encodePCAndSP(pcAndSp & 0xFFFF, pcAndSp >>> 16));
+        frame.setLong(PC_AND_SP_SLOT, DSLFrameInfo.encodePCAndSP(decodePC(pcAndSp), decodeSP(pcAndSp)));
     }
 
+    /* Encoding of pc and sp in the int operands of operations. */
+    private static final int PC_BITS = 22;
+    public static final int MAX_PC = (1 << PC_BITS) - 1;
+    public static final int MAX_SP = (1 << 31 - PC_BITS) - 1;
+
     public static int encodePCAndSP(final int pc, final int sp) {
-        assert 0 <= pc && pc <= 0xFFFF && 0 <= sp && sp <= 0x7FFF;
-        return sp << 16 | pc;
+        assert 0 <= pc && pc <= MAX_PC && 0 <= sp && sp <= MAX_SP;
+        return sp << PC_BITS | pc;
+    }
+
+    private static int decodePC(final int pcAndSp) {
+        return pcAndSp & MAX_PC;
+    }
+
+    private static int decodeSP(final int pcAndSp) {
+        return pcAndSp >>> PC_BITS;
     }
 
     private static CannotReturnToTarget cannotReturn(final VirtualFrame frame, final Object returnValue) {
@@ -336,12 +358,67 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
         }
     }
 
+    /*
+     * Operations for the generic translation, which dispatches on the pc and sp stored in the
+     * frame (see SqueakBytecodeTranslator).
+     */
+
+    private static int currentState(final VirtualFrame frame) {
+        final long pcAndSp = frame.getLong(PC_AND_SP_SLOT);
+        final int pc = (int) pcAndSp;
+        final int sp = (int) (pcAndSp >>> 32);
+        if (0 <= pc && pc <= MAX_PC && 0 <= sp && sp <= MAX_SP) {
+            return encodePCAndSP(pc, sp);
+        } else {
+            return -1; // not a valid state
+        }
+    }
+
+    @Operation
+    @ConstantOperand(type = int.class, name = "pcAndSp")
+    public static final class StateLessThan {
+        @Specialization
+        static boolean doCheck(final VirtualFrame frame, final int pcAndSp) {
+            return currentState(frame) < pcAndSp;
+        }
+    }
+
+    @Operation
+    @ConstantOperand(type = int.class, name = "pcAndSp")
+    public static final class StateEquals {
+        @Specialization
+        static boolean doCheck(final VirtualFrame frame, final int pcAndSp) {
+            return currentState(frame) == pcAndSp;
+        }
+    }
+
+    @Operation
+    @ConstantOperand(type = int.class, name = "pcAndSp")
+    public static final class SetState {
+        @Specialization
+        static void doSet(final VirtualFrame frame, final int pcAndSp) {
+            externalizePCAndSP(frame, pcAndSp);
+        }
+    }
+
+    /** Raised when execution reaches bytecode that cannot be executed (e.g., unknown bytecodes). */
+    @Operation
+    @ConstantOperand(type = String.class, name = "message")
+    public static final class UnsupportedBytecode {
+        @Specialization
+        static void doFail(final VirtualFrame frame, final String message,
+                        @Bind final SqueakBytecodeRootNode root) {
+            CompilerDirectives.transferToInterpreter();
+            throw SqueakException.create(message, "in", root.code, "at pc", FrameAccess.getInstructionPointer(frame), "sp", FrameAccess.getStackPointer(frame));
+        }
+    }
+
     @Operation
     @ConstantOperand(type = int.class, name = "pcAndSp")
     public static final class CheckForInterruptsInLoop {
         @Specialization
         static void doCheck(final VirtualFrame frame, final int pcAndSp) {
-            CheckForInterruptsInLoopNode.createForLoopUnchecked().execute(frame, pcAndSp & 0xFFFF, pcAndSp >>> 16);
+            CheckForInterruptsInLoopNode.createForLoopUnchecked().execute(frame, decodePC(pcAndSp), decodeSP(pcAndSp));
         }
     }
 
@@ -351,39 +428,43 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
      * ========================================================================================
      */
 
-    /** Follows forwarding pointers of values read from temporaries. */
+    /**
+     * Pushes a temporary variable and follows its forwarding pointer. This is a single instruction
+     * (instead of a load followed by a check) to keep the number of dispatches low.
+     */
     @Operation
-    public static final class Follow {
-        @Specialization
-        static long doLong(final long value) {
-            return value;
+    @ConstantOperand(type = int.class, name = "slot")
+    public static final class PushTemp {
+        /*
+         * The frame slot is read directly (and not through a LocalAccessor) because stack slots
+         * are also written from outside of the bytecode (arguments, context modifications).
+         */
+        @Specialization(guards = "frame.isLong(slot)")
+        static long doLong(final VirtualFrame frame, final int slot) {
+            return frame.getLong(slot);
         }
 
-        @Specialization
-        static double doDouble(final double value) {
-            return value;
+        @Specialization(guards = "frame.isDouble(slot)")
+        static double doDouble(final VirtualFrame frame, final int slot) {
+            return frame.getDouble(slot);
         }
 
-        @Specialization
-        static boolean doBoolean(final boolean value) {
-            return value;
+        @Specialization(guards = "frame.isBoolean(slot)")
+        static boolean doBoolean(final VirtualFrame frame, final int slot) {
+            return frame.getBoolean(slot);
         }
 
-        @Specialization(replaces = {"doLong", "doDouble", "doBoolean"})
-        static Object doObject(final Object value,
-                        @Bind final Node node,
-                        @Cached final InlinedConditionProfile followProfile) {
-            return DSLSendNodes.followForwarded(value, node, followProfile);
+        @Fallback
+        static Object doObject(final VirtualFrame frame, final int slot) {
+            return DSLSendNodes.followForwardedRarely(FrameAccess.getDSLSlotValue(frame, slot));
         }
     }
 
     @Operation
     public static final class PushReceiver {
         @Specialization
-        static Object doPush(final VirtualFrame frame,
-                        @Bind final Node node,
-                        @Cached final InlinedConditionProfile followProfile) {
-            return DSLSendNodes.followForwarded(FrameAccess.getReceiver(frame), node, followProfile);
+        static Object doPush(final VirtualFrame frame) {
+            return DSLSendNodes.followForwardedRarely(FrameAccess.getReceiver(frame));
         }
     }
 
@@ -393,9 +474,8 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
         @Specialization
         static Object doPush(final VirtualFrame frame, final int index,
                         @Bind final Node node,
-                        @Cached(inline = true) final SqueakObjectAt0Node at0Node,
-                        @Cached final InlinedConditionProfile followProfile) {
-            return DSLSendNodes.followForwarded(at0Node.execute(node, FrameAccess.getReceiver(frame), index), node, followProfile);
+                        @Cached(inline = true) final SqueakObjectAt0Node at0Node) {
+            return DSLSendNodes.followForwardedRarely(at0Node.execute(node, FrameAccess.getReceiver(frame), index));
         }
     }
 
@@ -469,9 +549,8 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
         @Specialization
         static Object doPush(final int indexInVector, final Object tempVector,
                         @Bind final Node node,
-                        @Cached(inline = true) final SqueakObjectAt0Node at0Node,
-                        @Cached final InlinedConditionProfile followProfile) {
-            return DSLSendNodes.followForwarded(at0Node.execute(node, tempVector, indexInVector), node, followProfile);
+                        @Cached(inline = true) final SqueakObjectAt0Node at0Node) {
+            return DSLSendNodes.followForwardedRarely(at0Node.execute(node, tempVector, indexInVector));
         }
     }
 
@@ -1026,6 +1105,91 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
         }
     }
 
+    private static boolean testBoolean(final VirtualFrame frame, final int jumpPcAndSp, final boolean expected, final Object value, final SqueakBytecodeRootNode root) {
+        if (value instanceof final Boolean booleanValue) {
+            return booleanValue == expected;
+        } else {
+            throw sendMustBeBoolean(frame, jumpPcAndSp, value, root);
+        }
+    }
+
+    /*
+     * Sends and comparisons whose result is only used by a conditional jump: they directly
+     * produce the condition, which saves a separate instruction for the conversion.
+     */
+
+    @Operation
+    @ConstantOperand(type = NativeObject.class, name = "selector")
+    @ConstantOperand(type = int.class, name = "pcAndSp")
+    @ConstantOperand(type = int.class, name = "jumpPcAndSp")
+    @ConstantOperand(type = boolean.class, name = "expected")
+    public static final class Send0Test {
+        @Specialization
+        static boolean doSend(final VirtualFrame frame, final NativeObject selector, final int pcAndSp, final int jumpPcAndSp, final boolean expected, final Object receiver,
+                        @Bind final SqueakBytecodeRootNode root,
+                        @Cached final DSLSend0Node sendNode) {
+            externalizePCAndSP(frame, pcAndSp);
+            return testBoolean(frame, jumpPcAndSp, expected, sendNode.execute(frame, selector, receiver), root);
+        }
+    }
+
+    @Operation
+    @ConstantOperand(type = NativeObject.class, name = "selector")
+    @ConstantOperand(type = int.class, name = "pcAndSp")
+    @ConstantOperand(type = int.class, name = "jumpPcAndSp")
+    @ConstantOperand(type = boolean.class, name = "expected")
+    public static final class Send1Test {
+        @Specialization
+        static boolean doSend(final VirtualFrame frame, final NativeObject selector, final int pcAndSp, final int jumpPcAndSp, final boolean expected, final Object receiver, final Object arg1,
+                        @Bind final SqueakBytecodeRootNode root,
+                        @Cached final DSLSend1Node sendNode) {
+            return testBoolean(frame, jumpPcAndSp, expected, send1(frame, selector, pcAndSp, receiver, arg1, sendNode), root);
+        }
+    }
+
+    /** Comparison (kind is the index of the special selector: 2 = <, ..., 7 = ~=). */
+    @Operation
+    @ConstantOperand(type = int.class, name = "kind")
+    @ConstantOperand(type = NativeObject.class, name = "selector")
+    @ConstantOperand(type = int.class, name = "pcAndSp")
+    @ConstantOperand(type = int.class, name = "jumpPcAndSp")
+    @ConstantOperand(type = boolean.class, name = "expected")
+    public static final class PrimCompareTest {
+        @Specialization
+        static boolean doLong(final int kind, @SuppressWarnings("unused") final NativeObject selector, @SuppressWarnings("unused") final int pcAndSp, @SuppressWarnings("unused") final int jumpPcAndSp,
+                        final boolean expected, final long lhs, final long rhs) {
+            return switch (kind) {
+                case 2 -> lhs < rhs;
+                case 3 -> lhs > rhs;
+                case 4 -> lhs <= rhs;
+                case 5 -> lhs >= rhs;
+                case 6 -> lhs == rhs;
+                default -> lhs != rhs;
+            } == expected;
+        }
+
+        @Specialization
+        static boolean doDouble(final int kind, @SuppressWarnings("unused") final NativeObject selector, @SuppressWarnings("unused") final int pcAndSp, @SuppressWarnings("unused") final int jumpPcAndSp,
+                        final boolean expected, final double lhs, final double rhs) {
+            return switch (kind) {
+                case 2 -> lhs < rhs;
+                case 3 -> lhs > rhs;
+                case 4 -> lhs <= rhs;
+                case 5 -> lhs >= rhs;
+                case 6 -> lhs == rhs;
+                default -> lhs != rhs;
+            } == expected;
+        }
+
+        @Fallback
+        static boolean doSend(final VirtualFrame frame, @SuppressWarnings("unused") final int kind, final NativeObject selector, final int pcAndSp, final int jumpPcAndSp, final boolean expected,
+                        final Object receiver, final Object arg1,
+                        @Bind final SqueakBytecodeRootNode root,
+                        @Cached final DSLSend1Node sendNode) {
+            return testBoolean(frame, jumpPcAndSp, expected, send1(frame, selector, pcAndSp, receiver, arg1, sendNode), root);
+        }
+    }
+
     private static SqueakException sendMustBeBoolean(final VirtualFrame frame, final int pcAndSp, final Object value, final SqueakBytecodeRootNode root) {
         CompilerDirectives.transferToInterpreter();
         externalizePCAndSP(frame, pcAndSp);
@@ -1037,7 +1201,7 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
     /**
      * Return from a method, or local return from a block (i.e., return to the sender).
      */
-    @Operation
+    @Return
     public static final class NormalReturn {
         @Specialization
         static Object doReturn(final VirtualFrame frame, final Object value,
@@ -1060,7 +1224,7 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
     /**
      * Method return ("^") executed in a block: returns to the sender of the block's home context.
      */
-    @Operation
+    @Return
     @ConstantOperand(type = int.class, name = "pcAndSp")
     public static final class NonLocalReturnFromBlock {
         @Specialization

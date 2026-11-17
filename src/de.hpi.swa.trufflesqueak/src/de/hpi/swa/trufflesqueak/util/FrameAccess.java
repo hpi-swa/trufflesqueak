@@ -146,7 +146,7 @@ public final class FrameAccess {
         return bytecodeDSLEnabled && frame.getFrameDescriptor().getInfo() instanceof DSLFrameInfo;
     }
 
-    private static Object getDSLSlotValue(final Frame frame, final int slotIndex) {
+    public static Object getDSLSlotValue(final Frame frame, final int slotIndex) {
         return frame.getTag(slotIndex) == FrameSlotKind.Illegal.tag ? NilObject.SINGLETON : frame.getValue(slotIndex);
     }
 

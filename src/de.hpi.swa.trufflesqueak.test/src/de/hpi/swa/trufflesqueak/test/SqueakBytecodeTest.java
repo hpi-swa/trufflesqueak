@@ -675,6 +675,49 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
                         114, 172, 0x14, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x75, 0x7C));
     }
 
+    @Test
+    public void testDifferentStackDepthsAtMerge() {
+        // 0 <71/72> pushConstant: true/false
+        // 1 <99> jumpFalse: 4
+        // 2 <76> pushConstant: 1
+        // 3 <76> pushConstant: 1
+        // 4 <77> pushConstant: 2 (reached with two different stack depths)
+        // 5 <7C> returnTop
+        final AbstractSqueakObject rcvr = image.specialObjectsArray;
+        assertSame(2L, runMethod(rcvr, 0x71, 0x99, 0x76, 0x76, 0x77, 0x7C));
+        assertSame(2L, runMethod(rcvr, 0x72, 0x99, 0x76, 0x76, 0x77, 0x7C));
+    }
+
+    @Test
+    public void testJumpIntoLoop() {
+        // 0 <75> pushConstant: 0
+        // 1 <68> popIntoTemp: 0
+        // 2 <93> jump: 7 (into the middle of the loop)
+        // 3 <10> pushTemp: 0 (loop head)
+        // 4 <76> pushConstant: 1
+        // 5 <B0> send: +
+        // 6 <68> popIntoTemp: 0
+        // 7 <10> pushTemp: 0
+        // 8 <77> pushConstant: 2
+        // 9 <B2> send: <
+        // 10 <99> jumpFalse: 13
+        // 11 <A3 F6> jumpTo: 3
+        // 13 <10> pushTemp: 0
+        // 14 <7C> returnTop
+        final AbstractSqueakObject rcvr = image.specialObjectsArray;
+        assertSame(2L, runMethod(rcvr, 0x75, 0x68, 0x93, 0x10, 0x76, 0xB0, 0x68, 0x10, 0x77, 0xB2, 0x99, 0xA3, 0xF6, 0x10, 0x7C));
+    }
+
+    @Test
+    public void testJumpIntoInstruction() {
+        // 0 <91> jump: 3 (the second byte of the instruction at 2)
+        // 1 <73> pushConstant: nil
+        // 2 <80 76> pushRcvr: 54 / 3 <76> pushConstant: 1
+        // 4 <7C> returnTop
+        final AbstractSqueakObject rcvr = image.specialObjectsArray;
+        assertSame(1L, runMethod(rcvr, 0x91, 0x73, 0x80, 0x76, 0x7C));
+    }
+
     // TODO: testSendSelector()
 
     @Test

@@ -22,6 +22,7 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Idempotent;
 import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
@@ -37,7 +38,6 @@ import de.hpi.swa.trufflesqueak.nodes.ResumeContextRootNode;
 import de.hpi.swa.trufflesqueak.nodes.StartContextRootNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.dsl.SqueakBytecodeRootNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.dsl.SqueakBytecodeTranslator;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.dsl.SqueakBytecodeTranslator.UnsupportedBytecodeException;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchPrimitiveNode;
@@ -51,7 +51,6 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitives.Pr
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
-import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
@@ -289,12 +288,8 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         assert !(hasPrimitive() && PrimitiveNodeFactory.isNonFailing(this)) : "Should not create rood node for non failing primitives";
         final SqueakImageContext image = SqueakImageContext.getSlow();
         if (FrameAccess.isBytecodeDSLEnabled()) {
-            try {
-                executionData.callTarget = SqueakBytecodeTranslator.createRoot(image.getLanguage(), image, this, false).getCallTarget();
-                return;
-            } catch (final UnsupportedBytecodeException e) {
-                LogUtils.BYTECODE_DSL.fine(() -> "Falling back to legacy interpreter for " + this + ": " + e.getMessage());
-            }
+            executionData.callTarget = SqueakBytecodeTranslator.createRoot(image.getLanguage(), image, this, false).getCallTarget();
+            return;
         }
         executionData.callTarget = new StartContextRootNode(image, this).getCallTarget();
     }
@@ -374,7 +369,18 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
                 final SqueakImageContext image = SqueakImageContext.getSlow();
                 executionData.resumptionCallTarget = SqueakBytecodeTranslator.createRoot(image.getLanguage(), image, this, true).getCallTarget();
             }
-            ((SqueakBytecodeRootNode) executionData.resumptionCallTarget.getRootNode()).setActiveContext(context);
+            final SqueakBytecodeRootNode resumptionRoot = (SqueakBytecodeRootNode) executionData.resumptionCallTarget.getRootNode();
+            final MaterializedFrame frame = context.getTruffleFrame();
+            final int pc = FrameAccess.getInstructionPointer(frame);
+            final int sp = FrameAccess.getStackPointer(frame);
+            if (!resumptionRoot.canResumeAt(pc, sp)) {
+                /* The context was modified so that it is in a state that is not reachable normally. */
+                final SqueakImageContext image = SqueakImageContext.getSlow();
+                final SqueakBytecodeRootNode root = SqueakBytecodeTranslator.createResumptionRoot(image.getLanguage(), image, this, pc, sp);
+                root.setActiveContext(context);
+                return root.getCallTarget();
+            }
+            resumptionRoot.setActiveContext(context);
             return executionData.resumptionCallTarget;
         }
         if (getExecutionData().resumptionCallTarget == null) {

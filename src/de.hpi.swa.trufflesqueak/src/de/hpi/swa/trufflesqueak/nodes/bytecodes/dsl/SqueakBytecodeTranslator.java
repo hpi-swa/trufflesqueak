@@ -15,6 +15,7 @@ import com.oracle.truffle.api.bytecode.BytecodeLocal;
 import com.oracle.truffle.api.bytecode.BytecodeParser;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -23,6 +24,7 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.dsl.SqueakBytecodeIR.Instruction;
 import de.hpi.swa.trufflesqueak.util.FrameAccess.DSLFrameInfo;
+import de.hpi.swa.trufflesqueak.util.LogUtils;
 
 /**
  * Translates Squeak bytecode (decoded into {@link SqueakBytecodeIR}) into Bytecode DSL operations.
@@ -63,16 +65,45 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
         private int endIndex;
         private Loop parent;
         private boolean needsContinueLabel;
+        /**
+         * Index of the conditional jump that ends the condition of this loop, if the loop starts
+         * with a condition that exits the loop (e.g., whileTrue: and to:do: loops), or -1.
+         */
+        private int conditionJumpIndex = -1;
         /* Per parse: */
         private BytecodeLabel continueLabel;
 
+        /**
+         * Whether this is not a loop but the body of a conditional: the instructions between a
+         * conditional forward jump and its target, which are emitted as the body of an IfThen.
+         */
+        private final boolean isIf;
+
         private Loop(final int headIndex, final int endIndex) {
+            this(headIndex, endIndex, false);
+        }
+
+        private Loop(final int headIndex, final int endIndex, final boolean isIf) {
             this.headIndex = headIndex;
             this.endIndex = endIndex;
+            this.isIf = isIf;
         }
     }
 
+    /** Emits an expression that produces whether a value is the expected boolean. */
+    @FunctionalInterface
+    private interface TestEmitter {
+        void emit(boolean expected, int jumpPcAndSp);
+    }
+
     private record DispatchEntry(int pc, BytecodeLabel label, boolean isLeaf) {
+    }
+
+    /** A state of the generic translation: an instruction together with the sp before it. */
+    private record State(int pc, int sp, Instruction insn) {
+        private int key() {
+            return SqueakBytecodeRootNode.encodePCAndSP(pc, sp);
+        }
     }
 
     private static final int SPECIAL_ADD = 0;
@@ -95,21 +126,41 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
     private static final int SPECIAL_VALUE_WITH_ARG = 26;
 
     private static final int MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS = 32;
+    /** Frame slot of the local with offset 0 (slot 0 holds the bytecode index). */
+    private static final int SLOT_OF_FIRST_LOCAL = DSLFrameInfo.STACK_START - DSLFrameInfo.NUM_RESERVED_LOCALS;
+
+    private static final boolean USE_IF_REGIONS = !Boolean.getBoolean("trufflesqueak.bytecode-dsl.no-if-regions");
+
+    /** For testing: translate all methods with the generic translation. */
+    private static final boolean FORCE_GENERIC = Boolean.getBoolean("trufflesqueak.bytecode-dsl.force-generic");
 
     private final SqueakImageContext image;
     private final CompiledCodeObject code;
     private final boolean isResumption;
+    /** Whether the generic translation (a state machine over pc and sp) is used. */
+    private final boolean isGeneric;
     private final boolean isBlock;
+    /** Additional state to start the analysis of the generic translation from (or -1). */
+    private final int seedPC;
+    private final int seedSP;
 
     /* Results of the analysis, independent of a builder (the parser may run multiple times). */
     private final Instruction[] instructions;
     private final int startPC;
     private final int[] pcToIndex;
-    private final Loop[] loops; // sorted by head index
-    private final Loop[] loopOf; // innermost loop per instruction
-    private final Loop[] loopStartingAt;
-    private final boolean[] needsLabel;
+    private Loop[] loops; // sorted by head index
+    private Loop[] loopOf; // innermost loop per instruction
+    private Loop[] loopStartingAt;
+    private Loop[] ifRegionAt; // per conditional jump: the body that it guards (or null)
+    private Loop[] loopConditionAt; // per conditional jump: the loop whose condition it ends (or null)
+    private boolean[] needsLabel;
     private final boolean modifiesContext;
+
+    /* Results of the analysis for the generic translation. */
+    private State[] states; // sorted by pc and sp
+    private HashMap<Integer, Integer> stateIndexByKey;
+    private int[] dispatchEntries; // indices of states, sorted by key
+    private final HashMap<Integer, Instruction> extraInstructions = new HashMap<>();
     private final int numStackSlots;
     private final HashMap<Integer, CompiledCodeObject> shadowBlocks = new HashMap<>();
 
@@ -119,15 +170,29 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
     private BytecodeLocal resumePendingLocal;
     private BytecodeLabel[] labels;
     private Runnable[] deferred;
+    /**
+     * For some deferred expressions: an alternative that directly produces the boolean for a
+     * conditional jump, which saves the conversion of the value into a condition.
+     */
+    private TestEmitter[] deferredTest;
+    private BytecodeLabel[] stateLabels;
+    private BytecodeLabel continueLabel;
+    private int currentState;
 
-    private SqueakBytecodeTranslator(final SqueakImageContext image, final CompiledCodeObject code, final boolean isResumption) {
+    private SqueakBytecodeTranslator(final SqueakImageContext image, final CompiledCodeObject code, final boolean isResumption, final boolean isGeneric, final int seedPC, final int seedSP) {
+        this.seedPC = seedPC;
+        this.seedSP = seedSP;
         this.image = image;
         this.code = code;
         this.isResumption = isResumption;
+        this.isGeneric = isGeneric;
         isBlock = code.isCompiledBlock() || code.isShadowBlock();
         instructions = SqueakBytecodeIR.decode(code);
         startPC = code.getStartPCZeroBased();
         numStackSlots = code.getMaxNumStackSlots();
+        if (code.getBytes().length > SqueakBytecodeRootNode.MAX_PC || numStackSlots > SqueakBytecodeRootNode.MAX_SP) {
+            throw SqueakException.create("Method is too large:", code);
+        }
         final int numInstructions = instructions.length;
 
         pcToIndex = new int[code.getMaxPCZeroBased() - startPC + 1];
@@ -135,6 +200,19 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
         for (int i = 0; i < numInstructions; i++) {
             pcToIndex[instructions[i].pc - startPC] = i;
         }
+
+        modifiesContext = couldMutateContextVariables(isGeneric ? analyzeGeneric() : analyzeStructured());
+    }
+
+    /**
+     * Finds loops and validates that the control flow can be expressed with structured loops and
+     * forward branches.
+     *
+     * @return whether there are potential stores into instance variables of contexts
+     */
+    private boolean analyzeStructured() {
+        final int numInstructions = instructions.length;
+        SqueakBytecodeIR.computeStackPointers(instructions, startPC, code.getMaxPCZeroBased(), code.getInitialSP());
 
         /* Find loops. */
         final HashMap<Integer, Loop> loopsByHead = new HashMap<>();
@@ -146,6 +224,12 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
             }
             if (insn.kind == SqueakBytecodeIR.UNKNOWN) {
                 throw new UnsupportedBytecodeException("Unknown bytecode " + insn.a + " at pc " + insn.pc);
+            }
+            if (!isExecutable(insn, insn.spBefore)) {
+                throw new UnsupportedBytecodeException("Invalid instruction " + insn);
+            }
+            if (!insn.isTerminator() && (i + 1 >= numInstructions || instructions[i + 1].pc != insn.nextPC)) {
+                throw new UnsupportedBytecodeException("Control flow leaves the method at pc " + insn.pc);
             }
             if (insn.kind == SqueakBytecodeIR.STORE_RECEIVER_VARIABLE && insn.a < CONTEXT.INST_SIZE) {
                 hasPotentialContextIVStore = true;
@@ -169,26 +253,54 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
             }
         }
         loops = loopsByHead.values().toArray(new Loop[0]);
-        java.util.Arrays.sort(loops, (l1, l2) -> l1.headIndex != l2.headIndex ? Integer.compare(l1.headIndex, l2.headIndex) : Integer.compare(l2.endIndex, l1.endIndex));
+        final ArrayList<Loop> regions = new ArrayList<>(java.util.Arrays.asList(loops));
+        loopConditionAt = new Loop[numInstructions];
+        if (!isResumption && USE_IF_REGIONS) {
+            final int[] minSource = new int[numInstructions];
+            final int[] maxSource = new int[numInstructions];
+            java.util.Arrays.fill(minSource, Integer.MAX_VALUE);
+            java.util.Arrays.fill(maxSource, -1);
+            for (int i = 0; i < numInstructions; i++) {
+                final Instruction insn = instructions[i];
+                if (insn.isReachable() && insn.isJump()) {
+                    final int targetIndex = indexOfPC(insn.target);
+                    minSource[targetIndex] = Math.min(minSource[targetIndex], i);
+                    maxSource[targetIndex] = Math.max(maxSource[targetIndex], i);
+                }
+            }
+            findIfRegions(regions, minSource, maxSource);
+            findLoopConditions(maxSource);
+        }
+        /* Sort from outer to inner regions. The body of a conditional encloses a loop with the same range. */
+        regions.sort((r1, r2) -> r1.headIndex != r2.headIndex ? Integer.compare(r1.headIndex, r2.headIndex)
+                        : r1.endIndex != r2.endIndex ? Integer.compare(r2.endIndex, r1.endIndex) : Boolean.compare(r2.isIf, r1.isIf));
         loopOf = new Loop[numInstructions];
         loopStartingAt = new Loop[numInstructions];
+        ifRegionAt = new Loop[numInstructions];
         final ArrayList<Loop> open = new ArrayList<>();
-        for (final Loop loop : loops) {
-            while (!open.isEmpty() && open.getLast().endIndex < loop.headIndex) {
+        for (final Loop region : regions) {
+            while (!open.isEmpty() && open.getLast().endIndex < region.headIndex) {
                 open.removeLast();
             }
             if (!open.isEmpty()) {
                 final Loop enclosing = open.getLast();
-                if (enclosing.endIndex < loop.endIndex) {
-                    throw new UnsupportedBytecodeException("Overlapping loops at pc " + instructions[loop.headIndex].pc);
+                if (enclosing.endIndex < region.endIndex) {
+                    if (region.isIf) {
+                        continue; // not properly nested: use a branch instead
+                    }
+                    throw new UnsupportedBytecodeException("Overlapping loops at pc " + instructions[region.headIndex].pc);
                 }
-                loop.parent = enclosing;
+                region.parent = enclosing;
             }
-            open.add(loop);
-            loopStartingAt[loop.headIndex] = loop;
-            /* Loops are sorted from outer to inner, so inner loops overwrite outer ones. */
-            for (int i = loop.headIndex; i <= loop.endIndex; i++) {
-                loopOf[i] = loop;
+            open.add(region);
+            if (region.isIf) {
+                ifRegionAt[region.headIndex - 1] = region;
+            } else {
+                loopStartingAt[region.headIndex] = region;
+            }
+            /* Regions are sorted from outer to inner, so inner regions overwrite outer ones. */
+            for (int i = region.headIndex; i <= region.endIndex; i++) {
+                loopOf[i] = region;
             }
         }
 
@@ -212,7 +324,7 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
                     if (loop.endIndex != i) {
                         loop.needsContinueLabel = true;
                     }
-                } else {
+                } else if (ifRegionAt[i] == null) {
                     final Loop owner = labelOwner(targetIndex);
                     if (!isSelfOrAncestor(owner, loopOf[i])) {
                         throw new UnsupportedBytecodeException("Forward jump into a loop at pc " + insn.pc);
@@ -221,7 +333,195 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
                 }
             }
         }
-        modifiesContext = couldMutateContextVariables(hasPotentialContextIVStore);
+        return hasPotentialContextIVStore;
+    }
+
+    /**
+     * Finds conditional forward jumps whose skipped instructions can be emitted as the body of an
+     * IfThen operation, which needs fewer instructions than a conditional branch around them. This
+     * requires that nothing outside of the body jumps into it and that the body does not overlap
+     * with loops.
+     */
+    private void findIfRegions(final ArrayList<Loop> regions, final int[] minSource, final int[] maxSource) {
+        final int numInstructions = instructions.length;
+        nextJump: for (int i = 0; i < numInstructions; i++) {
+            final Instruction insn = instructions[i];
+            if (!insn.isReachable() || insn.kind != SqueakBytecodeIR.JUMP_TRUE && insn.kind != SqueakBytecodeIR.JUMP_FALSE) {
+                continue;
+            }
+            final int first = i + 1;
+            final int last = indexOfPC(insn.target) - 1;
+            if (last < first) {
+                continue;
+            }
+            for (int k = first; k <= last; k++) {
+                if (maxSource[k] >= 0 && (minSource[k] < first || maxSource[k] > last)) {
+                    continue nextJump; // jump into the body from outside
+                }
+            }
+            for (final Loop loop : loops) {
+                final boolean disjoint = loop.endIndex < first || loop.headIndex > last;
+                final boolean inside = loop.headIndex >= first && loop.endIndex <= last;
+                final boolean around = loop.headIndex <= i && loop.endIndex > last;
+                if (!(disjoint || inside || around)) {
+                    continue nextJump;
+                }
+            }
+            regions.add(new Loop(first, last, true));
+        }
+    }
+
+    /**
+     * Finds loops that start with straight-line code followed by a conditional jump to the
+     * instruction after the loop. This code is emitted as the condition of the While operation.
+     */
+    private void findLoopConditions(final int[] maxSource) {
+        nextLoop: for (final Loop loop : loops) {
+            for (int i = loop.headIndex; i < loop.endIndex; i++) {
+                final Instruction insn = instructions[i];
+                if (!insn.isReachable() || i > loop.headIndex && maxSource[i] >= 0) {
+                    continue nextLoop; // not straight-line code
+                }
+                if (insn.kind == SqueakBytecodeIR.JUMP_TRUE || insn.kind == SqueakBytecodeIR.JUMP_FALSE) {
+                    if (indexOfPC(insn.target) == loop.endIndex + 1) {
+                        loop.conditionJumpIndex = i;
+                        loopConditionAt[i] = loop;
+                    }
+                    continue nextLoop;
+                } else if (insn.isJump() || insn.isTerminator()) {
+                    continue nextLoop;
+                }
+            }
+        }
+    }
+
+    /**
+     * Enumerates all reachable states (pairs of pc and sp) for the generic translation. Unlike the
+     * structured translation, this supports arbitrary control flow, different stack depths at the
+     * same pc, and jumps into the middle of other instructions.
+     *
+     * @return whether there are potential stores into instance variables of contexts
+     */
+    private boolean analyzeGeneric() {
+        final java.util.TreeMap<Long, State> found = new java.util.TreeMap<>();
+        final java.util.ArrayDeque<int[]> worklist = new java.util.ArrayDeque<>();
+        worklist.add(new int[]{startPC, code.getInitialSP()});
+        if (seedPC >= 0) {
+            worklist.add(new int[]{seedPC, seedSP});
+        }
+        boolean hasPotentialContextIVStore = false;
+        while (!worklist.isEmpty()) {
+            final int[] item = worklist.poll();
+            final int pc = item[0];
+            final int sp = item[1];
+            final long sortKey = (long) pc << 32 | sp;
+            if (sp < 0 || sp > numStackSlots || found.containsKey(sortKey)) {
+                continue;
+            }
+            final Instruction insn = instructionAt(pc);
+            if (insn == null) {
+                continue;
+            }
+            found.put(sortKey, new State(pc, sp, insn));
+            if (!isExecutable(insn, sp)) {
+                continue; // fails at run time
+            }
+            if (insn.kind == SqueakBytecodeIR.STORE_RECEIVER_VARIABLE && insn.a < CONTEXT.INST_SIZE) {
+                hasPotentialContextIVStore = true;
+            }
+            final int spAfter = sp + insn.stackDelta();
+            if (insn.isJump()) {
+                worklist.add(new int[]{insn.target, spAfter});
+            }
+            if (!insn.isTerminator()) {
+                worklist.add(new int[]{insn.nextPC, spAfter});
+            }
+        }
+        states = found.values().toArray(new State[0]);
+        stateIndexByKey = new HashMap<>();
+        for (int i = 0; i < states.length; i++) {
+            stateIndexByKey.put(states[i].key(), i);
+        }
+        /*
+         * States that must be reachable through the dispatch: all states in resumption roots,
+         * otherwise only the initial state and the targets of backward jumps.
+         */
+        final boolean[] isEntry = new boolean[states.length];
+        final Integer initialState = stateIndexByKey.get(SqueakBytecodeRootNode.encodePCAndSP(startPC, code.getInitialSP()));
+        if (initialState != null) {
+            isEntry[initialState] = true;
+        }
+        for (int i = 0; i < states.length; i++) {
+            final State state = states[i];
+            if (isResumption) {
+                isEntry[i] = true;
+            } else if (isExecutable(state.insn, state.sp)) {
+                final int spAfter = state.sp + state.insn.stackDelta();
+                if (state.insn.isJump()) {
+                    markBackwardEntry(isEntry, i, state.insn.target, spAfter);
+                }
+                if (!state.insn.isTerminator()) {
+                    markBackwardEntry(isEntry, i, state.insn.nextPC, spAfter);
+                }
+            }
+        }
+        final ArrayList<Integer> entries = new ArrayList<>();
+        for (int i = 0; i < states.length; i++) {
+            if (isEntry[i]) {
+                entries.add(i);
+            }
+        }
+        entries.sort((i1, i2) -> Integer.compare(states[i1].key(), states[i2].key()));
+        dispatchEntries = entries.stream().mapToInt(Integer::intValue).toArray();
+        return hasPotentialContextIVStore;
+    }
+
+    private void markBackwardEntry(final boolean[] isEntry, final int fromState, final int pc, final int sp) {
+        final Integer target = stateIndexByKey.get(SqueakBytecodeRootNode.encodePCAndSP(pc, sp));
+        if (target != null && target <= fromState) {
+            isEntry[target] = true;
+        }
+    }
+
+    /** Returns the instruction at the given pc or null if the pc is outside of the bytecodes. */
+    private Instruction instructionAt(final int pc) {
+        final int index = indexOfPC(pc);
+        if (index >= 0) {
+            return instructions[index];
+        } else if (pc < 0 || pc >= code.getBytes().length) {
+            return null;
+        } else {
+            return extraInstructions.computeIfAbsent(pc, p -> SqueakBytecodeIR.decodeAt(code, p));
+        }
+    }
+
+    /** Whether the instruction can be translated and executed with the given stack depth. */
+    private boolean isExecutable(final Instruction insn, final int sp) {
+        final int pops = switch (insn.kind) {
+            case SqueakBytecodeIR.DUP, SqueakBytecodeIR.POP, SqueakBytecodeIR.JUMP_TRUE, SqueakBytecodeIR.JUMP_FALSE, SqueakBytecodeIR.RETURN_TOP, SqueakBytecodeIR.BLOCK_RETURN_TOP, //
+                SqueakBytecodeIR.STORE_RECEIVER_VARIABLE, SqueakBytecodeIR.STORE_LITERAL_VARIABLE, SqueakBytecodeIR.STORE_TEMPORARY, SqueakBytecodeIR.STORE_REMOTE_TEMP ->
+                1;
+            case SqueakBytecodeIR.PUSH_NEW_ARRAY -> insn.b != 0 ? insn.a : 0;
+            case SqueakBytecodeIR.PUSH_FULL_CLOSURE -> insn.b + ((insn.c & SqueakBytecodeIR.FULL_CLOSURE_RECEIVER_ON_STACK) != 0 ? 1 : 0);
+            case SqueakBytecodeIR.PUSH_CLOSURE -> insn.b;
+            case SqueakBytecodeIR.SEND, SqueakBytecodeIR.SEND_SPECIAL -> insn.b + 1;
+            case SqueakBytecodeIR.SEND_SUPER -> insn.b + 1 + insn.c;
+            default -> 0;
+        };
+        if (sp < pops || sp + insn.stackDelta() > numStackSlots || sp + insn.stackDelta() < 0) {
+            return false;
+        }
+        final int numLiterals = code.getNumLiterals();
+        return switch (insn.kind) {
+            case SqueakBytecodeIR.PUSH_TEMPORARY, SqueakBytecodeIR.STORE_TEMPORARY -> insn.a < numStackSlots;
+            case SqueakBytecodeIR.PUSH_REMOTE_TEMP, SqueakBytecodeIR.STORE_REMOTE_TEMP -> insn.b < numStackSlots;
+            case SqueakBytecodeIR.PUSH_LITERAL_CONSTANT, SqueakBytecodeIR.PUSH_LITERAL_VARIABLE, SqueakBytecodeIR.STORE_LITERAL_VARIABLE -> insn.a < numLiterals;
+            case SqueakBytecodeIR.SEND, SqueakBytecodeIR.SEND_SUPER -> insn.a < numLiterals && code.getLiteral(insn.a) instanceof NativeObject;
+            case SqueakBytecodeIR.PUSH_FULL_CLOSURE -> insn.a < numLiterals && code.getLiteral(insn.a) instanceof CompiledCodeObject;
+            case SqueakBytecodeIR.JUMP, SqueakBytecodeIR.JUMP_TRUE, SqueakBytecodeIR.JUMP_FALSE -> insn.target >= 0 && insn.target <= SqueakBytecodeRootNode.MAX_PC;
+            case SqueakBytecodeIR.UNKNOWN -> false;
+            default -> true;
+        };
     }
 
     /**
@@ -230,10 +530,57 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
      * @throws UnsupportedBytecodeException if the bytecode cannot be translated
      */
     public static SqueakBytecodeRootNode createRoot(final SqueakLanguage language, final SqueakImageContext image, final CompiledCodeObject code, final boolean isResumption) {
-        final SqueakBytecodeTranslator translator = new SqueakBytecodeTranslator(image, code, isResumption);
+        SqueakBytecodeTranslator translator;
+        try {
+            if (FORCE_GENERIC) {
+                throw new UnsupportedBytecodeException("Generic translation forced");
+            }
+            translator = new SqueakBytecodeTranslator(image, code, isResumption, false, -1, -1);
+        } catch (final UnsupportedBytecodeException e) {
+            LogUtils.BYTECODE_DSL.fine(() -> "Using generic translation for " + code + ": " + e.getMessage());
+            translator = new SqueakBytecodeTranslator(image, code, isResumption, true, -1, -1);
+        }
+        return createRoot(language, code, translator);
+    }
+
+    /**
+     * Creates a resumption root that can continue execution at the given pc and sp, even if this
+     * state is not reachable from the beginning of the method (e.g., after the pc or the stack of
+     * a context have been modified).
+     */
+    public static SqueakBytecodeRootNode createResumptionRoot(final SqueakLanguage language, final SqueakImageContext image, final CompiledCodeObject code, final int pc, final int sp) {
+        LogUtils.BYTECODE_DSL.fine(() -> "Using generic translation to resume " + code + " at pc " + pc + " with sp " + sp);
+        return createRoot(language, code, new SqueakBytecodeTranslator(image, code, true, true, pc, sp));
+    }
+
+    private static SqueakBytecodeRootNode createRoot(final SqueakLanguage language, final CompiledCodeObject code, final SqueakBytecodeTranslator translator) {
         final SqueakBytecodeRootNode root = SqueakBytecodeRootNodeGen.create(language, BytecodeConfig.DEFAULT, translator).getNode(0);
-        root.initialize(code, translator.modifiesContext);
+        root.initialize(code, translator.modifiesContext, translator.getResumableStates());
         return root;
+    }
+
+    private int[] getResumableStates() {
+        final int[] keys;
+        if (isGeneric) {
+            keys = new int[states.length];
+            for (int i = 0; i < states.length; i++) {
+                keys[i] = states[i].key();
+            }
+        } else {
+            int count = 0;
+            for (final Instruction insn : instructions) {
+                count += insn.isReachable() ? 1 : 0;
+            }
+            keys = new int[count];
+            int i = 0;
+            for (final Instruction insn : instructions) {
+                if (insn.isReachable()) {
+                    keys[i++] = SqueakBytecodeRootNode.encodePCAndSP(insn.pc, insn.spBefore);
+                }
+            }
+        }
+        java.util.Arrays.sort(keys);
+        return keys;
     }
 
     private int indexOfPC(final int pc) {
@@ -243,7 +590,7 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
 
     private static Loop findLoopWithHead(final Loop start, final int headIndex) {
         Loop loop = start;
-        while (loop != null && loop.headIndex != headIndex) {
+        while (loop != null && (loop.isIf || loop.headIndex != headIndex)) {
             loop = loop.parent;
         }
         return loop;
@@ -269,7 +616,7 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
      */
     private Loop labelOwner(final int index) {
         final Loop loop = loopOf[index];
-        return loop != null && loop.headIndex == index ? loop.parent : loop;
+        return loop != null && !loop.isIf && loop.headIndex == index ? loop.parent : loop;
     }
 
     /** See AbstractInterpreterNode#couldMutateContextVariables. */
@@ -312,6 +659,7 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
         assert numStackSlots == 0 || stack[0].getLocalOffset() == DSLFrameInfo.NUM_RESERVED_LOCALS;
         labels = new BytecodeLabel[instructions.length];
         deferred = new Runnable[numStackSlots];
+        deferredTest = new TestEmitter[numStackSlots];
 
         b.beginBlock();
         if (isResumption) {
@@ -324,6 +672,24 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
             final boolean checkForInterrupts = !(image.interruptHandlerDisabled() || code.hasPrimitive() || code.getBytes().length < MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS || isBlock);
             b.emitEnterMethod(SqueakBytecodeRootNode.encodePCAndSP(startPC, code.getInitialSP()), checkForInterrupts);
         }
+        if (isGeneric) {
+            emitGenericBody();
+        } else {
+            emitStructuredBody();
+        }
+        assert assertNoDeferredValues();
+        b.endBlock();
+        b.endRoot();
+        b = null;
+        stack = null;
+        labels = null;
+        deferred = null;
+        deferredTest = null;
+        stateLabels = null;
+        continueLabel = null;
+    }
+
+    private void emitStructuredBody() {
         createLabels(null, 0, instructions.length - 1);
         if (isResumption) {
             emitDispatch(null, 0, instructions.length - 1, null);
@@ -331,6 +697,7 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
         for (int i = 0; i < instructions.length; i++) {
             final Instruction insn = instructions[i];
             if (!insn.isReachable()) {
+                closeRegionsEndingAt(i);
                 continue;
             }
             final Loop loop = loopStartingAt[i];
@@ -343,41 +710,137 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
             }
             if (loop != null) {
                 b.beginWhile();
-                b.emitLoadConstant(true);
-                b.beginBlock();
-                createLabels(loop, loop.headIndex, loop.endIndex);
-                if (loop.needsContinueLabel) {
-                    loop.continueLabel = b.createLabel();
-                }
-                if (isResumption) {
-                    final BytecodeLabel bodyStart = b.createLabel();
-                    b.beginIfThen();
-                    b.emitLoadLocal(resumePendingLocal);
+                if (loop.conditionJumpIndex >= 0) {
+                    /* The condition: closed by its conditional jump, which then begins the body. */
                     b.beginBlock();
-                    emitDispatch(loop, loop.headIndex, loop.endIndex, bodyStart);
-                    b.endBlock();
-                    b.endIfThen();
-                    b.emitLabel(bodyStart);
+                } else {
+                    b.emitLoadConstant(true);
+                    beginLoopBody(loop);
                 }
             }
-            emitInstruction(i, insn);
-            Loop ending = loopOf[i];
-            while (ending != null && ending.endIndex == i) {
+            emitInstruction(i, insn, insn.spBefore);
+            closeRegionsEndingAt(i);
+        }
+    }
+
+    private void beginLoopBody(final Loop loop) {
+        b.beginBlock();
+        createLabels(loop, loop.headIndex, loop.endIndex);
+        if (loop.needsContinueLabel) {
+            loop.continueLabel = b.createLabel();
+        }
+        if (isResumption) {
+            final BytecodeLabel bodyStart = b.createLabel();
+            b.beginIfThen();
+            b.emitLoadLocal(resumePendingLocal);
+            b.beginBlock();
+            emitDispatch(loop, loop.headIndex, loop.endIndex, bodyStart);
+            b.endBlock();
+            b.endIfThen();
+            b.emitLabel(bodyStart);
+        }
+    }
+
+    private void closeRegionsEndingAt(final int index) {
+        Loop ending = loopOf[index];
+        while (ending != null && ending.endIndex == index) {
+            if (ending.isIf) {
+                /* Control flow merges after the body: all values must be in their stack slots. */
+                flushAll();
+                b.endBlock();
+                b.endIfThen();
+            } else {
                 if (ending.needsContinueLabel) {
                     b.emitLabel(ending.continueLabel);
                 }
                 b.endBlock();
                 b.endWhile();
-                ending = ending.parent;
+            }
+            ending = ending.parent;
+        }
+    }
+
+    /**
+     * Emits the generic translation: a loop around a dispatch on the current state (the pc and sp
+     * stored in the frame) followed by the code of all states. Jumps to states that are emitted
+     * later are forward branches; all other jumps set the state and continue with the next
+     * iteration of the loop. The Squeak stack is always kept in the stack slots, so this shape is
+     * used for both normal and resumption roots.
+     */
+    private void emitGenericBody() {
+        b.beginWhile();
+        b.emitLoadConstant(true);
+        b.beginBlock();
+        continueLabel = b.createLabel();
+        stateLabels = new BytecodeLabel[states.length];
+        for (int i = 0; i < states.length; i++) {
+            stateLabels[i] = b.createLabel();
+        }
+        if (dispatchEntries.length == 0) {
+            b.emitUnsupportedBytecode("Invalid initial state");
+        } else {
+            emitGenericDispatch(0, dispatchEntries.length - 1);
+        }
+        for (int i = 0; i < states.length; i++) {
+            final State state = states[i];
+            final Instruction insn = state.insn;
+            currentState = i;
+            b.emitLabel(stateLabels[i]);
+            if (!isExecutable(insn, state.sp)) {
+                b.emitSetState(state.key());
+                b.emitUnsupportedBytecode(insn.kind == SqueakBytecodeIR.UNKNOWN ? "Unknown bytecode " + insn.a : "Invalid bytecode or stack depth");
+                continue;
+            }
+            emitInstruction(-1, insn, state.sp);
+            if (!insn.isTerminator()) {
+                final int spAfter = state.sp + insn.stackDelta();
+                final Integer next = stateIndexByKey.get(SqueakBytecodeRootNode.encodePCAndSP(insn.nextPC, spAfter));
+                if (next == null || next != i + 1) {
+                    emitGenericJump(insn.nextPC, spAfter);
+                }
             }
         }
-        assert assertNoDeferredValues();
+        b.emitLabel(continueLabel);
         b.endBlock();
-        b.endRoot();
-        b = null;
-        stack = null;
-        labels = null;
-        deferred = null;
+        b.endWhile();
+    }
+
+    private void emitGenericDispatch(final int low, final int high) {
+        if (low == high) {
+            final int stateIndex = dispatchEntries[low];
+            b.beginIfThen();
+            b.emitStateEquals(states[stateIndex].key());
+            b.emitBranch(stateLabels[stateIndex]);
+            b.endIfThen();
+            b.emitUnsupportedBytecode("Cannot continue execution");
+        } else {
+            final int mid = (low + high) >>> 1;
+            b.beginIfThenElse();
+            b.emitStateLessThan(states[dispatchEntries[mid + 1]].key());
+            b.beginBlock();
+            emitGenericDispatch(low, mid);
+            b.endBlock();
+            b.beginBlock();
+            emitGenericDispatch(mid + 1, high);
+            b.endBlock();
+            b.endIfThenElse();
+        }
+    }
+
+    /** Emits a jump to the state with the given pc and sp. */
+    private void emitGenericJump(final int pc, final int sp) {
+        final Integer target = pc < 0 || pc > SqueakBytecodeRootNode.MAX_PC || sp < 0 ? null : stateIndexByKey.get(SqueakBytecodeRootNode.encodePCAndSP(pc, sp));
+        if (target == null) {
+            b.emitUnsupportedBytecode("Invalid jump to pc " + pc + " with sp " + sp);
+        } else if (target > currentState) {
+            b.emitBranch(stateLabels[target]);
+        } else {
+            b.emitSetState(states[target].key());
+            if (!image.interruptHandlerDisabled()) {
+                b.emitCheckForInterruptsInLoop(states[target].key());
+            }
+            b.emitBranch(continueLabel);
+        }
     }
 
     /** Creates the labels that are emitted directly in the block of the given loop (or root). */
@@ -448,7 +911,7 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
      */
 
     private void push(final int slot, final Runnable expression) {
-        if (isResumption) {
+        if (isResumption || isGeneric) {
             b.beginStoreLocal(stack[slot]);
             expression.run();
             b.endStoreLocal();
@@ -463,6 +926,7 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
         final Runnable expression = deferred[slot];
         if (expression != null) {
             deferred[slot] = null;
+            deferredTest[slot] = null;
             return expression;
         } else {
             return () -> b.emitLoadLocal(stack[slot]);
@@ -489,6 +953,7 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
             final Runnable expression = deferred[slot];
             if (expression != null) {
                 deferred[slot] = null;
+                deferredTest[slot] = null;
                 b.beginStoreLocal(stack[slot]);
                 expression.run();
                 b.endStoreLocal();
@@ -511,8 +976,7 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
         return SqueakBytecodeRootNode.encodePCAndSP(pc, sp);
     }
 
-    private void emitInstruction(final int index, final Instruction insn) {
-        final int sp = insn.spBefore;
+    private void emitInstruction(final int index, final Instruction insn, final int sp) {
         switch (insn.kind) {
             case SqueakBytecodeIR.PUSH_RECEIVER_VARIABLE -> push(sp, () -> b.emitPushReceiverVariable(insn.a));
             case SqueakBytecodeIR.PUSH_LITERAL_VARIABLE -> push(sp, () -> b.emitPushLiteralVariable(insn.a));
@@ -524,11 +988,7 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
                     push(sp, () -> b.emitPushLiteralConstant(insn.a));
                 }
             }
-            case SqueakBytecodeIR.PUSH_TEMPORARY -> push(sp, () -> {
-                b.beginFollow();
-                b.emitLoadLocal(stack[insn.a]);
-                b.endFollow();
-            });
+            case SqueakBytecodeIR.PUSH_TEMPORARY -> push(sp, () -> b.emitPushTemp(stack[insn.a].getLocalOffset() + SLOT_OF_FIRST_LOCAL));
             case SqueakBytecodeIR.PUSH_RECEIVER -> push(sp, () -> b.emitPushReceiver());
             case SqueakBytecodeIR.PUSH_CONSTANT -> push(sp, () -> b.emitLoadConstant(insn.constant));
             case SqueakBytecodeIR.PUSH_ACTIVE_CONTEXT -> push(sp, () -> b.emitPushActiveContext());
@@ -543,6 +1003,7 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
                     /* Evaluate for side effects, the result is discarded. */
                     flush(sp - 1);
                     deferred[sp - 1] = null;
+                    deferredTest[sp - 1] = null;
                     expression.run();
                 }
             }
@@ -658,6 +1119,10 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
             }
             case SqueakBytecodeIR.JUMP -> {
                 flushAll();
+                if (isGeneric) {
+                    emitGenericJump(insn.target, sp);
+                    return;
+                }
                 final int targetIndex = indexOfPC(insn.target);
                 if (insn.isBackwardJump()) {
                     emitInterruptCheck(index, targetIndex, sp);
@@ -673,9 +1138,18 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
             case SqueakBytecodeIR.JUMP_TRUE, SqueakBytecodeIR.JUMP_FALSE -> {
                 final int pcAndSp = pcAndSp(insn.nextPC, sp - 1);
                 flush(sp - 1);
+                final TestEmitter test = deferredTest[sp - 1];
                 final Runnable condition = take(sp - 1);
-                b.beginIfThen();
-                if (insn.kind == SqueakBytecodeIR.JUMP_TRUE) {
+                final Loop body = isGeneric ? null : ifRegionAt[index];
+                final Loop conditionOfLoop = isGeneric ? null : loopConditionAt[index];
+                /* A body is executed if the jump is not taken; a branch if the jump is taken. */
+                final boolean expected = insn.kind == SqueakBytecodeIR.JUMP_TRUE ^ (body != null || conditionOfLoop != null);
+                if (conditionOfLoop == null) {
+                    b.beginIfThen();
+                }
+                if (test != null) {
+                    test.emit(expected, pcAndSp);
+                } else if (expected) {
                     b.beginIsTrue(pcAndSp);
                     condition.run();
                     b.endIsTrue();
@@ -684,7 +1158,22 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
                     condition.run();
                     b.endIsFalse();
                 }
-                b.emitBranch(labels[indexOfPC(insn.target)]);
+                if (conditionOfLoop != null) {
+                    b.endBlock(); // condition
+                    beginLoopBody(conditionOfLoop);
+                    return;
+                } else if (body != null) {
+                    /* The body is closed after its last instruction. */
+                    b.beginBlock();
+                    createLabels(body, body.headIndex, body.endIndex);
+                    return;
+                } else if (isGeneric) {
+                    b.beginBlock();
+                    emitGenericJump(insn.target, sp - 1);
+                    b.endBlock();
+                } else {
+                    b.emitBranch(labels[indexOfPC(insn.target)]);
+                }
                 b.endIfThen();
             }
             case SqueakBytecodeIR.RETURN_RECEIVER, SqueakBytecodeIR.RETURN_CONSTANT, SqueakBytecodeIR.RETURN_TOP -> {
@@ -696,7 +1185,6 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
                     flushAll();
                     value = insn.kind == SqueakBytecodeIR.RETURN_RECEIVER ? () -> b.emitPushReceiver() : () -> b.emitLoadConstant(insn.constant);
                 }
-                b.beginReturn();
                 if (isBlock) {
                     b.beginNonLocalReturnFromBlock(pcAndSp(insn.nextPC, sp + insn.stackDelta()));
                     value.run();
@@ -706,29 +1194,24 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
                     value.run();
                     b.endNormalReturn();
                 }
-                b.endReturn();
             }
             case SqueakBytecodeIR.BLOCK_RETURN_NIL -> {
                 flushAll();
-                b.beginReturn();
                 b.beginNormalReturn();
                 b.emitLoadConstant(NilObject.SINGLETON);
                 b.endNormalReturn();
-                b.endReturn();
             }
             case SqueakBytecodeIR.BLOCK_RETURN_TOP -> {
                 flush(sp - 1);
                 final Runnable value = take(sp - 1);
-                b.beginReturn();
                 b.beginNormalReturn();
                 value.run();
                 b.endNormalReturn();
-                b.endReturn();
             }
             case SqueakBytecodeIR.CALL_PRIMITIVE -> {
                 /* The primitive has already failed. Store the error code if requested. */
-                if (index + 1 < instructions.length && instructions[index + 1].kind == SqueakBytecodeIR.STORE_TEMPORARY && instructions[index + 1].b == 0) {
-                    assert sp > 0;
+                final Instruction next = instructionAt(insn.nextPC);
+                if (next != null && next.kind == SqueakBytecodeIR.STORE_TEMPORARY && next.b == 0 && sp > 0) {
                     flushAll();
                     b.beginStoreLocal(stack[sp - 1]);
                     b.emitPushErrorObject();
@@ -784,6 +1267,19 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
                 }
             }
         });
+        if (deferred[receiverSlot] != null && numArgs <= 1) {
+            deferredTest[receiverSlot] = (expected, jumpPcAndSp) -> {
+                if (numArgs == 0) {
+                    b.beginSend0Test(selector, pcAndSp, jumpPcAndSp, expected);
+                    emitAll(operands);
+                    b.endSend0Test();
+                } else {
+                    b.beginSend1Test(selector, pcAndSp, jumpPcAndSp, expected);
+                    emitAll(operands);
+                    b.endSend1Test();
+                }
+            };
+        }
     }
 
     private void emitSpecialSend(final Instruction insn, final int sp) {
@@ -896,6 +1392,27 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
                 default -> throw new UnsupportedBytecodeException("Unexpected special selector: " + specialIndex);
             }
         });
+        if (deferred[receiverSlot] != null) {
+            if (specialIndex == SPECIAL_IDENTICAL || specialIndex == SPECIAL_NOT_IDENTICAL) {
+                deferredTest[receiverSlot] = (expected, jumpPcAndSp) -> {
+                    if ((specialIndex == SPECIAL_IDENTICAL) == expected) {
+                        b.beginPrimIdentical();
+                        emitAll(operands);
+                        b.endPrimIdentical();
+                    } else {
+                        b.beginPrimNotIdentical();
+                        emitAll(operands);
+                        b.endPrimNotIdentical();
+                    }
+                };
+            } else if (SPECIAL_LESS_THAN <= specialIndex && specialIndex <= SPECIAL_NOT_EQUAL) {
+                deferredTest[receiverSlot] = (expected, jumpPcAndSp) -> {
+                    b.beginPrimCompareTest(specialIndex, selector, pcAndSp, jumpPcAndSp, expected);
+                    emitAll(operands);
+                    b.endPrimCompareTest();
+                };
+            }
+        }
     }
 
     /** Whether the special selector has a dedicated operation (rather than a plain send). */

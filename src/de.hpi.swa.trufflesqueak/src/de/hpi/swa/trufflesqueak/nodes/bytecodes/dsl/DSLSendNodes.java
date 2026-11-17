@@ -6,6 +6,7 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.bytecodes.dsl;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateInline;
@@ -59,6 +60,19 @@ public final class DSLSendNodes {
         } else {
             return value;
         }
+    }
+
+    /**
+     * Follows forwarding pointers without a profile and therefore without any node state, which
+     * keeps the interpreter fast. Forwarded objects are rare and deoptimize, so that compiled code
+     * only contains a check and the value keeps its type.
+     */
+    static Object followForwardedRarely(final Object value) {
+        if (value instanceof final AbstractSqueakObjectWithClassAndHash object && !object.isNotForwarded()) {
+            CompilerDirectives.transferToInterpreter();
+            return object.resolveForwardingPointer();
+        }
+        return value;
     }
 
     static Object followForwarded(final Object value, final Node node, final InlinedConditionProfile profile) {
