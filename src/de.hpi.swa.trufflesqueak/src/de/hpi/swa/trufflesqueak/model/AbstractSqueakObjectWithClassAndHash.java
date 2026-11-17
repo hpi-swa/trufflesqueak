@@ -103,10 +103,10 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
 
     @Override
     public final AbstractSqueakObjectWithHash resolveForwardingPointer() {
-        if (isNotForwarded()) {
+        if (CompilerDirectives.injectBranchProbability(CompilerDirectives.FASTPATH_PROBABILITY, isNotForwarded())) {
             return this;
         } else {
-            CompilerDirectives.transferToInterpreter();
+            /* Forwarded objects remain in the heap until the next unfollow, so do not deoptimize. */
             assert squeakClass.isNotForwarded() : "Forwarding pointer should not be a forwarded object (" + MiscUtils.toObjectString(this) + "->" + MiscUtils.toObjectString(squeakClass) + ")";
             return squeakClass;
         }
