@@ -179,10 +179,11 @@
     {
         ArbitraryObjectSocketTestCase -> #(#testBasics). "delays too short, see https://github.com/squeak-smalltalk/squeak-object-memory/issues/179"
         BitBltSimulationTest -> #(#testAlphaCompositing2Simulated #testAlphaCompositingSimulated). "simulated primitive fails if the JVM collects garbage while loading BitBlt state (see BitBltSimulation>>#loadBitBltFrom:warping:)"
-        DebuggerTests -> #(#test02UnhandledException #test19Abandon).
-        SHParserST80Test -> #(#testNumbers).
+        DebuggerTests -> #(#test02UnhandledException). "fails on most CI jobs except on Linux aarch64, cause unknown"
+        DebuggerTests -> #(#test19Abandon). "fails sometimes on Windows native"
+        SHParserST80Test -> #(#testNumbers). "fails rarely, cause unknown"
         StringSocketTestCase -> #(#testBogusInput1 #testBogusInput2). "delays too short, see https://github.com/squeak-smalltalk/squeak-object-memory/issues/179"
-        StringTest ->#(#testFindSelector).
+        StringTest ->#(#testFindSelector). "fails rarely, cause unknown"
         WideStringTest -> #(#testAsIntegerSignedUsingRandomNumbers). "sometimes hitting timeout due to slow becomeForward:"
 
         "failing on some platforms"
