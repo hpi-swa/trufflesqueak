@@ -515,8 +515,7 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
     private boolean isExecutable(final Instruction insn, final int sp) {
         final int pops = switch (insn.kind) {
             case SqueakBytecodeIR.DUP, SqueakBytecodeIR.POP, SqueakBytecodeIR.JUMP_TRUE, SqueakBytecodeIR.JUMP_FALSE, SqueakBytecodeIR.RETURN_TOP, SqueakBytecodeIR.BLOCK_RETURN_TOP, //
-                SqueakBytecodeIR.STORE_RECEIVER_VARIABLE, SqueakBytecodeIR.STORE_LITERAL_VARIABLE, SqueakBytecodeIR.STORE_TEMPORARY, SqueakBytecodeIR.STORE_REMOTE_TEMP ->
-                1;
+                SqueakBytecodeIR.STORE_RECEIVER_VARIABLE, SqueakBytecodeIR.STORE_LITERAL_VARIABLE, SqueakBytecodeIR.STORE_TEMPORARY, SqueakBytecodeIR.STORE_REMOTE_TEMP -> 1;
             case SqueakBytecodeIR.PUSH_NEW_ARRAY -> insn.b != 0 ? insn.a : 0;
             case SqueakBytecodeIR.PUSH_FULL_CLOSURE -> insn.b + ((insn.c & SqueakBytecodeIR.FULL_CLOSURE_RECEIVER_ON_STACK) != 0 ? 1 : 0);
             case SqueakBytecodeIR.PUSH_CLOSURE -> insn.b;
@@ -1550,8 +1549,7 @@ public final class SqueakBytecodeTranslator implements BytecodeParser<SqueakByte
     private static boolean isSpecialOperation(final int specialIndex, final int numArgs) {
         return switch (specialIndex) {
             case SPECIAL_ADD, SPECIAL_SUBTRACT, SPECIAL_LESS_THAN, SPECIAL_GREATER_THAN, SPECIAL_LESS_OR_EQUAL, SPECIAL_GREATER_OR_EQUAL, SPECIAL_EQUAL, SPECIAL_NOT_EQUAL, SPECIAL_MULTIPLY, SPECIAL_DIV, //
-                SPECIAL_BIT_AND, SPECIAL_BIT_OR, SPECIAL_IDENTICAL, SPECIAL_NOT_IDENTICAL, SPECIAL_VALUE_WITH_ARG ->
-                numArgs == 1;
+                SPECIAL_BIT_AND, SPECIAL_BIT_OR, SPECIAL_IDENTICAL, SPECIAL_NOT_IDENTICAL, SPECIAL_VALUE_WITH_ARG -> numArgs == 1;
             case SPECIAL_SIZE, SPECIAL_CLASS, SPECIAL_VALUE -> numArgs == 0;
             default -> false;
         };

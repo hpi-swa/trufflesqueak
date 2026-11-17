@@ -299,8 +299,13 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     root.numArgsAndCopied = count = FrameAccess.getNumArguments(frame);
                 }
-                assert count == FrameAccess.getNumArguments(frame);
-                copyArguments(frame, count);
+                final int actualCount = FrameAccess.getNumArguments(frame);
+                if (count == actualCount) {
+                    copyArguments(frame, count);
+                } else {
+                    /* Methods can be invoked with an unexpected number of arguments (e.g., reflectively). */
+                    copyArgumentsSlow(frame, actualCount);
+                }
             }
             if (!root.doesNotNeedThisContext.isValid()) {
                 GetOrCreateContextWithFrameNode.executeUncached(frame);
@@ -335,10 +340,23 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
             ensureContextReceiverIsNotActive(frame, root);
         }
 
+        private static boolean argumentsMatch(final Object[] expected, final Object[] actual) {
+            if (expected.length != actual.length) {
+                return false;
+            }
+            for (int i = 0; i < expected.length; i++) {
+                if (expected[i] != actual[i]) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         @TruffleBoundary
         private static void transferFrame(final ContextObject context, final MaterializedFrame target, final int numStackSlots) {
             final MaterializedFrame source = context.getTruffleFrame();
-            assert source.getArguments() == target.getArguments() : "Resumption roots must be called with the arguments of the context's frame";
+            /* Compiled code may receive a copy of the arguments array, so compare the elements. */
+            assert argumentsMatch(source.getArguments(), target.getArguments()) : "Resumption roots must be called with the arguments of the context's frame";
             final int sp = FrameAccess.getStackPointer(source);
             target.setLong(PC_AND_SP_SLOT, DSLFrameInfo.encodePCAndSP(FrameAccess.getInstructionPointer(source), sp));
             final int limit = Math.min(Math.min(sp, numStackSlots), FrameAccess.getNumStackSlots(source));
@@ -1315,7 +1333,8 @@ public abstract class SqueakBytecodeRootNode extends RootNode implements Bytecod
         }
 
         @Specialization
-        static boolean doDouble(final int kind, @SuppressWarnings("unused") final NativeObject selector, @SuppressWarnings("unused") final int pcAndSp, @SuppressWarnings("unused") final int jumpPcAndSp,
+        static boolean doDouble(final int kind, @SuppressWarnings("unused") final NativeObject selector, @SuppressWarnings("unused") final int pcAndSp,
+                        @SuppressWarnings("unused") final int jumpPcAndSp,
                         final boolean expected, final double lhs, final double rhs) {
             return switch (kind) {
                 case 2 -> lhs < rhs;

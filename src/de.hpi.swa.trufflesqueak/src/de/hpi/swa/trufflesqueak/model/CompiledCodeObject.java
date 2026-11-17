@@ -23,6 +23,8 @@ import com.oracle.truffle.api.dsl.Idempotent;
 import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
@@ -570,11 +572,35 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
             final AbstractPrimitiveNode nodeOrNull = PrimitiveNodeFactory.getOrCreateIndexedOrNamed(this);
             if (nodeOrNull != null) {
                 primitiveNodeOrNull = DispatchPrimitiveNode.create(nodeOrNull, getNumArgs());
+                /*
+                 * This node is executed without being part of the AST of a caller (uncached
+                 * dispatch). Nodes, such as cached libraries, must still be adopted by a root.
+                 */
+                PrimitiveHolderRootNode.adopt(primitiveNodeOrNull);
             } else {
                 primitiveNodeOrNull = null;
             }
         } else {
             primitiveNodeOrNull = null;
+        }
+    }
+
+    /** Root node that only exists to adopt the shared primitive node of a method. */
+    private static final class PrimitiveHolderRootNode extends RootNode {
+        @Child private DispatchPrimitiveNode primitiveNode;
+
+        private PrimitiveHolderRootNode(final DispatchPrimitiveNode primitiveNode) {
+            super(SqueakImageContext.getSlow().getLanguage());
+            this.primitiveNode = primitiveNode;
+        }
+
+        private static void adopt(final DispatchPrimitiveNode primitiveNode) {
+            new PrimitiveHolderRootNode(primitiveNode).adoptChildren();
+        }
+
+        @Override
+        public Object execute(final VirtualFrame frame) {
+            throw CompilerDirectives.shouldNotReachHere("Not meant to be executed");
         }
     }
 
