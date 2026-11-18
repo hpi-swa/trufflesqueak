@@ -301,13 +301,20 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     public void flushCache() {
-        /* Invalidate callTargetStable assumption to ensure this method is released from caches. */
+        /*
+         * Release this method from caches and drop its call targets: literals can be changed
+         * without invalidation (see setLiteral), and primitive 116 is the image's way to discard
+         * everything derived from this method.
+         */
         invalidateCallTarget("primitive 116");
     }
 
     public void flushCacheBySelector() {
-        /* Invalidate callTargetStable assumption to ensure this method is released from caches. */
-        invalidateCallTarget("primitive 119");
+        /*
+         * Only lookups for the selector need to be redone. The method itself is unchanged, so its
+         * call targets (and their compiled code) are kept.
+         */
+        invalidateCallTargetStable("primitive 119");
     }
 
     @TruffleBoundary
