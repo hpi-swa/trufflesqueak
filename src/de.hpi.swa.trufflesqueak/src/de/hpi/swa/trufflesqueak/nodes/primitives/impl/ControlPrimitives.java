@@ -464,7 +464,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimFlushCacheNode extends AbstractPrimitiveNode implements Primitive0 {
         @Specialization
         protected final Object doFlush(final Object receiver) {
-            getContext().flushMethodCache();
+            final SqueakImageContext image = getContext();
+            image.flushMethodCache();
+            image.flushNamedPrimitives();
             return receiver;
         }
     }

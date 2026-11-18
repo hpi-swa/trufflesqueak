@@ -164,7 +164,6 @@
         ObjectTest -> #(#testEvaluateWheneverChangeIn #testEvaluateWheneverChangeInTransparent "become EmptyObject->PointersObject not yet supported" #testPinning "not yet supported").
         PackageDependencyTest -> #(#testBalloon #testPreferenceBrowser #testSUnit).
         SequenceableCollectionTest -> #(#testDoWithIndexDeprecation).
-        SetInspectorTest -> #(#testUninitialized). "failing"
         SmallIntegerTest -> #(#testMaxVal #testMinVal #testPrintString). "assume SmallIntegers are 31 or 61 bit rather than 64 bit (long)."
         WorldStateTest -> #(#testActiveVariablesObsoletion #testWorldVariableObsoletion).
     } collect: [:assoc | | testCase |
@@ -174,17 +173,15 @@
     flakyTests := OrderedCollection new.
     {
         ArbitraryObjectSocketTestCase -> #(#testBasics). "delays too short, see https://github.com/squeak-smalltalk/squeak-object-memory/issues/179"
-        BitBltSimulationTest -> #(#testAlphaCompositing2Simulated #testAlphaCompositingSimulated).
-        DebuggerTests -> #(#test02UnhandledException #test19Abandon).
-        MCSnapshotTest -> #(#testInstanceReuse).
-        MorphicToolBuilderTests -> #(#testGetButtonColor).
-        PCCByLiteralsTest -> #(#testSwitchPrimCallOffOn).
-        SHParserST80Test -> #(#testNumbers).
+        BitBltSimulationTest -> #(#testAlphaCompositing2Simulated #testAlphaCompositingSimulated). "simulated primitive fails if the JVM collects garbage while loading BitBlt state (see BitBltSimulation>>#loadBitBltFrom:warping:)"
+        DebuggerTests -> #(#test02UnhandledException). "fails on most CI jobs except on Linux aarch64, cause unknown"
+        DebuggerTests -> #(#test19Abandon). "fails sometimes on Windows native"
+        MorphicToolBuilderTests -> #(#testGetButtonColor). "fails if the hand is over 0@0, where tests create morphs (e.g., when headless or depending on mouse events)"
+        SHParserST80Test -> #(#testNumbers). "fails rarely, cause unknown"
         StringSocketTestCase -> #(#testBogusInput1 #testBogusInput2). "delays too short, see https://github.com/squeak-smalltalk/squeak-object-memory/issues/179"
-        StringTest ->#(#testFindSelector).
-        TestValueWithinFix -> #(#testValueWithinTimingRepeat).
-        WeakSetInspectorTest -> #(#testSymbolTableM6812 #testUninitialized).
-        WideStringTest -> #(#testAsIntegerSignedUsingRandomNumbers). "sometimes hitting timeout due to slow becomeForward:"
+        StringTest ->#(#testFindSelector). "fails rarely, cause unknown"
+        WeakSetInspectorTest -> #(#testSymbolTableM6812). "symbol table can shrink between garbage collections, fails sometimes on Windows native"
+        WideStringTest -> #(#testAsIntegerSignedUsingRandomNumbers). "takes up to several seconds, may exceed the default timeout of 5s on non-ARM platforms (see TestCase>>#defaultTimeout)"
 
         "failing on some platforms"
         GIFReadWriterTest -> #(#testAnimatedColorsOutIn).
