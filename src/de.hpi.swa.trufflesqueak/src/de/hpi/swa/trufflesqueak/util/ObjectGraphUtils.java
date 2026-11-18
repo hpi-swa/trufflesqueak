@@ -273,10 +273,10 @@ public final class ObjectGraphUtils {
             flattenForwardPointers();
             if (allAbstractSqueakObjectWithHash) {
                 pointersBecomeOneWayFrames(_ -> {
-                }, becomeMap);
+                }, becomeMap, true);
             } else {
                 final ObjectTracer roots = ObjectTracer.fromRoots(image, false, FrameHandling.SCAN);
-                pointersBecomeOneWayFrames(roots::addIfUnmarked, becomeMap);
+                pointersBecomeOneWayFrames(roots::addIfUnmarked, becomeMap, false);
                 becomeOneWayManyPairs(roots);
             }
         }
@@ -339,12 +339,20 @@ public final class ObjectGraphUtils {
     }
 
     @TruffleBoundary
-    private static void pointersBecomeOneWayFrames(final Consumer<Object> tracer, final UnmodifiableEconomicMap<Object, Object> fromToMap) {
+    private static void pointersBecomeOneWayFrames(final Consumer<Object> tracer, final UnmodifiableEconomicMap<Object, Object> fromToMap, final boolean avoidDeopts) {
         Truffle.getRuntime().iterateFrames((frameInstance) -> {
-            final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_WRITE);
-            if (!FrameAccess.isTruffleSqueakFrame(current)) {
+            /*
+             * Requesting a frame for writing deoptimizes compiled frames, so only do this if the
+             * frame actually references an object that needs to be replaced. This is only safe if
+             * all objects are forwarded: otherwise, the tracer must see the materialized frame,
+             * because objects that are virtual in a compiled frame are only copies in a read-only
+             * frame and patching those copies has no effect.
+             */
+            final Frame readOnlyFrame = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
+            if (!FrameAccess.isTruffleSqueakFrame(readOnlyFrame)) {
                 return null; // skip
             }
+            final Frame current = !avoidDeopts || referencesAnyKey(readOnlyFrame, fromToMap) ? frameInstance.getFrame(FrameInstance.FrameAccess.READ_WRITE) : readOnlyFrame;
             final Object[] arguments = current.getArguments();
             for (int i = 0; i < arguments.length; i++) {
                 final Object argument = arguments[i];
@@ -377,6 +385,26 @@ public final class ObjectGraphUtils {
             });
             return null; // continue
         });
+    }
+
+    private static boolean referencesAnyKey(final Frame frame, final UnmodifiableEconomicMap<Object, Object> fromToMap) {
+        for (final Object argument : frame.getArguments()) {
+            if (argument != null && fromToMap.containsKey(argument)) {
+                return true;
+            }
+        }
+        final ContextObject context = FrameAccess.getContext(frame);
+        if (context != null && fromToMap.containsKey(context)) {
+            return true;
+        }
+        final boolean[] found = {false};
+        FrameAccess.iterateStackObjectsWithReplacement(frame, false, stackObject -> {
+            if (stackObject != null && fromToMap.containsKey(stackObject)) {
+                found[0] = true;
+            }
+            return null; // never replace
+        });
+        return found[0];
     }
 
     private record EphemeronsTask(ObjectTracer roots, ArrayDeque<EphemeronObject> ephemeronsToBeTraced) implements Runnable {
