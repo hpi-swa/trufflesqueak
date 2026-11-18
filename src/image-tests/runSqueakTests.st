@@ -133,7 +133,6 @@
         SlangTests -> #(#testSimpleMethod). "broken"
         SlangTypePromotionTest -> #(#testFloatAndNil #testNilAndFloat). "broken"
         SmalltalkImageTest -> #(#testForceChangesToDiskRobustness).
-        SocketTest -> #(#testSocketReuse #testTCPSocketReuse #testUDP).
         StackInterpreterTests -> #(#testImmediateFloats #testPointerTaggingDetagging). "broken"
         SystemChangeFileTest -> #(#testClassRenamed). "flaky and can hang the system"
     } collect: [:assoc | | testCase |
@@ -174,12 +173,14 @@
 
     flakyTests := OrderedCollection new.
     {
+        ArbitraryObjectSocketTestCase -> #(#testBasics). "delays too short, see https://github.com/squeak-smalltalk/squeak-object-memory/issues/179"
         BitBltSimulationTest -> #(#testAlphaCompositing2Simulated #testAlphaCompositingSimulated).
         DebuggerTests -> #(#test02UnhandledException #test19Abandon).
         MCSnapshotTest -> #(#testInstanceReuse).
         MorphicToolBuilderTests -> #(#testGetButtonColor).
         PCCByLiteralsTest -> #(#testSwitchPrimCallOffOn).
         SHParserST80Test -> #(#testNumbers).
+        StringSocketTestCase -> #(#testBogusInput1 #testBogusInput2). "delays too short, see https://github.com/squeak-smalltalk/squeak-object-memory/issues/179"
         StringTest ->#(#testFindSelector).
         TestValueWithinFix -> #(#testValueWithinTimingRepeat).
         WeakSetInspectorTest -> #(#testSymbolTableM6812 #testUninitialized).
@@ -190,6 +191,14 @@
     } collect: [:assoc | | testCase |
         testCase := assoc key.
         assoc value do: [:sel | flakyTests add: (testCase selector: sel) ]].
+
+    isMacOS ifTrue: [
+        {
+            SocketTest -> #(#testSocketReuse). "fails on GitHub's macOS runners, passes locally"
+        } collect: [:assoc | | testCase |
+            testCase := assoc key.
+            assoc value do: [:sel | flakyTests add: (testCase selector: sel) ]].
+    ].
 
     isWin ifTrue: [
         {

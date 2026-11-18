@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 
+import de.hpi.swa.trufflesqueak.nodes.plugins.network.SqueakSocketContext;
 import org.graalvm.collections.UnmodifiableEconomicMap;
 
 import com.oracle.truffle.api.Assumption;
@@ -228,6 +229,7 @@ public final class SqueakImageContext {
     public final BitBlt bitblt = new BitBlt(this);
     public String[] dropPluginFileList = ArrayUtils.EMPTY_STRINGS_ARRAY;
     public final JPEGReader jpegReader = new JPEGReader();
+    public final SqueakSocketContext squeakSocketContext = new SqueakSocketContext();
     public final Zip zip = new Zip();
 
     public SqueakImageContext(final SqueakLanguage squeakLanguage, final SqueakLanguage.Env environment) {
@@ -1008,6 +1010,7 @@ public final class SqueakImageContext {
         if (options.printResourceSummary()) {
             MiscUtils.printResourceSummary();
         }
+        squeakSocketContext.close();
     }
 
     public int getPrimFailCode() {
