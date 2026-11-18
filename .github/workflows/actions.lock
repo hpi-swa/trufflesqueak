@@ -11,9 +11,6 @@ workflows:
         - 'actions/setup-python@v7.1.0'
         - 'actions/upload-artifact@v7.0.2'
         - 'graalvm/setup-graalvm@v1.6.8'
-    '.github/workflows/claude-code.yml':
-        - 'actions/checkout@v7.0.1'
-        - 'anthropics/claude-code-action@v1.0.276'
 dependencies:
     'actions/checkout@v7.0.1':
         ref: 'v7.0.1'
@@ -35,20 +32,8 @@ dependencies:
         commit: 'sha1-cf430e030ddbb5b0abf93d22962f4752f3646cd9'
         owner_id: 44036562
         repo_id: 192625955
-    'anthropics/claude-code-action@v1.0.276':
-        ref: 'v1.0.276'
-        commit: 'sha1-f3b070c88125d33dbae5653df5f143101d4ea9dc'
-        owner_id: 76263028
-        repo_id: 986421638
-        uses:
-            - 'oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6'
     'graalvm/setup-graalvm@v1.6.8':
         ref: 'v1.6.8'
         commit: 'sha1-f70bc8032f90a104502824a54bcb94b6f01715bc'
         owner_id: 10176827
         repo_id: 443997241
-    'oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6':
-        ref: 'v2.2.0'
-        commit: 'sha1-0c5077e51419868618aeaa5fe8019c62421857d6'
-        owner_id: 108928776
-        repo_id: 512644635
