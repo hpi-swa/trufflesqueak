@@ -296,6 +296,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
                 executionData.callTargetStable.invalidate(reason);
             }
             executionData.callTarget = null;
+            executionData.resumptionCallTarget = null;
         }
     }
 
