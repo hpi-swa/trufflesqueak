@@ -315,24 +315,34 @@ public final class ObjectGraphUtils {
      *
      * <p>Chains ({@code A -> B -> C}) can arise both within a single bulk {@code become:} batch
      * (regardless of pair ordering) and across multiple lazy {@link #pointersBecomeOneWay} calls
-     * before {@link #becomeMap} is cleared by a full heap traversal. Calling
-     * {@link AbstractSqueakObjectWithClassAndHash#forwardTo} here-after chasing {@code target} to
-     * the end of the chain-preserves the VM-wide invariant that a forwarding pointer never points
-     * to another forwarded object.
+     * before {@link #becomeMap} is cleared by a full heap traversal. Because
+     * {@link AbstractSqueakObjectWithClassAndHash#forwardTo} is only called after {@code target}
+     * has been chased to the end of its chain, the VM-wide invariant that a forwarding pointer
+     * never points to another forwarded object is preserved.
+     *
+     * <p>Cyclic requests ({@code A -> B -> A}) are invalid for a one-way become and have no
+     * terminal target. The chase is therefore bounded by the size of {@link #becomeMap}, so that
+     * such requests cannot hang the VM.
      */
     private void flattenForwardPointers() {
         final MapCursor<Object, Object> cursor = becomeMap.getEntries();
         while (cursor.advance()) {
+            final Object key = cursor.getKey();
             Object target = cursor.getValue();
             Object next;
-            while ((next = becomeMap.get(target)) != null && next != cursor.getKey()) {
+            /* An acyclic chain has fewer hops than there are entries; more means a cycle. */
+            int remainingHops = becomeMap.size();
+            while ((next = becomeMap.get(target)) != null && next != key && remainingHops-- > 0) {
                 target = next;
             }
             if (target != cursor.getValue()) {
                 cursor.setValue(target);
             }
-            if (cursor.getKey() instanceof final AbstractSqueakObjectWithClassAndHash f && target instanceof final AbstractSqueakObjectWithClassAndHash t) {
-                f.forwardTo(t);
+            if (key instanceof final AbstractSqueakObjectWithClassAndHash f && target instanceof final AbstractSqueakObjectWithClassAndHash t) {
+                /* Entries from earlier lazy calls are usually forwarded already; avoid redundant invalidations. */
+                if (f.isNotForwarded() || f.getForwardingPointer() != t) {
+                    f.forwardTo(t);
+                }
             }
         }
     }
