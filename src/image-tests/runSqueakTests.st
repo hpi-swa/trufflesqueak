@@ -1,5 +1,5 @@
 [
-    | fileEntry repoPath isLinux isMacOS isWin alphabetically ignoredTests failingTests flakyTests testSuite result retries exitCode |
+    | repoPath isLinux isMacOS isWin alphabetically ignoredTests failingTests flakyTests testSuite result retries exitCode |
 
     ToolSet default: CommandLineToolSet.
 
@@ -10,12 +10,10 @@
 
     FileStream stdout nextPutAll: 'Patching TestCase ...'; cr; flush.
     TestCase compile: 'run: aResult
-        | timeToRun |
         FileStream stdout nextPutAll: self asString; nextPutAll: '' ... ''; flush.
-        "Failures do not save the test duration; useful for debugging time outs."
-        timeToRun := [aResult runCase: self] timeToRunWithoutGC.
+        aResult runCase: self.
         FileStream stdout nextPutAll: ''('';
-                          nextPutAll: timeToRun asString;
+                          nextPutAll: ((aResult durations at: self) ifNil: [0]) asString;
                           nextPutAll: ''ms)''; cr; flush.'
             classified: 'patched'.
     TestCase compile: 'isLogging
@@ -24,15 +22,6 @@
     TestCase compile: 'failureLog
         ^ FileStream stdout'
             classified: 'patched'.
-
-    "Increase timeouts from 10 ms to 100 ms on some Socket tests. See https://github.com/squeak-smalltalk/squeak-object-memory/issues/179"
-    fileEntry := ((FileDirectory on: Smalltalk documentPath) containingDirectory containingDirectory) / 'image-tests' / 'patchSocketTests.st'.
-    fileEntry exists
-        ifTrue: [
-            FileStream stdout nextPutAll: 'Applying socket delay patches from "', fileEntry fullName, '" ...'; cr; flush.
-            (FileStream readOnlyFileNamed: fileEntry fullName) fileIn]
-        ifFalse: [
-            FileStream stdout cr; nextPutAll: 'Socket delay patch not found at "', fileEntry fullName, '". SKIPPING'; cr; flush].
 
     isLinux := Smalltalk platformName = 'unix'.
     isMacOS := Smalltalk platformName = 'Mac OS'.
@@ -161,14 +150,6 @@
     } collect: [:testCase |
         testCase allTestSelectors do: [:sel | failingTests add: (testCase selector: sel) ]].
 
-    isMacOS ifTrue: [
-        {
-            SocketTest -> #(#testSocketReuse).  "fails on GitHub CI but passes locally"
-        } collect: [:assoc | | testCase |
-            testCase := assoc key.
-            assoc value do: [:sel | ignoredTests add: (testCase selector: sel) ]].
-    ].
-
     isWin ifTrue: [
         {
             Win32VMTest.
@@ -192,12 +173,14 @@
 
     flakyTests := OrderedCollection new.
     {
+        ArbitraryObjectSocketTestCase -> #(#testBasics). "delays too short, see https://github.com/squeak-smalltalk/squeak-object-memory/issues/179"
         BitBltSimulationTest -> #(#testAlphaCompositing2Simulated #testAlphaCompositingSimulated).
         DebuggerTests -> #(#test02UnhandledException #test19Abandon).
         MCSnapshotTest -> #(#testInstanceReuse).
         MorphicToolBuilderTests -> #(#testGetButtonColor).
         PCCByLiteralsTest -> #(#testSwitchPrimCallOffOn).
         SHParserST80Test -> #(#testNumbers).
+        StringSocketTestCase -> #(#testBogusInput1 #testBogusInput2). "delays too short, see https://github.com/squeak-smalltalk/squeak-object-memory/issues/179"
         StringTest ->#(#testFindSelector).
         TestValueWithinFix -> #(#testValueWithinTimingRepeat).
         WeakSetInspectorTest -> #(#testSymbolTableM6812 #testUninitialized).
@@ -208,6 +191,14 @@
     } collect: [:assoc | | testCase |
         testCase := assoc key.
         assoc value do: [:sel | flakyTests add: (testCase selector: sel) ]].
+
+    isMacOS ifTrue: [
+        {
+            SocketTest -> #(#testSocketReuse). "fails on GitHub's macOS runners, passes locally"
+        } collect: [:assoc | | testCase |
+            testCase := assoc key.
+            assoc value do: [:sel | flakyTests add: (testCase selector: sel) ]].
+    ].
 
     isWin ifTrue: [
         {
