@@ -207,6 +207,18 @@ public final class FrameAccess {
         return context != null && context.hasModifiedSender();
     }
 
+    /**
+     * Arguments for calling a {@link de.hpi.swa.trufflesqueak.nodes.ResumeContextRootNode}: only
+     * the context to resume. The actual Squeak frame is the context's materialized frame.
+     */
+    public static Object[] newResumeArguments(final ContextObject context) {
+        return new Object[]{context};
+    }
+
+    public static ContextObject getResumedContext(final Frame frame) {
+        return (ContextObject) frame.getArguments()[0];
+    }
+
     public static void setContext(final Frame frame, final ContextObject context) {
         assert getContext(frame) == null || getContext(frame) == context : "ContextObject already allocated";
         frame.setObjectStatic(SlotIndices.THIS_CONTEXT, context);
