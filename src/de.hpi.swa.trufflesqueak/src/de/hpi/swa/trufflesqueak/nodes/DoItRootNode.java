@@ -30,6 +30,7 @@ import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.BlockClosurePrimitives.PrimClosureValueWithArgsNode;
 import de.hpi.swa.trufflesqueak.nodes.process.GetNextActiveContextNode;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 
 public abstract class DoItRootNode extends RootNode {
@@ -65,7 +66,7 @@ public abstract class DoItRootNode extends RootNode {
             LogUtils.SCHEDULING.log(Level.FINE, "Process Switch in DoIt: {0}", activeContext);
             while (true) {
                 try {
-                    return IndirectCallNode.getUncached().call(activeContext.getCallTarget());
+                    return IndirectCallNode.getUncached().call(activeContext.getResumptionCallTarget(), FrameAccess.newResumeArguments(activeContext));
                 } catch (final NonLocalReturn | NonVirtualReturn | CannotReturnToTarget ret) {
                     throw SqueakException.create("Return exception in DoIt", ret);
                 } catch (final ProcessSwitch anotherPs) {

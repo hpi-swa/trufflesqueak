@@ -349,19 +349,17 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         }
     }
 
+    /**
+     * Returns the call target for resuming a {@link ContextObject} of this code object. There is
+     * one call target per code object: the context to resume must be passed as an argument (see
+     * {@link FrameAccess#newResumeArguments}) and the {@link ResumeContextRootNode} continues at
+     * the context's current instruction pointer. Methods may have many suspension points (sends,
+     * loop back-edges), so call targets are deliberately not created per instruction pointer.
+     */
     @TruffleBoundary
-    public RootCallTarget getResumptionCallTarget(final ContextObject context) {
+    public RootCallTarget getResumptionCallTarget() {
         if (getExecutionData().resumptionCallTarget == null) {
-            executionData.resumptionCallTarget = new ResumeContextRootNode(SqueakImageContext.getSlow(), context).getCallTarget();
-        } else {
-            final ResumeContextRootNode resumeNode = (ResumeContextRootNode) executionData.resumptionCallTarget.getRootNode();
-            /*
-             * Set the activeContext of the {@link ResumeContextRootNode} to the given context to
-             * reuse the call target. There may be methods with multiple suspension points. Since
-             * the interrupt handler can trigger at all kinds of locations, it does not make sense
-             * to create a resumption call target per instruction pointer.
-             */
-            resumeNode.setActiveContext(context);
+            executionData.resumptionCallTarget = new ResumeContextRootNode(SqueakImageContext.getSlow(), this).getCallTarget();
         }
         return executionData.resumptionCallTarget;
     }

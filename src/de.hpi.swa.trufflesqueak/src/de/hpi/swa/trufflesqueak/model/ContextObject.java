@@ -178,8 +178,8 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         return hasClosure() ? getClosure().getCompiledBlock() : getCodeObject();
     }
 
-    public CallTarget getCallTarget() {
-        return getMethodOrBlock().getResumptionCallTarget(this);
+    public CallTarget getResumptionCallTarget() {
+        return getMethodOrBlock().getResumptionCallTarget();
     }
 
     private MaterializedFrame getOrCreateTruffleFrame() {

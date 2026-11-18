@@ -14,35 +14,33 @@ import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.profiles.IntValueProfile;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
+/**
+ * Resumes a {@link ContextObject} at its current instruction pointer. The context to resume is
+ * passed as a call argument (see {@link FrameAccess#newResumeArguments(ContextObject)}), so that
+ * this node only holds on to static, per-code data. There is one call target per code object, see
+ * {@link CompiledCodeObject#getResumptionCallTarget()}.
+ */
 public final class ResumeContextRootNode extends AbstractRootNode {
-    private ContextObject activeContext;
     private final IntValueProfile instructionPointerProfile = IntValueProfile.createIdentityProfile();
     private final IntValueProfile stackPointerProfile = IntValueProfile.createIdentityProfile();
 
-    public ResumeContextRootNode(final SqueakImageContext image, final ContextObject context) {
-        super(image, context.getMethodOrBlock());
-        activeContext = context;
-        assert !activeContext.isDead() : "Terminated contexts cannot be resumed";
+    public ResumeContextRootNode(final SqueakImageContext image, final CompiledCodeObject code) {
+        super(image, code);
     }
 
     public ResumeContextRootNode(final ResumeContextRootNode original) {
         super(original);
-        activeContext = original.activeContext;
     }
 
     @Override
     public Object execute(final VirtualFrame frame) {
-        final ContextObject context = activeContext;
-        /*
-         * This root node is cached per method and outlives the context it resumes. Release the
-         * context so that it, and all objects referenced from its frame, can be garbage collected
-         * once it has returned.
-         */
-        activeContext = null;
-        assert context != null && !context.isDead() : "Terminated contexts cannot be resumed";
+        final ContextObject context = FrameAccess.getResumedContext(frame);
+        assert !context.isDead() : "Terminated contexts cannot be resumed";
+        assert context.getMethodOrBlock() == getCode() : "Context resumed with call target of different code object";
         /*
          * Make it so ObjectGraphUtils can find the active context when executing strictly within
          * the active context.
@@ -69,11 +67,6 @@ public final class ResumeContextRootNode extends AbstractRootNode {
         return interpreterNode.execute(context.getTruffleFrame(), pc, sp);
     }
 
-    public void setActiveContext(final ContextObject newActiveContext) {
-        assert getFrameDescriptor() == newActiveContext.getMethodOrBlock().getFrameDescriptor();
-        activeContext = newActiveContext;
-    }
-
     @Override
     protected boolean isInstrumentable() {
         return false;
@@ -87,6 +80,6 @@ public final class ResumeContextRootNode extends AbstractRootNode {
     @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
-        return getCode().toString();
+        return getCode() + " (resume)";
     }
 }
