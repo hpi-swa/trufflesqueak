@@ -347,7 +347,7 @@ jobs:
     defaults:
       run:
         # Unlike the default shell (`bash -e {0}`), an explicit `bash` enables `pipefail`, so
-        # piping benchmark output into `tee` no longer hides failures (e.g., due to ExitVM).
+        # piping benchmark output into `tee` no longer hides failures (e.g., VM crashes).
         shell: bash
     strategy:
       fail-fast: false
@@ -357,7 +357,7 @@ jobs:
             os: ubuntu-22.04-arm
             type: native
             iterations: 300
-            vm-args: '--compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --engine.Mode=default --engine.TraceCompilation --engine.CompilationFailureAction=ExitVM --engine.DynamicCompilationThresholds=false --engine.CompilationStatistics'
+            vm-args: '--compiler.TreatPerformanceWarningsAsErrors=call,instanceof,store,trivial --engine.Mode=default --engine.TraceCompilation --engine.CompilationFailureAction=Diagnose --engine.DynamicCompilationThresholds=false --engine.CompilationStatistics'
           - kind: interpreter
             os: ubuntu-22.04-arm
             type: native
@@ -428,6 +428,10 @@ jobs:
     - name: Analyze benchmark results
       run: |
         body="$(python mx.trufflesqueak/analyze_benchmarks.py ${{ matrix.kind }})"
+        if [[ -n "$(ls -A graal_dumps 2>/dev/null)" ]] || grep -qsw 'opt fail' *.log; then
+          # Failed call targets stay in the interpreter, so the numbers below are not representative.
+          body="$(printf '> [!WARNING]\n> Compilation failures occurred during this run, results may be skewed.\n\n%s' "$body")"
+        fi
         echo "$body" >> $GITHUB_STEP_SUMMARY
         if [[ "${{ github.event_name }}" == "push" ]]; then
           jq -cn --arg body "$body" '{ body: $body }' > comment.json
@@ -444,6 +448,15 @@ jobs:
         path: graal_dumps/
         if-no-files-found: ignore
         retention-days: 5
+      if: ${{ !cancelled() && matrix.kind == 'peak' }}
+    - name: Fail on compilation failures
+      # Benchmarks run with `--engine.CompilationFailureAction=Diagnose` so that the dumps of all
+      # failures across all benchmarks are collected and uploaded before the job fails here.
+      run: |
+        if [[ -n "$(ls -A graal_dumps 2>/dev/null)" ]] || grep -sw 'opt fail' *.log; then
+          echo "::error::Compilation failures detected, see the 'graal_dumps-benchmarks-${{ matrix.os }}' artifact."
+          exit 1
+        fi
       if: ${{ matrix.kind == 'peak' }}
   test-summary:
     name: Generate Test Summary
