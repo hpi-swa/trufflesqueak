@@ -181,7 +181,6 @@
         StringSocketTestCase -> #(#testBogusInput1 #testBogusInput2). "delays too short, see https://github.com/squeak-smalltalk/squeak-object-memory/issues/179"
         StringTest ->#(#testFindSelector). "fails rarely, cause unknown"
         WeakSetInspectorTest -> #(#testSymbolTableM6812). "symbol table can shrink between garbage collections, fails sometimes on Windows native"
-        WideStringTest -> #(#testAsIntegerSignedUsingRandomNumbers). "takes up to several seconds, may exceed the default timeout of 5s on non-ARM platforms (see TestCase>>#defaultTimeout)"
 
         "failing on some platforms"
         GIFReadWriterTest -> #(#testAnimatedColorsOutIn).
