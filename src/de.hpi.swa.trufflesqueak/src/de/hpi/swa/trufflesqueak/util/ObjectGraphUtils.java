@@ -34,6 +34,7 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithHash;
+import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject.FrameHandling;
@@ -353,6 +354,7 @@ public final class ObjectGraphUtils {
                     if (migratedValue != null) {
                         arguments[i] = migratedValue;
                     }
+                    patchClosure(arguments[i], fromToMap);
                 }
                 tracer.accept(arguments[i]);
             }
@@ -369,7 +371,9 @@ public final class ObjectGraphUtils {
             FrameAccess.iterateStackObjectsWithReplacement(current, false, stackObject -> {
                 if (stackObject != null) {
                     final Object migratedObject = fromToMap.get(stackObject);
-                    tracer.accept(Objects.requireNonNullElse(migratedObject, stackObject));
+                    final Object currentObject = Objects.requireNonNullElse(migratedObject, stackObject);
+                    patchClosure(currentObject, fromToMap);
+                    tracer.accept(currentObject);
                     return migratedObject;
                 } else {
                     return null;
@@ -377,6 +381,17 @@ public final class ObjectGraphUtils {
             });
             return null; // continue
         });
+    }
+
+    /**
+     * Closures referenced from active frames (e.g., the block of a running loop) keep their receiver
+     * and copied values for all subsequent activations. Patch them eagerly, otherwise each
+     * activation reads a forwarded object and deoptimizes when resolving the forwarding pointer.
+     */
+    private static void patchClosure(final Object object, final UnmodifiableEconomicMap<Object, Object> fromToMap) {
+        if (object instanceof final BlockClosureObject closure) {
+            closure.pointersBecomeOneWay(fromToMap);
+        }
     }
 
     private record EphemeronsTask(ObjectTracer roots, ArrayDeque<EphemeronObject> ephemeronsToBeTraced) implements Runnable {
