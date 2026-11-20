@@ -31,11 +31,13 @@ def trufflesqueak_standalone_deps():
 # Called from suite.py
 def libsmalltalkvm_build_args():
     build_args = []
-    selected_march = (
-        "x86-64-v3"
-        if mx.get_arch() == "amd64"
-        else ("armv8.1-a" if mx.get_arch() == "aarch64" else "compatibility")
-    )
+    if mx.get_arch() == "amd64":
+        selected_march = "x86-64-v3"
+    elif mx.get_arch() == "aarch64":
+        # All Apple silicon CPUs support AES, which is optional in armv8.1-a
+        selected_march = "armv8.1-a+aes" if mx.is_darwin() else "armv8.1-a"
+    else:
+        selected_march = "compatibility"
     build_args.append(f"-march={selected_march}")
     is_oracle_graalvm = "-community" not in os.getenv("JAVA_HOME")
     if is_oracle_graalvm and (mx.is_linux() or mx.is_darwin()):
