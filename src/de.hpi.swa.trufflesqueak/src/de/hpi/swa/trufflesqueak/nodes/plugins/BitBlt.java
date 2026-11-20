@@ -143,7 +143,6 @@ public final class BitBlt {
     private long componentAlphaModeColor;
     private Object destBits;
     private int destBitsBaseOffset;
-    private int destBitsIndexScale;
     private int destDelta;
     private int destDepth;
     private PointersObject destForm;
@@ -196,7 +195,6 @@ public final class BitBlt {
     private long sourceAlpha;
     private Object sourceBits;
     private int sourceBitsBaseOffset;
-    private int sourceBitsIndexScale;
     private int sourceDelta;
     private int sourceDepth;
     private PointersObject sourceForm;
@@ -1678,7 +1676,7 @@ public final class BitBlt {
             destDepth = -destDepth;
         }
         final Object destBitsValue = fetchPointerofObject(FORM.BITS, destForm);
-        if (!(destBitsValue instanceof final NativeObject destBitsNative && (isWords(destBitsNative) || isBytes(destBitsNative)))) {
+        if (!(destBitsValue instanceof final NativeObject destBitsNative)) {
             if (destBitsValue instanceof Long) {
                 throw SqueakException.create("Not supported: Query for actual surface dimensions");
             } else {
@@ -1692,12 +1690,18 @@ public final class BitBlt {
             destBits = destBitsNative.getIntStorage();
             destBitsSize = destBitsNative.getIntLength() * Integer.BYTES;
             destBitsBaseOffset = Unsafe.ARRAY_INT_BASE_OFFSET;
-            destBitsIndexScale = Unsafe.ARRAY_INT_INDEX_SCALE;
-        } else {
+        } else if (isBytes(destBitsNative)) {
             destBits = destBitsNative.getByteStorage();
             destBitsSize = destBitsNative.getByteLength();
             destBitsBaseOffset = Unsafe.ARRAY_BYTE_BASE_OFFSET;
-            destBitsIndexScale = Unsafe.ARRAY_BYTE_INDEX_SCALE * Integer.BYTES;
+        } else if (destBitsNative.isLongType()) {
+            destBits = destBitsNative.getLongStorage();
+            destBitsSize = destBitsNative.getLongLength() * Long.BYTES;
+            destBitsBaseOffset = Unsafe.ARRAY_LONG_BASE_OFFSET;
+        } else {
+            destBits = destBitsNative.getShortStorage();
+            destBitsSize = destBitsNative.getShortLength() * Short.BYTES;
+            destBitsBaseOffset = Unsafe.ARRAY_SHORT_BASE_OFFSET;
         }
         return destBitsSize >= destPitch * destHeight;
     }
@@ -1804,7 +1808,7 @@ public final class BitBlt {
             sourceDepth = -sourceDepth;
         }
         final Object sourceBitsValue = fetchPointerofObject(FORM.BITS, sourceForm);
-        if (!(sourceBitsValue instanceof final NativeObject sourceBitsNative && (isWords(sourceBitsNative) || isBytes(sourceBitsNative)))) {
+        if (!(sourceBitsValue instanceof final NativeObject sourceBitsNative)) {
             if (sourceBitsValue instanceof Long) {
                 throw SqueakException.create("Not supported: Query for actual surface dimensions");
             } else {
@@ -1813,23 +1817,25 @@ public final class BitBlt {
         }
         sourcePPW = div(32, sourceDepth);
         sourcePitch = div(sourceWidth + sourcePPW - 1, sourcePPW) << 2;
+        final int sourceBitsSize;
         if (isWords(sourceBitsNative)) {
-            final int[] ints = sourceBitsNative.getIntStorage();
-            sourceBits = ints;
+            sourceBits = sourceBitsNative.getIntStorage();
+            sourceBitsSize = sourceBitsNative.getIntLength() * Integer.BYTES;
             sourceBitsBaseOffset = Unsafe.ARRAY_INT_BASE_OFFSET;
-            sourceBitsIndexScale = Unsafe.ARRAY_INT_INDEX_SCALE;
-            return ints.length * Integer.BYTES >= sourcePitch * sourceHeight;
+        } else if (isBytes(sourceBitsNative)) {
+            sourceBits = sourceBitsNative.getByteStorage();
+            sourceBitsSize = sourceBitsNative.getByteLength();
+            sourceBitsBaseOffset = Unsafe.ARRAY_BYTE_BASE_OFFSET;
+        } else if (sourceBitsNative.isLongType()) {
+            sourceBits = sourceBitsNative.getLongStorage();
+            sourceBitsSize = sourceBitsNative.getLongLength() * Long.BYTES;
+            sourceBitsBaseOffset = Unsafe.ARRAY_LONG_BASE_OFFSET;
         } else {
-            final byte[] bytes = sourceBitsNative.getByteStorage();
-            if (bytes.length >= sourcePitch * sourceHeight) {
-                sourceBits = bytes;
-                sourceBitsBaseOffset = Unsafe.ARRAY_BYTE_BASE_OFFSET;
-                sourceBitsIndexScale = Unsafe.ARRAY_BYTE_INDEX_SCALE * Integer.BYTES;
-                return true;
-            } else {
-                return false;
-            }
+            sourceBits = sourceBitsNative.getShortStorage();
+            sourceBitsSize = sourceBitsNative.getShortLength() * Short.BYTES;
+            sourceBitsBaseOffset = Unsafe.ARRAY_SHORT_BASE_OFFSET;
         }
+        return sourceBitsSize >= sourcePitch * sourceHeight;
     }
 
     /*
@@ -3914,7 +3920,7 @@ public final class BitBlt {
 
     private long dstLongAt(final long index) {
         assert index >>> 2 < endOfDestination;
-        return Integer.toUnsignedLong(UnsafeUtils.getIntAt(destBits, destBitsBaseOffset + (index >>> 2) * destBitsIndexScale));
+        return Integer.toUnsignedLong(UnsafeUtils.getIntAt(destBits, destBitsBaseOffset + (index >>> 2) * Integer.BYTES));
     }
 
     /*
@@ -3929,7 +3935,7 @@ public final class BitBlt {
     }
 
     private void dstLongAtput(final long index, final long value) {
-        UnsafeUtils.putIntAt(destBits, destBitsBaseOffset + (index >>> 2) * destBitsIndexScale, (int) value);
+        UnsafeUtils.putIntAt(destBits, destBitsBaseOffset + (index >>> 2) * Integer.BYTES, (int) value);
     }
 
     private long halftoneLongAt(final int index) {
@@ -3943,6 +3949,6 @@ public final class BitBlt {
          * `PolygonMorph arrowPrototype`.
          */
         assert 0 <= index && index <= endOfSource;
-        return Integer.toUnsignedLong(UnsafeUtils.getIntAt(sourceBits, sourceBitsBaseOffset + (index >>> 2) * sourceBitsIndexScale));
+        return Integer.toUnsignedLong(UnsafeUtils.getIntAt(sourceBits, sourceBitsBaseOffset + (index >>> 2) * Integer.BYTES));
     }
 }
