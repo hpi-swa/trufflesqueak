@@ -922,6 +922,38 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         push(frame, sp++, result);
                         break;
                     }
+                    case BC.BYTECODE_PRIM_MULTIPLY: {
+                        final Object arg = pop(frame, --sp);
+                        final Object receiver = pop(frame, --sp);
+                        final byte profile = getProfile(currentPC);
+                        final Object result;
+                        if (receiver instanceof final Double lhs && arg instanceof final Double rhs && Double.isFinite(lhs * rhs)) {
+                            enter(currentPC, profile, BRANCH2);
+                            result = lhs * rhs;
+                        } else {
+                            enter(currentPC, profile, BRANCH1);
+                            FrameAccess.externalizePCAndSP(frame, pc, sp);
+                            result = send(frame, currentPC, receiver, arg);
+                        }
+                        push(frame, sp++, result);
+                        break;
+                    }
+                    case BC.BYTECODE_PRIM_DIVIDE: {
+                        final Object arg = pop(frame, --sp);
+                        final Object receiver = pop(frame, --sp);
+                        final byte profile = getProfile(currentPC);
+                        final Object result;
+                        if (receiver instanceof final Double lhs && arg instanceof final Double rhs && rhs != 0 && Double.isFinite(lhs / rhs)) {
+                            enter(currentPC, profile, BRANCH2);
+                            result = lhs / rhs;
+                        } else {
+                            enter(currentPC, profile, BRANCH1);
+                            FrameAccess.externalizePCAndSP(frame, pc, sp);
+                            result = send(frame, currentPC, receiver, arg);
+                        }
+                        push(frame, sp++, result);
+                        break;
+                    }
                     case BC.BYTECODE_PRIM_BIT_AND: {
                         final Object arg = pop(frame, --sp);
                         final Object receiver = pop(frame, --sp);
@@ -985,7 +1017,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         push(frame, sp++, send(frame, currentPC, receiver));
                         break;
                     }
-                    case BC.BYTECODE_PRIM_MULTIPLY, BC.BYTECODE_PRIM_DIVIDE, BC.BYTECODE_PRIM_MOD, BC.BYTECODE_PRIM_MAKE_POINT, BC.BYTECODE_PRIM_BIT_SHIFT, //
+                    case BC.BYTECODE_PRIM_MOD, BC.BYTECODE_PRIM_MAKE_POINT, BC.BYTECODE_PRIM_BIT_SHIFT, //
                         BC.BYTECODE_PRIM_DIV, BC.BYTECODE_PRIM_AT, BC.BYTECODE_PRIM_NEXT_PUT, BC.BYTECODE_PRIM_DO, BC.BYTECODE_PRIM_NEW_WITH_ARG, //
                         BC.SEND_LIT_SEL1_0, BC.SEND_LIT_SEL1_1, BC.SEND_LIT_SEL1_2, BC.SEND_LIT_SEL1_3, BC.SEND_LIT_SEL1_4, BC.SEND_LIT_SEL1_5, BC.SEND_LIT_SEL1_6, BC.SEND_LIT_SEL1_7, //
                         BC.SEND_LIT_SEL1_8, BC.SEND_LIT_SEL1_9, BC.SEND_LIT_SEL1_A, BC.SEND_LIT_SEL1_B, BC.SEND_LIT_SEL1_C, BC.SEND_LIT_SEL1_D, BC.SEND_LIT_SEL1_E, BC.SEND_LIT_SEL1_F: {
@@ -1058,7 +1090,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
         return switch (bytecode) {
             case BC.BYTECODE_PRIM_ADD, BC.BYTECODE_PRIM_SUBTRACT, BC.BYTECODE_PRIM_LESS_THAN, BC.BYTECODE_PRIM_GREATER_THAN, //
                 BC.BYTECODE_PRIM_LESS_OR_EQUAL, BC.BYTECODE_PRIM_GREATER_OR_EQUAL, BC.BYTECODE_PRIM_EQUAL, BC.BYTECODE_PRIM_NOT_EQUAL, //
-                BC.BYTECODE_PRIM_BIT_AND, BC.BYTECODE_PRIM_BIT_OR -> true;
+                BC.BYTECODE_PRIM_MULTIPLY, BC.BYTECODE_PRIM_DIVIDE, BC.BYTECODE_PRIM_BIT_AND, BC.BYTECODE_PRIM_BIT_OR -> true;
             default -> false;
         };
     }

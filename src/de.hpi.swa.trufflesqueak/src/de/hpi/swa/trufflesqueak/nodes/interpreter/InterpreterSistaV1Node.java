@@ -924,7 +924,11 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                         pc = handleSend0(frame, pc, vstate, state);
                         break;
                     }
-                    case BC.BYTECODE_PRIM_DIVIDE, BC.BYTECODE_PRIM_MOD, BC.BYTECODE_PRIM_MAKE_POINT, BC.BYTECODE_PRIM_BIT_SHIFT, //
+                    case BC.BYTECODE_PRIM_DIVIDE: {
+                        pc = handlePrimitiveDivide(frame, pc, vstate, state);
+                        break;
+                    }
+                    case BC.BYTECODE_PRIM_MOD, BC.BYTECODE_PRIM_MAKE_POINT, BC.BYTECODE_PRIM_BIT_SHIFT, //
                         BC.BYTECODE_PRIM_AT, BC.BYTECODE_PRIM_NEXT_PUT, BC.BYTECODE_PRIM_DO, BC.BYTECODE_PRIM_NEW_WITH_ARG, //
                         BC.SEND_LIT_SEL1_0, BC.SEND_LIT_SEL1_1, BC.SEND_LIT_SEL1_2, BC.SEND_LIT_SEL1_3, BC.SEND_LIT_SEL1_4, BC.SEND_LIT_SEL1_5, BC.SEND_LIT_SEL1_6, BC.SEND_LIT_SEL1_7, //
                         BC.SEND_LIT_SEL1_8, BC.SEND_LIT_SEL1_9, BC.SEND_LIT_SEL1_A, BC.SEND_LIT_SEL1_B, BC.SEND_LIT_SEL1_C, BC.SEND_LIT_SEL1_D, BC.SEND_LIT_SEL1_E, BC.SEND_LIT_SEL1_F: {
@@ -2316,6 +2320,9 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         if (receiver instanceof final Long lhs && arg instanceof final Long rhs) {
             enter(pc, profile, BRANCH2);
             result = multiply(pc, profile, lhs, rhs);
+        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs && Double.isFinite(lhs * rhs)) {
+            enter(pc, profile, BRANCH4);
+            result = lhs * rhs;
         } else {
             enter(pc, profile, BRANCH1);
             FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
@@ -2338,6 +2345,26 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
             }
         }
         return result;
+    }
+
+    @EarlyInline
+    @BytecodeInterpreterHandler(value = BC.BYTECODE_PRIM_DIVIDE, safepoint = false)
+    private int handlePrimitiveDivide(final VirtualFrame frame, final int pc, final VirtualState vstate, @SuppressWarnings("unused") final State state) {
+        final Object arg = pop(frame, --vstate.sp);
+        final Object receiver = pop(frame, --vstate.sp);
+        final byte profile = getProfile(pc);
+        final int nextPC = pc + 1;
+        final Object result;
+        if (receiver instanceof final Double lhs && arg instanceof final Double rhs && rhs != 0 && Double.isFinite(lhs / rhs)) {
+            enter(pc, profile, BRANCH2);
+            result = lhs / rhs;
+        } else {
+            enter(pc, profile, BRANCH1);
+            FrameAccess.externalizePCAndSP(frame, nextPC, vstate.sp);
+            result = send(frame, pc, receiver, arg);
+        }
+        push(frame, vstate.sp++, result);
+        return nextPC;
     }
 
     @EarlyInline
@@ -2489,7 +2516,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
     }
 
     @EarlyInline
-    @BytecodeInterpreterHandler(value = {BC.BYTECODE_PRIM_DIVIDE, BC.BYTECODE_PRIM_MOD, BC.BYTECODE_PRIM_MAKE_POINT,
+    @BytecodeInterpreterHandler(value = {BC.BYTECODE_PRIM_MOD, BC.BYTECODE_PRIM_MAKE_POINT,
                     BC.BYTECODE_PRIM_BIT_SHIFT, BC.BYTECODE_PRIM_AT, BC.BYTECODE_PRIM_NEXT_PUT,
                     BC.BYTECODE_PRIM_DO, BC.BYTECODE_PRIM_NEW_WITH_ARG,
                     BC.SEND_LIT_SEL1_0, BC.SEND_LIT_SEL1_1, BC.SEND_LIT_SEL1_2, BC.SEND_LIT_SEL1_3,
@@ -2897,7 +2924,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         return switch (bytecode) {
             case BC.BYTECODE_PRIM_ADD, BC.BYTECODE_PRIM_SUBTRACT, BC.BYTECODE_PRIM_LESS_THAN, BC.BYTECODE_PRIM_GREATER_THAN, //
                 BC.BYTECODE_PRIM_LESS_OR_EQUAL, BC.BYTECODE_PRIM_GREATER_OR_EQUAL, BC.BYTECODE_PRIM_EQUAL, BC.BYTECODE_PRIM_NOT_EQUAL, //
-                BC.BYTECODE_PRIM_MULTIPLY, BC.BYTECODE_PRIM_DIV, BC.BYTECODE_PRIM_BIT_AND, BC.BYTECODE_PRIM_BIT_OR, //
+                BC.BYTECODE_PRIM_MULTIPLY, BC.BYTECODE_PRIM_DIVIDE, BC.BYTECODE_PRIM_DIV, BC.BYTECODE_PRIM_BIT_AND, BC.BYTECODE_PRIM_BIT_OR, //
                 BC.BYTECODE_PRIM_SIZE -> true;
             default -> false;
         };
