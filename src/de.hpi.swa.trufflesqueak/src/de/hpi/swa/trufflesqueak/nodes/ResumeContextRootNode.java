@@ -41,6 +41,7 @@ public final class ResumeContextRootNode extends AbstractRootNode {
         final ContextObject context = FrameAccess.getResumedContext(frame);
         assert !context.isDead() : "Terminated contexts cannot be resumed";
         assert context.getMethodOrBlock() == getCode() : "Context resumed with call target of different code object";
+        context.ensureNotParked();
         /*
          * Make it so ObjectGraphUtils can find the active context when executing strictly within
          * the active context.

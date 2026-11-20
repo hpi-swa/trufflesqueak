@@ -40,6 +40,7 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject.FrameHandling;
 import de.hpi.swa.trufflesqueak.model.EphemeronObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.nodes.process.ProcessContinuations;
 
 public final class ObjectGraphUtils {
     private static final int ADDITIONAL_SPACE = 10_000;
@@ -341,6 +342,12 @@ public final class ObjectGraphUtils {
 
     @TruffleBoundary
     private static void pointersBecomeOneWayFrames(final Consumer<Object> tracer, final UnmodifiableEconomicMap<Object, Object> fromToMap) {
+        final ProcessContinuations continuations = SqueakImageContext.getSlow().processContinuations;
+        if (continuations != null) {
+            /* Frames in parked process stacks are not visible to stack walks, unwind them. */
+            continuations.flushAll();
+            continuations.notifyFramesAccessed();
+        }
         Truffle.getRuntime().iterateFrames((frameInstance) -> {
             final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_WRITE);
             if (!FrameAccess.isTruffleSqueakFrame(current)) {
@@ -561,6 +568,14 @@ public final class ObjectGraphUtils {
         private void addObjectsFromFrames() {
             CompilerAsserts.neverPartOfCompilation();
             final boolean shouldScrub = frameHandling == FrameHandling.SCRUB;
+            final ProcessContinuations continuations = image.processContinuations;
+            if (continuations != null) {
+                /* Frames in parked process stacks are not visible to stack walks, unwind them. */
+                continuations.flushAll();
+                if (shouldScrub) {
+                    continuations.notifyFramesAccessed();
+                }
+            }
 
             Truffle.getRuntime().iterateFrames(frameInstance -> {
                 final Frame readOnlyFrame = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);

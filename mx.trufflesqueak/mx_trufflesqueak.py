@@ -82,6 +82,7 @@ def _unittest_config_participant(config):
     (vmArgs, mainClass, mainClassArgs) = config
     vmArgs += ["-Dpolyglotimpl.DisableClassPathIsolation=true"]
     vmArgs += ["--add-exports=java.base/jdk.internal.module=de.hpi.swa.trufflesqueak"]
+    vmArgs += ["--add-exports=java.base/jdk.internal.vm=de.hpi.swa.trufflesqueak"]
     mainClassArgs += [
         "-JUnitOpenPackages",
         "de.hpi.swa.trufflesqueak/*=de.hpi.swa.trufflesqueak.test",
