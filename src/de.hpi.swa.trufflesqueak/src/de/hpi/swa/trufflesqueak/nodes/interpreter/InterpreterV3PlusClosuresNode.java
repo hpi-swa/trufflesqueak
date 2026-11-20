@@ -11,6 +11,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.EarlyInline;
 import com.oracle.truffle.api.HostCompilerDirectives;
 import com.oracle.truffle.api.HostCompilerDirectives.BytecodeInterpreterSwitch;
+import com.oracle.truffle.api.HostCompilerDirectives.InliningCutoff;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.BytecodeOSRNode;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
@@ -346,7 +347,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                 switch (HostCompilerDirectives.markThreadedSwitch(b)) {
                     case BC.PUSH_RCVR_VAR_0, BC.PUSH_RCVR_VAR_1, BC.PUSH_RCVR_VAR_2, BC.PUSH_RCVR_VAR_3, BC.PUSH_RCVR_VAR_4, BC.PUSH_RCVR_VAR_5, BC.PUSH_RCVR_VAR_6, BC.PUSH_RCVR_VAR_7, //
                         BC.PUSH_RCVR_VAR_8, BC.PUSH_RCVR_VAR_9, BC.PUSH_RCVR_VAR_A, BC.PUSH_RCVR_VAR_B, BC.PUSH_RCVR_VAR_C, BC.PUSH_RCVR_VAR_D, BC.PUSH_RCVR_VAR_E, BC.PUSH_RCVR_VAR_F: {
-                        pushFollowed(frame, currentPC, sp++, ACCESS.uncheckedCast(getData(currentPC), SqueakObjectAt0NodeGen.class).execute(this, FrameAccess.getReceiver(frame), b & 0xF));
+                        pushFollowed(frame, currentPC, sp++, at0(currentPC, FrameAccess.getReceiver(frame), b & 0xF));
                         break;
                     }
                     case BC.PUSH_TEMP_VAR_0, BC.PUSH_TEMP_VAR_1, BC.PUSH_TEMP_VAR_2, BC.PUSH_TEMP_VAR_3, BC.PUSH_TEMP_VAR_4, BC.PUSH_TEMP_VAR_5, BC.PUSH_TEMP_VAR_6, BC.PUSH_TEMP_VAR_7, //
@@ -369,7 +370,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         break;
                     }
                     case BC.POP_INTO_RCVR_VAR_0, BC.POP_INTO_RCVR_VAR_1, BC.POP_INTO_RCVR_VAR_2, BC.POP_INTO_RCVR_VAR_3, BC.POP_INTO_RCVR_VAR_4, BC.POP_INTO_RCVR_VAR_5, BC.POP_INTO_RCVR_VAR_6, BC.POP_INTO_RCVR_VAR_7: {
-                        ACCESS.uncheckedCast(getData(currentPC), SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getReceiver(frame), b & 7, pop(frame, --sp));
+                        atPut0(currentPC, FrameAccess.getReceiver(frame), b & 7, pop(frame, --sp));
                         break;
                     }
                     case BC.POP_INTO_TEMP_VAR_0, BC.POP_INTO_TEMP_VAR_1, BC.POP_INTO_TEMP_VAR_2, BC.POP_INTO_TEMP_VAR_3, BC.POP_INTO_TEMP_VAR_4, BC.POP_INTO_TEMP_VAR_5, BC.POP_INTO_TEMP_VAR_6, BC.POP_INTO_TEMP_VAR_7: {
@@ -464,7 +465,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         switch (variableType) {
                             case 0: {
                                 pushFollowed(frame, currentPC, sp++,
-                                                ACCESS.uncheckedCast(getData(currentPC), SqueakObjectAt0NodeGen.class).execute(this, FrameAccess.getReceiver(frame), variableIndex));
+                                                at0(currentPC, FrameAccess.getReceiver(frame), variableIndex));
                                 break;
                             }
                             case 1: {
@@ -504,7 +505,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 throw unknownBytecode();
                             }
                             case 3: {
-                                ACCESS.uncheckedCast(getData(currentPC), SqueakObjectAtPut0Node.class).execute(this, getAndResolveLiteral(currentPC, variableIndex), ASSOCIATION.VALUE, stackTop);
+                                atPut0(currentPC, getAndResolveLiteral(currentPC, variableIndex), ASSOCIATION.VALUE, stackTop);
                                 break;
                             }
                         }
@@ -529,7 +530,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 throw unknownBytecode();
                             }
                             case 3: {
-                                ACCESS.uncheckedCast(getData(currentPC), SqueakObjectAtPut0Node.class).execute(this, getAndResolveLiteral(currentPC, variableIndex), ASSOCIATION.VALUE, stackValue);
+                                atPut0(currentPC, getAndResolveLiteral(currentPC, variableIndex), ASSOCIATION.VALUE, stackValue);
                                 break;
                             }
                         }
@@ -569,7 +570,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 break;
                             }
                             case 2: {
-                                pushFollowed(frame, currentPC, sp++, ACCESS.uncheckedCast(getData(currentPC), SqueakObjectAt0NodeGen.class).execute(this, FrameAccess.getReceiver(frame), byte3));
+                                pushFollowed(frame, currentPC, sp++, at0(currentPC, FrameAccess.getReceiver(frame), byte3));
                                 break;
                             }
                             case 3: {
@@ -589,7 +590,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 break;
                             }
                             case 7: {
-                                ACCESS.uncheckedCast(getData(currentPC), SqueakObjectAtPut0Node.class).execute(this, getAndResolveLiteral(currentPC, byte3), ASSOCIATION.VALUE, top(frame, sp));
+                                atPut0(currentPC, getAndResolveLiteral(currentPC, byte3), ASSOCIATION.VALUE, top(frame, sp));
                                 break;
                             }
                             default: {
@@ -654,19 +655,19 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         final int remoteTempIndex = getUnsignedInt(bc, pc++);
                         final int tempVectorIndex = getUnsignedInt(bc, pc++);
                         pushFollowed(frame, currentPC, sp++,
-                                        ACCESS.uncheckedCast(getData(currentPC), SqueakObjectAt0NodeGen.class).execute(this, FrameAccess.getStackValue(frame, tempVectorIndex), remoteTempIndex));
+                                        at0(currentPC, FrameAccess.getStackValue(frame, tempVectorIndex), remoteTempIndex));
                         break;
                     }
                     case BC.STORE_REMOTE_TEMP_LONG: {
                         final int remoteTempIndex = getUnsignedInt(bc, pc++);
                         final int tempVectorIndex = getUnsignedInt(bc, pc++);
-                        ACCESS.uncheckedCast(getData(currentPC), SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getStackValue(frame, tempVectorIndex), remoteTempIndex, top(frame, sp));
+                        atPut0(currentPC, FrameAccess.getStackValue(frame, tempVectorIndex), remoteTempIndex, top(frame, sp));
                         break;
                     }
                     case BC.POP_INTO_REMOTE_TEMP_LONG: {
                         final int remoteTempIndex = getUnsignedInt(bc, pc++);
                         final int tempVectorIndex = getUnsignedInt(bc, pc++);
-                        ACCESS.uncheckedCast(getData(currentPC), SqueakObjectAtPut0Node.class).execute(this, FrameAccess.getStackValue(frame, tempVectorIndex), remoteTempIndex, pop(frame, --sp));
+                        atPut0(currentPC, FrameAccess.getStackValue(frame, tempVectorIndex), remoteTempIndex, pop(frame, --sp));
                         break;
                     }
                     case BC.PUSH_CLOSURE_COPY_COPIED_VALUES: {
@@ -1069,8 +1070,22 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
 
     @EarlyInline
     private void doStoreIntoReceiverVariable(final VirtualFrame frame, final int pc, final int index, final Object value) {
-        final Object receiver = FrameAccess.getReceiver(frame);
-        ACCESS.uncheckedCast(getData(pc), SqueakObjectAtPut0Node.class).execute(this, receiver, index, value);
+        atPut0(pc, FrameAccess.getReceiver(frame), index, value);
+    }
+
+    /*
+     * The at0 and atPut0 nodes are not inlined into the interpreter loop during host compilation.
+     * The loop has 14 call sites for them, and the quality of its machine code is sensitive to its
+     * size (on AArch64, it can even become too large to compile in an instrumented build).
+     */
+    @InliningCutoff
+    private Object at0(final int pc, final Object object, final long index) {
+        return ACCESS.uncheckedCast(getData(pc), SqueakObjectAt0NodeGen.class).execute(this, object, index);
+    }
+
+    @InliningCutoff
+    private void atPut0(final int pc, final Object object, final long index, final Object value) {
+        ACCESS.uncheckedCast(getData(pc), SqueakObjectAtPut0Node.class).execute(this, object, index, value);
     }
 
     static int longJump(final int b, final int nextByte) {

@@ -154,6 +154,11 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     static final class ReadLiteralVariableNode extends AbstractNode {
         private final SqueakObjectAt0NodeGen at0Node = insert((SqueakObjectAt0NodeGen) SqueakObjectAt0NodeGen.create());
 
+        /*
+         * Not inlined during host compilation to limit the size of the interpreter loops. Literal
+         * variables that cannot change (e.g., class bindings) do not use this node.
+         */
+        @InliningCutoff
         Object execute(final Node node, final Object literal) {
             final Object value = at0Node.execute(node, literal, ASSOCIATION.VALUE);
 
