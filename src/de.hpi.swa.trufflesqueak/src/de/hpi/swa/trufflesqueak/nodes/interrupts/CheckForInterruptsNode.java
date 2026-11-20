@@ -172,7 +172,10 @@ public abstract class CheckForInterruptsNode extends AbstractNode {
     public abstract static class CheckForInterruptsQuickNode extends CheckForInterruptsNode {
         private static final int MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS = 32;
 
-        public static CheckForInterruptsQuickNode createForSend(final CompiledCodeObject code) {
+        /**
+         * Returns {@code null} if the code does not need to check for interrupts when activated.
+         */
+        public static CheckForInterruptsQuickImplNode createForSend(final CompiledCodeObject code) {
             /*
              * Only check for interrupts if method is relatively large. Avoid check if primitive
              * method or if a closure is activated (effectively what
@@ -182,38 +185,13 @@ public abstract class CheckForInterruptsNode extends AbstractNode {
                             code.getBytes().length < MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS || //
                             /* FullBlockClosure or normal closure */
                             code.isCompiledBlock() || code.isShadowBlock()) {
-                return NoCheckForInterruptsNode.SINGLETON;
+                return null;
             } else {
                 return CheckForInterruptsQuickImplNode.SINGLETON;
             }
         }
 
         public abstract void execute(VirtualFrame frame);
-
-        @DenyReplace
-        private static final class NoCheckForInterruptsNode extends CheckForInterruptsQuickNode {
-            private static final NoCheckForInterruptsNode SINGLETON = new NoCheckForInterruptsNode();
-
-            @Override
-            public void execute(final VirtualFrame frame) {
-                // nothing to do
-            }
-
-            @Override
-            public boolean isAdoptable() {
-                return false;
-            }
-
-            @Override
-            public Node copy() {
-                return SINGLETON;
-            }
-
-            @Override
-            public Node deepCopy() {
-                return SINGLETON;
-            }
-        }
 
         @DenyReplace
         public static final class CheckForInterruptsQuickImplNode extends CheckForInterruptsQuickNode {

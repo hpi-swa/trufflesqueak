@@ -10,6 +10,7 @@ import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.HostCompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.NodeInfo;
@@ -26,6 +27,7 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsNode.CheckForInterruptsQuickNode;
+import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsNode.CheckForInterruptsQuickNode.CheckForInterruptsQuickImplNode;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
@@ -39,7 +41,8 @@ public final class StartContextRootNode extends AbstractRootNode {
     @CompilationFinal private byte numArgs;
     @CompilationFinal private Assumption doesNotNeedThisContext;
 
-    @Child private CheckForInterruptsQuickNode interruptHandlerNode;
+    /* Null if this code does not need to check for interrupts when it is activated. */
+    @Child private CheckForInterruptsQuickImplNode interruptHandlerNode;
 
     public StartContextRootNode(final SqueakImageContext image, final CompiledCodeObject code) {
         super(image, code);
@@ -61,7 +64,11 @@ public final class StartContextRootNode extends AbstractRootNode {
         ensureInitialized(frame);
         initializeFrame(frame);
         final SqueakImageContext image = SqueakImageContext.get(this);
-        final boolean inInterpreterOrCompilationRoot = CompilerDirectives.inInterpreter() || CompilerDirectives.inCompilationRoot();
+        /*
+         * Use inInterpreterFastPath() because the interpreter runs the code that is guarded by this
+         * flag on every activation. Otherwise, host inlining treats it as a slow path.
+         */
+        final boolean inInterpreterOrCompilationRoot = HostCompilerDirectives.inInterpreterFastPath() || CompilerDirectives.inCompilationRoot();
         try {
             if (inInterpreterOrCompilationRoot) {
                 if (image.enteringContextExceedsDepth()) {
@@ -79,7 +86,9 @@ public final class StartContextRootNode extends AbstractRootNode {
                      * still detected promptly: every compilation root performs the check, loops
                      * check on back-edges, and recursion always reaches a non-inlined call.
                      */
-                    interruptHandlerNode.execute(frame);
+                    if (interruptHandlerNode != null) {
+                        interruptHandlerNode.execute(frame);
+                    }
                 }
             }
             return interpreterNode.execute(frame, initialPC, initialSP);
