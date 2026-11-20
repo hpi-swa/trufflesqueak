@@ -28,12 +28,21 @@ public final class ResumeContextRootNode extends AbstractRootNode {
     private final IntValueProfile instructionPointerProfile = IntValueProfile.createIdentityProfile();
     private final IntValueProfile stackPointerProfile = IntValueProfile.createIdentityProfile();
 
+    /** The instruction pointer this root node is specialized for, or -1 if it is generic. */
+    private final int resumePC;
+
     public ResumeContextRootNode(final SqueakImageContext image, final CompiledCodeObject code) {
+        this(image, code, -1);
+    }
+
+    public ResumeContextRootNode(final SqueakImageContext image, final CompiledCodeObject code, final int resumePC) {
         super(image, code);
+        this.resumePC = resumePC;
     }
 
     public ResumeContextRootNode(final ResumeContextRootNode original) {
         super(original);
+        resumePC = original.resumePC;
     }
 
     @Override
@@ -54,8 +63,11 @@ public final class ResumeContextRootNode extends AbstractRootNode {
          */
         context.markAsPotentiallyActiveOnTruffleStack();
         context.clearModifiedSender();
-        final int pc = instructionPointerProfile.profile(context.getInstructionPointerForBytecodeLoop());
         final int sp = stackPointerProfile.profile(context.getStackPointer());
+        if (resumePC >= 0 && context.getInstructionPointerForBytecodeLoop() == resumePC && CompilerDirectives.isPartialEvaluationConstant(sp)) {
+            return interpreterNode.execute(context.getTruffleFrame(), resumePC, sp);
+        }
+        final int pc = instructionPointerProfile.profile(context.getInstructionPointerForBytecodeLoop());
         if (CompilerDirectives.isPartialEvaluationConstant(pc) && CompilerDirectives.isPartialEvaluationConstant(sp)) {
             return interpreterNode.execute(context.getTruffleFrame(), pc, sp);
         } else {

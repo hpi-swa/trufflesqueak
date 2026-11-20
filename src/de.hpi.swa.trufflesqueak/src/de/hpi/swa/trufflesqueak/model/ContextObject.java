@@ -185,7 +185,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     }
 
     public CallTarget getResumptionCallTarget() {
-        return getMethodOrBlock().getResumptionCallTarget();
+        return getMethodOrBlock().getResumptionCallTarget(getInstructionPointerForBytecodeLoop());
     }
 
     private MaterializedFrame getOrCreateTruffleFrame() {
