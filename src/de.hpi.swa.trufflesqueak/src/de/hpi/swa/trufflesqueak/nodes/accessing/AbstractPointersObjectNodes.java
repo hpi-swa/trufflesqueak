@@ -130,17 +130,15 @@ public class AbstractPointersObjectNodes {
                         @Cached("index") final long cachedIndex,
                         @Cached("object.getLayout()") final ObjectLayout cachedLayout,
                         @Cached("create(cachedLayout.getLocation(index), false)") final AbstractSlotLocationAccessorNode accessorNode) {
-            if (accessorNode.canStore(value)) {
-                try {
-                    accessorNode.executeWrite(object, value);
-                } catch (final IllegalWriteException e) {
-                    throw CompilerDirectives.shouldNotReachHere("write must succeed", e);
-                }
-            } else {
+            try {
+                accessorNode.executeWrite(object, value);
+            } catch (final IllegalWriteException e) {
                 /*
-                 * Update layout in interpreter if it is not stable yet. This will also invalidate
-                 * the assumption and therefore this particular instance of the specialization will
-                 * be removed from the cache and replaced by an updated version.
+                 * The location cannot store the value (executeWrite checks this itself, so there
+                 * is no need for a separate canStore call). Update layout in interpreter if it is
+                 * not stable yet. This will also invalidate the assumption and therefore this
+                 * particular instance of the specialization will be removed from the cache and
+                 * replaced by an updated version.
                  */
                 transferToInterpreterUpdateLocationAndWrite(object, index, value);
             }
