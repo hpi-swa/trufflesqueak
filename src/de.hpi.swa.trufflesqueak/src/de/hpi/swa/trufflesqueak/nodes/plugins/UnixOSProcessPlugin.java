@@ -10,6 +10,9 @@ import java.io.IOException;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
+import java.nio.ByteBuffer;
+import java.nio.channels.Pipe;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -102,6 +105,67 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
         @Specialization
         protected final boolean doCanReceiveSignals(@SuppressWarnings("unused") final Object receiver, final long pid) {
             return BooleanObject.wrap(setValue(pid, SIGNALS.SIG_DFL) == 0);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveCreatePipe")
+    protected abstract static class PrimCreatePipeNode extends AbstractPrimitiveNode implements Primitive0 {
+        /* Answers an Array with the file handles of the read end and of the write end. */
+        @Specialization
+        @TruffleBoundary
+        protected final ArrayObject doCreatePipe(@SuppressWarnings("unused") final Object receiver) {
+            final SqueakImageContext image = getContext();
+            final AbstractPipeEndChannel readEnd;
+            final AbstractPipeEndChannel writeEnd;
+            try {
+                final Pipe pipe = Pipe.open();
+                readEnd = new PipeReadEndChannel(pipe.source());
+                writeEnd = new PipeWriteEndChannel(pipe.sink());
+            } catch (final IOException e) {
+                throw PrimitiveFailed.GENERIC_ERROR;
+            }
+            image.env.registerOnDispose(readEnd);
+            image.env.registerOnDispose(writeEnd);
+            return image.asArrayOfObjects(PointersObject.newHandleWithHiddenObject(image, readEnd), PointersObject.newHandleWithHiddenObject(image, writeEnd));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveSQFileSetBlocking")
+    protected abstract static class PrimSQFileSetBlockingNode extends AbstractFileHandlePrimitiveNode implements Primitive1WithFallback {
+        @Specialization(guards = "isFileHandle(handle)")
+        protected static final long doSetBlocking(@SuppressWarnings("unused") final Object receiver, final PointersObject handle) {
+            return configureBlocking(handle, true);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveSQFileSetNonBlocking")
+    protected abstract static class PrimSQFileSetNonBlockingNode extends AbstractFileHandlePrimitiveNode implements Primitive1WithFallback {
+        @Specialization(guards = "isFileHandle(handle)")
+        protected static final long doSetNonBlocking(@SuppressWarnings("unused") final Object receiver, final PointersObject handle) {
+            return configureBlocking(handle, false);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveSQFileFlush")
+    protected abstract static class PrimSQFileFlushNode extends AbstractFileHandlePrimitiveNode implements Primitive1WithFallback {
+        /* Channels are not buffered, so there is nothing to flush. */
+        @SuppressWarnings("unused")
+        @Specialization(guards = "isFileHandle(handle) || isStdioHandle(handle)")
+        protected static final long doFlush(final Object receiver, final PointersObject handle) {
+            return 0L;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveTestEndOfFileFlag")
+    protected abstract static class PrimTestEndOfFileFlagNode extends AbstractFileHandlePrimitiveNode implements Primitive1WithFallback {
+        @Specialization(guards = "isPipeHandle(handle)")
+        protected static final boolean doTest(@SuppressWarnings("unused") final Object receiver, final PointersObject handle) {
+            return BooleanObject.wrap(((AbstractPipeEndChannel) handle.getHiddenObject()).isAtEndOfFile());
         }
     }
 
@@ -768,6 +832,155 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
                 }
             }
             return entries;
+        }
+    }
+
+    /**
+     * Pipes are file handles in Squeak, which the FilePlugin represents by
+     * {@link SeekableByteChannel}s. The two ends of a {@link Pipe} are therefore wrapped in channels
+     * that are not seekable. As with {@code feof()}, the end of file is only reached after an
+     * attempt to read from a pipe whose write end is closed.
+     */
+    private abstract static class AbstractPipeEndChannel implements SeekableByteChannel {
+        protected long position;
+
+        protected abstract void configureBlocking(boolean block) throws IOException;
+
+        protected boolean isAtEndOfFile() {
+            return false;
+        }
+
+        @Override
+        public int read(final ByteBuffer dst) throws IOException {
+            throw new IOException("Not readable");
+        }
+
+        @Override
+        public int write(final ByteBuffer src) throws IOException {
+            throw new IOException("Not writable");
+        }
+
+        @Override
+        public final long position() {
+            return position;
+        }
+
+        @Override
+        public final SeekableByteChannel position(final long newPosition) throws IOException {
+            throw new IOException("Not seekable");
+        }
+
+        @Override
+        public long size() {
+            return position;
+        }
+
+        @Override
+        public final SeekableByteChannel truncate(final long size) throws IOException {
+            throw new IOException("Not seekable");
+        }
+    }
+
+    private static final class PipeReadEndChannel extends AbstractPipeEndChannel {
+        private final Pipe.SourceChannel source;
+        private boolean endOfFile;
+
+        private PipeReadEndChannel(final Pipe.SourceChannel source) {
+            this.source = source;
+        }
+
+        @Override
+        protected void configureBlocking(final boolean block) throws IOException {
+            source.configureBlocking(block);
+        }
+
+        @Override
+        protected boolean isAtEndOfFile() {
+            return endOfFile;
+        }
+
+        @Override
+        public int read(final ByteBuffer dst) throws IOException {
+            final int count = source.read(dst);
+            if (count < 0) {
+                endOfFile = true;
+            } else {
+                position += count;
+            }
+            return count;
+        }
+
+        @Override
+        public long size() {
+            /* The FilePlugin considers a file to be at its end if position >= size. */
+            return endOfFile ? position : Long.MAX_VALUE;
+        }
+
+        @Override
+        public boolean isOpen() {
+            return source.isOpen();
+        }
+
+        @Override
+        public void close() throws IOException {
+            source.close();
+        }
+    }
+
+    private static final class PipeWriteEndChannel extends AbstractPipeEndChannel {
+        private final Pipe.SinkChannel sink;
+
+        private PipeWriteEndChannel(final Pipe.SinkChannel sink) {
+            this.sink = sink;
+        }
+
+        @Override
+        protected void configureBlocking(final boolean block) throws IOException {
+            sink.configureBlocking(block);
+        }
+
+        @Override
+        public int write(final ByteBuffer src) throws IOException {
+            final int count = sink.write(src);
+            position += count;
+            return count;
+        }
+
+        @Override
+        public boolean isOpen() {
+            return sink.isOpen();
+        }
+
+        @Override
+        public void close() throws IOException {
+            sink.close();
+        }
+    }
+
+    protected abstract static class AbstractFileHandlePrimitiveNode extends AbstractPrimitiveNode {
+        protected static final boolean isStdioHandle(final PointersObject handle) {
+            return handle.getHiddenObject() instanceof Byte;
+        }
+
+        protected static final boolean isPipeHandle(final PointersObject handle) {
+            return handle.getHiddenObject() instanceof AbstractPipeEndChannel;
+        }
+
+        protected static final boolean isFileHandle(final PointersObject handle) {
+            return handle.getHiddenObject() instanceof SeekableByteChannel;
+        }
+
+        @TruffleBoundary
+        protected static final long configureBlocking(final PointersObject handle, final boolean block) {
+            if (handle.getHiddenObject() instanceof final AbstractPipeEndChannel channel) {
+                try {
+                    channel.configureBlocking(block);
+                } catch (final IOException e) {
+                    throw PrimitiveFailed.GENERIC_ERROR;
+                }
+            }
+            /* The blocking mode has no effect on regular files. */
+            return 0L;
         }
     }
 
