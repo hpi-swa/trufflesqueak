@@ -11,7 +11,10 @@ import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.nio.file.attribute.PosixFilePermission;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -105,17 +108,15 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveEnvironmentAt")
     protected abstract static class PrimEnvironmentAtNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-        protected static final Object[] ENVIRONMENT_KEYS = System.getenv().keySet().toArray();
-
-        @Specialization(guards = "inBounds1(index, ENVIRONMENT_KEYS.length)")
+        @Specialization(guards = "index > 0")
         @TruffleBoundary
         protected final NativeObject doAt(@SuppressWarnings("unused") final Object receiver, final long index) {
             final SqueakImageContext image = getContext();
-            final String key = ENVIRONMENT_KEYS[(int) index - 1].toString();
-            assert key != null : "key should not be null";
-            final String value = systemGetEnv(image.env, key);
-            assert value != null : "value should not be null";
-            return image.asByteString(key + "=" + value);
+            final List<String> entries = Environment.entries(image.env);
+            if (index > entries.size()) {
+                throw PrimitiveFailed.GENERIC_ERROR;
+            }
+            return image.asByteString(entries.get((int) index - 1));
         }
     }
 
@@ -131,6 +132,34 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
                 throw PrimitiveFailed.GENERIC_ERROR;
             } else {
                 return image.asByteString(value);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitivePutEnv")
+    protected abstract static class PrimPutEnvNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
+        /* The argument is a null-terminated "KEY=value" string. */
+        @Specialization(guards = "keyValueString.isByteType()")
+        protected static final NativeObject doPutEnv(@SuppressWarnings("unused") final Object receiver, final NativeObject keyValueString) {
+            if (Environment.putKeyValue(keyValueString)) {
+                return keyValueString;
+            } else {
+                throw PrimitiveFailed.GENERIC_ERROR;
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveUnsetEnv")
+    protected abstract static class PrimUnsetEnvNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
+        /* The argument is a null-terminated string. */
+        @Specialization(guards = "keyString.isByteType()")
+        protected static final Object doUnsetEnv(final Object receiver, final NativeObject keyString) {
+            if (Environment.unset(keyString)) {
+                return receiver;
+            } else {
+                throw PrimitiveFailed.GENERIC_ERROR;
             }
         }
     }
@@ -677,9 +706,69 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
         private static final int SIGSTOP = 19;
     }
 
-    @TruffleBoundary
     private static String systemGetEnv(final Env env, final String key) {
-        return env.getEnvironment().get(key);
+        return Environment.get(env, key);
+    }
+
+    /**
+     * The environment of a JVM cannot be modified, and changing it through libc is not thread-safe.
+     * Changes made via {@code primitivePutEnv} and {@code primitiveUnsetEnv} are therefore only
+     * recorded here and are visible to the primitives of this plugin, but not to the rest of the
+     * process.
+     */
+    private static final class Environment {
+        /* Maps keys to their new value, or to null if they were unset. */
+        private static final Map<String, String> CHANGES = new HashMap<>();
+
+        private static String toCString(final NativeObject bytes) {
+            final String string = bytes.asStringUnsafe();
+            final int terminatorIndex = string.indexOf('\0');
+            return terminatorIndex >= 0 ? string.substring(0, terminatorIndex) : string;
+        }
+
+        @TruffleBoundary
+        private static synchronized String get(final Env env, final String key) {
+            return CHANGES.containsKey(key) ? CHANGES.get(key) : env.getEnvironment().get(key);
+        }
+
+        /* Answers false if the string is not of the form "KEY=value". */
+        @TruffleBoundary
+        private static synchronized boolean putKeyValue(final NativeObject keyValueString) {
+            final String keyValue = toCString(keyValueString);
+            final int separatorIndex = keyValue.indexOf('=');
+            if (separatorIndex <= 0) {
+                return false;
+            }
+            CHANGES.put(keyValue.substring(0, separatorIndex), keyValue.substring(separatorIndex + 1));
+            return true;
+        }
+
+        /* Answers false if the string is not a valid key. */
+        @TruffleBoundary
+        private static synchronized boolean unset(final NativeObject keyString) {
+            final String key = toCString(keyString);
+            if (key.isEmpty() || key.indexOf('=') >= 0) {
+                return false;
+            }
+            CHANGES.put(key, null);
+            return true;
+        }
+
+        @TruffleBoundary
+        private static synchronized List<String> entries(final Env env) {
+            final List<String> entries = new ArrayList<>();
+            for (final Map.Entry<String, String> entry : env.getEnvironment().entrySet()) {
+                if (!CHANGES.containsKey(entry.getKey())) {
+                    entries.add(entry.getKey() + "=" + entry.getValue());
+                }
+            }
+            for (final Map.Entry<String, String> entry : CHANGES.entrySet()) {
+                if (entry.getValue() != null) {
+                    entries.add(entry.getKey() + "=" + entry.getValue());
+                }
+            }
+            return entries;
+        }
     }
 
     @Override
