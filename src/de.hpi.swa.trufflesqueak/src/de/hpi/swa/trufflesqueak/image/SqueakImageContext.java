@@ -222,6 +222,9 @@ public final class SqueakImageContext {
     @CompilationFinal private final int maxContextStackDepth;
     private int currentContextStackDepth;
 
+    /* Number of process switches since startup (VM parameter 56). */
+    public long processSwitchCount;
+
     @CompilationFinal private ClassObject fractionClass;
     private PointersObject parserSharedInstance;
     private AbstractSqueakObject requestorSharedInstanceOrNil;
