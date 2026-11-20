@@ -19,7 +19,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.stream.Stream;
+
+import org.graalvm.polyglot.io.FileChannel;
+import org.graalvm.polyglot.io.FileLock;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
@@ -44,6 +48,8 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive4WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
@@ -128,6 +134,41 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
             image.env.registerOnDispose(readEnd);
             image.env.registerOnDispose(writeEnd);
             return image.asArrayOfObjects(PointersObject.newHandleWithHiddenObject(image, readEnd), PointersObject.newHandleWithHiddenObject(image, writeEnd));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveLockFileRegion")
+    protected abstract static class PrimLockFileRegionNode extends AbstractFileHandlePrimitiveNode implements Primitive4WithFallback {
+        /* Answers 0 if the region was locked and -1 otherwise, like fcntl(). */
+        @Specialization(guards = {"isLockableHandle(handle)", "offset >= 0", "length >= 0"})
+        protected static final long doLock(@SuppressWarnings("unused") final Object receiver, final PointersObject handle, final long offset, final long length, final boolean exclusive) {
+            return FileLocks.lock(getFileChannel(handle), offset, length, exclusive) ? 0L : -1L;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveUnlockFileRegion")
+    protected abstract static class PrimUnlockFileRegionNode extends AbstractFileHandlePrimitiveNode implements Primitive3WithFallback {
+        /* Answers 0 if the region is unlocked and -1 otherwise, like fcntl(). */
+        @Specialization(guards = {"isLockableHandle(handle)", "offset >= 0", "length >= 0"})
+        protected static final long doUnlock(@SuppressWarnings("unused") final Object receiver, final PointersObject handle, final long offset, final long length) {
+            return FileLocks.unlock(getFileChannel(handle), offset, length) ? 0L : -1L;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveTestLockableFileRegion")
+    protected abstract static class PrimTestLockableFileRegionNode extends AbstractFileHandlePrimitiveNode implements Primitive4WithFallback {
+        /*
+         * Answers an Array like the OpenSmalltalk VM. Its first element tells whether the region
+         * can be locked. The remaining elements describe a conflicting lock (pid, type, whence,
+         * start, and length), which is not known here.
+         */
+        @Specialization(guards = {"isLockableHandle(handle)", "offset >= 0", "length >= 0"})
+        protected final ArrayObject doTest(@SuppressWarnings("unused") final Object receiver, final PointersObject handle, final long offset, final long length, final boolean exclusive) {
+            final boolean isLockable = FileLocks.isLockable(getFileChannel(handle), offset, length, exclusive);
+            return getContext().asArrayOfObjects(BooleanObject.wrap(isLockable), NilObject.SINGLETON, NilObject.SINGLETON, NilObject.SINGLETON, NilObject.SINGLETON, NilObject.SINGLETON);
         }
     }
 
@@ -957,7 +998,113 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
         }
     }
 
+    /**
+     * File locks are implemented with {@link FileLock}s. With the default file system, these are
+     * advisory locks of the operating system and thus respected by other processes. POSIX locks never conflict with locks of the
+     * same process, while a JVM refuses to lock a region that overlaps with one of its own locks.
+     * Locks held through the same file handle are therefore released before an overlapping region
+     * is locked. Unlike with POSIX, this also unlocks the parts of those locks that are outside of
+     * the new region.
+     */
+    private static final class FileLocks {
+        private static final Map<FileChannel, List<FileLock>> LOCKS = new WeakHashMap<>();
+
+        private static long size(final long length) {
+            return length == 0 ? Long.MAX_VALUE : length; // zero means "until the end of the file"
+        }
+
+        private static long end(final long position, final long size) {
+            return position + size < 0 ? Long.MAX_VALUE : position + size;
+        }
+
+        private static List<FileLock> overlapping(final FileChannel channel, final long offset, final long length) {
+            final List<FileLock> result = new ArrayList<>();
+            final List<FileLock> locks = LOCKS.get(channel);
+            if (locks != null) {
+                locks.removeIf(lock -> !lock.isValid());
+                for (final FileLock lock : locks) {
+                    if (offset < end(lock.position(), lock.size()) && lock.position() < end(offset, size(length))) {
+                        result.add(lock);
+                    }
+                }
+            }
+            return result;
+        }
+
+        private static void release(final FileChannel channel, final List<FileLock> locks) throws IOException {
+            for (final FileLock lock : locks) {
+                lock.close();
+            }
+            LOCKS.get(channel).removeAll(locks);
+        }
+
+        /* Answers whether the region could be locked. */
+        @TruffleBoundary
+        private static synchronized boolean lock(final FileChannel channel, final long offset, final long length, final boolean exclusive) {
+            try {
+                final List<FileLock> ownLocks = overlapping(channel, offset, length);
+                if (!ownLocks.isEmpty()) {
+                    release(channel, ownLocks);
+                }
+                final FileLock lock = channel.tryLock(offset, size(length), !exclusive);
+                if (lock == null) {
+                    return false;
+                }
+                LOCKS.computeIfAbsent(channel, _ -> new ArrayList<>()).add(lock);
+                return true;
+            } catch (final IOException | RuntimeException e) {
+                /* For example, if the channel is closed or locked through another file handle. */
+                return false;
+            }
+        }
+
+        @TruffleBoundary
+        private static synchronized boolean unlock(final FileChannel channel, final long offset, final long length) {
+            if (!channel.isOpen()) {
+                return false;
+            }
+            try {
+                final List<FileLock> ownLocks = overlapping(channel, offset, length);
+                if (!ownLocks.isEmpty()) {
+                    release(channel, ownLocks);
+                }
+                return true;
+            } catch (final IOException e) {
+                return false;
+            }
+        }
+
+        /* Answers whether the region is locked through this file handle or could be locked. */
+        @TruffleBoundary
+        private static synchronized boolean isLockable(final FileChannel channel, final long offset, final long length, final boolean exclusive) {
+            if (!channel.isOpen()) {
+                return false;
+            }
+            if (!overlapping(channel, offset, length).isEmpty()) {
+                return true;
+            }
+            try {
+                final FileLock lock = channel.tryLock(offset, size(length), !exclusive);
+                if (lock == null) {
+                    return false;
+                }
+                lock.close();
+                return true;
+            } catch (final IOException | RuntimeException e) {
+                return false;
+            }
+        }
+    }
+
     protected abstract static class AbstractFileHandlePrimitiveNode extends AbstractPrimitiveNode {
+        protected static final boolean isLockableHandle(final PointersObject handle) {
+            return handle.getHiddenObject() instanceof FileChannel;
+        }
+
+        protected static final FileChannel getFileChannel(final PointersObject handle) {
+            return (FileChannel) handle.getHiddenObject();
+        }
+
         protected static final boolean isStdioHandle(final PointersObject handle) {
             return handle.getHiddenObject() instanceof Byte;
         }
