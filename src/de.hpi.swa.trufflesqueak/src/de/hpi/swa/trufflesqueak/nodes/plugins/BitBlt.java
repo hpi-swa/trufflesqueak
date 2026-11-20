@@ -2166,38 +2166,36 @@ public final class BitBlt {
     }
 
     /*
-     * Multiply word1 with word2 as nParts partitions of nBits each. This is useful for packed
-     * pixels, or packed colors. Bug in loop version when non-white background
-     */
-    /*
-     * In C, integer multiplication might answer a wrong value if the unsigned values are declared
-     * as signed. This problem does not affect this method, because the most significant bit (i.e.
-     * the sign bit) will always be zero (jmv)
+     * Multiply word1 with word2 as partitions of nBits each, with correct rounding. This is useful
+     * for packed pixels, or packed colors. Channels are spread into two groups of a double word, so
+     * that each channel has 2 * nBits available for its product.
      */
 
-    /* BitBltSimulation>>#partitionedMul:with:nBits:nPartitions: */
-    private static long partitionedMulwithnBitsnPartitions(final long word1, final long word2, final int nBits, final int nParts) {
-        /* partition mask starts at the right */
-        final int sMask = MASK_TABLE[nBits];
-        final int dMask = shl(sMask, nBits);
-        /* optimized first step */
-        long result = shr(((word1 & sMask) + 1) * ((word2 & sMask) + 1) - 1 & dMask, nBits);
-        if (nParts == 1) {
-            return result;
+    /* BitBltSimulation>>#partitionedMul:with:nBits:wordBits: */
+    private static long partitionedMulwithnBitswordBits(final long word1, final long word2, final int nBits, final int wordBits) {
+        final int doubleNBits = 2 * nBits;
+        final long channelMask = (1L << nBits) - 1;
+        final int nGroups = (wordBits / nBits + 1) / 2;
+        /* groupMask selects every other channel */
+        long groupMask = channelMask;
+        for (int i = 2; i <= nGroups; i++) {
+            groupMask = (groupMask << doubleNBits) + channelMask;
         }
-        long product = ((shr(word1, nBits) & sMask) + 1) * ((shr(word2, nBits) & sMask) + 1) - 1 & dMask;
-        result = result | product;
-        if (nParts == 2) {
-            return result;
+        final int groupShift = nGroups * doubleNBits;
+        /* Spread the odd channels into the high group and the even channels into the low group */
+        final long doubleWord1 = ((word1 >>> nBits & groupMask) << groupShift) + (word1 & groupMask);
+        final long doubleWord2 = ((word2 >>> nBits & groupMask) << groupShift) + (word2 & groupMask);
+        final long half = (channelMask >>> 1) + 1;
+        long doubleWordMul = 0;
+        int shift = 0;
+        for (int i = 1; i <= wordBits / nBits; i++) {
+            doubleWordMul += (doubleWord1 >>> shift & channelMask) * (doubleWord2 >>> shift & channelMask) + half << shift;
+            shift += doubleNBits;
         }
-        product = ((shr(word1, 2 * nBits) & sMask) + 1) * ((shr(word2, 2 * nBits) & sMask) + 1) - 1 & dMask;
-        result = result | shl(product, nBits);
-        if (nParts == 3) {
-            return result;
-        }
-        product = ((shr(word1, 3 * nBits) & sMask) + 1) * ((shr(word2, 3 * nBits) & sMask) + 1) - 1 & dMask;
-        result = result | shl(product, 2 * nBits);
-        return result;
+        final long doubleGroupMask = (groupMask << groupShift) + groupMask;
+        /* Divide each channel by channelMask, i.e. (x + (x >> nBits)) >> nBits */
+        doubleWordMul = (doubleWordMul >>> nBits & doubleGroupMask) + doubleWordMul >>> nBits & doubleGroupMask;
+        return (doubleWordMul >>> groupShift - nBits) + (doubleWordMul & groupMask) & 0xFFFFFFFFL;
     }
 
     /* BitBltSimulation>>#partitionedRgbComponentAlpha:dest:nBits:nPartitions: */
@@ -3149,16 +3147,19 @@ public final class BitBlt {
     /* BitBltSimulation>>#rgbMul:with: */
     private long rgbMulwith(final long sourceWord, final long destinationWord) {
         if (destDepth < 16) {
+            if (destDepth == 1) {
+                return bitAndwith(sourceWord, destinationWord);
+            }
             /* Mul each pixel separately */
-            return partitionedMulwithnBitsnPartitions(sourceWord, destinationWord, destDepth, destPPW);
+            return partitionedMulwithnBitswordBits(sourceWord, destinationWord, destDepth, 32);
         }
         if (destDepth == 16) {
             /* Mul RGB components of each pixel separately */
-            return partitionedMulwithnBitsnPartitions(sourceWord, destinationWord, 5, 3) +
-                            (partitionedMulwithnBitsnPartitions(sourceWord >>> 16, destinationWord >>> 16, 5, 3) << 16);
+            return partitionedMulwithnBitswordBits(sourceWord & 0xFFFF, destinationWord & 0xFFFF, 5, 16) +
+                            (partitionedMulwithnBitswordBits(sourceWord >>> 16, destinationWord >>> 16, 5, 16) << 16);
         } else {
             /* Mul RGBA components of the pixel separately */
-            return partitionedMulwithnBitsnPartitions(sourceWord, destinationWord, 8, 4);
+            return partitionedMulwithnBitswordBits(sourceWord, destinationWord, 8, 32);
         }
     }
 
