@@ -144,10 +144,12 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
         }
 
         @TruffleBoundary
+        @SuppressWarnings("restricted")
         private String getErrorMessage(final int errnum) {
             try {
                 final MemorySegment cStringPtr = (MemorySegment) getHandle().invokeExact(errnum);
-                return cStringPtr.getString(0);
+                /* The returned pointer has a size of zero and must be resized to read the string. */
+                return cStringPtr.reinterpret(Long.MAX_VALUE).getString(0);
             } catch (final Throwable e) {
                 throw PrimitiveFailed.andTransferToInterpreterWithError(e);
             }
