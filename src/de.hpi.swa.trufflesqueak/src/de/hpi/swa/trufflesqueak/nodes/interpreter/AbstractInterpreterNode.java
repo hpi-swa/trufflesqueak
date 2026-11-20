@@ -12,6 +12,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.EarlyInline;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
+import com.oracle.truffle.api.HostCompilerDirectives.InliningCutoff;
 import com.oracle.truffle.api.bytecode.BytecodeDSLAccess;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.MaterializedFrame;
@@ -405,7 +406,12 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         }
     }
 
+    /*
+     * Not inlined during host compilation: a non-local return unwinds the stack with an exception,
+     * so the call does not matter, but the interpreter loops contain several copies of this code.
+     */
     @EarlyInline
+    @InliningCutoff
     private Object handleBlockReturn(final VirtualFrame frame, final int currentPC, final int pc, final int sp, final Object result) {
         // Target is sender of closure's home context.
         final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
