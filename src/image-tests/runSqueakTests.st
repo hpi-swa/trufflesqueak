@@ -22,6 +22,10 @@
     TestCase compile: 'failureLog
         ^ FileStream stdout'
             classified: 'patched'.
+    TestCase compile: 'defaultTimeout
+        "Use the same timeout on all platforms (default is 25s if Smalltalk isLowerPerformance, 5s otherwise)."
+        ^ 10 "seconds"'
+            classified: 'patched'.
 
     isLinux := Smalltalk platformName = 'unix'.
     isMacOS := Smalltalk platformName = 'Mac OS'.
@@ -81,7 +85,6 @@
         InterpreterPrimitivesTest.
         IslandVMTweaksTestCase.
         LangEnvBugs.
-        MutexTest. "assertion errors"
         ReleaseTest.
         SlangBasicTypeInferenceTest. "many tests broken"
         SlangTypeForArithmeticTest.
@@ -114,13 +117,6 @@
     ].
 
     {
-        "slow tests"
-        CompilerTest -> #(#testAllNodePCsAreForBytecodesInCollections #testAllNodePCsAreForBytecodesInKernel #testAllNodePCsAreForBytecodesInMorphic).
-        FloatTest -> #(#testCompiledConstants).
-        LocaleTest -> #(#test04InstallFont).
-        ObjectTest -> #(#testIfNotNilDoDeprecation).
-        StringTest -> #(#testPercentEncodingJa).
-
         "ignored tests"
         AllocationTest -> #(#testOutOfMemorySignal).
         BitmapStreamTests -> #(#testMatrixTransform2x3WithImageSegment #testShortIntegerArrayWithImageSegment #testShortPointArrayWithImageSegment #testShortRunArrayWithImageSegment #testWordArrayWithImageSegment). "image segments not supported"
@@ -129,12 +125,13 @@
         ContextInspectorTest -> #(#testDebugConstruction). "broken"
         DebuggerTests -> #(#test01UserInterrupt #test17HandleBlockCannotReturn #test18HandleNestedBlockCannotReturn #test20TerminateProcess #test23TerminateDoubleErrorInEnsure #test24TerminateTripleErrorInEnsure). "fail, and can lock up or crash image sometimes"
         HtmlReadWriterTest -> #(#test16ImgTag).
+        LocaleTest -> #(#test04InstallFont). "requires internet access to download a font"
         MemoryTests -> #(#testFrameActivationLeak).
         SlangTests -> #(#testSimpleMethod). "broken"
         SlangTypePromotionTest -> #(#testFloatAndNil #testNilAndFloat). "broken"
         SmalltalkImageTest -> #(#testForceChangesToDiskRobustness).
         StackInterpreterTests -> #(#testImmediateFloats #testPointerTaggingDetagging). "broken"
-        SystemChangeFileTest -> #(#testClassRenamed). "flaky and can hang the system"
+        StringTest -> #(#testPercentEncodingJa). "slow, switches the locale six times and may exceed its timeout of 30s on CI"
     } collect: [:assoc | | testCase |
         testCase := assoc key.
         assoc value do: [:sel | ignoredTests add: (testCase selector: sel) ]].
@@ -176,7 +173,9 @@
         BitBltSimulationTest -> #(#testAlphaCompositing2Simulated #testAlphaCompositingSimulated). "simulated primitive fails if the JVM collects garbage while loading BitBlt state (see BitBltSimulation>>#loadBitBltFrom:warping:)"
         DebuggerTests -> #(#test02UnhandledException). "fails on most CI jobs except on Linux aarch64, cause unknown"
         DebuggerTests -> #(#test19Abandon). "fails sometimes on Windows native"
+        FloatTest -> #(#testCompiledConstants). "recompiles all methods with float literals, may exceed the default timeout on slower CI runners"
         MorphicToolBuilderTests -> #(#testGetButtonColor). "fails if the hand is over 0@0, where tests create morphs (e.g., when headless or depending on mouse events)"
+        ObjectTest -> #(#testIfNotNilDoDeprecation). "scans all methods three times, may exceed the default timeout on slower CI runners"
         SHParserST80Test -> #(#testNumbers). "fails rarely, cause unknown"
         StringSocketTestCase -> #(#testBogusInput1 #testBogusInput2). "delays too short, see https://github.com/squeak-smalltalk/squeak-object-memory/issues/179"
         StringTest ->#(#testFindSelector). "fails rarely, cause unknown"
