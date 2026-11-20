@@ -35,8 +35,9 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 76)
     protected abstract static class PrimStoreStackPointerNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = {"0 <= newStackPointerLong", "newStackPointerLong <= receiver.size()"})
-        protected static final ContextObject store(final ContextObject receiver, final long newStackPointerLong) {
+
+        @Specialization(guards = {"0 <= newStackPointerLong", "receiver.isValidStackPointer(newStackPointerLong)", "!receiver.hasContextProxy()"})
+        protected static final ContextObject storeTruffle(final ContextObject receiver, final long newStackPointerLong) {
             final int oldStackPointer = receiver.getStackPointerOrZero();
             final int newStackPointer = (int) newStackPointerLong;
 
@@ -45,6 +46,19 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
             }
 
             receiver.setStackPointer(newStackPointer);
+            return receiver;
+        }
+
+        @Specialization(guards = {"0 <= newStackPointerLong", "receiver.isValidStackPointer(newStackPointerLong)", "receiver.hasContextProxy()"})
+        protected static final ContextObject storeProxy(final ContextObject receiver, final long newStackPointerLong) {
+            final int oldStackPointer = receiver.getStackPointerOrZero();
+            final int newStackPointer = (int) newStackPointerLong;
+
+            for (int i = oldStackPointer; i < newStackPointer; i++) {
+                receiver.setProxyTemp(i, NilObject.SINGLETON);
+            }
+
+            receiver.setProxyStackPointer((long) newStackPointer);
             return receiver;
         }
     }
@@ -181,14 +195,9 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
          * truly invisible even (and especially!) to the garbage collector. Any store into stackp
          * other than by the primitive method stackp: is potentially fatal."
          */
-        @Specialization(guards = "receiver.hasTruffleFrame()")
+        @Specialization
         protected static final long doSize(final ContextObject receiver) {
-            return receiver.getStackPointer();
-        }
-
-        @Specialization(guards = "!receiver.hasTruffleFrame()")
-        protected static final long doSizeWithoutFrame(@SuppressWarnings("unused") final ContextObject receiver) {
-            return 0;
+            return receiver.getStackPointerOrZero();
         }
     }
 
