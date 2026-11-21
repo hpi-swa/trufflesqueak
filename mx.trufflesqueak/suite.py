@@ -149,7 +149,7 @@ suite = {
                 "jdk.unsupported",
             ],
             "requiresConcealed": {
-                "java.base": ["jdk.internal.module"],
+                "java.base": ["jdk.internal.module", "jdk.internal.vm"],
             },
             "checkstyleVersion": "10.7.0",
             "jacoco": "include",
@@ -251,6 +251,7 @@ suite = {
             "liblang_relpath": "../lib/<lib:smalltalkvm>",
             "default_vm_args": [
                 "--vm.-add-exports=java.base/jdk.internal.module=de.hpi.swa.trufflesqueak",
+                "--vm.-add-exports=java.base/jdk.internal.vm=de.hpi.swa.trufflesqueak",
                 "--vm.-enable-native-access=de.hpi.swa.trufflesqueak.sdl3",
             ],
         },

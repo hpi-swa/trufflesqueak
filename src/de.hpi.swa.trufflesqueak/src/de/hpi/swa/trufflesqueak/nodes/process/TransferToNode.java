@@ -13,6 +13,7 @@ import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
@@ -35,7 +36,9 @@ public abstract class TransferToNode extends AbstractNode {
     public abstract void execute(VirtualFrame frame, PointersObject newProcess);
 
     public static final void executeUncached(final VirtualFrame frame, final PointersObject newProcess) {
-        final PointersObject scheduler = getContext(null).getScheduler();
+        final SqueakImageContext image = getContext(null);
+        image.processSwitchCount++;
+        final PointersObject scheduler = image.getScheduler();
         final PointersObject oldProcess = READ_NODE.executePointers(scheduler, PROCESS_SCHEDULER.ACTIVE_PROCESS);
         WRITE_NODE.execute(scheduler, PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
         final ContextObject activeContext = FrameAccess.getOrCreateContextWithFrame(frame);
@@ -48,7 +51,9 @@ public abstract class TransferToNode extends AbstractNode {
                     @Cached final AbstractPointersObjectReadNode readOldProcessNode,
                     @Cached final AbstractPointersObjectWriteNode writeActiveProcessNode,
                     @Cached final AbstractPointersObjectWriteNode writeSuspendedContextNode) {
-        final PointersObject scheduler = getContext(node).getScheduler();
+        final SqueakImageContext image = getContext(node);
+        image.processSwitchCount++;
+        final PointersObject scheduler = image.getScheduler();
         final PointersObject oldProcess = readOldProcessNode.executePointers(scheduler, PROCESS_SCHEDULER.ACTIVE_PROCESS);
         writeActiveProcessNode.execute(scheduler, PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
         writeSuspendedContextNode.execute(oldProcess, PROCESS.SUSPENDED_CONTEXT, FrameAccess.getOrCreateContextWithFrame(frame));

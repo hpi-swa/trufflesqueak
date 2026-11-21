@@ -31,6 +31,7 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.context.CreateCannotReturnContextNode;
 import de.hpi.swa.trufflesqueak.nodes.process.GetNextActiveContextNode;
+import de.hpi.swa.trufflesqueak.nodes.process.ProcessContinuations;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.DebugUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -62,11 +63,19 @@ public final class ExecuteTopLevelContextNode extends RootNode {
 
     @Override
     public Object execute(final VirtualFrame frame) {
+        final ProcessContinuations continuations = image.processContinuations;
+        if (!isImageResuming && continuations != null) {
+            /* Nested top-level loops resume processes from the heap and unwind on switches. */
+            continuations.enterNestedExecution();
+        }
         try {
             executeLoop();
         } catch (final TopLevelReturn e) {
             return e.getReturnValue();
         } finally {
+            if (!isImageResuming && continuations != null) {
+                continuations.exitNestedExecution();
+            }
             if (isImageResuming) {
                 image.interrupt.shutdown();
                 final SqueakDisplay display = image.getDisplay();
@@ -90,6 +99,26 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         } else {
             ensureCachedContextCanRunAgain(activeContext);
         }
+        /* Only the image's main loop runs each process on its own stack. */
+        final ProcessContinuations continuations = isImageResuming ? image.processContinuations : null;
+        final ProcessContinuations.ProcessBody processBody = continuations != null ? this::executeUntilProcessSwitch : null;
+        while (true) {
+            if (continuations != null) {
+                continuations.run(activeContext, processBody);
+            } else {
+                executeUntilProcessSwitch(activeContext);
+            }
+            activeContext = getNextActiveContextNode.execute();
+            LogUtils.SCHEDULING.log(Level.FINE, "Process Switch: {0}", activeContext);
+        }
+    }
+
+    /**
+     * Executes the given context and returns to its senders until the Java stack of the process is
+     * unwound by a {@link ProcessSwitch}.
+     */
+    private void executeUntilProcessSwitch(final ContextObject initialActiveContext) {
+        ContextObject activeContext = initialActiveContext;
         while (true) {
             final AbstractSqueakObject sender = activeContext.getSender();
             assert sender == NilObject.SINGLETON || ((ContextObject) sender).hasTruffleFrame();
@@ -110,8 +139,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                     LogUtils.SCHEDULING.log(Level.FINE, "Cannot Return on top-level: {0}", activeContext);
                 }
             } catch (final ProcessSwitch ps) {
-                activeContext = getNextActiveContextNode.execute();
-                LogUtils.SCHEDULING.log(Level.FINE, "Process Switch: {0}", activeContext);
+                return;
             }
         }
     }

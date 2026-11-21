@@ -48,6 +48,12 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
 
     private Object senderOrFrameOrSize;
 
+    /**
+     * The parked process stack (see ProcessContinuations) that is currently executing this context
+     * as its top frame, or null. Typed as Object to avoid a dependency on JDK-internal classes.
+     */
+    private Object parkedStack;
+
     public ContextObject(final SqueakImageChunk chunk) {
         super(chunk);
         senderOrFrameOrSize = chunk;
@@ -179,7 +185,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     }
 
     public CallTarget getResumptionCallTarget() {
-        return getMethodOrBlock().getResumptionCallTarget();
+        return getMethodOrBlock().getResumptionCallTarget(getInstructionPointerForBytecodeLoop());
     }
 
     private MaterializedFrame getOrCreateTruffleFrame() {
@@ -317,6 +323,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
      * Sets the sender of a ContextObject.
      */
     public void setSender(final AbstractSqueakObject value) {
+        ensureNotParked();
         if (!hasModifiedSender() && hasTruffleFrame() && FrameAccess.getSender(getTruffleFrame()) != value) {
             setModifiedSender();
         }
@@ -324,10 +331,12 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     }
 
     public void setSenderUnsafe(final AbstractSqueakObject value) {
+        ensureNotParked();
         FrameAccess.setSender(getOrCreateTruffleFrame(), value);
     }
 
     public void removeSender() {
+        ensureNotParked();
         if (hasModifiedSender()) {
             clearModifiedSender();
         }
@@ -348,10 +357,12 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     }
 
     public void setInstructionPointer(final int value) {
+        ensureNotParked();
         FrameAccess.setInstructionPointer(getTruffleFrame(), value);
     }
 
     public void removeInstructionPointer() {
+        ensureNotParked();
         FrameAccess.setInstructionPointer(getTruffleFrame(), NIL_PC_STACK_NOT_NIL_VALUE);
     }
 
@@ -364,6 +375,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     }
 
     public void setStackPointer(final int value) {
+        ensureNotParked();
         assert 0 <= value && value <= size() : value + " not between 0 and " + getCodeObject().getSqueakContextSize() + " in " + this;
         FrameAccess.setStackPointer(getOrCreateTruffleFrame(), value);
     }
@@ -377,11 +389,13 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     }
 
     public void overwriteCodeObject(final CompiledCodeObject value) {
+        ensureNotParked();
         resetMarkedCodeFlags();
         setCodeObject(value);
     }
 
     public void setCodeObject(final CompiledCodeObject value) {
+        ensureNotParked();
         senderOrFrameOrSize = createTruffleFrame(value);
         setMarkedCodeFlags();
     }
@@ -442,6 +456,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     }
 
     public void removeClosure() {
+        ensureNotParked();
         if (hasClosure()) {
             throw SqueakException.create("Not yet implemented/support");
         }
@@ -449,6 +464,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
 
     @TruffleBoundary
     public void setClosure(final BlockClosureObject value) {
+        ensureNotParked();
         final MaterializedFrame oldFrame = getOrCreateTruffleFrame();
         final int pc = FrameAccess.getInstructionPointer(oldFrame);
         final int sp = FrameAccess.getStackPointer(oldFrame);
@@ -484,6 +500,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     }
 
     public void setReceiver(final Object value) {
+        ensureNotParked();
         FrameAccess.setReceiver(getOrCreateTruffleFrame(), value);
     }
 
@@ -519,6 +536,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
      */
     @TruffleBoundary
     public void atTempPut(final int index, final Object value) {
+        ensureNotParked();
         final MaterializedFrame frame = getOrCreateTruffleFrame();
         final Object[] args = frame.getArguments();
         if (FrameAccess.getArgumentStartIndex() + index < args.length) {
@@ -528,6 +546,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     }
 
     public void terminate() {
+        ensureNotParked();
         removeInstructionPointer();
         removeSender();
     }
@@ -554,6 +573,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     }
 
     public void push(final Object value) {
+        ensureNotParked();
         assert value != null : "Unexpected `null` value";
         final int currentStackPointer = getStackPointer();
         assert currentStackPointer <= getCodeObject().getMaxStackSize() : "curSP " + currentStackPointer + " > maxStackSize " + getCodeObject().getMaxStackSize();
@@ -562,6 +582,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     }
 
     public Object pop() {
+        ensureNotParked();
         final int newStackPointer = getStackPointer() - 1;
         assert 0 <= newStackPointer;
         final Object value = atTemp(newStackPointer);
@@ -605,6 +626,8 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     }
 
     public void become(final ContextObject other) {
+        ensureNotParked();
+        other.ensureNotParked();
         final Object otherSenderOrFrame = other.senderOrFrameOrSize;
         final int otherBooleans = other.getAllBooleanBits();
         other.setFields(senderOrFrameOrSize, getAllBooleanBits());
@@ -638,6 +661,30 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
      * vs. EE). This in turn means that the concrete class can be cached statically and injected via
      * {@link CompilerDirectives#castExact(Object, Class)}.
      */
+    public Object getParkedStack() {
+        return parkedStack;
+    }
+
+    public void setParkedStack(final Object stack) {
+        parkedStack = stack;
+    }
+
+    /**
+     * A context on top of a parked process stack is still executing in suspended Java frames.
+     * Before it is modified or resumed from the heap, the stack must be unwound.
+     */
+    public void ensureNotParked() {
+        if (parkedStack != null) {
+            flushParkedStack();
+        }
+    }
+
+    @TruffleBoundary
+    private void flushParkedStack() {
+        SqueakImageContext.getSlow().processContinuations.flush(this);
+        assert parkedStack == null;
+    }
+
     public MaterializedFrame getTruffleFrame() {
         return (MaterializedFrame) CompilerDirectives.castExact(senderOrFrameOrSize, CONCRETE_MATERIALIZED_FRAME_CLASS);
     }

@@ -12,6 +12,7 @@ import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
+import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class PushToStackNode extends AbstractNode {
@@ -30,5 +31,11 @@ public final class PushToStackNode extends AbstractNode {
         }
         FrameAccess.setStackPointer(frame, stackPointer);
         FrameAccess.setStackValue(frame, stackPointer - 1, value);
+    }
+
+    /** Reverts a previous {@link #execute}. */
+    public void undo(final VirtualFrame frame) {
+        FrameAccess.setStackValue(frame, stackPointer - 1, NilObject.SINGLETON);
+        FrameAccess.setStackPointer(frame, stackPointer - 1);
     }
 }

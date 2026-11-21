@@ -13,7 +13,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DenyReplace;
 import com.oracle.truffle.api.nodes.Node;
 
-import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -23,6 +22,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodesFactory.AbstractPointersObjectReadNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.process.ProcessContinuations;
 import de.hpi.swa.trufflesqueak.nodes.process.SignalSemaphoreForInterruptNode;
 import de.hpi.swa.trufflesqueak.nodes.process.TransferToNode;
 import de.hpi.swa.trufflesqueak.nodes.process.TransferToNodeGen;
@@ -149,7 +149,7 @@ public abstract class CheckForInterruptsNode extends AbstractNode {
 
             if (nextActiveProcess != originalActiveProcess) {
                 TransferToNode.executeUncached(frame, nextActiveProcess);
-                throw ProcessSwitch.SINGLETON;
+                ProcessContinuations.switchFromInterrupt(frame, image);
             }
         }
 
@@ -243,7 +243,7 @@ public abstract class CheckForInterruptsNode extends AbstractNode {
 
                 if (nextActiveProcess != originalActiveProcess) {
                     TransferToNode.executeUncached(frame, nextActiveProcess);
-                    throw ProcessSwitch.SINGLETON;
+                    ProcessContinuations.switchFromInterrupt(frame, image);
                 }
             }
 
@@ -296,7 +296,7 @@ public abstract class CheckForInterruptsNode extends AbstractNode {
 
             if (nextActiveProcess != originalActiveProcess) {
                 transferToNode.execute(frame, nextActiveProcess);
-                throw ProcessSwitch.SINGLETON;
+                ProcessContinuations.switchFromInterrupt(frame, image);
             }
         }
     }

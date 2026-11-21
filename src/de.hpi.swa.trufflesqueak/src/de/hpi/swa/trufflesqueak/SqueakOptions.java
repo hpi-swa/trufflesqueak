@@ -51,6 +51,9 @@ public final class SqueakOptions {
     @Option(name = SqueakLanguageOptions.SIGNAL_INPUT_SEMAPHORE, category = OptionCategory.INTERNAL, stability = OptionStability.EXPERIMENTAL, help = SqueakLanguageOptions.SIGNAL_INPUT_SEMAPHORE_HELP, usageSyntax = "false|true")//
     public static final OptionKey<Boolean> SignalInputSemaphore = new OptionKey<>(false);
 
+    @Option(name = SqueakLanguageOptions.PROCESS_CONTINUATIONS, category = OptionCategory.EXPERT, stability = OptionStability.EXPERIMENTAL, help = SqueakLanguageOptions.PROCESS_CONTINUATIONS_HELP, usageSyntax = "false|true")//
+    public static final OptionKey<Boolean> ProcessContinuations = new OptionKey<>(false);
+
     @Option(name = SqueakLanguageOptions.STARTUP, category = OptionCategory.INTERNAL, stability = OptionStability.EXPERIMENTAL, help = SqueakLanguageOptions.STARTUP_HELP, usageSyntax = "false|true")//
     public static final OptionKey<Boolean> Startup = new OptionKey<>(false);
 
@@ -65,7 +68,7 @@ public final class SqueakOptions {
     }
 
     public record SqueakContextOptions(String imagePath, String[] imageArguments, boolean printResourceSummary, boolean isHeadless, boolean disableInterruptHandler,
-                    int maxContextStackDepth, boolean disableStartup, boolean isTesting, boolean signalInputSemaphore) {
+                    int maxContextStackDepth, boolean disableStartup, boolean isTesting, boolean signalInputSemaphore, boolean processContinuations) {
         public static SqueakContextOptions create(final OptionValues options) {
             return new SqueakContextOptions(
                             options.get(ImagePath).isEmpty() ? null : options.get(ImagePath),
@@ -76,7 +79,8 @@ public final class SqueakOptions {
                             Math.max(1, options.get(ContextStackDepth)),
                             options.get(Startup),
                             options.get(Testing),
-                            options.get(SignalInputSemaphore));
+                            options.get(SignalInputSemaphore),
+                            options.get(ProcessContinuations));
         }
     }
 }

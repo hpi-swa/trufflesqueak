@@ -787,7 +787,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 // scavenge
                 case 55 -> 0L;
                 // number of process switches since startup (read-only)
-                case 56 -> NilObject.SINGLETON;
+                case 56 -> image.processSwitchCount;
                 // number of ioProcessEvents calls since startup (read-only)
                 case 57 -> 0L;
                 // number of ForceInterruptCheck calls since startup (read-only)
