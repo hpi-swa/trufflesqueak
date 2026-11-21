@@ -69,7 +69,6 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         format = original.format;
         // FIXME: should clone the pointers themselves, too
         pointers = original.pointers.clone();
-        initializeLayout();
     }
 
     public ClassObject(final SqueakImageContext image, final ClassObject classObject, final int size) {
@@ -84,17 +83,25 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return image;
     }
 
-    /* Used by TruffleSqueakTest. */
+    /* Used by TruffleSqueakTest and TruffleSqueakUtilities. */
     public boolean hasLayout() {
         return layout != null;
     }
 
+    /**
+     * Layouts are created on demand because many classes never have pointers instances (e.g.,
+     * metaclasses and classes of non-pointers objects).
+     */
     public ObjectLayout getLayout() {
-        assert layout != null : this + " has layout of null";
+        if (layout == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            initializeLayout();
+        }
         return layout;
     }
 
     private void initializeLayout() {
+        assert format >= 0 : this + " needs a format before it can have a layout";
         layout = new ObjectLayout(getBasicInstanceSize());
     }
 
@@ -250,7 +257,6 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
             methodDict = (VariablePointersObject) NilObject.nilToNull(chunk.getPointer(CLASS_DESCRIPTION.METHOD_DICT));
             format = (long) chunk.getPointer(CLASS_DESCRIPTION.FORMAT);
             pointers = chunk.getPointers(CLASS_DESCRIPTION.INLINE_POINTERS);
-            initializeLayout();
         }
     }
 
@@ -273,7 +279,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         invalidateClassFormatStableAssumption("new format");
         final int oldBasicInstanceSize = getBasicInstanceSize();
         this.format = format;
-        if (oldBasicInstanceSize != getBasicInstanceSize()) {
+        if (layout != null && oldBasicInstanceSize != getBasicInstanceSize()) {
             initializeLayout();
         }
     }
