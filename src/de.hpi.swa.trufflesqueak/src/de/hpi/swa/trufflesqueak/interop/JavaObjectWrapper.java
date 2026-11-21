@@ -14,7 +14,6 @@ import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.WeakHashMap;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -40,6 +39,7 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.utilities.TriState;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
@@ -54,7 +54,6 @@ import de.hpi.swa.trufflesqueak.util.ReflectionUtils;
 @ExportLibrary(InteropLibrary.class)
 public final class JavaObjectWrapper implements TruffleObject {
     static final int LIMIT = 2;
-    private static final WeakHashMap<Object, JavaObjectWrapper> CACHE = new WeakHashMap<>();
     private static final ClassValue<HashMap<String, Field>> CLASSES_TO_FIELDS = new ClassValue<>() {
         @Override
         @SuppressWarnings("deprecation") // isAccessible deprecated in Java 11
@@ -188,7 +187,7 @@ public final class JavaObjectWrapper implements TruffleObject {
         } else if (object instanceof final Float o) {
             return (double) o;
         } else {
-            return CACHE.computeIfAbsent(object, JavaObjectWrapper::new);
+            return new JavaObjectWrapper(object);
         }
     }
 
@@ -805,6 +804,21 @@ public final class JavaObjectWrapper implements TruffleObject {
         } else {
             throw MiscUtils.throwUnsupportedMessageException();
         }
+    }
+
+    @ExportMessage
+    TriState isIdenticalOrUndefined(final Object other) {
+        if (other instanceof final JavaObjectWrapper o) {
+            return TriState.valueOf(wrappedObject == o.wrappedObject);
+        } else {
+            return TriState.UNDEFINED;
+        }
+    }
+
+    @ExportMessage
+    @TruffleBoundary
+    int identityHashCode() {
+        return System.identityHashCode(wrappedObject);
     }
 
     @ExportMessage
