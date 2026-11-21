@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.nodes.accessing;
 
 import static de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash.assertNotForwarded;
 
+import com.oracle.truffle.api.HostCompilerDirectives.InliningCutoff;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateCached;
@@ -38,6 +39,12 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.ClassObjectNodes.ClassObjectWrit
 import de.hpi.swa.trufflesqueak.nodes.accessing.ContextObjectNodes.ContextObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectWriteNode;
 
+/**
+ * Only the specializations for the most common receivers (arrays and pointers) are inlined during
+ * host compilation. All others are cut off to keep the interpreter code small (see
+ * truffle/docs/HostCompilation.md). Unlike in {@link SqueakObjectAt0Node}, this includes native
+ * objects because writing to them is considerably more complex than reading from them.
+ */
 @GenerateInline
 @GenerateCached
 @ImportStatic(NativeObject.class)
@@ -62,53 +69,62 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
         writeNode.execute(obj, (int) index, value);
     }
 
+    @InliningCutoff
     @Specialization
     protected static final void doNative(final Node node, final NativeObject obj, final long index, final Object value,
                     @Cached final NativeObjectWriteNode writeNode) {
         writeNode.execute(node, obj, index, value);
     }
 
+    @InliningCutoff
     @Specialization
     protected static final void doCode(final CompiledCodeObject obj, final long index, final long value) {
         obj.atput0(index, value);
     }
 
+    @InliningCutoff
     @Specialization
     protected static final void doWeakPointers(final WeakVariablePointersObject obj, final long index, final Object value,
                     @Cached(inline = false) final WeakVariablePointersObjectWriteNode writeNode) {
         writeNode.execute(obj, (int) index, value);
     }
 
+    @InliningCutoff
     @Specialization
     protected static final void doVariablePointers(final VariablePointersObject obj, final long index, final Object value,
                     @Cached(inline = false) final VariablePointersObjectWriteNode writeNode) {
         writeNode.execute(obj, (int) index, value);
     }
 
+    @InliningCutoff
     @Specialization
     protected static final void doContext(final Node node, final ContextObject obj, final long index, final Object value,
                     @Cached final ContextObjectWriteNode writeNode) {
         writeNode.execute(node, obj, index, value);
     }
 
+    @InliningCutoff
     @Specialization
     protected static final void doClass(final Node node, final ClassObject obj, final long index, final Object value,
                     @Cached final ClassObjectWriteNode writeNode) {
         writeNode.execute(node, obj, index, value);
     }
 
+    @InliningCutoff
     @Specialization
     protected static final void doClosure(final Node node, final BlockClosureObject obj, final long index, final Object value,
                     @Cached final BlockClosureObjectWriteNode writeNode) {
         writeNode.execute(node, obj, index, value);
     }
 
+    @InliningCutoff
     @Specialization
     protected static final void doEphemeron(final EphemeronObject obj, final long index, final Object value,
                     @Shared("writeNode") @Cached(inline = false) final AbstractPointersObjectWriteNode writeNode) {
         writeNode.execute(obj, index, value);
     }
 
+    @InliningCutoff
     @Specialization
     protected static final void doFloat(final Node node, final FloatObject obj, final long index, final long value,
                     @Cached final InlinedBranchProfile indexZeroProfile,

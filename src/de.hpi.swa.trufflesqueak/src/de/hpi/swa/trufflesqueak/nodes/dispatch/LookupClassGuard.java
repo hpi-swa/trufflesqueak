@@ -23,7 +23,20 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 
 public abstract class LookupClassGuard {
-    public abstract boolean check(Object receiver);
+    /**
+     * Almost all inline caches are guarded by an {@link AbstractSqueakObjectWithClassAndHashGuard}.
+     * Check for it first, so that the interpreter does not need a virtual call for the common case.
+     * The type check folds during partial evaluation because guards are compilation constants.
+     */
+    public final boolean check(final Object receiver) {
+        if (this instanceof final AbstractSqueakObjectWithClassAndHashGuard guard) {
+            return guard.checkClass(receiver);
+        } else {
+            return checkOther(receiver);
+        }
+    }
+
+    protected abstract boolean checkOther(Object receiver);
 
     public final ClassObject getSqueakClass(final Node node) {
         CompilerAsserts.partialEvaluationConstant(node);
@@ -64,7 +77,7 @@ public abstract class LookupClassGuard {
         private static final NilGuard SINGLETON = new NilGuard();
 
         @Override
-        public boolean check(final Object receiver) {
+        protected boolean checkOther(final Object receiver) {
             return receiver == NilObject.SINGLETON;
         }
 
@@ -78,7 +91,7 @@ public abstract class LookupClassGuard {
         private static final TrueGuard SINGLETON = new TrueGuard();
 
         @Override
-        public boolean check(final Object receiver) {
+        protected boolean checkOther(final Object receiver) {
             return receiver == Boolean.TRUE;
         }
 
@@ -92,7 +105,7 @@ public abstract class LookupClassGuard {
         private static final FalseGuard SINGLETON = new FalseGuard();
 
         @Override
-        public boolean check(final Object receiver) {
+        protected boolean checkOther(final Object receiver) {
             return receiver == Boolean.FALSE;
         }
 
@@ -106,7 +119,7 @@ public abstract class LookupClassGuard {
         private static final SmallIntegerGuard SINGLETON = new SmallIntegerGuard();
 
         @Override
-        public boolean check(final Object receiver) {
+        protected boolean checkOther(final Object receiver) {
             return receiver instanceof Long;
         }
 
@@ -120,7 +133,7 @@ public abstract class LookupClassGuard {
         private static final CharacterGuard SINGLETON = new CharacterGuard();
 
         @Override
-        public boolean check(final Object receiver) {
+        protected boolean checkOther(final Object receiver) {
             return receiver instanceof Character || receiver instanceof CharacterObject;
         }
 
@@ -134,7 +147,7 @@ public abstract class LookupClassGuard {
         private static final DoubleGuard SINGLETON = new DoubleGuard();
 
         @Override
-        public boolean check(final Object receiver) {
+        protected boolean checkOther(final Object receiver) {
             return receiver instanceof Double;
         }
 
@@ -148,7 +161,7 @@ public abstract class LookupClassGuard {
         private static final ContextObjectGuard SINGLETON = new ContextObjectGuard();
 
         @Override
-        public boolean check(final Object receiver) {
+        protected boolean checkOther(final Object receiver) {
             return receiver instanceof ContextObject;
         }
 
@@ -162,7 +175,7 @@ public abstract class LookupClassGuard {
         private static final BlockClosureGuard SINGLETON = new BlockClosureGuard();
 
         @Override
-        public boolean check(final Object receiver) {
+        protected boolean checkOther(final Object receiver) {
             return receiver instanceof final BlockClosureObject closure && closure.isABlockClosure();
         }
 
@@ -176,7 +189,7 @@ public abstract class LookupClassGuard {
         private static final FullBlockClosureGuard SINGLETON = new FullBlockClosureGuard();
 
         @Override
-        public boolean check(final Object receiver) {
+        protected boolean checkOther(final Object receiver) {
             return receiver instanceof final BlockClosureObject closure && closure.isAFullBlockClosure();
         }
 
@@ -190,7 +203,7 @@ public abstract class LookupClassGuard {
         private static final FloatObjectGuard SINGLETON = new FloatObjectGuard();
 
         @Override
-        public boolean check(final Object receiver) {
+        protected boolean checkOther(final Object receiver) {
             return receiver instanceof FloatObject;
         }
 
@@ -208,9 +221,13 @@ public abstract class LookupClassGuard {
             assert expectedClass.assertNotForwarded();
         }
 
-        @Override
-        public boolean check(final Object receiver) {
+        private boolean checkClass(final Object receiver) {
             return receiver instanceof final AbstractSqueakObjectWithClassAndHash o && o.getSqueakClass() == expectedClass;
+        }
+
+        @Override
+        protected boolean checkOther(final Object receiver) {
+            return checkClass(receiver);
         }
 
         @Override
@@ -223,7 +240,7 @@ public abstract class LookupClassGuard {
         private static final ForeignObjectGuard SINGLETON = new ForeignObjectGuard();
 
         @Override
-        public boolean check(final Object receiver) {
+        protected boolean checkOther(final Object receiver) {
             return !SqueakGuards.isAbstractSqueakObject(receiver) && !SqueakGuards.isUsedJavaPrimitive(receiver);
         }
 
