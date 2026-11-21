@@ -92,16 +92,18 @@ public final class ObjectLayoutTest extends AbstractSqueakTestCaseWithDummyImage
     public void testTransitions() {
         final PointersObject obj = instantiate(createFreshTestClass());
 
-        /* Fill with three different primitive values. */
+        /* Fill inline slots with two different primitive values. */
         writeAndValidate(obj, 0, true);
         writeAndValidate(obj, 24, '&');
-        writeAndValidate(obj, 12, 1234L);
         assertNull(obj.primitiveExtension);
         assertUnsetObjectFields(obj);
 
-        /* Fill with another double primitive value. */
-        writeAndValidate(obj, 16, 98.76D);
+        /* Further primitive values go into the extension. */
+        writeAndValidate(obj, 12, 1234L);
         assertEquals(1, obj.primitiveExtension.length);
+        writeAndValidate(obj, 16, 98.76D);
+        assertEquals(2, obj.primitiveExtension.length);
+        assertUnsetObjectFields(obj);
 
         /* Fill all slots with double values. */
         for (int i = 0; i < obj.getNumSlots(); i++) {
@@ -140,7 +142,6 @@ public final class ObjectLayoutTest extends AbstractSqueakTestCaseWithDummyImage
         }
         assertEquals(42L, obj.primitive0);
         assertEquals(43L, obj.primitive1);
-        assertEquals(44L, obj.primitive2);
         assertEquals(obj.getNumSlots() - SlotLocation.NUM_PRIMITIVE_INLINE_LOCATIONS, obj.primitiveExtension.length);
         for (int i = 0; i < obj.primitiveExtension.length; i++) {
             assertEquals(obj.primitiveExtension[i], SlotLocation.NUM_PRIMITIVE_INLINE_LOCATIONS + i + 42L);
@@ -168,7 +169,6 @@ public final class ObjectLayoutTest extends AbstractSqueakTestCaseWithDummyImage
     private static void assertUnsetPrimitiveFields(final AbstractPointersObject obj) {
         assertEquals(0L, obj.primitive0);
         assertEquals(0L, obj.primitive1);
-        assertEquals(0L, obj.primitive2);
         assertNull(obj.primitiveExtension);
     }
 
