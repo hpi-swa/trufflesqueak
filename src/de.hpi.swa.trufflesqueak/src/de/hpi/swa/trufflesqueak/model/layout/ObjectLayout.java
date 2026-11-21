@@ -18,6 +18,8 @@ import com.oracle.truffle.api.dsl.Idempotent;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.model.layout.SlotLocation.PrimitiveKind;
+import de.hpi.swa.trufflesqueak.model.layout.SlotLocation.PrimitiveLocation;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
@@ -52,25 +54,28 @@ public final class ObjectLayout {
         invalidate();
         final SlotLocation[] newLocations = locations.clone();
         newLocations[index] = SlotLocation.UNINITIALIZED_LOCATION;
+        PrimitiveKind newKind = null;
         if (oldLocation.isUninitialized()) {
-            switch (value) {
-                case Boolean _ -> assignPrimitiveLocation(newLocations, index, SlotLocation.BOOL_LOCATIONS);
-                case Character _ -> assignPrimitiveLocation(newLocations, index, SlotLocation.CHAR_LOCATIONS);
-                case Long _ -> assignPrimitiveLocation(newLocations, index, SlotLocation.LONG_LOCATIONS);
-                case Double _ -> assignPrimitiveLocation(newLocations, index, SlotLocation.DOUBLE_LOCATIONS);
-                case null, default -> assignGenericLocation(newLocations, index);
-            }
+            newKind = switch (value) {
+                case Boolean _ -> PrimitiveKind.BOOL;
+                case Character _ -> PrimitiveKind.CHAR;
+                case Long v -> v == (int) (long) v ? PrimitiveKind.INT : PrimitiveKind.LONG;
+                case Double _ -> PrimitiveKind.DOUBLE;
+                case null, default -> null;
+            };
+        } else if (oldLocation instanceof final PrimitiveLocation primitive && primitive.getKind() == PrimitiveKind.INT && value instanceof Long) {
+            // Widen integer storage permanently instead of boxing an out-of-range value.
+            newKind = PrimitiveKind.LONG;
+        }
+        if (newKind != null && countPrimitiveLocations(newLocations) < SlotLocation.MAX_PRIMITIVE_LOCATIONS) {
+            packPrimitives(newLocations, index, newKind);
         } else {
             assignGenericLocation(newLocations, index);
-        }
-
-        if (oldLocation.isPrimitive()) {
-            assert newLocations[index].isGeneric();
-            compressPrimitivesIfPossible(newLocations, oldLocation);
+            packPrimitives(newLocations, -1, null);
         }
 
         assert !newLocations[index].isUninitialized();
-        assert slotLocationsAreConsecutive(newLocations) : "Locations are not consecutive";
+        assert slotLocationsAreConsecutive(newLocations) : "Locations overlap or contain gaps";
         final ObjectLayout newLayout = new ObjectLayout(newLocations);
         squeakClass.updateLayout(newLayout);
         return newLayout;
@@ -86,71 +91,63 @@ public final class ObjectLayout {
         newLocations[index] = SlotLocation.getObjectLocation(SlotLocation.OBJECT_LOCATIONS.size());
     }
 
-    private static void assignPrimitiveLocation(final SlotLocation[] newLocations, final int index, final SlotLocation[] possibleLocations) {
-        for (final SlotLocation possibleLocation : possibleLocations) {
-            if (!inUse(newLocations, possibleLocation)) {
-                newLocations[index] = possibleLocation;
-                return;
+    private static int countPrimitiveLocations(final SlotLocation[] locations) {
+        int count = 0;
+        for (final SlotLocation location : locations) {
+            if (location.isPrimitive()) {
+                count++;
             }
         }
-        // Primitive locations exhausted, fall back to a generic location.
-        assignGenericLocation(newLocations, index);
+        return count;
     }
 
-    private static void compressPrimitivesIfPossible(final SlotLocation[] locations, final SlotLocation freePrimitiveLocation) {
-        final int highestPrimitiveField = getHighestPrimitiveField(locations);
-        if (highestPrimitiveField < freePrimitiveLocation.getFieldIndex()) {
-            return;
-        }
-        for (int i = 0; i < locations.length; i++) {
-            final SlotLocation location = locations[i];
-            if (location.isPrimitive() && location.getFieldIndex() == highestPrimitiveField) {
-                if (location.isBool()) {
-                    locations[i] = SlotLocation.BOOL_LOCATIONS[freePrimitiveLocation.getFieldIndex()];
-                } else if (location.isChar()) {
-                    locations[i] = SlotLocation.CHAR_LOCATIONS[freePrimitiveLocation.getFieldIndex()];
-                } else if (location.isLong()) {
-                    locations[i] = SlotLocation.LONG_LOCATIONS[freePrimitiveLocation.getFieldIndex()];
-                } else if (location.isDouble()) {
-                    locations[i] = SlotLocation.DOUBLE_LOCATIONS[freePrimitiveLocation.getFieldIndex()];
+    /**
+     * Repack on the slow path, widest locations first. Sizes are powers of two, so this produces
+     * aligned locations without holes, and no location crosses a primitive word boundary.
+     */
+    private static void packPrimitives(final SlotLocation[] locations, final int changedIndex, final PrimitiveKind newKind) {
+        int byteIndex = 0;
+        int usedIndex = 0;
+        for (int byteSize = Long.BYTES; byteSize > 0; byteSize /= 2) {
+            for (int i = 0; i < locations.length; i++) {
+                final PrimitiveKind kind;
+                if (i == changedIndex) {
+                    kind = newKind;
+                } else if (locations[i] instanceof final PrimitiveLocation primitive) {
+                    kind = primitive.getKind();
                 } else {
-                    throw SqueakException.create("Unexpected location type");
+                    continue;
+                }
+                if (kind.getByteSize() == byteSize) {
+                    locations[i] = new PrimitiveLocation(kind, byteIndex, usedIndex++);
+                    byteIndex += byteSize;
                 }
             }
         }
     }
 
-    private static int getHighestPrimitiveField(final SlotLocation[] locations) {
-        int maxPrimitiveField = -1;
-        for (final SlotLocation location : locations) {
-            if (location.isPrimitive()) {
-                maxPrimitiveField = Math.max(location.getFieldIndex(), maxPrimitiveField);
-            }
-        }
-        return maxPrimitiveField;
-    }
-
     private static boolean slotLocationsAreConsecutive(final SlotLocation[] locations) {
         CompilerAsserts.neverPartOfCompilation();
-        final BitSet primitiveFields = new BitSet();
+        final BitSet primitiveBytes = new BitSet();
         final BitSet objectFields = new BitSet();
         for (final SlotLocation location : locations) {
-            final BitSet fields;
-            if (location.isPrimitive()) {
-                fields = primitiveFields;
+            if (location instanceof final PrimitiveLocation primitive) {
+                final int byteIndex = primitive.getByteIndex();
+                final int byteSize = primitive.getKind().getByteSize();
+                final int nextUsedByte = primitiveBytes.nextSetBit(byteIndex);
+                if (byteIndex % byteSize != 0 || nextUsedByte >= 0 && nextUsedByte < byteIndex + byteSize) {
+                    return false;
+                }
+                primitiveBytes.set(byteIndex, byteIndex + byteSize);
             } else if (location.isGeneric()) {
-                fields = objectFields;
-            } else {
-                continue;
+                final int fieldIndex = location.getFieldIndex();
+                if (objectFields.get(fieldIndex)) {
+                    return false;
+                }
+                objectFields.set(fieldIndex);
             }
-            final int fieldIndex = location.getFieldIndex();
-            if (fields.get(fieldIndex)) {
-                return false;
-            }
-            fields.set(fieldIndex);
         }
-        // A gap puts the first clear bit below the highest set bit.
-        return primitiveFields.nextClearBit(0) == primitiveFields.length() && objectFields.nextClearBit(0) == objectFields.length();
+        return primitiveBytes.nextClearBit(0) == primitiveBytes.length() && objectFields.nextClearBit(0) == objectFields.length();
     }
 
     private static boolean inUse(final SlotLocation[] locations, final SlotLocation targetlocation) {
@@ -209,7 +206,7 @@ public final class ObjectLayout {
         int count = 0;
         for (final SlotLocation location : locations) {
             if (location.isPrimitive() && location.isExtension()) {
-                count++;
+                count = Math.max(count, location.getFieldIndex() - SlotLocation.NUM_PRIMITIVE_INLINE_LOCATIONS + 1);
             }
         }
         return count;
