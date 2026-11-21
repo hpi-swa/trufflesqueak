@@ -28,6 +28,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS_TRAIT;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.METACLASS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.METHOD_DICT;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.LookupClassGuard;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
@@ -48,6 +49,8 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     private Object[] pointers;
 
     @CompilationFinal private ObjectLayout layout;
+    /* Shared by all send sites that cache this class, created lazily. */
+    private LookupClassGuard lookupClassGuard;
 
     public ClassObject(final SqueakImageContext image) {
         super();
@@ -621,6 +624,13 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     public Assumption getClassFormatStable() {
         return classFormatStable().getAssumption();
+    }
+
+    public LookupClassGuard getLookupClassGuard() {
+        if (lookupClassGuard == null) {
+            lookupClassGuard = LookupClassGuard.createForClass(this);
+        }
+        return lookupClassGuard;
     }
 
     @Override

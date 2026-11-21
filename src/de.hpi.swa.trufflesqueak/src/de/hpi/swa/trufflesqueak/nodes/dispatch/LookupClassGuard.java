@@ -53,11 +53,16 @@ public abstract class LookupClassGuard {
         } else if (receiver instanceof FloatObject) {
             return FloatObjectGuard.SINGLETON;
         } else if (receiver instanceof final AbstractSqueakObjectWithClassAndHash o) {
-            return new AbstractSqueakObjectWithClassAndHashGuard((AbstractSqueakObjectWithClassAndHash) o.resolveForwardingPointer());
+            return ((AbstractSqueakObjectWithClassAndHash) o.resolveForwardingPointer()).getSqueakClass().getLookupClassGuard();
         } else {
             assert !(receiver instanceof AbstractSqueakObject);
             return ForeignObjectGuard.SINGLETON;
         }
+    }
+
+    /** Creates the guard for instances of the given class. Use {@link ClassObject#getLookupClassGuard()} to share it. */
+    public static LookupClassGuard createForClass(final ClassObject classObject) {
+        return new AbstractSqueakObjectWithClassAndHashGuard(classObject);
     }
 
     private static final class NilGuard extends LookupClassGuard {
@@ -203,8 +208,8 @@ public abstract class LookupClassGuard {
     private static final class AbstractSqueakObjectWithClassAndHashGuard extends LookupClassGuard {
         private final ClassObject expectedClass;
 
-        private AbstractSqueakObjectWithClassAndHashGuard(final AbstractSqueakObjectWithClassAndHash receiver) {
-            expectedClass = receiver.getSqueakClass();
+        private AbstractSqueakObjectWithClassAndHashGuard(final ClassObject expectedClass) {
+            this.expectedClass = expectedClass;
             assert expectedClass.assertNotForwarded();
         }
 
