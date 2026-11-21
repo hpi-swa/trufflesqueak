@@ -13,6 +13,7 @@ import org.graalvm.collections.EconomicMap;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.SlowPathException;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -98,6 +99,41 @@ public abstract class SlotLocation {
     }
 
     public abstract Object read(AbstractPointersObject obj);
+
+    /**
+     * Read for megamorphic accesses. Object slots are by far the most common case and are read
+     * without a call. A boundary call would kill all memory locations in compiled code.
+     */
+    public final Object readMegamorphic(final AbstractPointersObject obj) {
+        if (this instanceof final ObjectInlineSlotLocation location) {
+            return location.read(obj);
+        } else if (this instanceof final ObjectExtensionSlotLocation location) {
+            return location.read(obj);
+        } else {
+            return readBoundary(obj);
+        }
+    }
+
+    @TruffleBoundary
+    private Object readBoundary(final AbstractPointersObject obj) {
+        return read(obj);
+    }
+
+    /** Write for megamorphic accesses, see {@link #readMegamorphic(AbstractPointersObject)}. */
+    public final void writeMegamorphic(final AbstractPointersObject obj, final Object value) throws IllegalWriteException {
+        if (this instanceof final ObjectInlineSlotLocation location) {
+            location.write(obj, value);
+        } else if (this instanceof final ObjectExtensionSlotLocation location) {
+            location.write(obj, value);
+        } else {
+            writeBoundary(obj, value);
+        }
+    }
+
+    @TruffleBoundary
+    private void writeBoundary(final AbstractPointersObject obj, final Object value) throws IllegalWriteException {
+        write(obj, value);
+    }
 
     public abstract void write(AbstractPointersObject obj, Object value) throws IllegalWriteException;
 
