@@ -208,7 +208,7 @@ public final class SqueakImageChunk {
                 assert bytes != null : "Must not be an ignored object";
                 return chunk.asObject();
             case SqueakImageConstants.SMALL_INTEGER_TAG: // SmallInteger
-                return ptr >> SqueakImageConstants.NUM_TAG_BITS;
+                return reader.boxSmallInteger(ptr >> SqueakImageConstants.NUM_TAG_BITS);
             case SqueakImageConstants.CHARACTER_TAG: // Character
                 return CharacterObject.valueOf(MiscUtils.toIntExact(ptr >> SqueakImageConstants.NUM_TAG_BITS));
             case SqueakImageConstants.SMALL_FLOAT_TAG:
@@ -219,7 +219,7 @@ public final class SqueakImageChunk {
                 }
                 final double value = Double.longBitsToDouble(Long.rotateRight(valueWithoutTag, 1));
                 assert Double.isFinite(value) : "SmallFloats must be finite";
-                return value;
+                return reader.boxSmallFloat(value);
             default:
                 throw SqueakException.create("Unexpected pointer");
         }

@@ -15,6 +15,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.function.Supplier;
@@ -44,6 +45,15 @@ public final class SqueakImageReader {
     public SqueakImageChunk hiddenRootsChunk;
 
     public final AddressToChunkMap chunkMap = new AddressToChunkMap();
+
+    /*
+     * Boxed values that end up in object arrays (method literals, array storage, generic slots)
+     * are shared while loading: images contain many equal small integers and floats.
+     */
+    private static final int BOXED_LONG_CACHE_LOW = -1024;
+    private static final int BOXED_LONG_CACHE_HIGH = 16384;
+    private final Long[] boxedLongCache = new Long[BOXED_LONG_CACHE_HIGH - BOXED_LONG_CACHE_LOW];
+    private final HashMap<Double, Double> boxedDoubleCache = new HashMap<>();
     public final SqueakImageContext image;
 
     private int headerSize;
@@ -206,6 +216,26 @@ public final class SqueakImageReader {
 
     private static boolean ignoreObjectData(final long headerWord, final int classIndex, final long size) {
         return isFreeObject(classIndex) || isObjectStack(classIndex, size) || isHiddenObject(classIndex) && SqueakImageConstants.ObjectHeader.isPinned(headerWord);
+    }
+
+    Long boxSmallInteger(final long value) {
+        if (BOXED_LONG_CACHE_LOW <= value && value < BOXED_LONG_CACHE_HIGH) {
+            final int index = (int) value - BOXED_LONG_CACHE_LOW;
+            Long boxed = boxedLongCache[index];
+            if (boxed == null) {
+                boxed = value;
+                boxedLongCache[index] = boxed;
+            }
+            return boxed;
+        } else {
+            return value;
+        }
+    }
+
+    Double boxSmallFloat(final double value) {
+        final Double boxed = value;
+        final Double existing = boxedDoubleCache.putIfAbsent(boxed, boxed);
+        return existing != null ? existing : boxed;
     }
 
     protected static boolean isHiddenObject(final int classIndex) {
