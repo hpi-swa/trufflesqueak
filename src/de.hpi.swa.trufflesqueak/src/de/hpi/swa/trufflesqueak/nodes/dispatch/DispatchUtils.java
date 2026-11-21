@@ -37,7 +37,24 @@ public final class DispatchUtils {
         return createAssumptions(startClass, targetClass, callTargetStable);
     }
 
+    /**
+     * Returns the assumptions that guard a direct dispatch from startClass to the given target. The
+     * arrays are shared between all send sites with the same lookup class and target (they must not
+     * be modified) because most send sites dispatch to a small set of class/method combinations.
+     */
     static Assumption[] createAssumptions(final ClassObject startClass, final ClassObject targetClass, final Assumption callTargetStable) {
+        /* DNU and OAM (no callTargetStable) share the assumptions for all superclasses. */
+        final Assumption key = callTargetStable == null ? Assumption.ALWAYS_VALID : callTargetStable;
+        final Assumption[] cachedAssumptions = startClass.getCachedDispatchAssumptions(key);
+        if (cachedAssumptions != null && Assumption.isValidAssumption(cachedAssumptions)) {
+            return cachedAssumptions;
+        }
+        final Assumption[] assumptions = createAssumptionsUncached(startClass, targetClass, callTargetStable);
+        startClass.cacheDispatchAssumptions(key, assumptions);
+        return assumptions;
+    }
+
+    private static Assumption[] createAssumptionsUncached(final ClassObject startClass, final ClassObject targetClass, final Assumption callTargetStable) {
         if (startClass == targetClass) {
             if (callTargetStable == null) {
                 return new Assumption[]{startClass.getClassHierarchyAndMethodDictStable()};
