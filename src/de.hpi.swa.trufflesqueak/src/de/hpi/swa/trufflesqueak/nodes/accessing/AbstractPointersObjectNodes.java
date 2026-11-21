@@ -7,6 +7,7 @@
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
@@ -15,12 +16,12 @@ import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
-import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -38,6 +39,45 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodesFacto
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 public class AbstractPointersObjectNodes {
+    /**
+     * Objects with obsolete layouts are usually migrated while still interpreting. Until one shows
+     * up in compiled code, this profile keeps the slow path out of it: a boundary call kills all
+     * memory and its merge back into the fast path prevents read elimination. Deoptimizing without
+     * invalidating on every hit, however, causes deopt storms when many objects need migration
+     * (e.g., in DeltaBlue). Therefore, invalidate once and use a boundary call from then on.
+     *
+     * The hit must be recorded in compiled code, before deoptimizing: the interpreter resumes at
+     * the last side effect, which can precede the access, and re-executes it. From there, it is
+     * impossible to tell that the access failed in compiled code (e.g., an exception that is only
+     * thrown if {@link CompilerDirectives#inCompiledCode()} is not thrown again). Without the
+     * record, the code is recompiled unchanged and deoptimizes again on the next object with an
+     * obsolete layout (deopt cycle). The record is made behind a boundary, because the compiler
+     * may otherwise move the deoptimization in front of the field write.
+     */
+    public static final class ObsoleteLayoutProfile {
+        @CompilationFinal private boolean seenInCompiledCode;
+
+        private ObsoleteLayoutProfile() {
+        }
+
+        @NeverDefault
+        public static ObsoleteLayoutProfile create() {
+            return new ObsoleteLayoutProfile();
+        }
+
+        public void enter() {
+            if (CompilerDirectives.inCompiledCode() && !seenInCompiledCode) {
+                markSeenInCompiledCode();
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+            }
+        }
+
+        @TruffleBoundary
+        private void markSeenInCompiledCode() {
+            seenInCompiledCode = true;
+        }
+    }
+
     @GenerateInline(false)
     @GenerateUncached
     @GenerateCached(true)
@@ -74,31 +114,22 @@ public class AbstractPointersObjectNodes {
             return accessorNode.executeRead(object);
         }
 
-        /*
-         * Objects with obsolete layouts are usually migrated while still interpreting. Until one
-         * shows up in compiled code, keep the slow path out of it: a boundary call kills all memory
-         * and its merge back into the fast path prevents read elimination. Deoptimizing without
-         * invalidating on every hit, however, causes deopt storms when many objects need migration
-         * (e.g., in DeltaBlue). Therefore, invalidate once and use a boundary call from then on.
-         */
-        @Specialization(guards = "!object.getLayout().isValid()", rewriteOn = RespecializeException.class, excludeForUncached = true)
-        protected static final Object doReadInvalidInInterpreter(final AbstractPointersObject object, final long index) throws RespecializeException {
-            if (CompilerDirectives.inCompiledCode()) {
-                throw RespecializeException.transferToInterpreterInvalidateAndThrow();
-            }
-            return doReadInvalid(object, index);
+        @Specialization(guards = "!object.getLayout().isValid()", excludeForUncached = true)
+        protected static final Object doReadInvalid(final AbstractPointersObject object, final long index,
+                        @Cached final ObsoleteLayoutProfile profile) {
+            profile.enter();
+            return readInvalid(object, index);
         }
 
         @TruffleBoundary
-        @Specialization(guards = "!object.getLayout().isValid()", excludeForUncached = true)
-        protected static final Object doReadInvalid(final AbstractPointersObject object, final long index) {
+        private static Object readInvalid(final AbstractPointersObject object, final long index) {
             object.updateLayout(); // ensure layout is updated
             return doReadGeneric(object, index);
         }
 
         @TruffleBoundary
         @ReportPolymorphism.Megamorphic
-        @Specialization(replaces = {"doReadCached", "doReadInvalidInInterpreter", "doReadInvalid"})
+        @Specialization(replaces = {"doReadCached", "doReadInvalid"})
         protected static final Object doReadGeneric(final AbstractPointersObject object, final long index) {
             return object.getLayout().getLocation(index).read(object);
         }
@@ -146,25 +177,22 @@ public class AbstractPointersObjectNodes {
             }
         }
 
-        /* See AbstractPointersObjectReadNode#doReadInvalidInInterpreter. */
-        @Specialization(guards = "!object.getLayout().isValid()", rewriteOn = RespecializeException.class, excludeForUncached = true)
-        protected static final void doWriteInvalidInInterpreter(final AbstractPointersObject object, final long index, final Object value) throws RespecializeException {
-            if (CompilerDirectives.inCompiledCode()) {
-                throw RespecializeException.transferToInterpreterInvalidateAndThrow();
-            }
-            doWriteInvalid(object, index, value);
+        @Specialization(guards = "!object.getLayout().isValid()", excludeForUncached = true)
+        protected static final void doWriteInvalid(final AbstractPointersObject object, final long index, final Object value,
+                        @Cached final ObsoleteLayoutProfile profile) {
+            profile.enter();
+            writeInvalid(object, index, value);
         }
 
         @TruffleBoundary
-        @Specialization(guards = "!object.getLayout().isValid()")
-        protected static final void doWriteInvalid(final AbstractPointersObject object, final long index, final Object value) {
+        private static void writeInvalid(final AbstractPointersObject object, final long index, final Object value) {
             object.updateLayout();
             doWriteGeneric(object, index, value);
         }
 
         @TruffleBoundary
         @ReportPolymorphism.Megamorphic
-        @Specialization(replaces = {"doWriteCached", "doWriteInvalidInInterpreter", "doWriteInvalid"})
+        @Specialization(replaces = {"doWriteCached", "doWriteInvalid"})
         protected static final void doWriteGeneric(final AbstractPointersObject object, final long index, final Object value) {
             try {
                 object.getLayout().getLocation(index).write(object, value);
