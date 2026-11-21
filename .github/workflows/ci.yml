@@ -369,6 +369,8 @@ jobs:
     name: benchmark ${{ matrix.kind }}
     timeout-minutes: 30
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write # for posting the results as a commit comment
     steps:
     - *checkout_repo # for analyze_benchmarks.py
     - name: Download TruffleSqueak (${{ matrix.type }}-${{ matrix.os }})
@@ -463,6 +465,8 @@ jobs:
     needs: [ build-jvm-standalone, build-native-standalone ]
     if: always()
     runs-on: ubuntu-22.04
+    permissions:
+      contents: write # for posting the summary as a commit comment
     steps:
       - name: Download GraalVM Compiler Dumps (if any)
         uses: actions/download-artifact@v8.0.2
