@@ -417,6 +417,135 @@ public final class DecoderSistaV1 extends AbstractDecoder {
         };
     }
 
+    /**
+     * Computes, for every backward jump, the temporaries that are dead at the jump target (the loop
+     * header), i.e., written before being read on every path from there. The result maps the pc of
+     * each backward jump bytecode (without extensions) to a bit mask over temporary indices 0-63, or
+     * is {@code null} if there are no such temporaries or the bytecode is not understood. Bytecodes
+     * of embedded blocks run in their own frames and are skipped. {@code pushThisContext} makes all
+     * temporaries live.
+     */
+    public static long[] deadTempsAtBackwardJumps(final CompiledCodeObject code, final int startPC, final int endPC, final int firstTemp, final int numTemps) {
+        CompilerAsserts.neverPartOfCompilation();
+        if (firstTemp >= Math.min(numTemps, Long.SIZE)) {
+            return null;
+        }
+        final byte[] bc = code.getBytes();
+        final long tempsMask = (Math.min(numTemps, Long.SIZE) == Long.SIZE ? -1L : (1L << Math.min(numTemps, Long.SIZE)) - 1) & -(1L << firstTemp);
+        final int[] instructionAt = new int[endPC + 1];
+        Arrays.fill(instructionAt, -1);
+        int count = 0;
+        final int[] starts = new int[endPC];
+        final int[] opPCs = new int[endPC];
+        final int[] fallthroughs = new int[endPC];
+        final int[] targets = new int[endPC];
+        final long[] uses = new long[endPC];
+        final long[] defs = new long[endPC];
+        boolean hasBackwardJump = false;
+        int index = startPC;
+        while (index < endPC) {
+            final DecodedExtension extension = decodeExtension(bc, index);
+            final int opPC = index + extension.offset;
+            if (opPC >= endPC) {
+                return null;
+            }
+            final int b = Byte.toUnsignedInt(bc[opPC]);
+            final int next = index + decodeNextPCDelta(code, index, extension, true);
+            int fallthrough = next;
+            int target = -1;
+            long use = 0;
+            long def = 0;
+            switch (b) {
+                case 0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47 -> use = bit(b & 7);
+                case 0x48, 0x49, 0x4A, 0x4B -> use = bit((b & 3) + 8);
+                case 0x52 -> use = -1L; // pushThisContext
+                case 0x58, 0x59, 0x5A, 0x5B, 0x5C, 0x5D, 0x5E -> fallthrough = -1; // returns
+                case 0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7 -> {
+                    target = next + AbstractInterpreterNode.calculateShortOffset(b);
+                    fallthrough = -1;
+                }
+                case 0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE, 0xBF, 0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7 -> target = next + AbstractInterpreterNode.calculateShortOffset(b);
+                case 0xD0, 0xD1, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7 -> def = bit(b & 7);
+                case 0xE5 -> use = bit(Byte.toUnsignedInt(bc[opPC + 1]));
+                case 0xED -> {
+                    final int delta = InterpreterSistaV1Node.calculateLongExtendedOffset(bc[opPC + 1], extension.extB);
+                    target = next + delta;
+                    fallthrough = -1;
+                    hasBackwardJump |= delta < 0;
+                }
+                case 0xEE, 0xEF -> target = next + Byte.toUnsignedInt(bc[opPC + 1]) + (extension.extB << 8);
+                case 0xF2, 0xF5 -> def = bit(Byte.toUnsignedInt(bc[opPC + 1]));
+                case 0xFB, 0xFC, 0xFD -> use = bit(Byte.toUnsignedInt(bc[opPC + 2])); // temp vector
+                case 0x54, 0x55, 0x56, 0x57, 0xDA, 0xDB, 0xDC, 0xDD, 0xDE, 0xDF, 0xE6, 0xEC, 0xF6, 0xF7, 0xFE, 0xFF -> {
+                    return null; // not a bytecode
+                }
+                default -> {
+                    // no temporary access, falls through
+                }
+            }
+            if (target >= endPC || target < -1 || fallthrough > endPC) {
+                return null;
+            }
+            instructionAt[index] = count;
+            starts[count] = index;
+            opPCs[count] = opPC;
+            fallthroughs[count] = fallthrough;
+            targets[count] = target;
+            uses[count] = use;
+            defs[count] = def;
+            count++;
+            index = next;
+        }
+        if (!hasBackwardJump) {
+            return null;
+        }
+        // Backward liveness, iterated to a fixpoint (loops).
+        final long[] liveIn = new long[count];
+        boolean changed = true;
+        while (changed) {
+            changed = false;
+            for (int i = count - 1; i >= 0; i--) {
+                long liveOut = 0;
+                if (fallthroughs[i] >= 0 && fallthroughs[i] < endPC) {
+                    final int succ = instructionAt[fallthroughs[i]];
+                    if (succ < 0) {
+                        return null;
+                    }
+                    liveOut |= liveIn[succ];
+                }
+                if (targets[i] >= 0) {
+                    final int succ = instructionAt[targets[i]];
+                    if (succ < 0) {
+                        return null;
+                    }
+                    liveOut |= liveIn[succ];
+                }
+                final long in = uses[i] | (liveOut & ~defs[i]);
+                if (in != liveIn[i]) {
+                    liveIn[i] = in;
+                    changed = true;
+                }
+            }
+        }
+        long[] result = null;
+        for (int i = 0; i < count; i++) {
+            if (targets[i] >= 0 && targets[i] <= starts[i] && fallthroughs[i] == -1) {
+                final long dead = ~liveIn[instructionAt[targets[i]]] & tempsMask;
+                if (dead != 0) {
+                    if (result == null) {
+                        result = new long[endPC];
+                    }
+                    result[opPCs[i]] = dead;
+                }
+            }
+        }
+        return result;
+    }
+
+    private static long bit(final int tempIndex) {
+        return tempIndex < Long.SIZE ? 1L << tempIndex : 0L;
+    }
+
     private static int jumpAndResetStackAfterBranchOrReturn(final byte[] joins, final int pc, final int sp, final int delta) {
         if (delta < 0) {
             assert Byte.toUnsignedInt(joins[pc + delta]) == sp : "bad join";
