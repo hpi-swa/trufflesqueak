@@ -58,6 +58,9 @@ public abstract class AbstractSqueakObjectWithHash extends AbstractSqueakObject 
     private static final int BOOLEAN_C_BIT = 1 << 5;
     private static final int BOOLEAN_D_BIT = 1 << 6;
 
+    /* Objects never move from the image's point of view, pinning is only tracked for the image. */
+    private static final int PINNED_BIT = 1 << 7;
+
     private static final int BOOLEAN_BIT_MASK = BOOLEAN_A_BIT | BOOLEAN_B_BIT | BOOLEAN_C_BIT | BOOLEAN_D_BIT;
 
     /* Generate new hash if hash is 0 (see SpurMemoryManager>>#hashBitsOf:). */
@@ -89,8 +92,8 @@ public abstract class AbstractSqueakObjectWithHash extends AbstractSqueakObject 
 
     @SuppressWarnings("this-escape")
     protected AbstractSqueakObjectWithHash(final AbstractSqueakObjectWithHash original) {
-        /* Preserves flags and resets hash. */
-        squeakHashAndBits = original.squeakHashAndBits & SQUEAK_HASH_FLAGS_MASK;
+        /* Preserves flags (except for the pinned bit) and resets hash. */
+        squeakHashAndBits = original.squeakHashAndBits & SQUEAK_HASH_FLAGS_MASK & ~PINNED_BIT;
     }
 
     protected void initializeFrom(final SqueakImageChunk chunk) {
@@ -214,6 +217,18 @@ public abstract class AbstractSqueakObjectWithHash extends AbstractSqueakObject 
     public abstract AbstractSqueakObjectWithHash resolveForwardingPointer();
 
     /* General purpose boolean flags. */
+
+    public final boolean isPinned() {
+        return (squeakHashAndBits & PINNED_BIT) != 0;
+    }
+
+    public final void setPinned(final boolean value) {
+        if (value) {
+            squeakHashAndBits |= PINNED_BIT;
+        } else {
+            squeakHashAndBits &= ~PINNED_BIT;
+        }
+    }
 
     public final void setBooleanABit() {
         squeakHashAndBits |= BOOLEAN_A_BIT;

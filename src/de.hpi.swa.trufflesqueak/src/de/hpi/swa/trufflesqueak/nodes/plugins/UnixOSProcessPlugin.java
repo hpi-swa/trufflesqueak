@@ -10,10 +10,20 @@ import java.io.IOException;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
+import java.nio.ByteBuffer;
+import java.nio.channels.Pipe;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.file.attribute.PosixFilePermission;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.stream.Stream;
+
+import org.graalvm.polyglot.io.FileChannel;
+import org.graalvm.polyglot.io.FileLock;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
@@ -38,6 +48,8 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3WithFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive4WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
@@ -103,19 +115,113 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveCreatePipe")
+    protected abstract static class PrimCreatePipeNode extends AbstractPrimitiveNode implements Primitive0 {
+        /* Answers an Array with the file handles of the read end and of the write end. */
+        @Specialization
+        @TruffleBoundary
+        protected final ArrayObject doCreatePipe(@SuppressWarnings("unused") final Object receiver) {
+            final SqueakImageContext image = getContext();
+            final AbstractPipeEndChannel readEnd;
+            final AbstractPipeEndChannel writeEnd;
+            try {
+                final Pipe pipe = Pipe.open();
+                readEnd = new PipeReadEndChannel(pipe.source());
+                writeEnd = new PipeWriteEndChannel(pipe.sink());
+            } catch (final IOException e) {
+                throw PrimitiveFailed.GENERIC_ERROR;
+            }
+            image.env.registerOnDispose(readEnd);
+            image.env.registerOnDispose(writeEnd);
+            return image.asArrayOfObjects(PointersObject.newHandleWithHiddenObject(image, readEnd), PointersObject.newHandleWithHiddenObject(image, writeEnd));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveLockFileRegion")
+    protected abstract static class PrimLockFileRegionNode extends AbstractFileHandlePrimitiveNode implements Primitive4WithFallback {
+        /* Answers 0 if the region was locked and -1 otherwise, like fcntl(). */
+        @Specialization(guards = {"isLockableHandle(handle)", "offset >= 0", "length >= 0"})
+        protected static final long doLock(@SuppressWarnings("unused") final Object receiver, final PointersObject handle, final long offset, final long length, final boolean exclusive) {
+            return FileLocks.lock(getFileChannel(handle), offset, length, exclusive) ? 0L : -1L;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveUnlockFileRegion")
+    protected abstract static class PrimUnlockFileRegionNode extends AbstractFileHandlePrimitiveNode implements Primitive3WithFallback {
+        /* Answers 0 if the region is unlocked and -1 otherwise, like fcntl(). */
+        @Specialization(guards = {"isLockableHandle(handle)", "offset >= 0", "length >= 0"})
+        protected static final long doUnlock(@SuppressWarnings("unused") final Object receiver, final PointersObject handle, final long offset, final long length) {
+            return FileLocks.unlock(getFileChannel(handle), offset, length) ? 0L : -1L;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveTestLockableFileRegion")
+    protected abstract static class PrimTestLockableFileRegionNode extends AbstractFileHandlePrimitiveNode implements Primitive4WithFallback {
+        /*
+         * Answers an Array like the OpenSmalltalk VM. Its first element tells whether the region
+         * can be locked. The remaining elements describe a conflicting lock (pid, type, whence,
+         * start, and length), which is not known here.
+         */
+        @Specialization(guards = {"isLockableHandle(handle)", "offset >= 0", "length >= 0"})
+        protected final ArrayObject doTest(@SuppressWarnings("unused") final Object receiver, final PointersObject handle, final long offset, final long length, final boolean exclusive) {
+            final boolean isLockable = FileLocks.isLockable(getFileChannel(handle), offset, length, exclusive);
+            return getContext().asArrayOfObjects(BooleanObject.wrap(isLockable), NilObject.SINGLETON, NilObject.SINGLETON, NilObject.SINGLETON, NilObject.SINGLETON, NilObject.SINGLETON);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveSQFileSetBlocking")
+    protected abstract static class PrimSQFileSetBlockingNode extends AbstractFileHandlePrimitiveNode implements Primitive1WithFallback {
+        @Specialization(guards = "isFileHandle(handle)")
+        protected static final long doSetBlocking(@SuppressWarnings("unused") final Object receiver, final PointersObject handle) {
+            return configureBlocking(handle, true);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveSQFileSetNonBlocking")
+    protected abstract static class PrimSQFileSetNonBlockingNode extends AbstractFileHandlePrimitiveNode implements Primitive1WithFallback {
+        @Specialization(guards = "isFileHandle(handle)")
+        protected static final long doSetNonBlocking(@SuppressWarnings("unused") final Object receiver, final PointersObject handle) {
+            return configureBlocking(handle, false);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveSQFileFlush")
+    protected abstract static class PrimSQFileFlushNode extends AbstractFileHandlePrimitiveNode implements Primitive1WithFallback {
+        /* Channels are not buffered, so there is nothing to flush. */
+        @SuppressWarnings("unused")
+        @Specialization(guards = "isFileHandle(handle) || isStdioHandle(handle)")
+        protected static final long doFlush(final Object receiver, final PointersObject handle) {
+            return 0L;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveTestEndOfFileFlag")
+    protected abstract static class PrimTestEndOfFileFlagNode extends AbstractFileHandlePrimitiveNode implements Primitive1WithFallback {
+        @Specialization(guards = "isPipeHandle(handle)")
+        protected static final boolean doTest(@SuppressWarnings("unused") final Object receiver, final PointersObject handle) {
+            return BooleanObject.wrap(((AbstractPipeEndChannel) handle.getHiddenObject()).isAtEndOfFile());
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveEnvironmentAt")
     protected abstract static class PrimEnvironmentAtNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-        protected static final Object[] ENVIRONMENT_KEYS = System.getenv().keySet().toArray();
-
-        @Specialization(guards = "inBounds1(index, ENVIRONMENT_KEYS.length)")
+        @Specialization(guards = "index > 0")
         @TruffleBoundary
         protected final NativeObject doAt(@SuppressWarnings("unused") final Object receiver, final long index) {
             final SqueakImageContext image = getContext();
-            final String key = ENVIRONMENT_KEYS[(int) index - 1].toString();
-            assert key != null : "key should not be null";
-            final String value = systemGetEnv(image.env, key);
-            assert value != null : "value should not be null";
-            return image.asByteString(key + "=" + value);
+            final List<String> entries = Environment.entries(image.env);
+            if (index > entries.size()) {
+                throw PrimitiveFailed.GENERIC_ERROR;
+            }
+            return image.asByteString(entries.get((int) index - 1));
         }
     }
 
@@ -136,6 +242,34 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitivePutEnv")
+    protected abstract static class PrimPutEnvNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
+        /* The argument is a null-terminated "KEY=value" string. */
+        @Specialization(guards = "keyValueString.isByteType()")
+        protected static final NativeObject doPutEnv(@SuppressWarnings("unused") final Object receiver, final NativeObject keyValueString) {
+            if (Environment.putKeyValue(keyValueString)) {
+                return keyValueString;
+            } else {
+                throw PrimitiveFailed.GENERIC_ERROR;
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveUnsetEnv")
+    protected abstract static class PrimUnsetEnvNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
+        /* The argument is a null-terminated string. */
+        @Specialization(guards = "keyString.isByteType()")
+        protected static final Object doUnsetEnv(final Object receiver, final NativeObject keyString) {
+            if (Environment.unset(keyString)) {
+                return receiver;
+            } else {
+                throw PrimitiveFailed.GENERIC_ERROR;
+            }
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveErrorMessageAt")
     protected abstract static class PrimErrorMessageAtNode extends AbstractSysCallPrimitiveNode implements Primitive1WithFallback {
         @Specialization
@@ -144,10 +278,12 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
         }
 
         @TruffleBoundary
+        @SuppressWarnings("restricted")
         private String getErrorMessage(final int errnum) {
             try {
                 final MemorySegment cStringPtr = (MemorySegment) getHandle().invokeExact(errnum);
-                return cStringPtr.getString(0);
+                /* The returned pointer has a size of zero and must be resized to read the string. */
+                return cStringPtr.reinterpret(Long.MAX_VALUE).getString(0);
             } catch (final Throwable e) {
                 throw PrimitiveFailed.andTransferToInterpreterWithError(e);
             }
@@ -675,9 +811,324 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
         private static final int SIGSTOP = 19;
     }
 
-    @TruffleBoundary
     private static String systemGetEnv(final Env env, final String key) {
-        return env.getEnvironment().get(key);
+        return Environment.get(env, key);
+    }
+
+    /**
+     * The environment of a JVM cannot be modified, and changing it through libc is not thread-safe.
+     * Changes made via {@code primitivePutEnv} and {@code primitiveUnsetEnv} are therefore only
+     * recorded here and are visible to the primitives of this plugin, but not to the rest of the
+     * process.
+     */
+    private static final class Environment {
+        /* Maps keys to their new value, or to null if they were unset. */
+        private static final Map<String, String> CHANGES = new HashMap<>();
+
+        private static String toCString(final NativeObject bytes) {
+            final String string = bytes.asStringUnsafe();
+            final int terminatorIndex = string.indexOf('\0');
+            return terminatorIndex >= 0 ? string.substring(0, terminatorIndex) : string;
+        }
+
+        @TruffleBoundary
+        private static synchronized String get(final Env env, final String key) {
+            return CHANGES.containsKey(key) ? CHANGES.get(key) : env.getEnvironment().get(key);
+        }
+
+        /* Answers false if the string is not of the form "KEY=value". */
+        @TruffleBoundary
+        private static synchronized boolean putKeyValue(final NativeObject keyValueString) {
+            final String keyValue = toCString(keyValueString);
+            final int separatorIndex = keyValue.indexOf('=');
+            if (separatorIndex <= 0) {
+                return false;
+            }
+            CHANGES.put(keyValue.substring(0, separatorIndex), keyValue.substring(separatorIndex + 1));
+            return true;
+        }
+
+        /* Answers false if the string is not a valid key. */
+        @TruffleBoundary
+        private static synchronized boolean unset(final NativeObject keyString) {
+            final String key = toCString(keyString);
+            if (key.isEmpty() || key.indexOf('=') >= 0) {
+                return false;
+            }
+            CHANGES.put(key, null);
+            return true;
+        }
+
+        @TruffleBoundary
+        private static synchronized List<String> entries(final Env env) {
+            final List<String> entries = new ArrayList<>();
+            for (final Map.Entry<String, String> entry : env.getEnvironment().entrySet()) {
+                if (!CHANGES.containsKey(entry.getKey())) {
+                    entries.add(entry.getKey() + "=" + entry.getValue());
+                }
+            }
+            for (final Map.Entry<String, String> entry : CHANGES.entrySet()) {
+                if (entry.getValue() != null) {
+                    entries.add(entry.getKey() + "=" + entry.getValue());
+                }
+            }
+            return entries;
+        }
+    }
+
+    /**
+     * Pipes are file handles in Squeak, which the FilePlugin represents by
+     * {@link SeekableByteChannel}s. The two ends of a {@link Pipe} are therefore wrapped in channels
+     * that are not seekable. As with {@code feof()}, the end of file is only reached after an
+     * attempt to read from a pipe whose write end is closed.
+     */
+    private abstract static class AbstractPipeEndChannel implements SeekableByteChannel {
+        protected long position;
+
+        protected abstract void configureBlocking(boolean block) throws IOException;
+
+        protected boolean isAtEndOfFile() {
+            return false;
+        }
+
+        @Override
+        public int read(final ByteBuffer dst) throws IOException {
+            throw new IOException("Not readable");
+        }
+
+        @Override
+        public int write(final ByteBuffer src) throws IOException {
+            throw new IOException("Not writable");
+        }
+
+        @Override
+        public final long position() {
+            return position;
+        }
+
+        @Override
+        public final SeekableByteChannel position(final long newPosition) throws IOException {
+            throw new IOException("Not seekable");
+        }
+
+        @Override
+        public long size() {
+            return position;
+        }
+
+        @Override
+        public final SeekableByteChannel truncate(final long size) throws IOException {
+            throw new IOException("Not seekable");
+        }
+    }
+
+    private static final class PipeReadEndChannel extends AbstractPipeEndChannel {
+        private final Pipe.SourceChannel source;
+        private boolean endOfFile;
+
+        private PipeReadEndChannel(final Pipe.SourceChannel source) {
+            this.source = source;
+        }
+
+        @Override
+        protected void configureBlocking(final boolean block) throws IOException {
+            source.configureBlocking(block);
+        }
+
+        @Override
+        protected boolean isAtEndOfFile() {
+            return endOfFile;
+        }
+
+        @Override
+        public int read(final ByteBuffer dst) throws IOException {
+            final int count = source.read(dst);
+            if (count < 0) {
+                endOfFile = true;
+            } else {
+                position += count;
+            }
+            return count;
+        }
+
+        @Override
+        public long size() {
+            /* The FilePlugin considers a file to be at its end if position >= size. */
+            return endOfFile ? position : Long.MAX_VALUE;
+        }
+
+        @Override
+        public boolean isOpen() {
+            return source.isOpen();
+        }
+
+        @Override
+        public void close() throws IOException {
+            source.close();
+        }
+    }
+
+    private static final class PipeWriteEndChannel extends AbstractPipeEndChannel {
+        private final Pipe.SinkChannel sink;
+
+        private PipeWriteEndChannel(final Pipe.SinkChannel sink) {
+            this.sink = sink;
+        }
+
+        @Override
+        protected void configureBlocking(final boolean block) throws IOException {
+            sink.configureBlocking(block);
+        }
+
+        @Override
+        public int write(final ByteBuffer src) throws IOException {
+            final int count = sink.write(src);
+            position += count;
+            return count;
+        }
+
+        @Override
+        public boolean isOpen() {
+            return sink.isOpen();
+        }
+
+        @Override
+        public void close() throws IOException {
+            sink.close();
+        }
+    }
+
+    /**
+     * File locks are implemented with {@link FileLock}s. With the default file system, these are
+     * advisory locks of the operating system and thus respected by other processes. POSIX locks never conflict with locks of the
+     * same process, while a JVM refuses to lock a region that overlaps with one of its own locks.
+     * Locks held through the same file handle are therefore released before an overlapping region
+     * is locked. Unlike with POSIX, this also unlocks the parts of those locks that are outside of
+     * the new region.
+     */
+    private static final class FileLocks {
+        private static final Map<FileChannel, List<FileLock>> LOCKS = new WeakHashMap<>();
+
+        private static long size(final long length) {
+            return length == 0 ? Long.MAX_VALUE : length; // zero means "until the end of the file"
+        }
+
+        private static long end(final long position, final long size) {
+            return position + size < 0 ? Long.MAX_VALUE : position + size;
+        }
+
+        private static List<FileLock> overlapping(final FileChannel channel, final long offset, final long length) {
+            final List<FileLock> result = new ArrayList<>();
+            final List<FileLock> locks = LOCKS.get(channel);
+            if (locks != null) {
+                locks.removeIf(lock -> !lock.isValid());
+                for (final FileLock lock : locks) {
+                    if (offset < end(lock.position(), lock.size()) && lock.position() < end(offset, size(length))) {
+                        result.add(lock);
+                    }
+                }
+            }
+            return result;
+        }
+
+        private static void release(final FileChannel channel, final List<FileLock> locks) throws IOException {
+            for (final FileLock lock : locks) {
+                lock.close();
+            }
+            LOCKS.get(channel).removeAll(locks);
+        }
+
+        /* Answers whether the region could be locked. */
+        @TruffleBoundary
+        private static synchronized boolean lock(final FileChannel channel, final long offset, final long length, final boolean exclusive) {
+            try {
+                final List<FileLock> ownLocks = overlapping(channel, offset, length);
+                if (!ownLocks.isEmpty()) {
+                    release(channel, ownLocks);
+                }
+                final FileLock lock = channel.tryLock(offset, size(length), !exclusive);
+                if (lock == null) {
+                    return false;
+                }
+                LOCKS.computeIfAbsent(channel, _ -> new ArrayList<>()).add(lock);
+                return true;
+            } catch (final IOException | RuntimeException e) {
+                /* For example, if the channel is closed or locked through another file handle. */
+                return false;
+            }
+        }
+
+        @TruffleBoundary
+        private static synchronized boolean unlock(final FileChannel channel, final long offset, final long length) {
+            if (!channel.isOpen()) {
+                return false;
+            }
+            try {
+                final List<FileLock> ownLocks = overlapping(channel, offset, length);
+                if (!ownLocks.isEmpty()) {
+                    release(channel, ownLocks);
+                }
+                return true;
+            } catch (final IOException e) {
+                return false;
+            }
+        }
+
+        /* Answers whether the region is locked through this file handle or could be locked. */
+        @TruffleBoundary
+        private static synchronized boolean isLockable(final FileChannel channel, final long offset, final long length, final boolean exclusive) {
+            if (!channel.isOpen()) {
+                return false;
+            }
+            if (!overlapping(channel, offset, length).isEmpty()) {
+                return true;
+            }
+            try {
+                final FileLock lock = channel.tryLock(offset, size(length), !exclusive);
+                if (lock == null) {
+                    return false;
+                }
+                lock.close();
+                return true;
+            } catch (final IOException | RuntimeException e) {
+                return false;
+            }
+        }
+    }
+
+    protected abstract static class AbstractFileHandlePrimitiveNode extends AbstractPrimitiveNode {
+        protected static final boolean isLockableHandle(final PointersObject handle) {
+            return handle.getHiddenObject() instanceof FileChannel;
+        }
+
+        protected static final FileChannel getFileChannel(final PointersObject handle) {
+            return (FileChannel) handle.getHiddenObject();
+        }
+
+        protected static final boolean isStdioHandle(final PointersObject handle) {
+            return handle.getHiddenObject() instanceof Byte;
+        }
+
+        protected static final boolean isPipeHandle(final PointersObject handle) {
+            return handle.getHiddenObject() instanceof AbstractPipeEndChannel;
+        }
+
+        protected static final boolean isFileHandle(final PointersObject handle) {
+            return handle.getHiddenObject() instanceof SeekableByteChannel;
+        }
+
+        @TruffleBoundary
+        protected static final long configureBlocking(final PointersObject handle, final boolean block) {
+            if (handle.getHiddenObject() instanceof final AbstractPipeEndChannel channel) {
+                try {
+                    channel.configureBlocking(block);
+                } catch (final IOException e) {
+                    throw PrimitiveFailed.GENERIC_ERROR;
+                }
+            }
+            /* The blocking mode has no effect on regular files. */
+            return 0L;
+        }
     }
 
     @Override
