@@ -6,6 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
+import org.graalvm.collections.EconomicMap;
+import org.graalvm.collections.Equivalence;
 import org.graalvm.collections.UnmodifiableEconomicMap;
 
 import com.oracle.truffle.api.Assumption;
@@ -38,6 +40,11 @@ import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     @CompilationFinal private CyclicAssumption classHierarchyAndMethodDictStable;
     @CompilationFinal private CyclicAssumption classFormatStable;
+    /*
+     * Assumption arrays for direct dispatch with this class as lookup class, keyed by the callTargetStable
+     * assumption of the target method. Shared by all send sites and dropped when this class is invalidated.
+     */
+    private EconomicMap<Assumption, Assumption[]> dispatchAssumptionsCache;
 
     private final SqueakImageContext image;
     @CompilationFinal private boolean instancesAreClasses;
@@ -603,6 +610,21 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         if (classHierarchyAndMethodDictStable != null) {
             classHierarchyAndMethodDictStable.invalidate(reason);
         }
+        dispatchAssumptionsCache = null; // all cached arrays contain the invalidated assumption
+    }
+
+    /** Returns the cached assumptions for the given key or null. The caller must check their validity. */
+    @TruffleBoundary
+    public Assumption[] getCachedDispatchAssumptions(final Assumption key) {
+        return dispatchAssumptionsCache == null ? null : dispatchAssumptionsCache.get(key);
+    }
+
+    @TruffleBoundary
+    public void cacheDispatchAssumptions(final Assumption key, final Assumption[] assumptions) {
+        if (dispatchAssumptionsCache == null) {
+            dispatchAssumptionsCache = EconomicMap.create(Equivalence.IDENTITY);
+        }
+        dispatchAssumptionsCache.put(key, assumptions);
     }
 
     private CyclicAssumption classFormatStable() {
