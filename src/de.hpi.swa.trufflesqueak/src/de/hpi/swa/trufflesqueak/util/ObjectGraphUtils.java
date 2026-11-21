@@ -47,6 +47,9 @@ public final class ObjectGraphUtils {
     private static final int USABLE_THREAD_COUNT = Math.min(Runtime.getRuntime().availableProcessors(), 4);
     private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(USABLE_THREAD_COUNT, r -> new Thread(r, "TruffleSqueakObjectGraphUtils"));
 
+    private static final Object VISITING = new Object();
+    private static final Object VERIFIED = new Object();
+
     private final SqueakImageContext image;
     private final boolean trackOperations;
 
@@ -251,10 +254,27 @@ public final class ObjectGraphUtils {
         return result;
     }
 
+    /**
+     * Replaces all references to each object in {@code fromPointers} with the corresponding object
+     * in {@code toPointers} (Squeak's {@code #elementsForwardIdentityTo:} primitive).
+     *
+     * <p>When every {@code from} and {@code to} is an {@link AbstractSqueakObjectWithClassAndHash},
+     * forwarding pointers are installed lazily in each object's class slot ({@link
+     * AbstractSqueakObjectWithClassAndHash#forwardTo}) and only active Truffle stack frames are
+     * rewritten immediately; heap references and {@link #becomeMap} are cleaned up on the next full
+     * heap traversal. Otherwise, the entire object graph is rewritten eagerly.
+     *
+     * @return {@code true} if the mapping was applied, or {@code false} if
+     *         {@code fromPointers}/{@code toPointers} contained duplicate {@code from} entries or a
+     *         forwarding cycle.
+     */
     @TruffleBoundary
-    public void pointersBecomeOneWay(final Object[] fromPointers, final Object[] toPointers, final boolean copyHash) {
+    public boolean pointersBecomeOneWay(final Object[] fromPointers, final Object[] toPointers, final boolean copyHash) {
+        if (fromPointers.length > 1 && hasDuplicatesOrCycles(fromPointers, toPointers)) {
+            return false;
+        }
         final long startTime = System.nanoTime();
-        boolean allAbstractSqueakObjectWithHash = true;
+        boolean useForwardingPointers = true;
         for (int i = 0; i < fromPointers.length; i++) {
             final Object from = fromPointers[i];
             final Object to = toPointers[i];
@@ -264,15 +284,23 @@ public final class ObjectGraphUtils {
                     if (copyHash) {
                         t.setSqueakHash(MiscUtils.toIntExact(f.getOrCreateSqueakHash()));
                     }
-                    f.forwardTo(t);
                 } else {
-                    allAbstractSqueakObjectWithHash = false;
+                    useForwardingPointers = false;
                 }
             }
         }
         if (!becomeMap.isEmpty()) {
             flattenForwardPointers();
-            if (allAbstractSqueakObjectWithHash) {
+            if (useForwardingPointers) {
+                final MapCursor<Object, Object> cursor = becomeMap.getEntries();
+                while (cursor.advance()) {
+                    final AbstractSqueakObjectWithClassAndHash from = (AbstractSqueakObjectWithClassAndHash) cursor.getKey();
+                    final AbstractSqueakObjectWithClassAndHash to = (AbstractSqueakObjectWithClassAndHash) cursor.getValue();
+                    /* Entries from earlier lazy calls may already forward to `to`; avoid redundant invalidations. */
+                    if (from.isNotForwarded() || from.getForwardingPointer() != to) {
+                        from.forwardTo(to);
+                    }
+                }
                 pointersBecomeOneWayFrames(_ -> {
                 }, becomeMap);
             } else {
@@ -284,18 +312,69 @@ public final class ObjectGraphUtils {
         if (trackOperations) {
             ObjectGraphOperations.POINTERS_BECOME_ONE_WAY.addNanos(System.nanoTime() - startTime);
         }
+        return true;
     }
 
-    /* Ensure forward pointers are never recursive. */
+    /**
+     * Checks in O(n) time whether {@code fromPointers -> toPointers} contains duplicate
+     * {@code from} entries or any cycle. Only performs the graph walk if at least one {@code to}
+     * target also appears as a {@code from} key, reusing {@code edges} to track traversal state.
+     */
+    private static boolean hasDuplicatesOrCycles(final Object[] fromPointers, final Object[] toPointers) {
+        final EconomicMap<Object, Object> edges = EconomicMap.create(Equivalence.IDENTITY, fromPointers.length);
+        boolean possibleCycle = false;
+        for (int i = 0; i < fromPointers.length; i++) {
+            final Object from = fromPointers[i];
+            final Object to = toPointers[i];
+            if (edges.put(from, to) != null) {
+                return true;
+            }
+            if (from != to && edges.containsKey(to)) {
+                possibleCycle = true;
+            }
+        }
+        return possibleCycle && hasCycles(edges);
+    }
+
+    private static boolean hasCycles(final EconomicMap<Object, Object> edges) {
+        final ArrayList<Object> path = new ArrayList<>();
+        final MapCursor<Object, Object> cursor = edges.getEntries();
+        while (cursor.advance()) {
+            Object curr = cursor.getKey();
+            while (curr != null) {
+                final Object next = edges.get(curr);
+                if (next == VISITING) {
+                    return true;
+                }
+                if (next == null || next == curr || next == VERIFIED) {
+                    break;
+                }
+                edges.put(curr, VISITING);
+                path.add(curr);
+                curr = next;
+            }
+            for (final Object node : path) {
+                edges.put(node, VERIFIED);
+            }
+            path.clear();
+        }
+        return false;
+    }
+
+    /**
+     * Collapses multi-hop chains ({@code A -> B -> C}) in {@link #becomeMap} so every entry points
+     * directly to its terminal target. Chains can arise within a single bulk batch or across
+     * consecutive lazy calls before {@link #becomeMap} is cleared by a full heap traversal.
+     */
     private void flattenForwardPointers() {
         final MapCursor<Object, Object> cursor = becomeMap.getEntries();
         while (cursor.advance()) {
-            final Object toPointer = becomeMap.get(cursor.getValue());
-            if (toPointer instanceof final AbstractSqueakObjectWithClassAndHash to) {
-                /* Current value is also key, so update forward object of value's key. */
-                ((AbstractSqueakObjectWithClassAndHash) cursor.getKey()).forwardTo(to);
-                cursor.setValue(to);
+            Object target = cursor.getValue();
+            Object next;
+            while ((next = becomeMap.get(target)) != null) {
+                target = next;
             }
+            cursor.setValue(target);
         }
     }
 
