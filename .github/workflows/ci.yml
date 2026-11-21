@@ -179,7 +179,7 @@ jobs:
       id: timer_squeak_windows
       run: |
         $sw = [System.Diagnostics.Stopwatch]::StartNew()
-        trufflesqueak --download-image trufflesqueak-test ${{ env.VM_ARGS }} -- ..\..\..\..\src\image-tests\runSqueakTests.st
+        trufflesqueak --download-image trufflesqueak-test ${{ env.VM_ARGS }} --engine.Mode=latency -- ..\..\..\..\src\image-tests\runSqueakTests.st
         $sw.Stop()
         $formatted = "{0:D2}:{1:D2}" -f $sw.Elapsed.Minutes, $sw.Elapsed.Seconds
         $safeOs = "${{ matrix.os }}".Replace('-', '_').Replace('.', '_')
@@ -192,7 +192,7 @@ jobs:
       shell: bash
       run: |
         START_TIME=$SECONDS
-        trufflesqueak --download-image trufflesqueak-test ${{ env.VM_ARGS }} -- $(pwd)/src/image-tests/runSqueakTests.st
+        trufflesqueak --download-image trufflesqueak-test ${{ env.VM_ARGS }} --engine.Mode=latency -- $(pwd)/src/image-tests/runSqueakTests.st
         ELAPSED_TIME=$(($SECONDS - $START_TIME))
         FORMATTED_TIME=$(printf "%02d:%02d" $((ELAPSED_TIME / 60)) $((ELAPSED_TIME % 60)))
         SAFE_OS=$(echo "${{ matrix.os }}" | tr '-' '_' | tr '.' '_')
