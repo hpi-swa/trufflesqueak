@@ -63,7 +63,14 @@ public final class WeakVariablePointersObject extends AbstractVariablePointersOb
     public Object getFromWeakVariablePart(final Node node, final long index, final InlinedConditionProfile weakRefProfile) {
         final Object value = getObjectFromVariablePart(index);
         if (weakRefProfile.profile(node, value instanceof WeakRef)) {
-            return NilObject.nullToNil(((WeakRef) value).get());
+            final AbstractSqueakObject referent = ((WeakRef) value).get();
+            if (referent == null) {
+                /* Drop the cleared WeakRef so that it does not linger until the slot is overwritten. */
+                putObjectFromVariablePart(index, NilObject.SINGLETON);
+                return NilObject.SINGLETON;
+            } else {
+                return referent;
+            }
         } else {
             assert value != null;
             return value;
