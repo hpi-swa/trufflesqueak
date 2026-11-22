@@ -73,7 +73,8 @@ public final class NewspeakLookup {
             if (enclosingObjectHolder == null) {
                 return methodReceiver;
             } else {
-                return enclosingObjectHolder.getOtherPointer(NEWSPEAK_CLASS.ENCLOSING_OBJECT);
+                /* The enclosing object may have been forwarded by a become in the meantime. */
+                return AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(enclosingObjectHolder.getOtherPointer(NEWSPEAK_CLASS.ENCLOSING_OBJECT));
             }
         }
 
