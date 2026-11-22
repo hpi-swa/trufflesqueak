@@ -625,6 +625,10 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
             final ClassObject methodClass = getMethodClassOrNullSlow();
             if (methodClass != null) {
                 className = methodClass.getClassName();
+            } else if (getMethodClassOrMixinSlow() instanceof final PointersObject mixin && mixin.size() > 0 && mixin.instVarAt0Slow(0) instanceof final NativeObject mixinName &&
+                            mixinName.isByteType()) {
+                /* Newspeak methods are owned by mixins, whose first slot is their name. */
+                className = mixinName.asStringUnsafe();
             }
             final NativeObject selectorObj = getCompiledInSelector();
             if (selectorObj != null) {
