@@ -113,9 +113,9 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         if (!isNotForwarded()) {
             return "forward to " + getForwardingPointer().toString();
         }
-        if (image.isMetaClass(getSqueakClass())) {
+        if (image.isMetaClass(getSqueakClass()) || isMetaclassLike()) {
             final Object classInstance = pointers[METACLASS.THIS_CLASS - CLASS_DESCRIPTION.INLINE_POINTERS];
-            if (classInstance != NilObject.SINGLETON && ((ClassObject) classInstance).pointers[CLASS.NAME] instanceof final NativeObject metaClassName) {
+            if (classInstance instanceof final ClassObject c && c.pointers.length > CLASS.NAME && c.pointers[CLASS.NAME] instanceof final NativeObject metaClassName) {
                 return metaClassName.asStringUnsafe() + " class";
             } else {
                 return "Unknown metaclass";
@@ -127,12 +127,21 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
             } else {
                 return "Unknown classTrait";
             }
-        } else if (size() >= CLASS.NAME && pointers[CLASS.NAME] instanceof final NativeObject className) {
+        } else if (pointers.length > CLASS.NAME && pointers[CLASS.NAME] instanceof final NativeObject className) {
             // this also works for traits, since TRAIT.NAME == CLASS.NAME
             return className.asStringUnsafe();
         } else {
             return "Unknown behavior";
         }
+    }
+
+    /**
+     * Answers true for metaclasses that are not instances of Smalltalk's Metaclass (e.g., Newspeak
+     * metaclasses), which also refer to their sole instance through their last slot.
+     */
+    private boolean isMetaclassLike() {
+        return pointers != null && pointers.length == METACLASS.INST_SIZE - CLASS_DESCRIPTION.INLINE_POINTERS &&
+                        pointers[METACLASS.THIS_CLASS - CLASS_DESCRIPTION.INLINE_POINTERS] instanceof final ClassObject c && c.getSqueakClass() == this;
     }
 
     private boolean isAClassTrait() {
@@ -368,6 +377,10 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         assert superclass == null || superclass.assertNotForwarded();
         invalidateClassHierarchyAndMethodDictStableAssumption("new superclass");
         this.superclass = superclass;
+        if (superclass != null && superclass.instancesAreClasses) {
+            /* Subclasses of behavior classes are behavior classes (e.g., new metaclasses). */
+            setInstancesAreClasses();
+        }
         /*
          * TODO: Instead of a full global flush, this should be refined to only flush entries in
          * image.methodCache where the entry's class is `this` class or a subclass of `this` class.
@@ -565,9 +578,11 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     public void become(final ClassObject other) {
         becomeOtherClass(other);
 
-        final boolean otherInstancesAreClasses = image.isMetaClass(other.getSqueakClass());
+        /* Whether instances are classes is determined by the contents, which are swapped below. */
+        final boolean otherInstancesAreClasses = other.instancesAreClasses;
         if (instancesAreClasses != otherInstancesAreClasses) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
+            other.instancesAreClasses = instancesAreClasses;
             instancesAreClasses = otherInstancesAreClasses;
         }
 
