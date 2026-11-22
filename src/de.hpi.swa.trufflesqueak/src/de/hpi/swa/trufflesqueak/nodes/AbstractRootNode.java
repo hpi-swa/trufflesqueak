@@ -13,6 +13,7 @@ import com.oracle.truffle.api.nodes.RootNode;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.AbstractInterpreterInstrumentableNode;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.InterpreterNewsqueakV4Node;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.InterpreterSistaV1Node;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.InterpreterV3PlusClosuresNode;
 
@@ -21,13 +22,20 @@ public abstract class AbstractRootNode extends RootNode {
 
     protected AbstractRootNode(final SqueakImageContext image, final CompiledCodeObject code) {
         super(image.getLanguage(), code.getFrameDescriptor());
-        interpreterNode = code.getHasV3PlusClosuresBytecodes() ? new InterpreterV3PlusClosuresNode(image, code) : new InterpreterSistaV1Node(image, code);
+        if (code.getHasV3PlusClosuresBytecodes()) {
+            interpreterNode = new InterpreterV3PlusClosuresNode(image, code);
+        } else if (image.isNewspeak()) {
+            interpreterNode = new InterpreterNewsqueakV4Node(image, code);
+        } else {
+            interpreterNode = new InterpreterSistaV1Node(image, code);
+        }
     }
 
     protected AbstractRootNode(final AbstractRootNode original) {
         super(SqueakImageContext.get(original).getLanguage(), original.getFrameDescriptor());
         interpreterNode = switch (original.interpreterNode) {
             case InterpreterSistaV1Node n -> new InterpreterSistaV1Node(n);
+            case InterpreterNewsqueakV4Node n -> new InterpreterNewsqueakV4Node(n);
             case InterpreterV3PlusClosuresNode n -> new InterpreterV3PlusClosuresNode(n);
             default -> throw CompilerDirectives.shouldNotReachHere("Unknown node " + original);
         };

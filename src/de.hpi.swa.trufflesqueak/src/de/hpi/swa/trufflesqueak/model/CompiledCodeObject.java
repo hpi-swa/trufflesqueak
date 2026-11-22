@@ -40,6 +40,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Abst
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNode.DispatchPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.AbstractDecoder;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.AbstractDecoder.ShadowBlockParams;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.DecoderNewsqueakV4;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.DecoderSistaV1;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.DecoderV3PlusClosures;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
@@ -431,9 +432,35 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return CompiledCodeHeaderUtils.getHasV3PlusClosuresBytecodes(internalHeader);
     }
 
+    /** The secondary bytecode set is NewsqueakV4 in Newspeak images and SistaV1 in all others. */
+    public boolean getHasNewsqueakV4Bytecodes(final SqueakImageContext image) {
+        return !getHasV3PlusClosuresBytecodes() && image.isNewspeak();
+    }
+
+    /** See StackInterpreter>>accessModifierOfMethodHeader:. */
+    public int getAccessModifier() {
+        return CompiledCodeHeaderUtils.getAccessModifier(internalHeader);
+    }
+
+    public boolean isPublic() {
+        return getAccessModifier() == ACCESS_MODIFIER_PUBLIC;
+    }
+
+    public boolean isPrivate() {
+        return getAccessModifier() == ACCESS_MODIFIER_PRIVATE;
+    }
+
+    public boolean isProtected() {
+        return getAccessModifier() == ACCESS_MODIFIER_PROTECTED;
+    }
+
     private AbstractDecoder getDecoder() {
         CompilerAsserts.neverPartOfCompilation();
-        return getHasV3PlusClosuresBytecodes() ? DecoderV3PlusClosures.SINGLETON : DecoderSistaV1.SINGLETON;
+        if (getHasV3PlusClosuresBytecodes()) {
+            return DecoderV3PlusClosures.SINGLETON;
+        } else {
+            return SqueakImageContext.getSlow().isNewspeak() ? DecoderNewsqueakV4.SINGLETON : DecoderSistaV1.SINGLETON;
+        }
     }
 
     @Override
@@ -745,6 +772,9 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         CompilerAsserts.neverPartOfCompilation();
         final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
         if (hasMethodClass(readNode)) {
+            if (!(readNode.execute((AbstractPointersObject) getMethodClassAssociation(), CLASS_BINDING.VALUE) instanceof ClassObject)) {
+                return null; /* e.g., a mixin in case of Newspeak methods. */
+            }
             final ClassObject methodClass = getMethodClass(readNode);
             if (methodClass.isNotForwarded()) {
                 return methodClass;
@@ -755,6 +785,23 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
             }
         }
         return null;
+    }
+
+    /**
+     * Answers the value of the method class association, which is a class for Smalltalk methods
+     * and a mixin for Newspeak methods. See StackInterpreter>>methodClassOf:.
+     */
+    public Object getMethodClassOrMixinSlow() {
+        CompilerAsserts.neverPartOfCompilation();
+        if (getMethodClassAssociation() instanceof final AbstractPointersObject apo && apo.instsize() > CLASS_BINDING.VALUE) {
+            final Object value = AbstractPointersObjectReadNode.getUncached().execute(apo, CLASS_BINDING.VALUE);
+            if (value instanceof final AbstractSqueakObjectWithClassAndHash o && !o.isNotForwarded()) {
+                return o.getForwardingPointer();
+            }
+            return value;
+        } else {
+            return NilObject.SINGLETON;
+        }
     }
 
     /** CompiledMethod>>#methodClass. */
@@ -859,6 +906,10 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
      *   sign bit:       1 bit:    selects the instruction set, >= 0 Primary, < 0 Secondary (#signFlag)
      * </pre>
      */
+    public static final int ACCESS_MODIFIER_PUBLIC = 0b00;
+    public static final int ACCESS_MODIFIER_PRIVATE = 0b01;
+    public static final int ACCESS_MODIFIER_PROTECTED = 0b10;
+
     public static final class CompiledCodeHeaderUtils {
         /* Bits 30-59 of the header word, set in negative headers that are sign-extended from 31 bits. */
         private static final long LEGACY_SIGN_EXTENSION_BITS = 0x0FFFFFFFC0000000L;
@@ -897,6 +948,10 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         private static int getNumArguments(final long internalHeader) {
             // Mask to field size; size limited in image to 6 bits (7 bits with extension).
             return (int) (internalHeader >> 24) & 0xFF;
+        }
+
+        private static int getAccessModifier(final long internalHeader) {
+            return (int) (internalHeader >> 32) & 0x3;
         }
 
         private static boolean getHasPrimitive(final long internalHeader) {

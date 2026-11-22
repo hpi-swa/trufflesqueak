@@ -27,7 +27,8 @@ public final class DispatchUtils {
         final Assumption callTargetStable;
         if (lookupResult instanceof CompiledCodeObject method) {
             assert method.isCompiledMethod();
-            targetClass = method.getMethodClassSlow();
+            /* Null if the method is not owned by a class (e.g., Newspeak methods owned by mixins). */
+            targetClass = method.getMethodClassOrNullSlow();
             callTargetStable = method.getCallTargetStable();
         } else {
             /* DNU or OAM, return assumptions for all superclasses. */

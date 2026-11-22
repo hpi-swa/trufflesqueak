@@ -48,6 +48,18 @@ public final class ObjectLayouts {
          * Relative offsets to {@link CLASS_DESCRIPTION} for {@link ClassObject}.
          */
         public static final int NAME = 3;
+        public static final int CLASS_POOL = 4;
+    }
+
+    public static final class NEWSPEAK_CLASS {
+        /** Slot of a mixin application (class or metaclass) that refers to its mixin. */
+        public static final int MIXIN = 3;
+        /** Slot of a mixin application (class or metaclass) that refers to its enclosing object. */
+        public static final int ENCLOSING_OBJECT = 4;
+    }
+
+    public static final class NEWSPEAK_MIXIN {
+        public static final int ENCLOSING_MIXIN = 3;
     }
 
     public static final class CLASS_BINDING {

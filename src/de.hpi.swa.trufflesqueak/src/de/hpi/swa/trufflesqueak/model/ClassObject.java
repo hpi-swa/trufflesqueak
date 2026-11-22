@@ -419,6 +419,43 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     @TruffleBoundary
     public Object lookupInMethodDictSlow(final NativeObject selector) {
+        return lookupInMethodDictSlow(selector, LOOKUP_ANY);
+    }
+
+    /**
+     * Same as {@link #lookupInMethodDictSlow(NativeObject)}, but ignores access modifiers of
+     * methods. See StackInterpreter>>lookupMNU.
+     */
+    @TruffleBoundary
+    public Object lookupInMethodDictIgnoringAccessSlow(final NativeObject selector) {
+        return lookupInMethodDictSlow(selector, LOOKUP_ANY);
+    }
+
+    /**
+     * Same as {@link #lookupInMethodDictSlow(NativeObject)}, but skips private methods. See
+     * StackInterpreter>>lookupProtected:startingAt:rule:.
+     */
+    @TruffleBoundary
+    public Object lookupProtectedInMethodDictSlow(final NativeObject selector) {
+        return lookupInMethodDictSlow(selector, LOOKUP_PROTECTED);
+    }
+
+    /** Looks up selector in the method dictionary of this class only (ignoring access modifiers). */
+    @TruffleBoundary
+    public Object lookupInOwnMethodDictSlow(final NativeObject selector) {
+        assert assertNotForwarded();
+        if (methodDict == null) {
+            return null;
+        }
+        return lookupMethodInDictionary(getResolvedMethodDict(), selector, selector.getSqueakHashInt());
+    }
+
+    /* Lookup rules, see StackInterpreter>>lookupOrdinarySend and #lookupProtected:startingAt:rule:. */
+    private static final int LOOKUP_ANY = 0;
+    private static final int LOOKUP_PUBLIC = 1;
+    private static final int LOOKUP_PROTECTED = 2;
+
+    private Object lookupInMethodDictSlow(final NativeObject selector, final int lookupRule) {
         final int selectorHash = selector.getSqueakHashInt();
         ClassObject lookupClass = this;
         while (lookupClass != null) {
@@ -432,14 +469,26 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
             }
             final Object result = lookupMethodInDictionary(lookupClass.getResolvedMethodDict(), selector, selectorHash);
             if (result != null) {
-                return result;
+                if (lookupRule == LOOKUP_ANY || !(result instanceof final CompiledCodeObject method) || method.isPublic()) {
+                    return result;
+                } else if (lookupRule == LOOKUP_PUBLIC) {
+                    if (method.isProtected()) {
+                        return null; /* Protected methods cannot be called by ordinary sends. */
+                    }
+                    /* Private methods are invisible to ordinary sends, continue in superclass. */
+                } else {
+                    assert lookupRule == LOOKUP_PROTECTED;
+                    if (!method.isPrivate()) {
+                        return result;
+                    }
+                }
             }
             if (lookupClass.getSuperclassOrNull() == null) {
                 break;
             }
             lookupClass = lookupClass.getResolvedSuperclass();
         }
-        assert !selector.isDoesNotUnderstand(image) : "Could not find does not understand method";
+        assert lookupRule != LOOKUP_ANY || !selector.isDoesNotUnderstand(image) : "Could not find does not understand method";
         return null; /* Signals a doesNotUnderstand. */
     }
 
@@ -495,8 +544,8 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         if (current == null) {
             assert originalSelector != image.doesNotUnderstand : "Fatal dispatch error: Recursive doesNotUnderstand:";
 
-            final CompiledCodeObject dnuMethod = lookupMethodInMethodDictSlow(image.doesNotUnderstand);
-            if (dnuMethod != null) {
+            /* The lookup of #doesNotUnderstand: ignores access modifiers. */
+            if (lookupInMethodDictIgnoringAccessSlow(image.doesNotUnderstand) instanceof final CompiledCodeObject dnuMethod) {
                 return dnuMethod;
             } else {
                 throw SqueakException.create("Fatal dispatch error: #doesNotUnderstand: not found in", this);
@@ -509,8 +558,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
                 throw SqueakException.create("Fatal dispatch error: hit nil method dictionary in class with no superclass while sending", originalSelector);
             }
 
-            final CompiledCodeObject ciMethod = startingClass.lookupMethodInMethodDictSlow(image.cannotInterpretSelector);
-            if (ciMethod != null) {
+            if (startingClass.lookupInMethodDictIgnoringAccessSlow(image.cannotInterpretSelector) instanceof final CompiledCodeObject ciMethod) {
                 return ciMethod;
             } else {
                 throw SqueakException.create("Fatal dispatch error: #cannotInterpret: not found in superclass chain of", current);

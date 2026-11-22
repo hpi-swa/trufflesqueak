@@ -62,6 +62,7 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.FRACTION;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.MESSAGE;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.POINT;
@@ -86,6 +87,7 @@ import de.hpi.swa.trufflesqueak.tools.SqueakMessageInterceptor;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.DebugUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.NewspeakLookup;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.MethodCacheEntry;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
@@ -183,6 +185,12 @@ public final class SqueakImageContext {
     public final SqueakImageFlags flags = new SqueakImageFlags();
     private String imagePath;
     @CompilationFinal public int imageFormat;
+    /*
+     * Newspeak images use the NewsqueakV4 bytecode set as secondary bytecode set (instead of
+     * SistaV1) and require access control for method lookups.
+     */
+    @CompilationFinal private boolean isNewspeak;
+    public final NewspeakLookup.Cache newspeakLookupCache = new NewspeakLookup.Cache();
     private final TruffleFile homePath;
     @CompilationFinal(dimensions = 1) private byte[] resourcesDirectoryBytes;
     @CompilationFinal(dimensions = 1) private byte[] resourcesPathBytes;
@@ -303,6 +311,21 @@ public final class SqueakImageContext {
                 interrupt.clear();
             }
         }
+    }
+
+    public boolean isNewspeak() {
+        return isNewspeak;
+    }
+
+    /** Access modifiers of methods (public, protected, private) only exist in Newspeak images. */
+    public boolean enforcesAccessControl() {
+        return isNewspeak;
+    }
+
+    public void setIsNewspeak() {
+        CompilerAsserts.neverPartOfCompilation();
+        LogUtils.IMAGE.fine("Newspeak image detected (secondary bytecode set is NewsqueakV4)");
+        isNewspeak = true;
     }
 
     public SqueakImage getSqueakImage() {

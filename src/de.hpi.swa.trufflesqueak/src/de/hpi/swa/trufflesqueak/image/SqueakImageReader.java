@@ -11,6 +11,7 @@ import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -32,6 +33,7 @@ import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS_BINDING;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS_DESCRIPTION;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.METACLASS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
@@ -319,7 +321,56 @@ public final class SqueakImageReader {
         image.specialSelectors.fillin(specialChunk.getChunk(SPECIAL_OBJECT.SPECIAL_SELECTORS));
     }
 
+    /**
+     * Determines the secondary bytecode set of the image through the class variable
+     * SecondaryBytecodeSetEncoderClass of CompiledMethod (or one of its superclasses). This is done
+     * on chunk level because the bytecode set must be known before methods and contexts are filled
+     * in. Newspeak images use NewsqueakV4, all other images use SistaV1.
+     */
+    private void detectSecondaryBytecodeSet() {
+        final SqueakImageChunk specialChunk = chunkMap.get(specialObjectsPointer);
+        SqueakImageChunk classChunk = getChunkOrNull(specialChunk.getWord(SPECIAL_OBJECT.CLASS_COMPILED_METHOD));
+        while (classChunk != null && isBehaviorChunk(classChunk)) {
+            final int classPoolIndex = CLASS_DESCRIPTION.INLINE_POINTERS + CLASS.CLASS_POOL;
+            final SqueakImageChunk classPool = classChunk.getWordSize() > classPoolIndex ? getChunkOrNull(classChunk.getWord(classPoolIndex)) : null;
+            /* Class pools are dictionaries (tally, array of bindings). */
+            final SqueakImageChunk bindings = classPool != null && classPool.getWordSize() >= 2 ? getChunkOrNull(classPool.getWord(1)) : null;
+            if (bindings != null && bindings.getFormat() == 2) {
+                for (int i = 0; i < bindings.getWordSize(); i++) {
+                    final SqueakImageChunk binding = getChunkOrNull(bindings.getWord(i));
+                    if (binding != null && binding.getFormat() == 1 && binding.getWordSize() >= 2 && hasByteContents(getChunkOrNull(binding.getWord(CLASS_BINDING.KEY)), "SecondaryBytecodeSetEncoderClass")) {
+                        final SqueakImageChunk encoderClass = getChunkOrNull(binding.getWord(CLASS_BINDING.VALUE));
+                        final int nameIndex = CLASS_DESCRIPTION.INLINE_POINTERS + CLASS.NAME;
+                        if (encoderClass != null && isBehaviorChunk(encoderClass) && encoderClass.getWordSize() > nameIndex &&
+                                        hasByteContents(getChunkOrNull(encoderClass.getWord(nameIndex)), "EncoderForNewsqueakV4")) {
+                            image.setIsNewspeak();
+                        }
+                        return;
+                    }
+                }
+            }
+            classChunk = getSuperclassChunk(classChunk);
+        }
+    }
+
+    private SqueakImageChunk getChunkOrNull(final long pointer) {
+        if ((pointer & 7) != SqueakImageConstants.OBJECT_TAG) {
+            return null;
+        }
+        final SqueakImageChunk chunk = chunkMap.get(pointer);
+        return chunk == null || chunk.isNil() ? null : chunk;
+    }
+
+    private static boolean hasByteContents(final SqueakImageChunk chunk, final String expected) {
+        if (chunk == null || chunk.getFormat() < 16 || chunk.getFormat() > 23) {
+            return false;
+        }
+        /* The bytes of a chunk do not include padding. */
+        return new String(chunk.getBytes(), StandardCharsets.US_ASCII).equals(expected);
+    }
+
     private void initObjects() {
+        detectSecondaryBytecodeSet();
         initPrebuiltConstant();
         fillInClassObjects();
         fillInObjects();
