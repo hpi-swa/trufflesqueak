@@ -25,6 +25,7 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes;
+import de.hpi.swa.trufflesqueak.nodes.accessing.FloatObjectNodes.FloatObjectNormalizeNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0WithFallback;
@@ -75,8 +76,10 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
     public abstract static class PrimFloat64ArrayAtNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
         @Specialization(guards = {"receiver.isLongType()", "inBounds1(index, receiver.getLongLength())"})
-        protected static final double doAt(final NativeObject receiver, final long index) {
-            return Double.longBitsToDouble(receiver.getLong(index - 1));
+        protected static final Object doAt(final NativeObject receiver, final long index,
+                        @Bind final Node node,
+                        @Cached final FloatObjectNormalizeNode normalizeNode) {
+            return normalizeNode.execute(node, Double.longBitsToDouble(receiver.getLong(index - 1)));
         }
     }
 
