@@ -1,4 +1,4 @@
-| fileEntry testSuite nonTerminatingTestCases failingTests result retries exitCode |
+| fileEntry testSuite failingTests result retries exitCode |
 
 StdIOWriteStream stdout nextPutAll: 'Setting author information for testing ...'; newLine; flush.
 Utilities classPool at: #AuthorName put: 'TruffleSqueak'.
@@ -26,15 +26,6 @@ StdIOWriteStream stdout nextPutAll: 'Determining SmallInteger range ...'; newLin
     SmallInteger instVarNamed: 'minVal' put: val.
     SmallInteger instVarNamed: 'maxVal' put: -1 - val ] value.
 
-nonTerminatingTestCases := OrderedCollection new.
-{
-} collect: [:assoc | | testCase |
-    testCase := Smalltalk at: assoc key.
-    assoc value do: [:sel | nonTerminatingTestCases add: (testCase selector: sel) ]].
-StdIOWriteStream stdout newLine; nextPutAll: 'Non-terminating TestCases:'; newLine; flush.
-nonTerminatingTestCases do: [:ea | StdIOWriteStream stdout nextPutAll: '- ', ea asString; newLine; flush ].
-StdIOWriteStream stdout newLine; flush.
-
 failingTests := OrderedCollection new.
 {
     #FloatTest -> #(#testIsDenormalized). "assumes denormalized Floats are never SmallFloat64s, but all finite Floats are SmallFloat64s (doubles) in TruffleSqueak."
@@ -45,8 +36,7 @@ failingTests := OrderedCollection new.
 
 StdIOWriteStream stdout newLine; nextPutAll: 'Passing TestCases:'; newLine; flush.
 testSuite := TestCase buildSuite.
-testSuite tests removeAllSuchThat: [:ea | nonTerminatingTestCases anySatisfy: [:t | ea class == t class and: [ ea selector == t selector ]]].
-testSuite tests removeAllSuchThat: [:ea | failingTests            anySatisfy: [:t | ea class == t class and: [ ea selector == t selector ]]].
+testSuite tests removeAllSuchThat: [:ea | failingTests anySatisfy: [:t | ea class == t class and: [ ea selector == t selector ]]].
 result := testSuite run.
 result printReport.
 
