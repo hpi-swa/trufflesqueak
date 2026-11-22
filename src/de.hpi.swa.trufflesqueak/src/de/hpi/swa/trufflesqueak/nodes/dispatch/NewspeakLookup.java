@@ -107,10 +107,12 @@ public final class NewspeakLookup {
             }
         }
 
-        private Assumption[] toAssumptions(final Object lookupResult) {
+        private Assumption[] toAssumptions(final NativeObject selector, final Object lookupResult) {
             final ArrayList<Assumption> assumptions = new ArrayList<>(classes.size() + 1);
             if (lookupResult instanceof final CompiledCodeObject method) {
                 assumptions.add(method.getCallTargetStable());
+            } else if (selector != null) {
+                assumptions.add(selector.getSqueakClass().getImage().getFailedLookupAssumption(selector));
             }
             for (final ClassObject classObject : classes) {
                 assumptions.add(classObject.getClassHierarchyAndMethodDictStable());
@@ -179,7 +181,7 @@ public final class NewspeakLookup {
             currentClass = classOfEnclosingObject(holder);
             targetMixin = enclosingMixinOf(targetMixin);
         }
-        return new Result(null, currentClass, holder, dependencies.toAssumptions(null));
+        return new Result(null, currentClass, holder, dependencies.toAssumptions(null, null));
     }
 
     /** See StackInterpreter>>lookupImplicitReceiverSend. */
@@ -234,7 +236,7 @@ public final class NewspeakLookup {
         final ClassObject mixinApplication = findApplicationOfTargetMixin(dependencies, mixin, receiverClass);
         final Object lookupResult = mixinApplication.lookupInOwnMethodDictSlow(selector);
         if (lookupResult instanceof final CompiledCodeObject method && method.isPrivate()) {
-            return new Result(method, receiverClass, holder, dependencies.toAssumptions(method));
+            return new Result(method, receiverClass, holder, dependencies.toAssumptions(selector, method));
         }
         return lookupProtected(dependencies, receiverClass, holder, receiverClass, selector);
     }
@@ -249,7 +251,7 @@ public final class NewspeakLookup {
         dependencies.addWithSuperclasses(startClass);
         final Object lookupResult = startClass.lookupProtectedInMethodDictSlow(selector);
         /* The lookup of doesNotUnderstand: starts at startClass. */
-        return new Result(lookupResult, startClass, holder, dependencies.toAssumptions(lookupResult));
+        return new Result(lookupResult, startClass, holder, dependencies.toAssumptions(selector, lookupResult));
     }
 
     /**

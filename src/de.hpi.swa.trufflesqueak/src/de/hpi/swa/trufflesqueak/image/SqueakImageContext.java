@@ -18,6 +18,8 @@ import java.util.WeakHashMap;
 import java.util.logging.Level;
 
 import de.hpi.swa.trufflesqueak.nodes.plugins.network.SqueakSocketContext;
+import org.graalvm.collections.EconomicMap;
+import org.graalvm.collections.Equivalence;
 import org.graalvm.collections.UnmodifiableEconomicMap;
 
 import com.oracle.truffle.api.Assumption;
@@ -191,6 +193,7 @@ public final class SqueakImageContext {
      */
     @CompilationFinal private boolean isNewspeak;
     public final NewspeakLookup.Cache newspeakLookupCache = new NewspeakLookup.Cache();
+    private final EconomicMap<NativeObject, CyclicAssumption> failedLookupAssumptions = EconomicMap.create(Equivalence.IDENTITY);
     private final TruffleFile homePath;
     @CompilationFinal(dimensions = 1) private byte[] resourcesDirectoryBytes;
     @CompilationFinal(dimensions = 1) private byte[] resourcesPathBytes;
@@ -730,6 +733,39 @@ public final class SqueakImageContext {
     public void flushCachesForSelector(final NativeObject selector) {
         flushCachesForSelectorInClassTable(selector);
         flushMethodCacheForSelector(selector);
+        invalidateFailedLookups(selector);
+    }
+
+    /**
+     * Answers an assumption that is valid as long as caches are not flushed for the given selector.
+     * Cached lookups that did not find a method (e.g., doesNotUnderstand:) must depend on it,
+     * because a method that is installed for the selector later on cannot invalidate them through
+     * its own assumptions.
+     */
+    @TruffleBoundary
+    public Assumption getFailedLookupAssumption(final NativeObject selector) {
+        CyclicAssumption assumption = failedLookupAssumptions.get(selector);
+        if (assumption == null) {
+            assumption = new CyclicAssumption("No method installed for selector");
+            failedLookupAssumptions.put(selector, assumption);
+        }
+        return assumption.getAssumption();
+    }
+
+    @TruffleBoundary
+    private void invalidateFailedLookups(final NativeObject selector) {
+        final CyclicAssumption assumption = failedLookupAssumptions.removeKey(selector);
+        if (assumption != null) {
+            assumption.invalidate("caches flushed for selector");
+        }
+    }
+
+    @TruffleBoundary
+    public void invalidateAllFailedLookups() {
+        for (final CyclicAssumption assumption : failedLookupAssumptions.getValues()) {
+            assumption.invalidate("caches flushed");
+        }
+        failedLookupAssumptions.clear();
     }
 
     public TruffleFile getHomePath() {

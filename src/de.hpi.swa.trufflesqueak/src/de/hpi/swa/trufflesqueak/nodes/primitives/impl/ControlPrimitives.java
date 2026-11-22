@@ -466,6 +466,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected final Object doFlush(final Object receiver) {
             final SqueakImageContext image = getContext();
             image.flushMethodCache();
+            image.invalidateAllFailedLookups();
             image.flushNamedPrimitives();
             return receiver;
         }

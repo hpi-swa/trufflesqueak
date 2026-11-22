@@ -65,7 +65,7 @@ public final class DispatchSelector4Node extends DispatchSelectorNode {
         @NeverDefault
         public static final DispatchDirect4Node create(final NativeObject selector, final ClassObject lookupClass, final boolean canPrimFail) {
             final Object lookupResult = lookupClass.lookupInMethodDictSlow(selector);
-            final Assumption[] assumptions = DispatchUtils.createAssumptions(lookupClass, lookupResult);
+            final Assumption[] assumptions = DispatchUtils.createAssumptions(selector, lookupClass, lookupResult);
             if (lookupResult instanceof final CompiledCodeObject lookupMethod) {
                 if (lookupMethod.getNumArgs() == 4) {
                     return create(assumptions, lookupMethod);
