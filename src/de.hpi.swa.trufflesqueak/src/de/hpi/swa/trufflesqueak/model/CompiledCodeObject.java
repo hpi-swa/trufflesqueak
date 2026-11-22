@@ -854,11 +854,18 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
      *   (index 34)      1 bit:    jit without counters - reserved for methods that have been optimized by Sista
      *   (index 35)      1 bit:    has primitive
      *   (index 36)      2 bits:   frame size: 00 = SmallFrame, 01 = LargeFrame, 1X = HugeFrame
-     *   (index 38)      25 bits:  reserved, 0
+     *   (index 38)      1 bit:    header word was sign-extended from 31 bits (bits 30-59 set)
+     *   (index 39)      24 bits:  reserved, 0
      *   sign bit:       1 bit:    selects the instruction set, >= 0 Primary, < 0 Secondary (#signFlag)
      * </pre>
      */
     public static final class CompiledCodeHeaderUtils {
+        /* Bits 30-59 of the header word, set in negative headers that are sign-extended from 31 bits. */
+        private static final long LEGACY_SIGN_EXTENSION_BITS = 0x0FFFFFFFC0000000L;
+        /* Bits 48-59 are reserved and zero in all headers that use the extension fields. */
+        private static final long LEGACY_SIGN_EXTENSION_CHECK_MASK = 0x0FFF000000000000L;
+        /* Internal marker (index 38) to be able to restore the original header word. */
+        private static final long INTERNAL_LEGACY_SIGN_EXTENSION_FLAG = 1L << 38;
 
         // Frame size table indexed by the concatenation of hugeFrame and largeFrame bits.
         // HUGE_FRAMESIZE limits numArgs / numTemps to 127.
@@ -906,6 +913,19 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
         // Convert 61-or-more-bit SmallInteger into internal representation.
         public static long fromSmallIntegerValue(final long headerWord) {
+            if (headerWord < 0 && (headerWord & LEGACY_SIGN_EXTENSION_CHECK_MASK) != 0) {
+                /*
+                 * Negative header that was not built from the 61-bit SmallInteger minVal (e.g., in
+                 * images that originate from 32-bit images such as Newspeak images). All upper bits
+                 * are sign bits and not extension fields.
+                 */
+                return fromNormalizedSmallIntegerValue(headerWord & ~LEGACY_SIGN_EXTENSION_BITS) | INTERNAL_LEGACY_SIGN_EXTENSION_FLAG;
+            } else {
+                return fromNormalizedSmallIntegerValue(headerWord);
+            }
+        }
+
+        private static long fromNormalizedSmallIntegerValue(final long headerWord) {
             // @formatter:off
             return
                 // 1. MASTER PASS-THROUGH (Shift = 0)
@@ -936,6 +956,9 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
             return
                 // 0. Sign bit with sign extension to 61-bits
                 (internalHeader < 0 ? SqueakImageConstants.SMALL_INTEGER_MIN_VAL : 0) |
+
+                // 0b. Sign extension of headers that originate from 32-bit images
+                ((internalHeader & INTERNAL_LEGACY_SIGN_EXTENSION_FLAG) != 0 ? LEGACY_SIGN_EXTENSION_BITS : 0) |
 
                 // 1. MASTER PASS-THROUGH (Shift = 0)
                 // HugeFrame (37), numArgs low (24-27), numLiterals (0-14)
