@@ -1,4 +1,4 @@
-| fileEntry testSuite nonTerminatingTestCases failingTests result retries exitCode val next |
+| fileEntry testSuite nonTerminatingTestCases failingTests result retries exitCode |
 
 StdIOWriteStream stdout nextPutAll: 'Setting author information for testing ...'; newLine; flush.
 Utilities classPool at: #AuthorName put: 'TruffleSqueak'.
@@ -19,11 +19,12 @@ CompiledMethod preferredBytecodeSetEncoderClass == EncoderForSistaV1
 "TruffleSqueak's SmallIntegers are 64-bit (Java longs), but Cuis caches a hard-coded 61-bit range.
  Determine the actual range (like `SmallInteger class>>#startUp:` in Squeak), so that the image agrees with the VM."
 StdIOWriteStream stdout nextPutAll: 'Determining SmallInteger range ...'; newLine; flush.
-val := -32768. "Assume at least 16 bits"
-[next := val + val.
- next class == SmallInteger] whileTrue: [val := next].
-SmallInteger instVarNamed: 'minVal' put: val.
-SmallInteger instVarNamed: 'maxVal' put: -1 - val.
+[ | val next |
+    val := -32768. "Assume at least 16 bits"
+    [next := val + val.
+     next class == SmallInteger] whileTrue: [val := next].
+    SmallInteger instVarNamed: 'minVal' put: val.
+    SmallInteger instVarNamed: 'maxVal' put: -1 - val ] value.
 
 nonTerminatingTestCases := OrderedCollection new.
 {
