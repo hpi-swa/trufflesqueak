@@ -25,11 +25,6 @@ import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public abstract class SlotLocation {
-    /*
-     * Two inline primitive slots keep AbstractPointersObject at 64 bytes on HotSpot (compressed oops).
-     * Heap dumps of Squeak images show that about 5% of all pointers objects have more than two
-     * primitive slots; those use the primitive extension array.
-     */
     public static final int NUM_PRIMITIVE_INLINE_LOCATIONS = 2;
     public static final int NUM_PRIMITIVE_EXTENSION_LOCATIONS = Integer.SIZE - NUM_PRIMITIVE_INLINE_LOCATIONS;
     public static final int NUM_OBJECT_INLINE_LOCATIONS = 3;
