@@ -24,6 +24,7 @@ import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
@@ -770,7 +771,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 enter(currentPC, profile, BRANCH4);
                                 result = r;
                             }
-                        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs && Double.isFinite(lhs + rhs)) {
+                        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs && FloatObject.isUnboxable(lhs + rhs)) {
                             enter(currentPC, profile, BRANCH5);
                             result = lhs + rhs;
                         } else {
@@ -797,7 +798,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 enter(currentPC, profile, BRANCH4);
                                 result = r;
                             }
-                        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs && Double.isFinite(lhs - rhs)) {
+                        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs && FloatObject.isUnboxable(lhs - rhs)) {
                             enter(currentPC, profile, BRANCH5);
                             result = lhs - rhs;
                         } else {

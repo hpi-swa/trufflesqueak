@@ -22,7 +22,7 @@ public final class FloatObjectNodes {
     @GenerateInline
     @GenerateUncached
     @GenerateCached(false)
-    @ImportStatic(Double.class)
+    @ImportStatic(FloatObject.class)
     public abstract static class FloatObjectNormalizeNode extends AbstractNode {
 
         public static FloatObjectNormalizeNode getUncached() {
@@ -31,13 +31,13 @@ public final class FloatObjectNodes {
 
         public abstract Object execute(Node node, double value);
 
-        @Specialization(guards = "isFinite(value)")
-        protected static final double doFinite(final double value) {
+        @Specialization(guards = "isUnboxable(value)")
+        protected static final double doUnboxed(final double value) {
             return value;
         }
 
-        @Specialization(guards = "!isFinite(value)")
-        protected static final FloatObject doNaNOrInfinite(final double value) {
+        @Specialization(guards = "!isUnboxable(value)")
+        protected static final FloatObject doBoxed(final double value) {
             return new FloatObject(value);
         }
     }

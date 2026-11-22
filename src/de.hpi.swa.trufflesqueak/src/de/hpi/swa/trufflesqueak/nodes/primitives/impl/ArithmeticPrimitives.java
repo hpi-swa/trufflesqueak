@@ -1178,7 +1178,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final InlinedConditionProfile inSafeIntegerRangeProfile,
                         @Cached final InlinedConditionProfile isNegativeInfinityProfile) {
             if (isFiniteProfile.profile(node, receiver.isFinite())) {
-                return PrimSmallFloatFractionPartNode.doDouble(receiver.getValue(), node, inSafeIntegerRangeProfile);
+                return FloatObject.boxIfNecessary(PrimSmallFloatFractionPartNode.doDouble(receiver.getValue(), node, inSafeIntegerRangeProfile));
             } else if (isNanProfile.profile(node, receiver.isNaN())) {
                 return new FloatObject(receiver);
             } else {
@@ -1257,7 +1257,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind final Node node,
                         @Cached final InlinedConditionProfile isFiniteProfile) {
             if (isFiniteProfile.profile(node, receiver.isFinite())) {
-                return Math.sin(receiver.getValue());
+                return FloatObject.boxIfNecessary(Math.sin(receiver.getValue()));
             } else {
                 return FloatObject.valueOf(Double.NaN);
             }
@@ -1274,7 +1274,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             if (isNaNProfile.profile(node, receiver.isNaN())) {
                 return new FloatObject(receiver);
             } else {
-                return Math.atan(receiver.getValue());
+                return FloatObject.boxIfNecessary(Math.atan(receiver.getValue()));
             }
         }
     }
@@ -1798,7 +1798,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         private static final long MIN_SAFE_INTEGER_LONG = -MAX_SAFE_INTEGER_LONG;
 
         public static final double ensureFinite(final double value) throws RespecializeException {
-            if (Double.isFinite(value)) {
+            if (FloatObject.isUnboxable(value)) {
                 return value;
             } else {
                 throw RespecializeException.transferToInterpreterInvalidateAndThrow();

@@ -181,14 +181,16 @@ public final class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDum
 
     @Test
     public void testFloatChunkCaching() {
-        for (final double value : new double[]{0.0, -0.0, 1.25, Double.MIN_VALUE, Double.MAX_VALUE, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.NaN}) {
+        for (final double value : new double[]{0.0, -0.0, 1.25, Double.MIN_NORMAL, Double.MAX_VALUE, Double.MIN_VALUE, -Double.MIN_VALUE, Math.nextDown(Double.MIN_NORMAL),
+                        Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.NaN}) {
             final SqueakImageChunk chunk = newFloatChunk(UnsafeUtils.toBytes(new long[]{Double.doubleToRawLongBits(value)}));
             final Object object = chunk.asObject();
             assertSame(object, chunk.asObject());
-            if (Double.isFinite(value)) {
+            if (Double.isFinite(value) && (value == 0 || Math.abs(value) >= Double.MIN_NORMAL)) {
                 assertEquals(Double.doubleToRawLongBits(value), Double.doubleToRawLongBits((double) object));
             } else {
-                assertTrue(object instanceof FloatObject);
+                /* NaN, infinities, and subnormal doubles are always boxed. */
+                assertTrue(object instanceof final FloatObject o && Double.doubleToRawLongBits(o.getValue()) == Double.doubleToRawLongBits(value));
             }
         }
     }
