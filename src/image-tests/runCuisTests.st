@@ -1,4 +1,4 @@
-| fileEntry testSuite nonTerminatingTestCases failingTests result retries exitCode |
+| fileEntry testSuite nonTerminatingTestCases failingTests result retries exitCode val next |
 
 StdIOWriteStream stdout nextPutAll: 'Setting author information for testing ...'; newLine; flush.
 Utilities classPool at: #AuthorName put: 'TruffleSqueak'.
@@ -16,6 +16,15 @@ CompiledMethod preferredBytecodeSetEncoderClass == EncoderForSistaV1
     ifFalse: [
         StdIOWriteStream stdout nextPutAll: 'Image does not support EncoderForSistaV1...'; newLine; flush].
 
+"TruffleSqueak's SmallIntegers are 64-bit (Java longs), but Cuis caches a hard-coded 61-bit range.
+ Determine the actual range (like `SmallInteger class>>#startUp:` in Squeak), so that the image agrees with the VM."
+StdIOWriteStream stdout nextPutAll: 'Determining SmallInteger range ...'; newLine; flush.
+val := -32768. "Assume at least 16 bits"
+[next := val + val.
+ next class == SmallInteger] whileTrue: [val := next].
+SmallInteger instVarNamed: 'minVal' put: val.
+SmallInteger instVarNamed: 'maxVal' put: -1 - val.
+
 nonTerminatingTestCases := OrderedCollection new.
 {
 } collect: [:assoc | | testCase |
@@ -27,9 +36,8 @@ StdIOWriteStream stdout newLine; flush.
 
 failingTests := OrderedCollection new.
 {
-    #FloatTest -> #(#testHashWithSmallishLargeNegativeInteger #testHashWithSmallishLargePositiveInteger #testIsDenormalized #testPrimTruncated).
-    #IntegerTest -> #(#testRange).
-    #SmallIntegerTest -> #(#testDivideMayOverflow).
+    #FloatTest -> #(#testIsDenormalized). "assumes denormalized Floats are never SmallFloat64s, but all finite Floats are SmallFloat64s (doubles) in TruffleSqueak."
+    #SmallIntegerTest -> #(#testMaxVal #testMinVal #testPrintString). "assume SmallIntegers are 31 or 61 bit rather than 64 bit (long)."
 } collect: [:assoc | | testCase |
     testCase := Smalltalk at: assoc key.
     assoc value do: [:sel | failingTests add: (testCase selector: sel) ]].
