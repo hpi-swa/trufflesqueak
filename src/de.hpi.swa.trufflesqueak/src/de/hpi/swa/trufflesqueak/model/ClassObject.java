@@ -30,6 +30,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.METHOD_DICT;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
+import de.hpi.swa.trufflesqueak.util.LogUtils;
 
 /*
  * Represents all subclasses of ClassDescription (Class, Metaclass, TraitBehavior, ...).
@@ -82,6 +83,78 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     public SqueakImageContext getImage() {
         return image;
+    }
+
+    /**
+     * Answers the given object as a class. In the OpenSmalltalk VM, any object with a superclass,
+     * a method dictionary, and a format can be used as a behavior. Here, behaviors must be
+     * instances of {@link ClassObject}, which is decided when an object is created. This usually
+     * works because classes whose instances are behaviors are known (see
+     * {@link #instancesAreClasses()}). In case an object turns out to be used as a behavior
+     * nonetheless (e.g., after Newspeak has replaced its Behavior, Class, and Metaclass classes with
+     * new versions), a class is created from the object, and the object is forwarded to it.
+     *
+     * @return the class, or null if the object cannot be used as a class
+     */
+    @TruffleBoundary
+    public static ClassObject asClassOrNull(final SqueakImageContext image, final Object object) {
+        if (object instanceof final ClassObject existingClass) {
+            return existingClass.isNotForwarded() ? existingClass : asClassOrNull(image, existingClass.getForwardingPointer());
+        } else if (object instanceof final PointersObject pointersObject) {
+            if (pointersObject.isNotForwarded()) {
+                return createFromPointersObjectOrNull(image, pointersObject);
+            } else {
+                return asClassOrNull(image, pointersObject.getForwardingPointer());
+            }
+        } else {
+            return null;
+        }
+    }
+
+    private static ClassObject createFromPointersObjectOrNull(final SqueakImageContext image, final PointersObject pointersObject) {
+        if (pointersObject.size() < CLASS_DESCRIPTION.INLINE_POINTERS) {
+            return null;
+        }
+        final Object superclassOrNil = pointersObject.instVarAt0Slow(CLASS_DESCRIPTION.SUPERCLASS);
+        final Object methodDictOrNil = pointersObject.instVarAt0Slow(CLASS_DESCRIPTION.METHOD_DICT);
+        if (!(pointersObject.instVarAt0Slow(CLASS_DESCRIPTION.FORMAT) instanceof final Long formatValue) ||
+                        !(methodDictOrNil == NilObject.SINGLETON || methodDictOrNil instanceof VariablePointersObject)) {
+            return null;
+        }
+        final ClassObject superclassOrNull;
+        if (superclassOrNil == NilObject.SINGLETON) {
+            superclassOrNull = null;
+        } else {
+            superclassOrNull = asClassOrNull(image, superclassOrNil);
+            if (superclassOrNull == null) {
+                return null;
+            }
+        }
+        final ClassObject metaclass = pointersObject.getSqueakClass();
+        final ClassObject classObject = new ClassObject(image, metaclass, pointersObject.size());
+        classObject.superclass = superclassOrNull;
+        classObject.methodDict = methodDictOrNil == NilObject.SINGLETON ? null : (VariablePointersObject) methodDictOrNil;
+        classObject.format = formatValue;
+        for (int i = CLASS_DESCRIPTION.INLINE_POINTERS; i < pointersObject.size(); i++) {
+            classObject.pointers[i - CLASS_DESCRIPTION.INLINE_POINTERS] = pointersObject.instVarAt0Slow(i);
+        }
+        classObject.initializeLayout();
+        if (superclassOrNull != null && superclassOrNull.instancesAreClasses) {
+            classObject.instancesAreClasses = true;
+        }
+        /*
+         * Instances of the object's class and of its superclasses that define the slots required
+         * for behaviors are behaviors from now on.
+         */
+        ClassObject current = metaclass;
+        while (current != null && current.getBasicInstanceSize() >= CLASS_DESCRIPTION.INLINE_POINTERS) {
+            current.setInstancesAreClasses();
+            current = current.getSuperclassOrNull();
+        }
+        LogUtils.IMAGE.fine(() -> "Creating class from instance of " + metaclass);
+        image.objectGraphUtils.pointersBecomeOneWay(new Object[]{pointersObject}, new Object[]{classObject}, true);
+        image.flushMethodCacheAfterBecome();
+        return classObject;
     }
 
     /* Used by TruffleSqueakTest. */
@@ -688,6 +761,10 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     @Override
     public void forwardTo(final AbstractSqueakObjectWithClassAndHash pointer) {
+        if (instancesAreClasses && pointer instanceof final ClassObject newClass) {
+            /* The new version of a class whose instances are classes also has classes as instances. */
+            newClass.setInstancesAreClasses();
+        }
         super.forwardTo(pointer);
         invalidateClassHierarchyAndMethodDictStableAssumption("forwarded");
         invalidateClassFormatStableAssumption("forwarded");

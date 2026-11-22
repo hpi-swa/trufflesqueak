@@ -912,6 +912,20 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             changeClassOfToNode.execute(node, argument, receiver);
             return receiver;
         }
+
+        /** The receiver is an object that has not been used as a behavior so far. */
+        @Specialization
+        protected static final ClassObject doPrimAdoptInstance(final PointersObject receiver, final AbstractSqueakObjectWithClassAndHash argument,
+                        @Bind final Node node,
+                        @Bind final SqueakImageContext image,
+                        @Cached final SqueakObjectChangeClassOfToNode changeClassOfToNode) {
+            final ClassObject classObject = ClassObject.asClassOrNull(image, receiver);
+            if (classObject == null) {
+                throw PrimitiveFailed.BAD_RECEIVER;
+            }
+            changeClassOfToNode.execute(node, argument, classObject);
+            return classObject;
+        }
     }
 
     @GenerateNodeFactory
