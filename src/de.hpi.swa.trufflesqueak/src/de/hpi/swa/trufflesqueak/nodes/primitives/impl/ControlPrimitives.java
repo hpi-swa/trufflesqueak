@@ -114,6 +114,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive6WithFallbac
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitivesFactory.PrimLoadInstVarNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.process.ProcessContinuations;
 import de.hpi.swa.trufflesqueak.nodes.process.AddLastLinkToListNode;
 import de.hpi.swa.trufflesqueak.nodes.process.GetActiveProcessNode;
 import de.hpi.swa.trufflesqueak.nodes.process.RemoveProcessFromListNode;
@@ -306,11 +307,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimSignalNode extends AbstractPrimitiveWithFrameNode implements Primitive0WithFallback {
         @Specialization(guards = "isSemaphore(receiver)")
         protected static final Object doSignal(final VirtualFrame frame, final PointersObject receiver,
+                        @Bind final Node node,
                         @Cached final SignalSemaphoreNode signalSemaphoreNode,
                         @Cached final PushToStackNode pushNode) {
             if (signalSemaphoreNode.executeSignal(frame, receiver)) {
-                pushNode.execute(frame, receiver);
-                throw ProcessSwitch.SINGLETON;
+                return ProcessContinuations.switchFromPrimitive(frame, getContext(node), pushNode, receiver);
             } else {
                 return receiver;
             }
@@ -338,8 +339,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             } else {
                 addLastLinkToListNode.execute(getActiveProcessNode.execute(node), receiver);
                 wakeHighestPriorityNode.executeWake(frame);
-                pushNode.execute(frame, receiver);
-                throw ProcessSwitch.SINGLETON;
+                return (PointersObject) ProcessContinuations.switchFromPrimitive(frame, getContext(node), pushNode, receiver);
             }
         }
     }
@@ -349,6 +349,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimResumeNode extends AbstractPrimitiveWithFrameNode implements Primitive0WithFallback {
         @Specialization
         protected static final Object doResume(final VirtualFrame frame, final PointersObject receiver,
+                        @Bind final Node node,
                         @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final ResumeProcessNode resumeProcessNode,
                         @Cached final PushToStackNode pushNode) {
@@ -357,8 +358,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
             if (resumeProcessNode.executeResume(frame, receiver)) {
-                pushNode.execute(frame, receiver);
-                throw ProcessSwitch.SINGLETON;
+                return ProcessContinuations.switchFromPrimitive(frame, getContext(node), pushNode, receiver);
             } else {
                 return receiver;
             }
@@ -934,8 +934,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             }
             addLastLinkToListNode.execute(activeProcess, processList);
             wakeHighestPriorityNode.executeWake(frame);
-            pushNode.execute(frame, NilObject.SINGLETON);
-            throw ProcessSwitch.SINGLETON;
+            return ProcessContinuations.switchFromPrimitive(frame, getContext(node), pushNode, NilObject.SINGLETON);
         }
     }
 
@@ -974,7 +973,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             }
 
             @Fallback
-            protected static final PointersObject doExitNonEmpty(final VirtualFrame frame, final PointersObject mutex, @SuppressWarnings("unused") final Object firstLink,
+            protected static final PointersObject doExitNonEmpty(final VirtualFrame frame, final Node node, final PointersObject mutex, @SuppressWarnings("unused") final Object firstLink,
                             @Cached final AbstractPointersObjectReadNode readNode,
                             @Exclusive @Cached final AbstractPointersObjectWriteNode writeNode,
                             @Cached final ResumeProcessNode resumeProcessNode,
@@ -982,8 +981,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 final PointersObject owningProcess = mutex.removeFirstLinkOfList(readNode, writeNode);
                 writeNode.execute(mutex, MUTEX.OWNER, owningProcess);
                 if (resumeProcessNode.executeResume(frame, owningProcess)) {
-                    pushNode.execute(frame, mutex);
-                    throw ProcessSwitch.SINGLETON;
+                    return (PointersObject) ProcessContinuations.switchFromPrimitive(frame, getContext(node), pushNode, mutex);
                 } else {
                     return mutex;
                 }
@@ -1035,7 +1033,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Fallback
-        protected static final Object doEnter(final VirtualFrame frame, final PointersObject mutex, @SuppressWarnings("unused") final Object mutexOwner,
+        protected static final Object doEnter(final VirtualFrame frame, final Node node, final PointersObject mutex, @SuppressWarnings("unused") final Object mutexOwner,
                         final PointersObject effectiveProcess,
                         @Cached final AddLastLinkToListNode addLastLinkToListNode,
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
@@ -1043,8 +1041,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             addLastLinkToListNode.execute(effectiveProcess, mutex);
             wakeHighestPriorityNode.executeWake(frame);
             /* Leave `false` as result on stack. */
-            pushNode.execute(frame, BooleanObject.FALSE);
-            throw ProcessSwitch.SINGLETON;
+            return ProcessContinuations.switchFromPrimitive(frame, getContext(node), pushNode, BooleanObject.FALSE);
         }
     }
 

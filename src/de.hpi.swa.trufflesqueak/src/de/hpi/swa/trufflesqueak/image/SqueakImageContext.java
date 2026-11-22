@@ -28,6 +28,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
+import com.oracle.truffle.api.TruffleOptions;
 import com.oracle.truffle.api.TruffleLanguage.ParsingRequest;
 import com.oracle.truffle.api.dsl.Bind.DefaultExpression;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -80,6 +81,8 @@ import de.hpi.swa.trufflesqueak.nodes.plugins.B2D;
 import de.hpi.swa.trufflesqueak.nodes.plugins.BitBlt;
 import de.hpi.swa.trufflesqueak.nodes.plugins.JPEGReader;
 import de.hpi.swa.trufflesqueak.nodes.plugins.Zip;
+import de.hpi.swa.trufflesqueak.nodes.process.JDKProcessContinuations;
+import de.hpi.swa.trufflesqueak.nodes.process.ProcessContinuations;
 import de.hpi.swa.trufflesqueak.nodes.process.SignalSemaphoreNodeGen;
 import de.hpi.swa.trufflesqueak.shared.SqueakImageLocator;
 import de.hpi.swa.trufflesqueak.tools.SqueakMessageInterceptor;
@@ -200,6 +203,8 @@ public final class SqueakImageContext {
     public int classTableIndex = SqueakImageConstants.CLASS_TABLE_PAGE_SIZE;
     @CompilationFinal private SqueakDisplay display;
     public final CheckForInterruptsState interrupt;
+    /** Non-null if processes are switched with JDK continuations. */
+    public final ProcessContinuations processContinuations;
     public final long startUpMillis = System.currentTimeMillis();
     public final ReferenceQueue<AbstractSqueakObject> weakPointersQueue = new ReferenceQueue<>();
 
@@ -221,6 +226,9 @@ public final class SqueakImageContext {
     /* Context stack depth */
     @CompilationFinal private final int maxContextStackDepth;
     private int currentContextStackDepth;
+
+    /* Number of process switches since startup (VM parameter 56). */
+    public long processSwitchCount;
 
     @CompilationFinal private ClassObject fractionClass;
     private PointersObject parserSharedInstance;
@@ -244,6 +252,7 @@ public final class SqueakImageContext {
         maxContextStackDepth = options.maxContextStackDepth();
         patch(environment);
         interrupt = new CheckForInterruptsState(this);
+        processContinuations = createProcessContinuations();
         objectGraphUtils = new ObjectGraphUtils(this);
         SqueakMessageInterceptor.enableIfRequested(environment);
         final String truffleLanguageHome = language.getTruffleLanguageHome();
@@ -256,6 +265,22 @@ public final class SqueakImageContext {
         initializeMethodCache();
 
         DebugUtils.registerContext(this);
+    }
+
+    private ProcessContinuations createProcessContinuations() {
+        if (!options.processContinuations()) {
+            return null;
+        }
+        if (TruffleOptions.AOT) {
+            LogUtils.MAIN.warning("Process continuations are not supported in native images, falling back to stack unwinding.");
+            return null;
+        }
+        try {
+            return JDKProcessContinuations.create(this);
+        } catch (final LinkageError e) {
+            LogUtils.MAIN.warning("Process continuations are not available (requires --add-exports=java.base/jdk.internal.vm=de.hpi.swa.trufflesqueak): " + e);
+            return null;
+        }
     }
 
     public static SqueakImageContext get(final Node node) {
@@ -336,12 +361,18 @@ public final class SqueakImageContext {
         final boolean wasActive = interrupt.deactivate();
         final int savedDepth = currentContextStackDepth;
         currentContextStackDepth = SUSPENDED_CONTEXT_STACK_DEPTH;
+        if (processContinuations != null) {
+            processContinuations.enterNestedExecution();
+        }
         return new SavedExecutionState(this, activeProcess, wasActive, savedDepth);
     }
 
     private void resumeNormalExecution(final SavedExecutionState state) {
         setActiveProcessSlow(state.activeProcess());
         currentContextStackDepth = state.savedContextDepth();
+        if (processContinuations != null) {
+            processContinuations.exitNestedExecution();
+        }
         interrupt.reactivate(state.interruptsWereActive());
     }
 
@@ -462,6 +493,14 @@ public final class SqueakImageContext {
 
     public void exitingContext() {
         --currentContextStackDepth;
+    }
+
+    public int getContextStackDepth() {
+        return currentContextStackDepth;
+    }
+
+    public void setContextStackDepth(final int value) {
+        currentContextStackDepth = value;
     }
 
     public void resetContextStackDepth() {
@@ -1013,6 +1052,9 @@ public final class SqueakImageContext {
 
     public void finalizeContext() {
         if (options.printResourceSummary()) {
+            if (processContinuations != null) {
+                LogUtils.MAIN.info("# Process continuations: " + processContinuations.getStatistics());
+            }
             MiscUtils.printResourceSummary();
         }
         squeakSocketContext.close();

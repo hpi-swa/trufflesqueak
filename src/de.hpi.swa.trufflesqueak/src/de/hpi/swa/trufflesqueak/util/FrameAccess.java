@@ -24,6 +24,7 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
@@ -33,6 +34,7 @@ import de.hpi.swa.trufflesqueak.model.ContextObject.FrameHandling;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.nodes.process.ProcessContinuations;
 
 /**
  * TruffleSqueak frame argument layout.
@@ -628,10 +630,18 @@ public final class FrameAccess {
             }
             return null; // continue with next frame
         });
+        final ProcessContinuations continuations = SqueakImageContext.getSlow().processContinuations;
         if (frame != null) {
+            if (continuations != null) {
+                continuations.notifyFramesAccessed();
+            }
             return frame;
-        } else {
-            throw SqueakException.create("Could not find frame for:", context);
+        } else if (continuations != null && continuations.flushAll()) {
+            /* The frame was in a parked process stack, which is unwound to the heap now. */
+            if (context.hasTruffleFrame()) {
+                return context.getTruffleFrame();
+            }
         }
+        throw SqueakException.create("Could not find frame for:", context);
     }
 }

@@ -54,6 +54,9 @@ import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 @SuppressWarnings("static-method")
 public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHash {
     private static final String SOURCE_UNAVAILABLE_NAME = "<unavailable>";
+    private static final boolean SPECIALIZE_RESUMPTION = Boolean.getBoolean("trufflesqueak.specializedResumption");
+    private static final int MAX_SPECIALIZED_RESUMPTION_TARGETS = 4;
+    private static final int SPECIALIZED_RESUMPTION_THRESHOLD = 16;
     public static final String SOURCE_UNAVAILABLE_CONTENTS = "Source unavailable";
 
     private static final DispatchPrimitiveNode UNINITIALIZED_PRIMITIVE_NODE = DispatchPrimitiveNode.create(new PrimNoopNode(), 0);
@@ -88,6 +91,10 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         private CyclicAssumption callTargetStable;
         private Assumption doesNotNeedThisContext;
         private RootCallTarget resumptionCallTarget;
+        /* Resumption call targets specialized for frequently resumed instruction pointers. */
+        private int[] resumptionPCs;
+        private int[] resumptionCounts;
+        private RootCallTarget[] specializedResumptionCallTargets;
     }
 
     /**
@@ -297,6 +304,9 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
             }
             executionData.callTarget = null;
             executionData.resumptionCallTarget = null;
+            executionData.resumptionPCs = null;
+            executionData.resumptionCounts = null;
+            executionData.specializedResumptionCallTargets = null;
         }
     }
 
@@ -370,6 +380,41 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
             executionData.resumptionCallTarget = new ResumeContextRootNode(SqueakImageContext.getSlow(), this).getCallTarget();
         }
         return executionData.resumptionCallTarget;
+    }
+
+    /**
+     * Returns a call target for resuming a {@link ContextObject} of this code object at the given
+     * instruction pointer. Instruction pointers that are resumed frequently get their own call
+     * target, so that the remainder of the method can be compiled (the generic call target can only
+     * be compiled for a single, stable instruction pointer).
+     */
+    @TruffleBoundary
+    public RootCallTarget getResumptionCallTarget(final int pc) {
+        if (!SPECIALIZE_RESUMPTION) {
+            return getResumptionCallTarget();
+        }
+        final ExecutionData data = getExecutionData();
+        if (data.resumptionPCs == null) {
+            data.resumptionPCs = new int[MAX_SPECIALIZED_RESUMPTION_TARGETS];
+            Arrays.fill(data.resumptionPCs, -1);
+            data.resumptionCounts = new int[MAX_SPECIALIZED_RESUMPTION_TARGETS];
+            data.specializedResumptionCallTargets = new RootCallTarget[MAX_SPECIALIZED_RESUMPTION_TARGETS];
+        }
+        for (int i = 0; i < MAX_SPECIALIZED_RESUMPTION_TARGETS; i++) {
+            if (data.resumptionPCs[i] == pc) {
+                if (data.specializedResumptionCallTargets[i] != null) {
+                    return data.specializedResumptionCallTargets[i];
+                } else if (++data.resumptionCounts[i] >= SPECIALIZED_RESUMPTION_THRESHOLD) {
+                    return data.specializedResumptionCallTargets[i] = new ResumeContextRootNode(SqueakImageContext.getSlow(), this, pc).getCallTarget();
+                }
+                break;
+            } else if (data.resumptionPCs[i] == -1) {
+                data.resumptionPCs[i] = pc;
+                data.resumptionCounts[i] = 1;
+                break;
+            }
+        }
+        return getResumptionCallTarget();
     }
 
     public FrameDescriptor getFrameDescriptor() {

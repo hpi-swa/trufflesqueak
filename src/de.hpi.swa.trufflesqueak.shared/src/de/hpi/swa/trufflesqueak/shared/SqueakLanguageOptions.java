@@ -43,6 +43,8 @@ public final class SqueakLanguageOptions {
     public static final String SDL_POLL_TIMEOUT_HELP = "Timeout in milliseconds for the SDL event loop (0 = disabled)";
     public static final String SIGNAL_INPUT_SEMAPHORE = "signal-input-semaphore";
     public static final String SIGNAL_INPUT_SEMAPHORE_HELP = "Signal the input semaphore";
+    public static final String PROCESS_CONTINUATIONS = "process-continuations";
+    public static final String PROCESS_CONTINUATIONS_HELP = "Switch processes with JDK continuations instead of unwinding the stack (JVM only)";
     public static final String STARTUP = "disable-startup";
     public static final String STARTUP_HELP = "Disable image startup routine in headless mode";
     public static final String TESTING = "testing";
