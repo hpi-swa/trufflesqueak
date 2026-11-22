@@ -285,6 +285,13 @@ public final class SqueakImageContext {
             if (options.disableStartup()) {
                 LogUtils.IMAGE.info("Skipping startup routine...");
                 return;
+            } else if (isNewspeak) {
+                /*
+                 * The startup routine below is specific to Squeak. In Newspeak images, processing the
+                 * start-up list starts the UI and its event loop, which never returns here.
+                 */
+                LogUtils.IMAGE.fine("Skipping startup routine for Newspeak image...");
+                return;
             }
 
             final String prepareHeadlessImageScript = """
