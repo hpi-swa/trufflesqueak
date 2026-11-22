@@ -173,7 +173,7 @@ jobs:
         SAFE_OS=$(echo "${{ matrix.os }}" | tr '-' '_' | tr '.' '_')
         echo "cuis75_${SAFE_OS}=${FORMATTED_TIME}" >> "$GITHUB_OUTPUT"
       timeout-minutes: 10
-      if: ${{ matrix.os == 'ubuntu-22.04' }}
+      if: ${{ matrix.os == 'ubuntu-22.04' || matrix.os == 'ubuntu-22.04-arm' }}
     - &run_squeak_tests_windows
       name: Run Squeak/Smalltalk tests on TruffleSqueak standalone on Windows
       id: timer_squeak_windows
