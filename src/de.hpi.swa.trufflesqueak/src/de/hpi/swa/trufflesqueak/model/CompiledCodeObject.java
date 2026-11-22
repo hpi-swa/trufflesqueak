@@ -57,6 +57,11 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     private static final String SOURCE_UNAVAILABLE_NAME = "<unavailable>";
     public static final String SOURCE_UNAVAILABLE_CONTENTS = "Source unavailable";
 
+    /* Access modifiers of methods in Newspeak images, see StackInterpreter>>accessModifierOfMethodHeader:. */
+    public static final int ACCESS_MODIFIER_PUBLIC = 0b00;
+    public static final int ACCESS_MODIFIER_PRIVATE = 0b01;
+    public static final int ACCESS_MODIFIER_PROTECTED = 0b10;
+
     private static final DispatchPrimitiveNode UNINITIALIZED_PRIMITIVE_NODE = DispatchPrimitiveNode.create(new PrimNoopNode(), 0);
 
     // header info and data
@@ -910,10 +915,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
      *   sign bit:       1 bit:    selects the instruction set, >= 0 Primary, < 0 Secondary (#signFlag)
      * </pre>
      */
-    public static final int ACCESS_MODIFIER_PUBLIC = 0b00;
-    public static final int ACCESS_MODIFIER_PRIVATE = 0b01;
-    public static final int ACCESS_MODIFIER_PROTECTED = 0b10;
-
     public static final class CompiledCodeHeaderUtils {
         /* Bits 30-59 of the header word, set in negative headers that are sign-extended from 31 bits. */
         private static final long LEGACY_SIGN_EXTENSION_BITS = 0x0FFFFFFFC0000000L;

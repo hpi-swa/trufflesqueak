@@ -37,6 +37,11 @@ import de.hpi.swa.trufflesqueak.util.LogUtils;
  */
 @SuppressWarnings("static-method")
 public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
+    /* Lookup rules, see StackInterpreter>>lookupOrdinarySend and #lookupProtected:startingAt:rule:. */
+    private static final int LOOKUP_ANY = 0;
+    private static final int LOOKUP_PUBLIC = 1;
+    private static final int LOOKUP_PROTECTED = 2;
+
     @CompilationFinal private CyclicAssumption classHierarchyAndMethodDictStable;
     @CompilationFinal private CyclicAssumption classFormatStable;
 
@@ -522,11 +527,6 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         }
         return lookupMethodInDictionary(getResolvedMethodDict(), selector, selector.getSqueakHashInt());
     }
-
-    /* Lookup rules, see StackInterpreter>>lookupOrdinarySend and #lookupProtected:startingAt:rule:. */
-    private static final int LOOKUP_ANY = 0;
-    private static final int LOOKUP_PUBLIC = 1;
-    private static final int LOOKUP_PROTECTED = 2;
 
     private Object lookupInMethodDictSlow(final NativeObject selector, final int lookupRule) {
         final int selectorHash = selector.getSqueakHashInt();

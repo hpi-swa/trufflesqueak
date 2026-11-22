@@ -338,7 +338,8 @@ public final class SqueakImageReader {
             if (bindings != null && bindings.getFormat() == 2) {
                 for (int i = 0; i < bindings.getWordSize(); i++) {
                     final SqueakImageChunk binding = getChunkOrNull(bindings.getWord(i));
-                    if (binding != null && binding.getFormat() == 1 && binding.getWordSize() >= 2 && hasByteContents(getChunkOrNull(binding.getWord(CLASS_BINDING.KEY)), "SecondaryBytecodeSetEncoderClass")) {
+                    if (binding != null && binding.getFormat() == 1 && binding.getWordSize() >= 2 && hasByteContents(getChunkOrNull(binding.getWord(CLASS_BINDING.KEY)),
+                                    "SecondaryBytecodeSetEncoderClass")) {
                         final SqueakImageChunk encoderClass = getChunkOrNull(binding.getWord(CLASS_BINDING.VALUE));
                         final int nameIndex = CLASS_DESCRIPTION.INLINE_POINTERS + CLASS.NAME;
                         if (encoderClass != null && isBehaviorChunk(encoderClass) && encoderClass.getWordSize() > nameIndex &&

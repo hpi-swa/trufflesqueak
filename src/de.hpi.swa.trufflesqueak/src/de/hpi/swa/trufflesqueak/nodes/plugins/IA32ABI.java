@@ -42,6 +42,9 @@ import de.hpi.swa.trufflesqueak.util.VarHandleUtils;
 public final class IA32ABI extends AbstractPrimitiveFactoryHolder {
     private static final int WORD_SIZE = Long.BYTES;
 
+    /** Handles of loaded libraries are indices into this list plus one. */
+    private static final ArrayList<SymbolLookup> LOADED_LIBRARIES = new ArrayList<>();
+
     @Override
     public List<? extends NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
         return IA32ABIFactory.getFactories();
@@ -73,9 +76,6 @@ public final class IA32ABI extends AbstractPrimitiveFactoryHolder {
     /*
      * Libraries
      */
-
-    /** Handles of loaded libraries are indices into this list plus one. */
-    private static final ArrayList<SymbolLookup> LOADED_LIBRARIES = new ArrayList<>();
 
     @TruffleBoundary
     @SuppressWarnings("restricted")
