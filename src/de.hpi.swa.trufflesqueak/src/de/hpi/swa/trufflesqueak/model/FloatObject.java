@@ -69,6 +69,23 @@ public final class FloatObject extends AbstractSqueakObjectWithHash {
         // Nothing to do
     }
 
+    /**
+     * Only finite doubles that are not subnormal are unboxed (SmallFloat64). Like in Spur, NaN,
+     * infinities, and subnormal doubles are always represented as {@link FloatObject}
+     * (BoxedFloat64), because images may rely on this (e.g., {@code Float>>#isDenormalized} in
+     * Cuis).
+     */
+    public static boolean isUnboxable(final double value) {
+        /* Shift out the sign bit, exponent bits are then the 11 most significant bits. */
+        final long bits = Double.doubleToRawLongBits(value) << 1;
+        /* Exponent bits are neither all zero (zero, subnormal) nor all one (NaN, infinity). */
+        return Long.compareUnsigned(bits - (1L << 53), 0x7FEL << 53) < 0 || bits == 0;
+    }
+
+    public static Object boxIfNecessary(final double value) {
+        return isUnboxable(value) ? (Object) value : new FloatObject(value);
+    }
+
     public static FloatObject valueOf(final double value) {
         return new FloatObject(value);
     }
@@ -78,7 +95,7 @@ public final class FloatObject extends AbstractSqueakObjectWithHash {
         final long lowValue = Integer.toUnsignedLong(VarHandleUtils.getInt(chunk.getBytes(), 0));
         final long highValue = Integer.toUnsignedLong(VarHandleUtils.getInt(chunk.getBytes(), 1));
         final double value = Double.longBitsToDouble(highValue << 32 | lowValue);
-        if (Double.isFinite(value)) {
+        if (isUnboxable(value)) {
             final Object object = value;
             chunk.setObject(object);
             return object;

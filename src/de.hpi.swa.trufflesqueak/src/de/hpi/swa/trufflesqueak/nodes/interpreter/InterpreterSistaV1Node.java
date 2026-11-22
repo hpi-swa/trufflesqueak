@@ -39,6 +39,7 @@ import de.hpi.swa.trufflesqueak.model.CharacterObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
@@ -2124,7 +2125,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                 enter(pc, profile, BRANCH4);
                 result = r;
             }
-        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs && Double.isFinite(lhs + rhs)) {
+        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs && FloatObject.isUnboxable(lhs + rhs)) {
             enter(pc, profile, BRANCH5);
             result = lhs + rhs;
         } else {
@@ -2155,7 +2156,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                 enter(pc, profile, BRANCH4);
                 result = r;
             }
-        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs && Double.isFinite(lhs - rhs)) {
+        } else if (receiver instanceof final Double lhs && arg instanceof final Double rhs && FloatObject.isUnboxable(lhs - rhs)) {
             enter(pc, profile, BRANCH5);
             result = lhs - rhs;
         } else {

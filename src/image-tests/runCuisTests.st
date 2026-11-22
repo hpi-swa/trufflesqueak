@@ -28,7 +28,6 @@ StdIOWriteStream stdout nextPutAll: 'Determining SmallInteger range ...'; newLin
 
 failingTests := OrderedCollection new.
 {
-    #FloatTest -> #(#testIsDenormalized). "assumes denormalized Floats are never SmallFloat64s, but all finite Floats are SmallFloat64s (doubles) in TruffleSqueak."
     #SmallIntegerTest -> #(#testMaxVal #testMinVal #testPrintString). "assume SmallIntegers are 31 or 61 bit rather than 64 bit (long)."
 } collect: [:assoc | | testCase |
     testCase := Smalltalk at: assoc key.
