@@ -33,6 +33,14 @@ failingTests := OrderedCollection new.
     testCase := Smalltalk at: assoc key.
     assoc value do: [:sel | failingTests add: (testCase selector: sel) ]].
 
+(Smalltalk platformName = 'unix' and: [ Smalltalk platformSubtype = 'arm64' ]) ifTrue: [
+    {
+        #FloatTest -> #(#testE #testExp #testPrimExpAndLn). "assume `1.0 exp = Float e`, but `Math.exp(1.0)` is off by one ulp on aarch64 (no intrinsic as on x64). Cuis expects these to fail on macOS."
+    } collect: [:assoc | | testCase |
+        testCase := Smalltalk at: assoc key.
+        assoc value do: [:sel | failingTests add: (testCase selector: sel) ]].
+].
+
 StdIOWriteStream stdout newLine; nextPutAll: 'Passing TestCases:'; newLine; flush.
 testSuite := TestCase buildSuite.
 testSuite tests removeAllSuchThat: [:ea | failingTests anySatisfy: [:t | ea class == t class and: [ ea selector == t selector ]]].
