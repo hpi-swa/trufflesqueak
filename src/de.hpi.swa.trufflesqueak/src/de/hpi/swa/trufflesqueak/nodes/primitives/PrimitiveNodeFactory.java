@@ -163,7 +163,11 @@ public final class PrimitiveNodeFactory {
         if (map == null || numReceiverAndArguments > MirrorPrimitiveNode.MAX_NUM_RECEIVER_AND_ARGUMENTS) {
             return null;
         }
-        for (int i = numReceiverAndArguments - 1; i >= 1; i--) {
+        /*
+         * Use the variant with the fewest arguments: it is the primitive in its basic form, while
+         * variants with more arguments expect specific additional arguments.
+         */
+        for (int i = 1; i < numReceiverAndArguments; i++) {
             final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = map.get(i);
             if (nodeFactory != null) {
                 return new MirrorPrimitiveNode(createNode(nodeFactory, i), i);
@@ -226,7 +230,7 @@ public final class PrimitiveNodeFactory {
         /* Newspeak also calls named primitives from methods with additional leading arguments. */
         if (SqueakImageContext.getSlow().isNewspeak() && numReceiverAndArguments <= MirrorPrimitiveNode.MAX_NUM_RECEIVER_AND_ARGUMENTS) {
             final EconomicMap<Integer, NodeFactory<? extends AbstractPrimitiveNode>> map = PLUGIN_MAP.get(moduleName, EconomicMap.emptyMap()).get(functionName, EconomicMap.emptyMap());
-            for (int i = numReceiverAndArguments - 1; i >= 1; i--) {
+            for (int i = 1; i < numReceiverAndArguments; i++) {
                 final NodeFactory<? extends AbstractPrimitiveNode> mirroredNodeFactory = map.get(i);
                 if (mirroredNodeFactory != null) {
                     return new MirrorPrimitiveNode(createNode(mirroredNodeFactory, i), i);
