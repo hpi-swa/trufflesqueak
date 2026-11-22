@@ -7,6 +7,7 @@
 package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.logging.Level;
 
 import com.oracle.truffle.api.Assumption;
@@ -18,11 +19,28 @@ import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 
 public final class DispatchUtils {
+    /**
+     * Creates the assumptions for a lookup of selector in startClass. In case the lookup did not
+     * find a method (doesNotUnderstand: or object as method), the result additionally depends on
+     * no method being installed for the selector afterwards.
+     */
+    static Assumption[] createAssumptions(final NativeObject selector, final ClassObject startClass, final Object lookupResult) {
+        final Assumption[] assumptions = createAssumptions(startClass, lookupResult);
+        if (lookupResult instanceof CompiledCodeObject) {
+            return assumptions;
+        } else {
+            final Assumption[] result = Arrays.copyOf(assumptions, assumptions.length + 1);
+            result[assumptions.length] = startClass.getImage().getFailedLookupAssumption(selector);
+            return result;
+        }
+    }
+
     static Assumption[] createAssumptions(final ClassObject startClass, final Object lookupResult) {
         final ClassObject targetClass;
         final Assumption callTargetStable;
