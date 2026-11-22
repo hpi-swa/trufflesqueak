@@ -419,7 +419,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     @TruffleBoundary
     public Object lookupInMethodDictSlow(final NativeObject selector) {
-        return lookupInMethodDictSlow(selector, LOOKUP_ANY);
+        return lookupInMethodDictSlow(selector, image.enforcesAccessControl() ? LOOKUP_PUBLIC : LOOKUP_ANY);
     }
 
     /**
