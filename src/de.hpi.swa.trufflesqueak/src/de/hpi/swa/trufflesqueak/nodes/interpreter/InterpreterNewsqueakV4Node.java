@@ -421,7 +421,8 @@ public final class InterpreterNewsqueakV4Node extends AbstractInterpreterNode {
                             push(frame, sp++, getOrCreateContext(frame, currentPC));
                         } else {
                             assert extB < 0;
-                            pushFollowed(frame, currentPC, sp++, ACCESS.uncheckedCast(getData(currentPC), NewspeakEnclosingObjectNode.class).execute(FrameAccess.getReceiver(frame)));
+                            final Object methodReceiver = AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(FrameAccess.getReceiver(frame));
+                            pushFollowed(frame, currentPC, sp++, ACCESS.uncheckedCast(getData(currentPC), NewspeakEnclosingObjectNode.class).execute(methodReceiver));
                         }
                         extA = extB = numExtB = 0;
                         break;
@@ -1012,7 +1013,9 @@ public final class InterpreterNewsqueakV4Node extends AbstractInterpreterNode {
     /** Performs a send with absent receiver (implicit receiver, self, outer, or super send). */
     private Object sendNewspeak(final VirtualFrame frame, final int currentPC, final Object[] arguments) {
         try {
-            return ACCESS.uncheckedCast(getData(currentPC), DispatchNewspeakSendNode.class).execute(frame, FrameAccess.getReceiver(frame), arguments);
+            /* The receiver of the method may have been forwarded by a become in the meantime. */
+            final Object methodReceiver = AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(FrameAccess.getReceiver(frame));
+            return ACCESS.uncheckedCast(getData(currentPC), DispatchNewspeakSendNode.class).execute(frame, methodReceiver, arguments);
         } catch (final AbstractStandardSendReturn r) {
             return handleReturnException(frame, currentPC, r);
         }
