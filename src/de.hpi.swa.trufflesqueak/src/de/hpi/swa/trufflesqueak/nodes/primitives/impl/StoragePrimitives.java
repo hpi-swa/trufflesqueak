@@ -55,19 +55,26 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallbac
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 
 public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     protected abstract static class AbstractArrayBecomeOneWayPrimitiveNode extends AbstractPrimitiveNode {
 
         protected final ArrayObject performPointersBecomeOneWay(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash) {
-            if (!fromArray.isObjectType() || !toArray.isObjectType() || fromArray.getObjectLength() != toArray.getObjectLength()) {
+            final Object[] toPointers;
+            if (fromArray.isEmptyType() && toArray.isEmptyType() && fromArray.getEmptyLength() == toArray.getEmptyLength()) {
+                return fromArray; /* Nothing to do for empty arrays and arrays that only contain nil. */
+            } else if (fromArray.isObjectType() && toArray.isObjectType() && fromArray.getObjectLength() == toArray.getObjectLength()) {
+                toPointers = toArray.getObjectStorage();
+            } else if (fromArray.isObjectType() && toArray.isEmptyType() && fromArray.getObjectLength() == toArray.getEmptyLength()) {
+                toPointers = ArrayUtils.withAll(toArray.getEmptyLength(), NilObject.SINGLETON);
+            } else {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.BAD_ARGUMENT;
             }
             // Need to operate on copy of `fromPointers` because itself might also be changed.
             final Object[] fromPointers = fromArray.getObjectStorage().clone();
-            final Object[] toPointers = toArray.getObjectStorage();
             final SqueakImageContext image = getContext();
             image.objectGraphUtils.pointersBecomeOneWay(fromPointers, toPointers, copyHash);
             image.flushMethodCacheAfterBecome();
