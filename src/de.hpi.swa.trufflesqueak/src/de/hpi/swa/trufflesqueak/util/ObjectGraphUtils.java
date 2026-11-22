@@ -265,6 +265,13 @@ public final class ObjectGraphUtils {
                         t.setSqueakHash(MiscUtils.toIntExact(f.getOrCreateSqueakHash()));
                     }
                     f.forwardTo(t);
+                    if (from instanceof ClassObject) {
+                        /*
+                         * Forwarding pointers are not followed when the class of an object is
+                         * accessed, so the instances of a class must be updated eagerly.
+                         */
+                        allAbstractSqueakObjectWithHash = false;
+                    }
                 } else {
                     allAbstractSqueakObjectWithHash = false;
                 }
