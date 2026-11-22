@@ -140,13 +140,34 @@ public final class PrimitiveNodeFactory {
         if (primitiveIndex == PRIMITIVE_EXTERNAL_CALL_INDEX) {
             return getOrCreateNamed(method, numReceiverAndArguments);
         } else {
-            final AbstractPrimitiveNode primitiveNode = getOrCreateIndexed(primitiveIndex, numReceiverAndArguments);
+            AbstractPrimitiveNode primitiveNode = getOrCreateIndexed(primitiveIndex, numReceiverAndArguments);
+            if (primitiveNode == null && SqueakImageContext.getSlow().isNewspeak()) {
+                primitiveNode = createMirrorPrimitiveOrNull(primitiveIndex, numReceiverAndArguments);
+            }
             if (primitiveNode != null && primitiveNode.acceptsMethod(method)) {
                 return primitiveNode;
             } else {
                 return null;
             }
         }
+    }
+
+    /**
+     * Newspeak calls primitives from methods with additional leading arguments. In this case, the
+     * primitive operates on the last arguments (see {@link MirrorPrimitiveNode}).
+     */
+    private static AbstractPrimitiveNode createMirrorPrimitiveOrNull(final int primitiveIndex, final int numReceiverAndArguments) {
+        final EconomicMap<Integer, NodeFactory<? extends AbstractPrimitiveNode>> map = PRIMITIVE_TABLE.get(primitiveIndex);
+        if (map == null || numReceiverAndArguments > MirrorPrimitiveNode.MAX_NUM_RECEIVER_AND_ARGUMENTS) {
+            return null;
+        }
+        for (int i = numReceiverAndArguments - 1; i >= 1; i--) {
+            final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = map.get(i);
+            if (nodeFactory != null) {
+                return new MirrorPrimitiveNode(createNode(nodeFactory, i), i);
+            }
+        }
+        return null;
     }
 
     public static AbstractPrimitiveNode getOrCreateIndexed(final int primitiveIndex, final int numReceiverAndArguments) {
