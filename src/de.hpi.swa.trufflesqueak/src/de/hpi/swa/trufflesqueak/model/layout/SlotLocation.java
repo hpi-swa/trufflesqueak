@@ -25,7 +25,7 @@ import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public abstract class SlotLocation {
-    public static final int NUM_PRIMITIVE_INLINE_LOCATIONS = 3;
+    public static final int NUM_PRIMITIVE_INLINE_LOCATIONS = 2;
     public static final int NUM_PRIMITIVE_EXTENSION_LOCATIONS = Integer.SIZE - NUM_PRIMITIVE_INLINE_LOCATIONS;
     public static final int NUM_OBJECT_INLINE_LOCATIONS = 3;
 
@@ -51,7 +51,6 @@ public abstract class SlotLocation {
 
         PRIMITIVE_ADDRESSES[0] = AbstractPointersObject.PRIMITIVE_0_ADDRESS;
         PRIMITIVE_ADDRESSES[1] = AbstractPointersObject.PRIMITIVE_1_ADDRESS;
-        PRIMITIVE_ADDRESSES[2] = AbstractPointersObject.PRIMITIVE_2_ADDRESS;
 
         for (int i = 0; i < NUM_PRIMITIVE_INLINE_LOCATIONS; i++) {
             BOOL_LOCATIONS[i] = new BoolInlineSlotLocation(i);
