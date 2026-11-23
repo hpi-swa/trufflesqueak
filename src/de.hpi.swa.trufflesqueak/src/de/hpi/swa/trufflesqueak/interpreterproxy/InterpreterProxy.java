@@ -11,6 +11,7 @@ import java.lang.foreign.MemorySegment;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.function.Predicate;
+import java.util.logging.Level;
 
 import com.oracle.truffle.api.CompilerDirectives;
 
@@ -421,7 +422,9 @@ public final class InterpreterProxy implements AutoCloseable {
         if (object instanceof final Long longObject) {
             return longObject;
         } else {
-            LogUtils.INTERPRETER_PROXY.severe(() -> "Object to long called with non-Long: " + object);
+            if (LogUtils.INTERPRETER_PROXY.isLoggable(Level.SEVERE)) {
+                LogUtils.INTERPRETER_PROXY.severe("Object to long called with non-Long: " + object);
+            }
             return primitiveFail();
         }
     }
@@ -430,7 +433,9 @@ public final class InterpreterProxy implements AutoCloseable {
         if (object instanceof final FloatObject floatObject) {
             return floatObject.getValue();
         } else {
-            LogUtils.INTERPRETER_PROXY.severe(() -> "Object to long called with non-FloatObject: " + object);
+            if (LogUtils.INTERPRETER_PROXY.isLoggable(Level.SEVERE)) {
+                LogUtils.INTERPRETER_PROXY.severe("Object to long called with non-FloatObject: " + object);
+            }
             return primitiveFail();
         }
     }
@@ -487,7 +492,9 @@ public final class InterpreterProxy implements AutoCloseable {
         if (object instanceof final Boolean bool) {
             return returnBoolean(bool);
         } else {
-            LogUtils.INTERPRETER_PROXY.severe(() -> "booleanValueOf called with non-Boolean object: " + object);
+            if (LogUtils.INTERPRETER_PROXY.isLoggable(Level.SEVERE)) {
+                LogUtils.INTERPRETER_PROXY.severe("booleanValueOf called with non-Boolean object: " + object);
+            }
             return primitiveFail();
         }
     }
@@ -647,7 +654,9 @@ public final class InterpreterProxy implements AutoCloseable {
         if (object instanceof final ClassObject classObject) {
             return classObject.getBasicInstanceSize();
         } else {
-            LogUtils.INTERPRETER_PROXY.severe(() -> "instanceSizeOf called with non-ClassObject: " + object);
+            if (LogUtils.INTERPRETER_PROXY.isLoggable(Level.SEVERE)) {
+                LogUtils.INTERPRETER_PROXY.severe("instanceSizeOf called with non-ClassObject: " + object);
+            }
             return primitiveFail();
         }
     }
@@ -658,7 +667,9 @@ public final class InterpreterProxy implements AutoCloseable {
             final AbstractSqueakObject newObject = SqueakObjectNewNode.executeUncached(classObject, MiscUtils.toIntExact(size));
             return oopFor(newObject);
         } else {
-            LogUtils.INTERPRETER_PROXY.severe(() -> "instantiateClassIndexableSize called with non-ClassObject: " + object);
+            if (LogUtils.INTERPRETER_PROXY.isLoggable(Level.SEVERE)) {
+                LogUtils.INTERPRETER_PROXY.severe("instantiateClassIndexableSize called with non-ClassObject: " + object);
+            }
             return primitiveFail();
         }
     }
@@ -673,7 +684,9 @@ public final class InterpreterProxy implements AutoCloseable {
 
     private MemorySegment ioLoadFunctionFrom(final MemorySegment functionName, final MemorySegment moduleName) {
         /* TODO */
-        LogUtils.INTERPRETER_PROXY.severe(() -> "Missing implementation for ioLoadFunctionFrom: %s>>%s".formatted(charPointerToByteString(functionName), charPointerToByteString(moduleName)));
+        if (LogUtils.INTERPRETER_PROXY.isLoggable(Level.SEVERE)) {
+            LogUtils.INTERPRETER_PROXY.severe("Missing implementation for ioLoadFunctionFrom: %s>>%s".formatted(charPointerToByteString(functionName), charPointerToByteString(moduleName)));
+        }
         return MemorySegment.NULL;
     }
 
@@ -821,7 +834,9 @@ public final class InterpreterProxy implements AutoCloseable {
     }
 
     private long primitiveFailFor(final long reasonCode) {
-        LogUtils.INTERPRETER_PROXY.fine(() -> "Primitive failed with code: " + reasonCode);
+        if (LogUtils.INTERPRETER_PROXY.isLoggable(Level.FINE)) {
+            LogUtils.INTERPRETER_PROXY.fine("Primitive failed with code: " + reasonCode);
+        }
         return primFailCode = reasonCode;
     }
 
@@ -864,7 +879,9 @@ public final class InterpreterProxy implements AutoCloseable {
         if (value instanceof final NativeObject nativeObject) {
             return NativeObjectSizeNode.executeUncached(nativeObject);
         } else {
-            LogUtils.INTERPRETER_PROXY.warning(() -> "slotSizeOf called with non-NativeObject: " + value);
+            if (LogUtils.INTERPRETER_PROXY.isLoggable(Level.WARNING)) {
+                LogUtils.INTERPRETER_PROXY.warning("slotSizeOf called with non-NativeObject: " + value);
+            }
             return returnVoid();
         }
     }
@@ -1192,13 +1209,17 @@ public final class InterpreterProxy implements AutoCloseable {
     @SuppressWarnings("unused")
     private void storeIntegerOfObjectWithValue(final long index, final long oop, final long integer) {
         assert false; // TODO
-        LogUtils.INTERPRETER_PROXY.warning(() -> "Missing implementation for storeIntegerOfObjectWithValue: %s, %s, %s".formatted(index, oop, integer));
+        if (LogUtils.INTERPRETER_PROXY.isLoggable(Level.WARNING)) {
+            LogUtils.INTERPRETER_PROXY.warning("Missing implementation for storeIntegerOfObjectWithValue: %s, %s, %s".formatted(index, oop, integer));
+        }
     }
 
     @SuppressWarnings("unused")
     private long storeLong32OfObjectWithValue(final long fieldIndex, final long oop, final long anInteger) {
         assert false; // TODO
-        LogUtils.INTERPRETER_PROXY.warning(() -> "Missing implementation for storeLong32OfObjectWithValue: %s, %s, %s".formatted(fieldIndex, oop, anInteger));
+        if (LogUtils.INTERPRETER_PROXY.isLoggable(Level.WARNING)) {
+            LogUtils.INTERPRETER_PROXY.warning("Missing implementation for storeLong32OfObjectWithValue: %s, %s, %s".formatted(fieldIndex, oop, anInteger));
+        }
         return returnVoid();
     }
 

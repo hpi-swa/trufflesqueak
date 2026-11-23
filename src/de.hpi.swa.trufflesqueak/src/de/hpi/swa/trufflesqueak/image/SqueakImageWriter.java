@@ -101,7 +101,9 @@ public final class SqueakImageWriter {
             finalizeImageHeader();
         }
         final double fileSize = Math.ceil((double) position / 1024 / 1024 * 100) / 100;
-        LogUtils.IMAGE.fine(() -> "Image saved in " + (MiscUtils.currentTimeMillis() - start) + "ms (" + fileSize + "MiB).");
+        if (LogUtils.IMAGE.isLoggable(Level.FINE)) {
+            LogUtils.IMAGE.fine("Image saved in " + (MiscUtils.currentTimeMillis() - start) + "ms (" + fileSize + "MiB).");
+        }
     }
 
     private void writeImageHeader() {
@@ -247,7 +249,9 @@ public final class SqueakImageWriter {
             if (oop != null) {
                 return oop;
             } else {
-                LogUtils.IMAGE.warning(() -> "Unreserved object detected: " + aso + ". Replacing with nil.");
+                if (LogUtils.IMAGE.isLoggable(Level.WARNING)) {
+                    LogUtils.IMAGE.warning("Unreserved object detected: " + aso + ". Replacing with nil.");
+                }
                 return nilOop;
             }
         } else {

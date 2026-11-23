@@ -13,6 +13,7 @@ import java.math.BigInteger;
 import java.nio.ByteOrder;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 
 import org.graalvm.polyglot.Engine;
 
@@ -2198,7 +2199,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
         protected static final void setLastError(final Exception e) {
             lastError = e;
-            LogUtils.INTEROP.fine(() -> MiscUtils.toString(lastError));
+            if (LogUtils.INTEROP.isLoggable(Level.FINE)) {
+                LogUtils.INTEROP.fine(MiscUtils.toString(lastError));
+            }
         }
     }
 

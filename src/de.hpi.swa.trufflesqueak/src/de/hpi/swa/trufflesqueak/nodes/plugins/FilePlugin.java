@@ -144,7 +144,9 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             attributes = file.getAttributes(ENTRY_ATTRIBUTES);
         } catch (final IOException e) {
             // TODO: make this better
-            LogUtils.IO.warning(() -> "File must exist: " + file + " (" + e + "). Falling back to nil...");
+            if (LogUtils.IO.isLoggable(Level.WARNING)) {
+                LogUtils.IO.warning("File must exist: " + file + " (" + e + "). Falling back to nil...");
+            }
             return NilObject.SINGLETON;
         }
         final Long creationTime = MiscUtils.toSqueakSecondsLocal(attributes.get(TruffleFile.CREATION_TIME).to(TimeUnit.SECONDS));

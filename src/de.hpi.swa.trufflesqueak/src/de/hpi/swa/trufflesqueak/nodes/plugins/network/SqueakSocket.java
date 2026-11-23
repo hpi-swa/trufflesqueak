@@ -27,6 +27,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.NetworkChannel;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
+import java.util.logging.Level;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsState;
@@ -200,7 +201,9 @@ public abstract class SqueakSocket {
             if (written == 0 && count > 0) {
                 writeReady = false; // Buffer is full, flag it to wait for OP_WRITE
             }
-            LogUtils.SOCKET.finer(() -> this + " written: " + written);
+            if (LogUtils.SOCKET.isLoggable(Level.FINER)) {
+                LogUtils.SOCKET.finer(this + " written: " + written);
+            }
             socketError = 0;
             return written;
         } catch (final IOException e) {
@@ -224,7 +227,9 @@ public abstract class SqueakSocket {
         final ByteBuffer buffer = ByteBuffer.wrap(data, start, count);
         try {
             final long received = receiveDataFrom(buffer);
-            LogUtils.SOCKET.finer(() -> this + " received: " + received);
+            if (LogUtils.SOCKET.isLoggable(Level.FINER)) {
+                LogUtils.SOCKET.finer(this + " received: " + received);
+            }
             socketError = 0;
             return received;
         } catch (final IOException e) {
