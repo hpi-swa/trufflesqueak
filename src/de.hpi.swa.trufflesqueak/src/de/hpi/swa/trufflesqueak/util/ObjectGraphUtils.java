@@ -655,7 +655,9 @@ public final class ObjectGraphUtils {
             final long millis = nanos / 1_000_000;
             MILLIS[ordinal()] += millis;
             COUNTS[ordinal()]++;
-            LogUtils.OBJECT_GRAPH.log(Level.FINE, () -> getName() + " took " + millis + "ms");
+            if (LogUtils.OBJECT_GRAPH.isLoggable(Level.FINE)) {
+                LogUtils.OBJECT_GRAPH.log(Level.FINE, getName() + " took " + millis + "ms");
+            }
         }
 
         public int getCount() {

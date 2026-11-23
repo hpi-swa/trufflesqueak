@@ -7,6 +7,7 @@
 package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
 import java.util.ArrayList;
+import java.util.logging.Level;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -68,18 +69,27 @@ public final class DispatchUtils {
     static void logMissingPrimitive(final AbstractPrimitiveNode primitiveNode, final CompiledCodeObject code) {
         assert primitiveNode == null && code.hasPrimitive();
         final int primitiveIndex = code.primitiveIndex();
-        if (primitiveIndex == PrimitiveNodeFactory.PRIMITIVE_EXTERNAL_CALL_INDEX) {
-            LogUtils.PRIMITIVES.fine(() -> "Named primitive not found for " + code);
-        } else if (primitiveIndex != PrimitiveNodeFactory.PRIMITIVE_SIMULATION_GUARD_INDEX &&
-                        primitiveIndex != PrimitiveNodeFactory.PRIMITIVE_ENSURE_MARKER_INDEX &&
-                        primitiveIndex != PrimitiveNodeFactory.PRIMITIVE_ON_DO_MARKER_INDEX &&
-                        primitiveIndex != 65 && primitiveIndex != 66 && primitiveIndex != 67) {
-            LogUtils.PRIMITIVES.fine(() -> "Primitive #" + code.primitiveIndex() + " not found for " + code);
+        if (LogUtils.PRIMITIVES.isLoggable(Level.FINE)) {
+            if (primitiveIndex == PrimitiveNodeFactory.PRIMITIVE_EXTERNAL_CALL_INDEX) {
+                LogUtils.PRIMITIVES.fine("Named primitive not found for " + code);
+            } else if (primitiveIndex != PrimitiveNodeFactory.PRIMITIVE_SIMULATION_GUARD_INDEX &&
+                            primitiveIndex != PrimitiveNodeFactory.PRIMITIVE_ENSURE_MARKER_INDEX &&
+                            primitiveIndex != PrimitiveNodeFactory.PRIMITIVE_ON_DO_MARKER_INDEX &&
+                            primitiveIndex != 65 && primitiveIndex != 66 && primitiveIndex != 67) {
+                LogUtils.PRIMITIVES.fine("Primitive #" + code.primitiveIndex() + " not found for " + code);
+            }
         }
     }
 
     public static void logPrimitiveFailed(final NodeInterface primitiveNode) {
-        LogUtils.PRIMITIVES.finer(() -> primitiveNode.getClass().getSimpleName() + " failed");
+        if (LogUtils.PRIMITIVES.isLoggable(Level.FINER)) {
+            logPrimitiveFailedBoundary(primitiveNode);
+        }
+    }
+
+    @TruffleBoundary
+    private static void logPrimitiveFailedBoundary(final NodeInterface primitiveNode) {
+        LogUtils.PRIMITIVES.finer(primitiveNode.getClass().getSimpleName() + " failed");
     }
 
     @TruffleBoundary

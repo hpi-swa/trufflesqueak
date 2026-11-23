@@ -14,6 +14,7 @@ import java.lang.foreign.SymbolLookup;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.util.Optional;
+import java.util.logging.Level;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.TruffleFile;
@@ -92,11 +93,15 @@ public final class InterpreterProxySupport {
                         LogUtils.INTERPRETER_PROXY.warning("initialiseModule return unexpected result: " + result);
                     }
                 } catch (Throwable e) {
-                    LogUtils.INTERPRETER_PROXY.warning(() -> DebugUtils.toString(e));
+                    if (LogUtils.INTERPRETER_PROXY.isLoggable(Level.WARNING)) {
+                        LogUtils.INTERPRETER_PROXY.warning(DebugUtils.toString(e));
+                    }
                     return null;
                 }
             } else {
-                LogUtils.INTERPRETER_PROXY.fine(() -> "Module '" + moduleName + "' does not have an 'initialiseModule'");
+                if (LogUtils.INTERPRETER_PROXY.isLoggable(Level.FINE)) {
+                    LogUtils.INTERPRETER_PROXY.fine("Module '" + moduleName + "' does not have an 'initialiseModule'");
+                }
             }
 
             final Optional<MemorySegment> setInterpreterSymbol = lookup.find("setInterpreter");
@@ -109,11 +114,15 @@ public final class InterpreterProxySupport {
                         LogUtils.INTERPRETER_PROXY.warning("setInterpreter return unexpected result: " + result);
                     }
                 } catch (Throwable e) {
-                    LogUtils.INTERPRETER_PROXY.warning(() -> DebugUtils.toString(e));
+                    if (LogUtils.INTERPRETER_PROXY.isLoggable(Level.WARNING)) {
+                        LogUtils.INTERPRETER_PROXY.warning(DebugUtils.toString(e));
+                    }
                     return null;
                 }
             } else {
-                LogUtils.INTERPRETER_PROXY.warning(() -> "Could not find 'setInterpreter' for module '" + moduleName + "'");
+                if (LogUtils.INTERPRETER_PROXY.isLoggable(Level.WARNING)) {
+                    LogUtils.INTERPRETER_PROXY.warning("Could not find 'setInterpreter' for module '" + moduleName + "'");
+                }
             }
             return lookup;
         });

@@ -8,8 +8,10 @@ package de.hpi.swa.trufflesqueak.nodes.plugins;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -41,12 +43,19 @@ public final class TruffleSqueakPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimPrintArgsNode extends AbstractPrimitiveNode implements Primitive1 {
         @Specialization
         protected static final Object printArgs(final Object receiver, final Object value) {
-            if (value instanceof final NativeObject o && o.isByteType()) {
-                LogUtils.DEBUG.info(o::asStringUnsafe);
-            } else {
-                LogUtils.DEBUG.info(() -> String.valueOf(value));
+            if (LogUtils.DEBUG.isLoggable(Level.INFO)) {
+                debugPrint(value);
             }
             return receiver;
+        }
+
+        @TruffleBoundary
+        private static void debugPrint(final Object value) {
+            if (value instanceof final NativeObject o && o.isByteType()) {
+                LogUtils.DEBUG.info(o.asStringUnsafe());
+            } else {
+                LogUtils.DEBUG.info(String.valueOf(value));
+            }
         }
     }
 

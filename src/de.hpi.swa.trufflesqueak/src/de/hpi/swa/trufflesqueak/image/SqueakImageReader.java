@@ -88,8 +88,10 @@ public final class SqueakImageReader {
             throw SqueakException.create("Failed to read Smalltalk image:", e.getMessage());
         }
         initObjects();
-        LogUtils.IMAGE.fine(() -> "Image loaded in " + (MiscUtils.currentTimeMillis() - start) + "ms.");
-        LogUtils.IMAGE.fine(() -> "Image screen size is " + image.flags.getScreenWidth() + "x" + image.flags.getScreenHeight());
+        if (LogUtils.IMAGE.isLoggable(Level.FINE)) {
+            LogUtils.IMAGE.fine("Image loaded in " + (MiscUtils.currentTimeMillis() - start) + "ms.");
+            LogUtils.IMAGE.fine("Image screen size is " + image.flags.getScreenWidth() + "x" + image.flags.getScreenHeight());
+        }
         image.setHiddenRoots((ArrayObject) hiddenRootsChunk.asObject());
         image.getSqueakImage();
     }

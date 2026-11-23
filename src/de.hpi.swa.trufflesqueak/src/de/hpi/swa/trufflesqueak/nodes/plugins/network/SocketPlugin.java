@@ -55,6 +55,12 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         protected final SqueakSocketContext getSocketContext() {
             return getContext().squeakSocketContext;
         }
+
+        /* Concatenates behind a boundary to keep string building out of compiled code. */
+        @TruffleBoundary
+        protected static final void logFiner(final String message, final Object value) {
+            LogUtils.SOCKET.finer(message + value);
+        }
     }
 
     @GenerateNodeFactory
@@ -89,7 +95,9 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         protected final AbstractSqueakObject doWork(@SuppressWarnings("unused") final Object receiver) {
             // Legacy primitive assumes IPv4
             final byte[] address = getResolver().getLoopbackInetAddress(SqueakSocketContext.SQ_FAMILY_INET4).getAddress();
-            LogUtils.SOCKET.finer(() -> "Local Address: " + SqueakOpaqueSocketAddress.getIpAddressString(address, getSocketContext().getSessionID()));
+            if (LogUtils.SOCKET.isLoggable(Level.FINER)) {
+                logFiner("Local Address: ", SqueakOpaqueSocketAddress.getIpAddressString(address, getSocketContext().getSessionID()));
+            }
             return getContext().asByteArray(address);
         }
     }
@@ -958,7 +966,9 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
          */
         @Specialization(guards = "hostName.isByteType()")
         protected final Object doWork(final Object receiver, final NativeObject hostName) {
-            LogUtils.SOCKET.finer(() -> "Starting lookup for host name " + hostName);
+            if (LogUtils.SOCKET.isLoggable(Level.FINER)) {
+                logFiner("Starting lookup for host name ", hostName);
+            }
             getResolver().startHostNameLookUp(hostName.asStringUnsafe());
             return receiver;
         }
@@ -974,7 +984,9 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
          */
         @Specialization(guards = "address.isByteType()")
         protected final Object doWork(final Object receiver, final NativeObject address) {
-            LogUtils.SOCKET.finer(() -> "Starting lookup for address " + address);
+            if (LogUtils.SOCKET.isLoggable(Level.FINER)) {
+                logFiner("Starting lookup for address ", address);
+            }
             getResolver().startAddressLookUp(address.getByteStorage());
             return receiver;
         }
@@ -992,7 +1004,9 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                         @Bind final Node node,
                         @Cached final InlinedConditionProfile hasResultProfile) {
             final byte[] lastNameLookup = getResolver().lastHostNameLookupResult();
-            LogUtils.SOCKET.finer(() -> "Name Lookup Result: " + SqueakOpaqueSocketAddress.getIpAddressString(lastNameLookup, getSocketContext().getSessionID()));
+            if (LogUtils.SOCKET.isLoggable(Level.FINER)) {
+                logFiner("Name Lookup Result: ", SqueakOpaqueSocketAddress.getIpAddressString(lastNameLookup, getSocketContext().getSessionID()));
+            }
             return hasResultProfile.profile(node, lastNameLookup == null) ? NilObject.SINGLETON : getContext(node).asByteArray(lastNameLookup);
         }
     }
@@ -1007,7 +1021,9 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final AbstractSqueakObject doWork(@SuppressWarnings("unused") final Object receiver) {
             final String lastAddressLookup = getResolver().lastAddressLookUpResult();
-            LogUtils.SOCKET.finer(() -> ">> Address Lookup Result: " + lastAddressLookup);
+            if (LogUtils.SOCKET.isLoggable(Level.FINER)) {
+                logFiner(">> Address Lookup Result: ", lastAddressLookup);
+            }
             return lastAddressLookup == null ? NilObject.SINGLETON : getContext().asByteString(lastAddressLookup);
         }
     }

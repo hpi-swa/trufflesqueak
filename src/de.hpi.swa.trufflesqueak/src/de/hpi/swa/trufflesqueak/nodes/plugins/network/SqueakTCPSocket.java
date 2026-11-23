@@ -106,7 +106,9 @@ final class SqueakTCPSocket extends SqueakSocket {
     @Override
     protected Status getStatus() throws IOException {
         final Status status = listening ? serverStatus() : clientStatus();
-        LogUtils.SOCKET.finer(() -> this + " " + status);
+        if (LogUtils.SOCKET.isLoggable(Level.FINER)) {
+            LogUtils.SOCKET.finer(this + " " + status);
+        }
         return status;
     }
 

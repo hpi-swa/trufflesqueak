@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.IntConsumer;
+import java.util.logging.Level;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -619,7 +620,9 @@ public final class FrameAccess {
         final MaterializedFrame frame = Truffle.getRuntime().iterateFrames(frameInstance -> {
             final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
             if (isTruffleSqueakFrame(current)) {
-                LogUtils.ITERATE_FRAMES.fine(() -> "..." + FrameAccess.getCodeObject(current).toString());
+                if (LogUtils.ITERATE_FRAMES.isLoggable(Level.FINE)) {
+                    LogUtils.ITERATE_FRAMES.fine("..." + FrameAccess.getCodeObject(current).toString());
+                }
                 final ContextObject contextObject = getContext(current);
                 if (context == contextObject) {
                     assert contextObject == null || !contextObject.hasTruffleFrame() : "Redundant frame lookup";
