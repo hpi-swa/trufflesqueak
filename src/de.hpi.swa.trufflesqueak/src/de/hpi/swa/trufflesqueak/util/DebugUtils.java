@@ -193,7 +193,30 @@ public final class DebugUtils {
         for (int i = 0; i < lists.length; i++) {
             printLinkedList(b, "*Quiescent processes list at priority " + (i + 1), (PointersObject) lists[i]);
         }
+        printAllProcesses(b, image, activeProcess);
         return b.toString();
+    }
+
+    /** Prints all processes, including the ones that are suspended or wait on other semaphores. */
+    private static void printAllProcesses(final StringBuilder b, final SqueakImageContext image, final PointersObject activeProcess) {
+        try {
+            b.append("*All processes:\n");
+            for (final Object object : image.objectGraphUtils.allInstancesOf(activeProcess.getSqueakClass())) {
+                if (object instanceof final PointersObject aProcess) {
+                    b.append("\tprocess @").append(Integer.toHexString(aProcess.hashCode())).append(aProcess == activeProcess ? " (active)" : "");
+                    b.append(" priority ").append(aProcess.instVarAt0Slow(PROCESS.PRIORITY));
+                    b.append(" waiting on ").append(aProcess.instVarAt0Slow(PROCESS.LIST));
+                    if (aProcess.instVarAt0Slow(PROCESS.SUSPENDED_CONTEXT) instanceof final ContextObject c) {
+                        b.append(" with stack trace:\n");
+                        printSqMaterializedStackTraceOn(b, c);
+                    } else {
+                        b.append(" with suspended context nil\n");
+                    }
+                }
+            }
+        } catch (final Throwable t) {
+            b.append("\t[unable to print all processes: ").append(t).append("]\n");
+        }
     }
 
     public static void printSqStackTrace() {

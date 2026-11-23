@@ -466,6 +466,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected final Object doFlush(final Object receiver) {
             final SqueakImageContext image = getContext();
             image.flushMethodCache();
+            image.invalidateAllFailedLookups();
             image.flushNamedPrimitives();
             return receiver;
         }
@@ -910,6 +911,20 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final SqueakObjectChangeClassOfToNode changeClassOfToNode) {
             changeClassOfToNode.execute(node, argument, receiver);
             return receiver;
+        }
+
+        /** The receiver is an object that has not been used as a behavior so far. */
+        @Specialization
+        protected static final ClassObject doPrimAdoptInstance(final PointersObject receiver, final AbstractSqueakObjectWithClassAndHash argument,
+                        @Bind final Node node,
+                        @Bind final SqueakImageContext image,
+                        @Cached final SqueakObjectChangeClassOfToNode changeClassOfToNode) {
+            final ClassObject classObject = ClassObject.asClassOrNull(image, receiver);
+            if (classObject == null) {
+                throw PrimitiveFailed.BAD_RECEIVER;
+            }
+            changeClassOfToNode.execute(node, argument, classObject);
+            return classObject;
         }
     }
 

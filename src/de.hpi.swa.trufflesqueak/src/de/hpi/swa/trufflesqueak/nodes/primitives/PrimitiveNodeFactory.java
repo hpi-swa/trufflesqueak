@@ -30,6 +30,7 @@ import de.hpi.swa.trufflesqueak.nodes.plugins.FilePlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.Float64ArrayPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.FloatArrayPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.HostWindowPlugin;
+import de.hpi.swa.trufflesqueak.nodes.plugins.IA32ABI;
 import de.hpi.swa.trufflesqueak.nodes.plugins.JPEGReaderPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
 import de.hpi.swa.trufflesqueak.nodes.plugins.Matrix2x3Plugin;
@@ -98,6 +99,7 @@ public final class PrimitiveNodeFactory {
                         new Float64ArrayPlugin(),
                         new TruffleSqueakPlugin(),
                         new HostWindowPlugin(),
+                        new IA32ABI(),
                         new JPEGReaderPlugin(),
                         new LargeIntegers(),
                         new Matrix2x3Plugin(),
@@ -140,13 +142,38 @@ public final class PrimitiveNodeFactory {
         if (primitiveIndex == PRIMITIVE_EXTERNAL_CALL_INDEX) {
             return getOrCreateNamed(method, numReceiverAndArguments);
         } else {
-            final AbstractPrimitiveNode primitiveNode = getOrCreateIndexed(primitiveIndex, numReceiverAndArguments);
+            AbstractPrimitiveNode primitiveNode = getOrCreateIndexed(primitiveIndex, numReceiverAndArguments);
+            if (primitiveNode == null && SqueakImageContext.getSlow().isNewspeak()) {
+                primitiveNode = createMirrorPrimitiveOrNull(primitiveIndex, numReceiverAndArguments);
+            }
             if (primitiveNode != null && primitiveNode.acceptsMethod(method)) {
                 return primitiveNode;
             } else {
                 return null;
             }
         }
+    }
+
+    /**
+     * Newspeak calls primitives from methods with additional leading arguments. In this case, the
+     * primitive operates on the last arguments (see {@link MirrorPrimitiveNode}).
+     */
+    private static AbstractPrimitiveNode createMirrorPrimitiveOrNull(final int primitiveIndex, final int numReceiverAndArguments) {
+        final EconomicMap<Integer, NodeFactory<? extends AbstractPrimitiveNode>> map = PRIMITIVE_TABLE.get(primitiveIndex);
+        if (map == null || numReceiverAndArguments > MirrorPrimitiveNode.MAX_NUM_RECEIVER_AND_ARGUMENTS) {
+            return null;
+        }
+        /*
+         * Use the variant with the fewest arguments: it is the primitive in its basic form, while
+         * variants with more arguments expect specific additional arguments.
+         */
+        for (int i = 1; i < numReceiverAndArguments; i++) {
+            final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = map.get(i);
+            if (nodeFactory != null) {
+                return new MirrorPrimitiveNode(createNode(nodeFactory, i), i);
+            }
+        }
+        return null;
     }
 
     public static AbstractPrimitiveNode getOrCreateIndexed(final int primitiveIndex, final int numReceiverAndArguments) {
@@ -198,6 +225,17 @@ public final class PrimitiveNodeFactory {
         final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = PLUGIN_MAP.get(moduleName, EconomicMap.emptyMap()).get(functionName, EconomicMap.emptyMap()).get(numReceiverAndArguments);
         if (nodeFactory != null) {
             return createNode(nodeFactory, numReceiverAndArguments);
+        }
+
+        /* Newspeak also calls named primitives from methods with additional leading arguments. */
+        if (SqueakImageContext.getSlow().isNewspeak() && numReceiverAndArguments <= MirrorPrimitiveNode.MAX_NUM_RECEIVER_AND_ARGUMENTS) {
+            final EconomicMap<Integer, NodeFactory<? extends AbstractPrimitiveNode>> map = PLUGIN_MAP.get(moduleName, EconomicMap.emptyMap()).get(functionName, EconomicMap.emptyMap());
+            for (int i = 1; i < numReceiverAndArguments; i++) {
+                final NodeFactory<? extends AbstractPrimitiveNode> mirroredNodeFactory = map.get(i);
+                if (mirroredNodeFactory != null) {
+                    return new MirrorPrimitiveNode(createNode(mirroredNodeFactory, i), i);
+                }
+            }
         }
 
         /* Check for external plugin primitive. */

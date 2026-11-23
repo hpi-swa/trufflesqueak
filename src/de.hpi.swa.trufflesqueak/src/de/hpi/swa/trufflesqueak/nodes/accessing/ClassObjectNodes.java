@@ -13,9 +13,11 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.VariablePointersObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 
@@ -59,6 +61,16 @@ public final class ClassObjectNodes {
         @Specialization(guards = "isSuperclassIndex(index)")
         protected static final void doClassSuperclass(final ClassObject obj, @SuppressWarnings("unused") final long index, final ClassObject value) {
             obj.setSuperclass(value);
+        }
+
+        /** The superclass is an object that has not been used as a behavior so far. */
+        @Specialization(guards = "isSuperclassIndex(index)")
+        protected static final void doClassSuperclass(final Node node, final ClassObject obj, @SuppressWarnings("unused") final long index, final PointersObject value) {
+            final ClassObject superclass = ClassObject.asClassOrNull(getContext(node), value);
+            if (superclass == null) {
+                throw SqueakException.create("Unable to use object as superclass:", value);
+            }
+            obj.setSuperclass(superclass);
         }
 
         @Specialization(guards = "isSuperclassIndex(index)")

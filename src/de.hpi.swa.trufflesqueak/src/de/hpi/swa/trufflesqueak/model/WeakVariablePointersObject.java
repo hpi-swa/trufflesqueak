@@ -103,7 +103,14 @@ public final class WeakVariablePointersObject extends AbstractVariablePointersOb
 
     @Override
     protected void traceVariablePart(final ObjectTracer tracer) {
-        /* Weak pointers excluded from tracing. */
+        /* Weak pointers excluded from tracing, unless all objects that are alive must be visited. */
+        if (tracer.tracesWeakReferents()) {
+            for (final Object value : variablePart) {
+                if (value instanceof final WeakRef weakRef) {
+                    tracer.addIfUnmarked(weakRef.get());
+                }
+            }
+        }
     }
 
     @Override

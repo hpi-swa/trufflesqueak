@@ -6,6 +6,7 @@
  */
 package de.hpi.swa.trufflesqueak.nodes;
 
+import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
@@ -32,12 +33,17 @@ public abstract class LookupMethodNode extends AbstractNode {
 
     @SuppressWarnings("unused")
     @Specialization(limit = "LOOKUP_CACHE_SIZE", guards = {"classObject == cachedClass", "selector == cachedSelector"}, //
-                    assumptions = {"cachedClass.getClassHierarchyAndMethodDictStable()"})
+                    assumptions = {"cachedClass.getClassHierarchyAndMethodDictStable()", "getFailedLookupAssumption(cachedClass, cachedSelector, cachedMethod)"})
     protected static final Object doCached(final ClassObject classObject, final NativeObject selector,
                     @Cached("classObject") final ClassObject cachedClass,
                     @Cached("selector") final NativeObject cachedSelector,
                     @Cached("classObject.lookupInMethodDictSlow(selector)") final Object cachedMethod) {
         return cachedMethod;
+    }
+
+    /** Cached lookups that did not find a method depend on no method being installed afterwards. */
+    protected static final Assumption getFailedLookupAssumption(final ClassObject classObject, final NativeObject selector, final Object lookupResult) {
+        return lookupResult == null ? classObject.getImage().getFailedLookupAssumption(selector) : Assumption.ALWAYS_VALID;
     }
 
     @ReportPolymorphism.Megamorphic

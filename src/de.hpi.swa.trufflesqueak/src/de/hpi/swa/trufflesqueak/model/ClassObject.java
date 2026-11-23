@@ -31,12 +31,18 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Abst
 import de.hpi.swa.trufflesqueak.nodes.dispatch.LookupClassGuard;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
+import de.hpi.swa.trufflesqueak.util.LogUtils;
 
 /*
  * Represents all subclasses of ClassDescription (Class, Metaclass, TraitBehavior, ...).
  */
 @SuppressWarnings("static-method")
 public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
+    /* Lookup rules, see StackInterpreter>>lookupOrdinarySend and #lookupProtected:startingAt:rule:. */
+    private static final int LOOKUP_ANY = 0;
+    private static final int LOOKUP_PUBLIC = 1;
+    private static final int LOOKUP_PROTECTED = 2;
+
     @CompilationFinal private CyclicAssumption classHierarchyAndMethodDictStable;
     @CompilationFinal private CyclicAssumption classFormatStable;
 
@@ -87,6 +93,78 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return image;
     }
 
+    /**
+     * Answers the given object as a class. In the OpenSmalltalk VM, any object with a superclass,
+     * a method dictionary, and a format can be used as a behavior. Here, behaviors must be
+     * instances of {@link ClassObject}, which is decided when an object is created. This usually
+     * works because classes whose instances are behaviors are known (see
+     * {@link #instancesAreClasses()}). In case an object turns out to be used as a behavior
+     * nonetheless (e.g., after Newspeak has replaced its Behavior, Class, and Metaclass classes with
+     * new versions), a class is created from the object, and the object is forwarded to it.
+     *
+     * @return the class, or null if the object cannot be used as a class
+     */
+    @TruffleBoundary
+    public static ClassObject asClassOrNull(final SqueakImageContext image, final Object object) {
+        if (object instanceof final ClassObject existingClass) {
+            return existingClass.isNotForwarded() ? existingClass : asClassOrNull(image, existingClass.getForwardingPointer());
+        } else if (object instanceof final PointersObject pointersObject) {
+            if (pointersObject.isNotForwarded()) {
+                return createFromPointersObjectOrNull(image, pointersObject);
+            } else {
+                return asClassOrNull(image, pointersObject.getForwardingPointer());
+            }
+        } else {
+            return null;
+        }
+    }
+
+    private static ClassObject createFromPointersObjectOrNull(final SqueakImageContext image, final PointersObject pointersObject) {
+        if (pointersObject.size() < CLASS_DESCRIPTION.INLINE_POINTERS) {
+            return null;
+        }
+        final Object superclassOrNil = pointersObject.instVarAt0Slow(CLASS_DESCRIPTION.SUPERCLASS);
+        final Object methodDictOrNil = pointersObject.instVarAt0Slow(CLASS_DESCRIPTION.METHOD_DICT);
+        if (!(pointersObject.instVarAt0Slow(CLASS_DESCRIPTION.FORMAT) instanceof final Long formatValue) ||
+                        !(methodDictOrNil == NilObject.SINGLETON || methodDictOrNil instanceof VariablePointersObject)) {
+            return null;
+        }
+        final ClassObject superclassOrNull;
+        if (superclassOrNil == NilObject.SINGLETON) {
+            superclassOrNull = null;
+        } else {
+            superclassOrNull = asClassOrNull(image, superclassOrNil);
+            if (superclassOrNull == null) {
+                return null;
+            }
+        }
+        final ClassObject metaclass = pointersObject.getSqueakClass();
+        final ClassObject classObject = new ClassObject(image, metaclass, pointersObject.size());
+        classObject.superclass = superclassOrNull;
+        classObject.methodDict = methodDictOrNil == NilObject.SINGLETON ? null : (VariablePointersObject) methodDictOrNil;
+        classObject.format = formatValue;
+        for (int i = CLASS_DESCRIPTION.INLINE_POINTERS; i < pointersObject.size(); i++) {
+            classObject.pointers[i - CLASS_DESCRIPTION.INLINE_POINTERS] = pointersObject.instVarAt0Slow(i);
+        }
+        classObject.initializeLayout();
+        if (superclassOrNull != null && superclassOrNull.instancesAreClasses) {
+            classObject.instancesAreClasses = true;
+        }
+        /*
+         * Instances of the object's class and of its superclasses that define the slots required
+         * for behaviors are behaviors from now on.
+         */
+        ClassObject current = metaclass;
+        while (current != null && current.getBasicInstanceSize() >= CLASS_DESCRIPTION.INLINE_POINTERS) {
+            current.setInstancesAreClasses();
+            current = current.getSuperclassOrNull();
+        }
+        LogUtils.IMAGE.fine(() -> "Creating class from instance of " + metaclass);
+        image.objectGraphUtils.pointersBecomeOneWay(new Object[]{pointersObject}, new Object[]{classObject}, true);
+        image.flushMethodCacheAfterBecome();
+        return classObject;
+    }
+
     /* Used by TruffleSqueakTest. */
     public boolean hasLayout() {
         return layout != null;
@@ -116,9 +194,9 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         if (!isNotForwarded()) {
             return "forward to " + getForwardingPointer().toString();
         }
-        if (image.isMetaClass(getSqueakClass())) {
+        if (image.isMetaClass(getSqueakClass()) || isMetaclassLike()) {
             final Object classInstance = pointers[METACLASS.THIS_CLASS - CLASS_DESCRIPTION.INLINE_POINTERS];
-            if (classInstance != NilObject.SINGLETON && ((ClassObject) classInstance).pointers[CLASS.NAME] instanceof final NativeObject metaClassName) {
+            if (classInstance instanceof final ClassObject c && c.pointers.length > CLASS.NAME && c.pointers[CLASS.NAME] instanceof final NativeObject metaClassName) {
                 return metaClassName.asStringUnsafe() + " class";
             } else {
                 return "Unknown metaclass";
@@ -130,12 +208,21 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
             } else {
                 return "Unknown classTrait";
             }
-        } else if (size() >= CLASS.NAME && pointers[CLASS.NAME] instanceof final NativeObject className) {
+        } else if (pointers.length > CLASS.NAME && pointers[CLASS.NAME] instanceof final NativeObject className) {
             // this also works for traits, since TRAIT.NAME == CLASS.NAME
             return className.asStringUnsafe();
         } else {
             return "Unknown behavior";
         }
+    }
+
+    /**
+     * Answers true for metaclasses that are not instances of Smalltalk's Metaclass (e.g., Newspeak
+     * metaclasses), which also refer to their sole instance through their last slot.
+     */
+    private boolean isMetaclassLike() {
+        return pointers != null && pointers.length == METACLASS.INST_SIZE - CLASS_DESCRIPTION.INLINE_POINTERS &&
+                        pointers[METACLASS.THIS_CLASS - CLASS_DESCRIPTION.INLINE_POINTERS] instanceof final ClassObject c && c.getSqueakClass() == this;
     }
 
     private boolean isAClassTrait() {
@@ -371,6 +458,10 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         assert superclass == null || superclass.assertNotForwarded();
         invalidateClassHierarchyAndMethodDictStableAssumption("new superclass");
         this.superclass = superclass;
+        if (superclass != null && superclass.instancesAreClasses) {
+            /* Subclasses of behavior classes are behavior classes (e.g., new metaclasses). */
+            setInstancesAreClasses();
+        }
         /*
          * TODO: Instead of a full global flush, this should be refined to only flush entries in
          * image.methodCache where the entry's class is `this` class or a subclass of `this` class.
@@ -409,6 +500,38 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     @TruffleBoundary
     public Object lookupInMethodDictSlow(final NativeObject selector) {
+        return lookupInMethodDictSlow(selector, image.enforcesAccessControl() ? LOOKUP_PUBLIC : LOOKUP_ANY);
+    }
+
+    /**
+     * Same as {@link #lookupInMethodDictSlow(NativeObject)}, but ignores access modifiers of
+     * methods. See StackInterpreter>>lookupMNU.
+     */
+    @TruffleBoundary
+    public Object lookupInMethodDictIgnoringAccessSlow(final NativeObject selector) {
+        return lookupInMethodDictSlow(selector, LOOKUP_ANY);
+    }
+
+    /**
+     * Same as {@link #lookupInMethodDictSlow(NativeObject)}, but skips private methods. See
+     * StackInterpreter>>lookupProtected:startingAt:rule:.
+     */
+    @TruffleBoundary
+    public Object lookupProtectedInMethodDictSlow(final NativeObject selector) {
+        return lookupInMethodDictSlow(selector, LOOKUP_PROTECTED);
+    }
+
+    /** Looks up selector in the method dictionary of this class only (ignoring access modifiers). */
+    @TruffleBoundary
+    public Object lookupInOwnMethodDictSlow(final NativeObject selector) {
+        assert assertNotForwarded();
+        if (methodDict == null) {
+            return null;
+        }
+        return lookupMethodInDictionary(getResolvedMethodDict(), selector, selector.getSqueakHashInt());
+    }
+
+    private Object lookupInMethodDictSlow(final NativeObject selector, final int lookupRule) {
         final int selectorHash = selector.getSqueakHashInt();
         ClassObject lookupClass = this;
         while (lookupClass != null) {
@@ -422,14 +545,26 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
             }
             final Object result = lookupMethodInDictionary(lookupClass.getResolvedMethodDict(), selector, selectorHash);
             if (result != null) {
-                return result;
+                if (lookupRule == LOOKUP_ANY || !(result instanceof final CompiledCodeObject method) || method.isPublic()) {
+                    return result;
+                } else if (lookupRule == LOOKUP_PUBLIC) {
+                    if (method.isProtected()) {
+                        return null; /* Protected methods cannot be called by ordinary sends. */
+                    }
+                    /* Private methods are invisible to ordinary sends, continue in superclass. */
+                } else {
+                    assert lookupRule == LOOKUP_PROTECTED;
+                    if (!method.isPrivate()) {
+                        return result;
+                    }
+                }
             }
             if (lookupClass.getSuperclassOrNull() == null) {
                 break;
             }
             lookupClass = lookupClass.getResolvedSuperclass();
         }
-        assert !selector.isDoesNotUnderstand(image) : "Could not find does not understand method";
+        assert lookupRule != LOOKUP_ANY || !selector.isDoesNotUnderstand(image) : "Could not find does not understand method";
         return null; /* Signals a doesNotUnderstand. */
     }
 
@@ -485,8 +620,8 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         if (current == null) {
             assert originalSelector != image.doesNotUnderstand : "Fatal dispatch error: Recursive doesNotUnderstand:";
 
-            final CompiledCodeObject dnuMethod = lookupMethodInMethodDictSlow(image.doesNotUnderstand);
-            if (dnuMethod != null) {
+            /* The lookup of #doesNotUnderstand: ignores access modifiers. */
+            if (lookupInMethodDictIgnoringAccessSlow(image.doesNotUnderstand) instanceof final CompiledCodeObject dnuMethod) {
                 return dnuMethod;
             } else {
                 throw SqueakException.create("Fatal dispatch error: #doesNotUnderstand: not found in", this);
@@ -499,8 +634,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
                 throw SqueakException.create("Fatal dispatch error: hit nil method dictionary in class with no superclass while sending", originalSelector);
             }
 
-            final CompiledCodeObject ciMethod = startingClass.lookupMethodInMethodDictSlow(image.cannotInterpretSelector);
-            if (ciMethod != null) {
+            if (startingClass.lookupInMethodDictIgnoringAccessSlow(image.cannotInterpretSelector) instanceof final CompiledCodeObject ciMethod) {
                 return ciMethod;
             } else {
                 throw SqueakException.create("Fatal dispatch error: #cannotInterpret: not found in superclass chain of", current);
@@ -568,9 +702,11 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     public void become(final ClassObject other) {
         becomeOtherClass(other);
 
-        final boolean otherInstancesAreClasses = image.isMetaClass(other.getSqueakClass());
+        /* Whether instances are classes is determined by the contents, which are swapped below. */
+        final boolean otherInstancesAreClasses = other.instancesAreClasses;
         if (instancesAreClasses != otherInstancesAreClasses) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
+            other.instancesAreClasses = instancesAreClasses;
             instancesAreClasses = otherInstancesAreClasses;
         }
 
@@ -636,6 +772,10 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     @Override
     public void forwardTo(final AbstractSqueakObjectWithClassAndHash pointer) {
+        if (instancesAreClasses && pointer instanceof final ClassObject newClass) {
+            /* The new version of a class whose instances are classes also has classes as instances. */
+            newClass.setInstancesAreClasses();
+        }
         super.forwardTo(pointer);
         invalidateClassHierarchyAndMethodDictStableAssumption("forwarded");
         invalidateClassFormatStableAssumption("forwarded");

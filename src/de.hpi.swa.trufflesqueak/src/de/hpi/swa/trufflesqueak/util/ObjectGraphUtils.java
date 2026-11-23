@@ -254,7 +254,14 @@ public final class ObjectGraphUtils {
     @TruffleBoundary
     public void pointersBecomeOneWay(final Object[] fromPointers, final Object[] toPointers, final boolean copyHash) {
         final long startTime = System.nanoTime();
-        boolean allAbstractSqueakObjectWithHash = true;
+        /*
+         * Forwarding pointers are followed when values are read from receivers, temporaries, and
+         * literals, but not when they are read through primitives (e.g., from collections). This is
+         * sufficient for Smalltalk images, which rarely forward objects that are referenced from
+         * many places. Newspeak forwards all instances of classes that change shape when it
+         * installs code, so update all objects eagerly in Newspeak images.
+         */
+        boolean allAbstractSqueakObjectWithHash = !image.isNewspeak();
         for (int i = 0; i < fromPointers.length; i++) {
             final Object from = fromPointers[i];
             final Object to = toPointers[i];
@@ -265,6 +272,13 @@ public final class ObjectGraphUtils {
                         t.setSqueakHash(MiscUtils.toIntExact(f.getOrCreateSqueakHash()));
                     }
                     f.forwardTo(t);
+                    if (from instanceof ClassObject) {
+                        /*
+                         * Forwarding pointers are not followed when the class of an object is
+                         * accessed, so the instances of a class must be updated eagerly.
+                         */
+                        allAbstractSqueakObjectWithHash = false;
+                    }
                 } else {
                     allAbstractSqueakObjectWithHash = false;
                 }
@@ -276,7 +290,7 @@ public final class ObjectGraphUtils {
                 pointersBecomeOneWayFrames(_ -> {
                 }, becomeMap);
             } else {
-                final ObjectTracer roots = ObjectTracer.fromRoots(image, false, FrameHandling.SCAN);
+                final ObjectTracer roots = ObjectTracer.fromRoots(image, false, FrameHandling.SCAN).withWeakReferents();
                 pointersBecomeOneWayFrames(roots::addIfUnmarked, becomeMap);
                 becomeOneWayManyPairs(roots);
             }
@@ -309,7 +323,7 @@ public final class ObjectGraphUtils {
             return; // nothing to do
         }
         final long startTime = System.nanoTime();
-        becomeOneWayManyPairs(ObjectTracer.fromRoots(image, true, FrameHandling.SCRUB));
+        becomeOneWayManyPairs(ObjectTracer.fromRoots(image, true, FrameHandling.SCRUB).withWeakReferents());
         if (trackOperations) {
             ObjectGraphOperations.UNFOLLOW.addNanos(System.nanoTime() - startTime);
         }
@@ -515,6 +529,7 @@ public final class ObjectGraphUtils {
         public final SqueakImageContext image;
         private final boolean currentMarkingFlag;
         public final FrameHandling frameHandling;
+        private boolean tracesWeakReferents;
 
         private ObjectTracer(final SqueakImageContext image, final boolean markingFlag, final FrameHandling frameHandling) {
             this.image = image;
@@ -524,7 +539,23 @@ public final class ObjectGraphUtils {
 
         /** Return an empty traversal based on this root traversal. */
         public ObjectTracer copyEmpty() {
-            return new ObjectTracer(image, currentMarkingFlag, frameHandling);
+            final ObjectTracer tracer = new ObjectTracer(image, currentMarkingFlag, frameHandling);
+            tracer.tracesWeakReferents = tracesWeakReferents;
+            return tracer;
+        }
+
+        /**
+         * Also visit objects that are only weakly reachable. This is needed to replace pointers in
+         * all objects that are still alive, including the ones that are only referenced from weak
+         * collections (e.g., from registries of dependents).
+         */
+        private ObjectTracer withWeakReferents() {
+            tracesWeakReferents = true;
+            return this;
+        }
+
+        public boolean tracesWeakReferents() {
+            return tracesWeakReferents;
         }
 
         /**

@@ -13,7 +13,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants.ObjectHeader;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSqueakObjectWithHash {
     /**
@@ -107,8 +106,16 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
             return this;
         } else {
             CompilerDirectives.transferToInterpreter();
-            assert squeakClass.isNotForwarded() : "Forwarding pointer should not be a forwarded object (" + MiscUtils.toObjectString(this) + "->" + MiscUtils.toObjectString(squeakClass) + ")";
-            return squeakClass;
+            /*
+             * The object that this object is forwarded to may have been forwarded itself by a later
+             * become, in case not all references to this object have been replaced before.
+             */
+            AbstractSqueakObjectWithClassAndHash pointer = squeakClass;
+            while (!pointer.isNotForwarded()) {
+                pointer = pointer.squeakClass;
+            }
+            squeakClass = pointer;
+            return pointer;
         }
     }
 

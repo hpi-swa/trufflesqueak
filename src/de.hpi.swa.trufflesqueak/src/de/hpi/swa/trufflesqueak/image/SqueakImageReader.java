@@ -11,13 +11,15 @@ import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 
@@ -32,6 +34,7 @@ import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS_BINDING;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS_DESCRIPTION;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.METACLASS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
@@ -348,7 +351,57 @@ public final class SqueakImageReader {
         image.specialSelectors.fillin(specialChunk.getChunk(SPECIAL_OBJECT.SPECIAL_SELECTORS));
     }
 
+    /**
+     * Determines the secondary bytecode set of the image through the class variable
+     * SecondaryBytecodeSetEncoderClass of CompiledMethod (or one of its superclasses). This is done
+     * on chunk level because the bytecode set must be known before methods and contexts are filled
+     * in. Newspeak images use NewsqueakV4, all other images use SistaV1.
+     */
+    private void detectSecondaryBytecodeSet() {
+        final SqueakImageChunk specialChunk = chunkMap.get(specialObjectsPointer);
+        SqueakImageChunk classChunk = getChunkOrNull(specialChunk.getWord(SPECIAL_OBJECT.CLASS_COMPILED_METHOD));
+        while (classChunk != null && isBehaviorChunk(classChunk)) {
+            final int classPoolIndex = CLASS_DESCRIPTION.INLINE_POINTERS + CLASS.CLASS_POOL;
+            final SqueakImageChunk classPool = classChunk.getWordSize() > classPoolIndex ? getChunkOrNull(classChunk.getWord(classPoolIndex)) : null;
+            /* Class pools are dictionaries (tally, array of bindings). */
+            final SqueakImageChunk bindings = classPool != null && classPool.getWordSize() >= 2 ? getChunkOrNull(classPool.getWord(1)) : null;
+            if (bindings != null && bindings.getFormat() == 2) {
+                for (int i = 0; i < bindings.getWordSize(); i++) {
+                    final SqueakImageChunk binding = getChunkOrNull(bindings.getWord(i));
+                    if (binding != null && binding.getFormat() == 1 && binding.getWordSize() >= 2 && hasByteContents(getChunkOrNull(binding.getWord(CLASS_BINDING.KEY)),
+                                    "SecondaryBytecodeSetEncoderClass")) {
+                        final SqueakImageChunk encoderClass = getChunkOrNull(binding.getWord(CLASS_BINDING.VALUE));
+                        final int nameIndex = CLASS_DESCRIPTION.INLINE_POINTERS + CLASS.NAME;
+                        if (encoderClass != null && isBehaviorChunk(encoderClass) && encoderClass.getWordSize() > nameIndex &&
+                                        hasByteContents(getChunkOrNull(encoderClass.getWord(nameIndex)), "EncoderForNewsqueakV4")) {
+                            image.setIsNewspeak();
+                        }
+                        return;
+                    }
+                }
+            }
+            classChunk = getSuperclassChunk(classChunk);
+        }
+    }
+
+    private SqueakImageChunk getChunkOrNull(final long pointer) {
+        if ((pointer & 7) != SqueakImageConstants.OBJECT_TAG) {
+            return null;
+        }
+        final SqueakImageChunk chunk = chunkMap.get(pointer);
+        return chunk == null || chunk.isNil() ? null : chunk;
+    }
+
+    private static boolean hasByteContents(final SqueakImageChunk chunk, final String expected) {
+        if (chunk == null || chunk.getFormat() < 16 || chunk.getFormat() > 23) {
+            return false;
+        }
+        /* The bytes of a chunk do not include padding. */
+        return new String(chunk.getBytes(), StandardCharsets.US_ASCII).equals(expected);
+    }
+
     private void initObjects() {
+        detectSecondaryBytecodeSet();
         initPrebuiltConstant();
         fillInClassObjects();
         fillInObjects();
@@ -370,9 +423,15 @@ public final class SqueakImageReader {
         final SqueakImageChunk sqClassDescription = getSuperclassChunk(sqMetaclass);
         final SqueakImageChunk sqBehavior = getSuperclassChunk(sqClassDescription);
 
-        final List<SqueakImageChunk> metaclassChunks = new ArrayList<>();
-
-        /* Pass 1: Instantiate ClassObjects for all metaclasses and their sole instance (thisClass). */
+        /*
+         * Pass 1: Collect all behaviors on chunk level. Any object in the class table is a behavior
+         * as far as the VM is concerned, and so are their classes, their superclasses, and the sole
+         * instance (thisClass) of all metaclasses. This also covers class hierarchies that are
+         * independent of Smalltalk's Behavior (e.g., Newspeak's Behavior, Class, and Metaclass).
+         */
+        final LinkedHashSet<SqueakImageChunk> classChunks = new LinkedHashSet<>();
+        final HashSet<SqueakImageChunk> behaviorClassChunks = new HashSet<>();
+        final ArrayDeque<SqueakImageChunk> worklist = new ArrayDeque<>();
         for (int p = 0; p < SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS; p++) {
             final SqueakImageChunk classTablePage = chunkMap.get(hiddenRootsChunk.getWord(p));
             if (classTablePage == null || classTablePage.isNil()) {
@@ -382,55 +441,77 @@ public final class SqueakImageReader {
                 final long potentialClassPtr = classTablePage.getWord(i);
                 assert potentialClassPtr != 0;
                 final SqueakImageChunk classChunk = chunkMap.get(potentialClassPtr);
-                if (classChunk == null || classChunk.isNil()) {
-                    continue;
+                if (isBehaviorChunk(classChunk)) {
+                    worklist.add(classChunk);
                 }
-
-                if (isMetaclassChunk(classChunk, sqMetaclass)) {
-                    metaclassChunks.add(classChunk);
-                    assert classChunk.getWordSize() >= METACLASS.INST_SIZE;
-                    final ClassObject metaClassObject = classChunk.asClassObject();
-                    assert metaClassObject != null;
-                    metaClassObject.setInstancesAreClasses();
-                    final SqueakImageChunk classInstance = getThisClassChunk(classChunk);
-                    classInstance.asClassObject();
+            }
+        }
+        worklist.add(sqClassDescription);
+        worklist.add(sqBehavior);
+        behaviorClassChunks.add(sqMetaclass);
+        behaviorClassChunks.add(sqClassDescription);
+        behaviorClassChunks.add(sqBehavior);
+        while (!worklist.isEmpty()) {
+            final SqueakImageChunk classChunk = worklist.poll();
+            if (!classChunks.add(classChunk)) {
+                continue;
+            }
+            final SqueakImageChunk classOfClassChunk = classChunk.getClassChunk();
+            if (isBehaviorChunk(classOfClassChunk)) {
+                behaviorClassChunks.add(classOfClassChunk);
+                worklist.add(classOfClassChunk);
+            }
+            final SqueakImageChunk superclassChunk = getSuperclassChunk(classChunk);
+            if (isBehaviorChunk(superclassChunk)) {
+                worklist.add(superclassChunk);
+            }
+            if (isMetaclassChunk(classChunk, sqMetaclass)) {
+                assert classChunk.getWordSize() >= METACLASS.INST_SIZE;
+                final SqueakImageChunk classInstance = getThisClassChunk(classChunk);
+                if (isBehaviorChunk(classInstance)) {
+                    behaviorClassChunks.add(classChunk);
+                    worklist.add(classInstance);
                 }
             }
         }
 
-        final HashSet<ClassObject> behaviorClasses = new HashSet<>(32);
-        final ClassObject classDescriptionClass = sqClassDescription.asClassObject();
-        final ClassObject behaviorClass = sqBehavior.asClassObject();
-        if (classDescriptionClass != null) {
-            classDescriptionClass.setInstancesAreClasses();
-            behaviorClasses.add(classDescriptionClass);
-        }
-        if (behaviorClass != null) {
-            behaviorClass.setInstancesAreClasses();
-            behaviorClasses.add(behaviorClass);
-        }
-
-        final List<ClassObject> classInstances = new ArrayList<>(metaclassChunks.size());
-
-        /* Pass 2: Fill in all classes. */
-        for (final SqueakImageChunk metaclassChunk : metaclassChunks) {
-            final SqueakImageChunk classInstanceChunk = getThisClassChunk(metaclassChunk);
-            if (classInstanceChunk != null) {
-                final ClassObject classObject = classInstanceChunk.asClassObject();
-                if (classObject != null) {
-                    classObject.fillin(classInstanceChunk);
-                    classInstances.add(classObject);
-                }
+        /*
+         * Pass 2: Propagate the fact that instances are behaviors up the hierarchy to all
+         * superclasses that define the slots that the VM requires for behaviors (superclass,
+         * methodDict, and format), and then down the hierarchy to all their subclasses.
+         */
+        for (final SqueakImageChunk classChunk : behaviorClassChunks.toArray(new SqueakImageChunk[0])) {
+            SqueakImageChunk current = getSuperclassChunk(classChunk);
+            while (isBehaviorChunk(current) && getInstanceSize(current) >= CLASS_DESCRIPTION.INLINE_POINTERS && behaviorClassChunks.add(current)) {
+                current = getSuperclassChunk(current);
             }
         }
+        for (final SqueakImageChunk classChunk : classChunks) {
+            checkAndMarkBehaviorClass(classChunk, behaviorClassChunks);
+        }
 
-        /* Pass 3: Propagate instancesAreClasses down the hierarchy. */
-        for (final ClassObject classObject : classInstances) {
-            checkAndMarkBehaviorClass(classObject, behaviorClasses);
+        /* Pass 3: Instantiate ClassObjects for all behaviors, then fill them in. */
+        for (final SqueakImageChunk classChunk : classChunks) {
+            final ClassObject classObject = classChunk.asClassObject();
+            if (behaviorClassChunks.contains(classChunk)) {
+                classObject.setInstancesAreClasses();
+            }
+        }
+        for (final SqueakImageChunk classChunk : classChunks) {
+            classChunk.asClassObject().fillin(classChunk);
         }
 
         assert image.metaClass.instancesAreClasses();
         image.setByteSymbolClass(((NativeObject) image.metaClass.getOtherPointers()[CLASS.NAME]).getSqueakClass());
+    }
+
+    /**
+     * Behaviors are fixed pointers objects with at least a superclass, a method dictionary, and a
+     * format (see {@link CLASS_DESCRIPTION}).
+     */
+    private static boolean isBehaviorChunk(final SqueakImageChunk chunk) {
+        return chunk != null && !chunk.isNil() && chunk.getFormat() == 1 && chunk.getWordSize() >= CLASS_DESCRIPTION.INLINE_POINTERS &&
+                        (chunk.getWord(CLASS_DESCRIPTION.FORMAT) & 7) == SqueakImageConstants.SMALL_INTEGER_TAG;
     }
 
     /**
@@ -451,23 +532,25 @@ public final class SqueakImageReader {
     }
 
     /**
-     * Recursively walks up the class hierarchy to determine if a class inherits from Behavior.
-     * Memoizes results in the provided behaviorClasses set.
+     * Walks up the class hierarchy to determine if a class inherits from a class whose instances
+     * are behaviors. Memoizes results in the provided behaviorClassChunks set.
      */
-    private boolean checkAndMarkBehaviorClass(final ClassObject classObject, final HashSet<ClassObject> behaviorClasses) {
-        if (classObject == null) {
-            return false;
-        }
-        if (behaviorClasses.contains(classObject)) {
-            return true;
-        }
-
-        if (checkAndMarkBehaviorClass(classObject.getSuperclassOrNull(), behaviorClasses)) {
-            behaviorClasses.add(classObject);
-            classObject.setInstancesAreClasses();
-            return true;
+    private boolean checkAndMarkBehaviorClass(final SqueakImageChunk classChunk, final HashSet<SqueakImageChunk> behaviorClassChunks) {
+        final ArrayList<SqueakImageChunk> visited = new ArrayList<>();
+        SqueakImageChunk current = classChunk;
+        while (isBehaviorChunk(current)) {
+            if (behaviorClassChunks.contains(current)) {
+                behaviorClassChunks.addAll(visited);
+                return true;
+            }
+            visited.add(current);
+            current = getSuperclassChunk(current);
         }
         return false;
+    }
+
+    private static int getInstanceSize(final SqueakImageChunk classChunk) {
+        return (int) (classChunk.getWord(CLASS_DESCRIPTION.FORMAT) >> SqueakImageConstants.NUM_TAG_BITS & 0xFFFF);
     }
 
     private SqueakImageChunk getSuperclassChunk(final SqueakImageChunk classChunk) {

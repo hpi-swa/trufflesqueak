@@ -38,6 +38,7 @@ import de.hpi.swa.trufflesqueak.model.CharacterObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
@@ -55,20 +56,38 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallbac
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 
 public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     protected abstract static class AbstractArrayBecomeOneWayPrimitiveNode extends AbstractPrimitiveNode {
 
         protected final ArrayObject performPointersBecomeOneWay(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash) {
-            if (!fromArray.isObjectType() || !toArray.isObjectType() || fromArray.getObjectLength() != toArray.getObjectLength()) {
+            final Object[] toPointers;
+            if (fromArray.isEmptyType() && toArray.isEmptyType() && fromArray.getEmptyLength() == toArray.getEmptyLength()) {
+                return fromArray; /* Nothing to do for empty arrays and arrays that only contain nil. */
+            } else if (fromArray.isObjectType() && toArray.isObjectType() && fromArray.getObjectLength() == toArray.getObjectLength()) {
+                toPointers = toArray.getObjectStorage();
+            } else if (fromArray.isObjectType() && toArray.isEmptyType() && fromArray.getObjectLength() == toArray.getEmptyLength()) {
+                toPointers = ArrayUtils.withAll(toArray.getEmptyLength(), NilObject.SINGLETON);
+            } else {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.BAD_ARGUMENT;
             }
             // Need to operate on copy of `fromPointers` because itself might also be changed.
             final Object[] fromPointers = fromArray.getObjectStorage().clone();
-            final Object[] toPointers = toArray.getObjectStorage();
             final SqueakImageContext image = getContext();
+            for (int i = 0; i < fromPointers.length; i++) {
+                if (fromPointers[i] instanceof ClassObject && toPointers[i] instanceof PointersObject) {
+                    /* A class can only become an object that can also be used as a class. */
+                    final ClassObject classObject = ClassObject.asClassOrNull(image, toPointers[i]);
+                    if (classObject == null) {
+                        CompilerDirectives.transferToInterpreter();
+                        throw PrimitiveFailed.BAD_ARGUMENT;
+                    }
+                    toPointers[i] = classObject;
+                }
+            }
             image.objectGraphUtils.pointersBecomeOneWay(fromPointers, toPointers, copyHash);
             image.flushMethodCacheAfterBecome();
             return fromArray;
@@ -136,6 +155,19 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                 throw PrimitiveFailed.INSUFFICIENT_OBJECT_MEMORY;
             }
         }
+
+        /** The receiver is an object that has not been used as a behavior so far. */
+        @Specialization
+        protected static final AbstractSqueakObjectWithHash newFromPointersObject(final PointersObject receiver,
+                        @Bind final Node node,
+                        @Bind final SqueakImageContext image,
+                        @Exclusive @Cached final SqueakObjectNewNode newNode) {
+            final ClassObject classObject = ClassObject.asClassOrNull(image, receiver);
+            if (classObject == null) {
+                throw PrimitiveFailed.BAD_RECEIVER;
+            }
+            return newIndirect(classObject, node, newNode);
+        }
     }
 
     @GenerateNodeFactory
@@ -167,6 +199,19 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.INSUFFICIENT_OBJECT_MEMORY;
             }
+        }
+
+        /** The receiver is an object that has not been used as a behavior so far. */
+        @Specialization
+        protected static final AbstractSqueakObjectWithHash newWithArgFromPointersObject(final PointersObject receiver, final long size,
+                        @Bind final Node node,
+                        @Bind final SqueakImageContext image,
+                        @Exclusive @Cached final SqueakObjectNewNode newNode) {
+            final ClassObject classObject = ClassObject.asClassOrNull(image, receiver);
+            if (classObject == null || !isInstantiable(classObject, size)) {
+                throw PrimitiveFailed.BAD_RECEIVER;
+            }
+            return newWithArg(classObject, size, node, newNode);
         }
 
         protected static final boolean isInstantiable(final ClassObject receiver, final long size) {

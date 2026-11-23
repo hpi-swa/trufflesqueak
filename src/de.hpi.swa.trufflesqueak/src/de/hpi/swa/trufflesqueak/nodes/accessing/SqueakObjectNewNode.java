@@ -182,7 +182,7 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
     protected static final ClassObject doClassOdd(final ClassObject classObject, final int extraSize,
                     @Bind final SqueakImageContext image) {
         assert extraSize == 0;
-        return new ClassObject(image, classObject, classObject.getBasicInstanceSize() + METACLASS.INST_SIZE);
+        return new ClassObject(image, classObject, classObject.getBasicInstanceSize());
     }
 
     @Specialization(guards = {"classObject.getLayout() == cachedLayout"}, assumptions = "cachedLayout.getValidAssumption()", limit = "NEW_CACHE_SIZE")

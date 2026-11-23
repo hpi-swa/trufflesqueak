@@ -157,7 +157,7 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
         @NeverDefault
         public static final DispatchDirectNaryNode create(final NativeObject selector, final ClassObject lookupClass) {
             final Object lookupResult = lookupClass.lookupInMethodDictSlow(selector);
-            final Assumption[] assumptions = DispatchUtils.createAssumptions(lookupClass, lookupResult);
+            final Assumption[] assumptions = DispatchUtils.createAssumptions(selector, lookupClass, lookupResult);
             if (lookupResult instanceof final CompiledCodeObject lookupMethod) {
                 return create(assumptions, lookupMethod);
             } else if (lookupResult == null) {
@@ -169,6 +169,24 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
                     return new DispatchDirectObjectAsMethodNaryNode(assumptions, selector, runWithInMethod, lookupResult);
                 } else {
                     assert runWithInLookupResult == null : "runWithInLookupResult should not be another Object";
+                    return createMessageFallbackNode(selector, assumptions, lookupResultClass);
+                }
+            }
+        }
+
+        /** Creates a node for an already resolved lookup (e.g., for Newspeak sends). */
+        @NeverDefault
+        public static final DispatchDirectNaryNode create(final Assumption[] assumptions, final NativeObject selector, final ClassObject lookupClass, final Object lookupResult) {
+            if (lookupResult instanceof final CompiledCodeObject lookupMethod) {
+                return create(assumptions, lookupMethod);
+            } else if (lookupResult == null) {
+                return createMessageFallbackNode(selector, assumptions, lookupClass);
+            } else {
+                final ClassObject lookupResultClass = SqueakObjectClassNode.executeUncached(lookupResult);
+                final Object runWithInLookupResult = LookupMethodNode.executeUncached(lookupResultClass, SqueakImageContext.getSlow().runWithInSelector);
+                if (runWithInLookupResult instanceof final CompiledCodeObject runWithInMethod) {
+                    return new DispatchDirectObjectAsMethodNaryNode(assumptions, selector, runWithInMethod, lookupResult);
+                } else {
                     return createMessageFallbackNode(selector, assumptions, lookupResultClass);
                 }
             }
