@@ -10,6 +10,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.locks.LockSupport;
+import java.util.logging.Level;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -187,7 +188,9 @@ public final class CheckForInterruptsState {
         if (nextWakeupTick != 0) {
             final long time = MiscUtils.currentTimeMillis();
             if (time >= nextWakeupTick) {
-                LogUtils.INTERRUPTS.finer(() -> "Reached nextWakeupTick: " + nextWakeupTick);
+                if (LogUtils.INTERRUPTS.isLoggable(Level.FINER)) {
+                    logReachedNextWakeupTick(nextWakeupTick);
+                }
                 return true;
             }
         }
@@ -205,14 +208,24 @@ public final class CheckForInterruptsState {
     }
 
     public void setNextWakeupTick(final long msTime) {
-        LogUtils.INTERRUPTS.finer(() -> {
-            if (nextWakeupTick != 0) {
-                return (msTime != 0 ? "Changing nextWakeupTick to " + msTime + " from " : "Resetting nextWakeupTick from ") + nextWakeupTick;
-            } else {
-                return msTime != 0 ? "Setting nextWakeupTick to " + msTime : "Resetting nextWakeupTick when it was already 0";
-            }
-        });
+        if (LogUtils.INTERRUPTS.isLoggable(Level.FINER)) {
+            logNextWakeupTickChange(nextWakeupTick, msTime);
+        }
         nextWakeupTick = msTime;
+    }
+
+    @TruffleBoundary
+    private static void logReachedNextWakeupTick(final long currentNextWakeupTick) {
+        LogUtils.INTERRUPTS.finer("Reached nextWakeupTick: " + currentNextWakeupTick);
+    }
+
+    @TruffleBoundary
+    private static void logNextWakeupTickChange(final long currentNextWakeupTick, final long msTime) {
+        if (currentNextWakeupTick != 0) {
+            LogUtils.INTERRUPTS.finer((msTime != 0 ? "Changing nextWakeupTick to " + msTime + " from " : "Resetting nextWakeupTick from ") + currentNextWakeupTick);
+        } else {
+            LogUtils.INTERRUPTS.finer(msTime != 0 ? "Setting nextWakeupTick to " + msTime : "Resetting nextWakeupTick when it was already 0");
+        }
     }
 
     /* Finalization interrupt */
