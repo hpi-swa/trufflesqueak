@@ -69,15 +69,13 @@ public final class DispatchUtils {
     static void logMissingPrimitive(final AbstractPrimitiveNode primitiveNode, final CompiledCodeObject code) {
         assert primitiveNode == null && code.hasPrimitive();
         final int primitiveIndex = code.primitiveIndex();
-        if (primitiveIndex == PrimitiveNodeFactory.PRIMITIVE_EXTERNAL_CALL_INDEX) {
-            if (LogUtils.PRIMITIVES.isLoggable(Level.FINE)) {
+        if (LogUtils.PRIMITIVES.isLoggable(Level.FINE)) {
+            if (primitiveIndex == PrimitiveNodeFactory.PRIMITIVE_EXTERNAL_CALL_INDEX) {
                 LogUtils.PRIMITIVES.fine("Named primitive not found for " + code);
-            }
-        } else if (primitiveIndex != PrimitiveNodeFactory.PRIMITIVE_SIMULATION_GUARD_INDEX &&
-                        primitiveIndex != PrimitiveNodeFactory.PRIMITIVE_ENSURE_MARKER_INDEX &&
-                        primitiveIndex != PrimitiveNodeFactory.PRIMITIVE_ON_DO_MARKER_INDEX &&
-                        primitiveIndex != 65 && primitiveIndex != 66 && primitiveIndex != 67) {
-            if (LogUtils.PRIMITIVES.isLoggable(Level.FINE)) {
+            } else if (primitiveIndex != PrimitiveNodeFactory.PRIMITIVE_SIMULATION_GUARD_INDEX &&
+                            primitiveIndex != PrimitiveNodeFactory.PRIMITIVE_ENSURE_MARKER_INDEX &&
+                            primitiveIndex != PrimitiveNodeFactory.PRIMITIVE_ON_DO_MARKER_INDEX &&
+                            primitiveIndex != 65 && primitiveIndex != 66 && primitiveIndex != 67) {
                 LogUtils.PRIMITIVES.fine("Primitive #" + code.primitiveIndex() + " not found for " + code);
             }
         }
