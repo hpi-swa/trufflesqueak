@@ -15,6 +15,8 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,9 +38,24 @@ import de.hpi.swa.trufflesqueak.shared.SqueakLanguageOptions;
 import de.hpi.swa.trufflesqueak.shared.WatchdogBridge;
 
 public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
+    private static final String ENGINE_OPTION_PREFIX = "--engine.";
     private static final String ENGINE_MODE_OPTION = "engine.Mode";
-    private static final String ENGINE_MODE_LATENCY = "latency";
+    private static final String ENGINE_MODE_DEFAULT = "default";
+    private static final String ENGINE_MODE_THROUGHPUT = "throughput";
     private static final String ENGINE_DYNAMIC_COMPILATION_THRESHOLDS_OPTION = "engine.DynamicCompilationThresholds";
+
+    /**
+     * Compilation thresholds the launcher sets in the default and throughput engine modes (each one
+     * only unless explicitly set by the user). They are raised compared to the Truffle defaults (400
+     * and 10000) to reduce the number of tier 1 and tier 2 compilations of short-running workloads
+     * such as the image test suite without affecting AWFY peak performance. Higher thresholds (e.g.,
+     * 10000 and 100000) make DeltaBlue regress. In latency mode, the Truffle defaults are kept.
+     */
+    private static final Map<String, String> COMPILATION_THRESHOLDS = new LinkedHashMap<>();
+    static {
+        COMPILATION_THRESHOLDS.put("engine.FirstTierCompilationThreshold", "2000");
+        COMPILATION_THRESHOLDS.put("engine.LastTierCompilationThreshold", "20000");
+    }
 
     private boolean headless;
     private boolean printImagePath;
@@ -48,8 +65,7 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
     private String downloadImageKey;
     private String sourceCode;
     private boolean enableTranscriptForwarding;
-    private boolean addEnableEngineModeLatency = true;
-    private boolean addDisableDynamicCompilationThresholds = true;
+    private final Map<String, String> userEngineOptions = new HashMap<>();
     private int sdlPollTimeoutMilliseconds;
     private int watchdogTimeoutMinutes;
     private int contextStackDepth = DEFAULT_CONTEXT_STACK_DEPTH;
@@ -100,10 +116,10 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
                 downloadImageKey = getRequiredDownloadImageKey(arguments, ++i);
             } else {
                 // Check for options explicitly set by user
-                if (arg.contains(ENGINE_MODE_OPTION)) {
-                    addEnableEngineModeLatency = false;
-                } else if (arg.contains(ENGINE_DYNAMIC_COMPILATION_THRESHOLDS_OPTION)) {
-                    addDisableDynamicCompilationThresholds = false;
+                if (arg.startsWith(ENGINE_OPTION_PREFIX)) {
+                    final int equalsIndex = arg.indexOf('=');
+                    final String key = arg.substring(2, equalsIndex < 0 ? arg.length() : equalsIndex);
+                    userEngineOptions.put(key, equalsIndex < 0 ? "true" : arg.substring(equalsIndex + 1));
                 }
                 unrecognized.add(arg);
             }
@@ -217,14 +233,23 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
         final String runtimeName = getRuntimeName();
         final boolean hasGraalCompiler = runtimeName.contains("Graal");
 
-        final boolean enableEngineModeLatency = addEnableEngineModeLatency && hasGraalCompiler;
-        if (enableEngineModeLatency) {
-            contextBuilder.option(ENGINE_MODE_OPTION, ENGINE_MODE_LATENCY);
-        }
-
-        final boolean disableDynamicCompilationThresholds = addDisableDynamicCompilationThresholds && hasGraalCompiler;
-        if (disableDynamicCompilationThresholds) {
-            contextBuilder.option(ENGINE_DYNAMIC_COMPILATION_THRESHOLDS_OPTION, Boolean.toString(false));
+        String defaultEngineMode = null;
+        if (hasGraalCompiler) {
+            final String engineMode = userEngineOptions.get(ENGINE_MODE_OPTION);
+            if (engineMode == null) {
+                defaultEngineMode = ENGINE_MODE_THROUGHPUT;
+                contextBuilder.option(ENGINE_MODE_OPTION, defaultEngineMode);
+            }
+            if (engineMode == null || ENGINE_MODE_DEFAULT.equals(engineMode) || ENGINE_MODE_THROUGHPUT.equals(engineMode)) {
+                for (final Map.Entry<String, String> entry : COMPILATION_THRESHOLDS.entrySet()) {
+                    if (!userEngineOptions.containsKey(entry.getKey())) {
+                        contextBuilder.option(entry.getKey(), entry.getValue());
+                    }
+                }
+            }
+            if (!userEngineOptions.containsKey(ENGINE_DYNAMIC_COMPILATION_THRESHOLDS_OPTION)) {
+                contextBuilder.option(ENGINE_DYNAMIC_COMPILATION_THRESHOLDS_OPTION, Boolean.toString(false));
+            }
         }
 
         contextBuilder.allowAllAccess(true);
@@ -244,7 +269,7 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
                 startWatchdog(watchdogTimeoutMinutes);
             }
             if (!quiet) {
-                final String engineModeSuffix = enableEngineModeLatency ? " (" + ENGINE_MODE_LATENCY + " mode)" : "";
+                final String engineModeSuffix = defaultEngineMode != null ? " (" + defaultEngineMode + " mode)" : "";
                 println(String.format("[trufflesqueak] Running %s on %s%s...", new File(imagePath).getName(), runtimeName, engineModeSuffix));
             }
             if (sourceCode != null) {
