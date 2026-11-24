@@ -140,7 +140,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
                     if (result != null) {
                         return result;
                     } else {
-                        return callNode.call(method.getCallTarget(), FrameAccess.newWith(NilObject.SINGLETON, null, receiver, arguments));
+                        return callNode.call(method.getStartContextRootNode(), -1, FrameAccess.newWith(NilObject.SINGLETON, null, receiver, arguments));
                     }
                 } else {
                     if (LogUtils.INTEROP.isLoggable(Level.WARNING)) {

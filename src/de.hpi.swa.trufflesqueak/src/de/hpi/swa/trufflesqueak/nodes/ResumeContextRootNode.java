@@ -22,7 +22,7 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
  * Resumes a {@link ContextObject} at its current instruction pointer. The context to resume is
  * passed as a call argument (see {@link FrameAccess#newResumeArguments(ContextObject)}), so that
  * this node only holds on to static, per-code data. There is one call target per code object, see
- * {@link CompiledCodeObject#getResumptionCallTarget()}.
+ * {@link CompiledCodeObject#getResumeContextRootNode()}.
  */
 public final class ResumeContextRootNode extends AbstractRootNode {
     private final IntValueProfile instructionPointerProfile = IntValueProfile.createIdentityProfile();

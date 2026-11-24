@@ -20,6 +20,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_SELECTOR;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
+import de.hpi.swa.trufflesqueak.nodes.StartContextRootNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 @GenerateInline(false)
@@ -42,7 +43,7 @@ public abstract class DispatchValueWithArgNode extends AbstractNode {
                     @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
         final Object[] closureArgs = FrameAccess.newClosureArgumentsTemplateUnrolled(closure, FrameAccess.getOrCreateContextWithoutFrame(frame), 1, cachedNumCopied);
         FrameAccess.fillClosureTemplateWith(closureArgs, arg1);
-        return directCallNode.call(closureArgs);
+        return directCallNode.call(StartContextRootNode.class, -1, closureArgs);
     }
 
     @ReportPolymorphism.Megamorphic
@@ -52,7 +53,7 @@ public abstract class DispatchValueWithArgNode extends AbstractNode {
         final CompiledCodeObject block = closure.getCompiledBlock();
         final Object[] closureArgs = FrameAccess.newClosureArgumentsTemplate(closure, FrameAccess.getOrCreateContextWithoutFrame(frame), 1);
         FrameAccess.fillClosureTemplateWith(closureArgs, arg1);
-        return indirectCallNode.call(block.getCallTarget(), closureArgs);
+        return indirectCallNode.call(block.getStartContextRootNode(), -1, closureArgs);
     }
 
     // --- Non-Block Receivers (Associations, MessageSends, etc.) ---

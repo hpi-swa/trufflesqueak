@@ -495,7 +495,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                     return result;
                 } else {
                     final Object[] callArguments = argumentsNode.execute(node, frame, receiver, argumentArray, lookupClass, lookupResult, selector);
-                    return callNode.call(method.getCallTarget(), callArguments);
+                    return callNode.call(method.getStartContextRootNode(), -1, callArguments);
                 }
             } else {
                 CompilerDirectives.transferToInterpreter();
@@ -1124,7 +1124,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             if (result != null) {
                 return result;
             } else {
-                return callNode.call(method.getCallTarget(), FrameAccess.newWith(frame, null, receiver, arguments));
+                return callNode.call(method.getStartContextRootNode(), -1, FrameAccess.newWith(frame, null, receiver, arguments));
             }
         }
     }
@@ -1176,7 +1176,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             if (result != null) {
                 return result;
             } else {
-                return callNode.call(method.getCallTarget(), FrameAccess.newWith(frame, null, receiver));
+                return callNode.call(method.getStartContextRootNode(), -1, FrameAccess.newWith(frame, null, receiver));
             }
         }
     }
@@ -1202,7 +1202,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             if (result != null) {
                 return result;
             } else {
-                return callNode.call(method.getCallTarget(), FrameAccess.newWith(frame, null, receiver, arg1));
+                return callNode.call(method.getStartContextRootNode(), -1, FrameAccess.newWith(frame, null, receiver, arg1));
             }
         }
     }
@@ -1228,7 +1228,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             if (result != null) {
                 return result;
             } else {
-                return callNode.call(method.getCallTarget(), FrameAccess.newWith(frame, null, receiver, arg1, arg2));
+                return callNode.call(method.getStartContextRootNode(), -1, FrameAccess.newWith(frame, null, receiver, arg1, arg2));
             }
         }
     }
@@ -1255,7 +1255,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             if (result != null) {
                 return result;
             } else {
-                return callNode.call(method.getCallTarget(), FrameAccess.newWith(frame, null, receiver, arg1, arg2, arg3));
+                return callNode.call(method.getStartContextRootNode(), -1, FrameAccess.newWith(frame, null, receiver, arg1, arg2, arg3));
             }
         }
     }
@@ -1283,7 +1283,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             if (result != null) {
                 return result;
             } else {
-                return callNode.call(method.getCallTarget(), FrameAccess.newWith(frame, null, receiver, arg1, arg2, arg3, arg4));
+                return callNode.call(method.getStartContextRootNode(), -1, FrameAccess.newWith(frame, null, receiver, arg1, arg2, arg3, arg4));
             }
         }
     }

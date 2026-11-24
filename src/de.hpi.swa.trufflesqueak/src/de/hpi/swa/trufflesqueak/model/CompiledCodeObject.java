@@ -84,10 +84,10 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
         private Source source;
 
-        private RootCallTarget callTarget;
+        private StartContextRootNode startContextRootNode;
         private CyclicAssumption callTargetStable;
         private Assumption doesNotNeedThisContext;
-        private RootCallTarget resumptionCallTarget;
+        private ResumeContextRootNode resumeContextRootNode;
     }
 
     /**
@@ -265,8 +265,8 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     // used by CompiledMethod>>callTarget
     public RootCallTarget getCallTargetOrNull() {
-        if (hasExecutionData()) {
-            return executionData.callTarget;
+        if (hasExecutionData() && executionData.startContextRootNode != null) {
+            return executionData.startContextRootNode.getCallTarget();
         } else {
             return null;
         }
@@ -274,16 +274,29 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     @TruffleBoundary
     public RootCallTarget getCallTarget() {
-        if (getExecutionData().callTarget == null) {
-            initializeCallTarget();
+        return getStartContextRootNode().getCallTarget();
+    }
+
+    /**
+     * Returns the root node for activating this code object. Its call target is initialized, so
+     * that callers can use root-based calls (e.g., {@code IndirectCallNode#call(RootNode, int,
+     * Object[])}). Direct call nodes for {@link #getCallTarget()} can call it with
+     * {@code StartContextRootNode.class} as the root type.
+     */
+    @TruffleBoundary
+    public StartContextRootNode getStartContextRootNode() {
+        if (getExecutionData().startContextRootNode == null) {
+            initializeStartContextRootNode();
         }
-        return executionData.callTarget;
+        return executionData.startContextRootNode;
     }
 
     @TruffleBoundary
-    private void initializeCallTarget() {
+    private void initializeStartContextRootNode() {
         assert !(hasPrimitive() && PrimitiveNodeFactory.isNonFailing(this)) : "Should not create rood node for non failing primitives";
-        executionData.callTarget = new StartContextRootNode(SqueakImageContext.getSlow(), this).getCallTarget();
+        final StartContextRootNode rootNode = new StartContextRootNode(SqueakImageContext.getSlow(), this);
+        rootNode.initializeCallTarget();
+        executionData.startContextRootNode = rootNode;
     }
 
     private void invalidateCallTarget() {
@@ -295,8 +308,8 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
             if (executionData.callTargetStable != null) {
                 executionData.callTargetStable.invalidate(reason);
             }
-            executionData.callTarget = null;
-            executionData.resumptionCallTarget = null;
+            executionData.startContextRootNode = null;
+            executionData.resumeContextRootNode = null;
         }
     }
 
@@ -358,18 +371,22 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     /**
-     * Returns the call target for resuming a {@link ContextObject} of this code object. There is
-     * one call target per code object: the context to resume must be passed as an argument (see
-     * {@link FrameAccess#newResumeArguments}) and the {@link ResumeContextRootNode} continues at
-     * the context's current instruction pointer. Methods may have many suspension points (sends,
-     * loop back-edges), so call targets are deliberately not created per instruction pointer.
+     * Returns the root node for resuming a {@link ContextObject} of this code object. There is one
+     * root node (and call target) per code object: the context to resume must be passed as an
+     * argument (see {@link FrameAccess#newResumeArguments}) and the {@link ResumeContextRootNode}
+     * continues at the context's current instruction pointer. Methods may have many suspension
+     * points (sends, loop back-edges), so call targets are deliberately not created per instruction
+     * pointer. The call target of the returned root node is initialized, so that callers can use
+     * root-based calls.
      */
     @TruffleBoundary
-    public RootCallTarget getResumptionCallTarget() {
-        if (getExecutionData().resumptionCallTarget == null) {
-            executionData.resumptionCallTarget = new ResumeContextRootNode(SqueakImageContext.getSlow(), this).getCallTarget();
+    public ResumeContextRootNode getResumeContextRootNode() {
+        if (getExecutionData().resumeContextRootNode == null) {
+            final ResumeContextRootNode rootNode = new ResumeContextRootNode(SqueakImageContext.getSlow(), this);
+            rootNode.initializeCallTarget();
+            executionData.resumeContextRootNode = rootNode;
         }
-        return executionData.resumptionCallTarget;
+        return executionData.resumeContextRootNode;
     }
 
     public FrameDescriptor getFrameDescriptor() {

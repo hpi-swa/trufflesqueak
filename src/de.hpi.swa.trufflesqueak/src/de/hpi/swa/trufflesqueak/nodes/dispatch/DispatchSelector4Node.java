@@ -32,6 +32,7 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.LookupMethodNode;
+import de.hpi.swa.trufflesqueak.nodes.StartContextRootNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector4NodeFactory.DispatchDirectPrimitiveFallback4NodeGen;
@@ -157,7 +158,7 @@ public final class DispatchSelector4Node extends DispatchSelectorNode {
                         @Cached("create(method)") final HandlePrimitiveFailedNode handlePrimitiveFailedNode,
                         @Cached("create(method.getCallTarget())") final DirectCallNode callNode) {
             handlePrimitiveFailedNode.execute(pf);
-            return callNode.call(FrameAccess.newWith(frame, null, receiver, arg1, arg2, arg3, arg4));
+            return callNode.call(StartContextRootNode.class, -1, FrameAccess.newWith(frame, null, receiver, arg1, arg2, arg3, arg4));
         }
     }
 
@@ -171,7 +172,7 @@ public final class DispatchSelector4Node extends DispatchSelectorNode {
 
         @Override
         public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4) {
-            return callNode.call(FrameAccess.newWith(frame, null, receiver, arg1, arg2, arg3, arg4));
+            return callNode.call(StartContextRootNode.class, -1, FrameAccess.newWith(frame, null, receiver, arg1, arg2, arg3, arg4));
         }
     }
 
@@ -189,7 +190,7 @@ public final class DispatchSelector4Node extends DispatchSelectorNode {
         @Override
         public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4) {
             final PointersObject message = createMessageNode.execute(selector, receiver, new Object[]{arg1, arg2, arg3, arg4});
-            return callNode.call(FrameAccess.newMessageFallbackWith(frame, receiver, message));
+            return callNode.call(StartContextRootNode.class, -1, FrameAccess.newMessageFallbackWith(frame, receiver, message));
         }
     }
 
@@ -207,7 +208,7 @@ public final class DispatchSelector4Node extends DispatchSelectorNode {
 
         @Override
         public Object execute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4) {
-            return callNode.call(FrameAccess.newOAMWith(frame, targetObject, selector, getContext().asArrayOfObjects(arg1, arg2, arg3, arg4), receiver));
+            return callNode.call(StartContextRootNode.class, -1, FrameAccess.newOAMWith(frame, targetObject, selector, getContext().asArrayOfObjects(arg1, arg2, arg3, arg4), receiver));
         }
     }
 
@@ -232,7 +233,7 @@ public final class DispatchSelector4Node extends DispatchSelectorNode {
             if (result != null) {
                 return result;
             } else {
-                return callNode.call(method.getCallTarget(), argumentsNode.execute(node, frame, receiver, arg1, arg2, arg3, arg4, receiverClass, lookupResult, selector));
+                return callNode.call(method.getStartContextRootNode(), -1, argumentsNode.execute(node, frame, receiver, arg1, arg2, arg3, arg4, receiverClass, lookupResult, selector));
             }
         }
 
