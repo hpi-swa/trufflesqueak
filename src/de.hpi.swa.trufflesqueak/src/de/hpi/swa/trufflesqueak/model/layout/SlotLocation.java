@@ -310,7 +310,11 @@ public abstract class SlotLocation {
         }
 
         public final void setMask(final AbstractPointersObject object, final IntValueProfile primitiveUsedMapProfile) {
-            putPrimitiveUsedMap(object, primitiveUsedMapProfile.profile(getPrimitiveUsedMap(object)) | usedMask);
+            final int usedMap = primitiveUsedMapProfile.profile(getPrimitiveUsedMap(object));
+            /* Skip the store if the slot is already marked (constant-folds if the map is profiled). */
+            if ((usedMap & usedMask) == 0) {
+                putPrimitiveUsedMap(object, usedMap | usedMask);
+            }
         }
     }
 
