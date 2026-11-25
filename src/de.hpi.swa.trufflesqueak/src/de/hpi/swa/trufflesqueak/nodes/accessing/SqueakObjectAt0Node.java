@@ -6,6 +6,7 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
+import com.oracle.truffle.api.HostCompilerDirectives.InliningCutoff;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateCached;
@@ -36,6 +37,11 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.ClassObjectNodes.ClassObjectRead
 import de.hpi.swa.trufflesqueak.nodes.accessing.ContextObjectNodes.ContextObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectReadNode;
 
+/**
+ * Only the specializations for the most common receivers (arrays, pointers, and native objects) are
+ * inlined during host compilation. All others are cut off to keep the interpreter code small (see
+ * truffle/docs/HostCompilation.md).
+ */
 @GenerateInline
 @GenerateUncached
 @GenerateCached(true)
@@ -65,47 +71,55 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
         return readNode.execute(node, obj, index);
     }
 
+    @InliningCutoff
     @Specialization
     protected static final Object doCode(final CompiledCodeObject obj, final long index) {
         return obj.at0(index);
     }
 
+    @InliningCutoff
     @Specialization
     protected static final Object doClass(final Node node, final ClassObject obj, final long index,
                     @Cached final ClassObjectReadNode readNode) {
         return readNode.execute(node, obj, index);
     }
 
+    @InliningCutoff
     @Specialization
     protected static final Object doVariablePointers(final VariablePointersObject obj, final long index,
                     @Cached(inline = false) final VariablePointersObjectReadNode readNode) {
         return readNode.execute(obj, index);
     }
 
+    @InliningCutoff
     @Specialization
     protected static final Object doWeakPointersVariable(final WeakVariablePointersObject obj, final long index,
                     @Cached(inline = false) final WeakVariablePointersObjectReadNode readNode) {
         return readNode.execute(obj, index);
     }
 
+    @InliningCutoff
     @Specialization
     protected static final Object doClosure(final Node node, final BlockClosureObject obj, final long index,
                     @Cached final BlockClosureObjectReadNode readNode) {
         return readNode.execute(node, obj, index);
     }
 
+    @InliningCutoff
     @Specialization
     protected static final Object doContext(final Node node, final ContextObject obj, final long index,
                     @Cached final ContextObjectReadNode readNode) {
         return readNode.execute(node, obj, index);
     }
 
+    @InliningCutoff
     @Specialization
     protected static final Object doEphemeron(final EphemeronObject obj, final long index,
                     @Shared("readNode") @Cached(inline = false) final AbstractPointersObjectReadNode readNode) {
         return readNode.execute(obj, index);
     }
 
+    @InliningCutoff
     @Specialization
     protected static final long doFloat(final Node node, final FloatObject obj, final long index,
                     @Cached final InlinedBranchProfile indexZeroProfile,

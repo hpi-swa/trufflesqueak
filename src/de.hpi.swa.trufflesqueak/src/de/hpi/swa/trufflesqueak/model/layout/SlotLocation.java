@@ -157,22 +157,27 @@ public abstract class SlotLocation {
                 return new PrimitiveSlotLocationAccessorNode((PrimitiveLocation) location, isReading);
             } else if (location.isUninitialized()) {
                 return new UninitializedSlotLocationAccessorNode((UninitializedSlotLocation) location);
+            } else if (location instanceof final ObjectInlineSlotLocation objectInlineLocation) {
+                return new ObjectInlineSlotLocationAccessorNode(objectInlineLocation);
             } else {
-                return new GenericSlotLocationAccessorNode((GenericLocation) location);
+                return new ObjectExtensionSlotLocationAccessorNode((ObjectExtensionSlotLocation) location);
             }
         }
 
         public abstract Object executeRead(AbstractPointersObject object);
 
         public abstract void executeWrite(AbstractPointersObject object, Object value) throws IllegalWriteException;
-
-        public abstract boolean canStore(Object value);
     }
 
-    private static final class GenericSlotLocationAccessorNode extends AbstractSlotLocationAccessorNode {
-        private final GenericLocation location;
+    /*
+     * The accessor nodes for object locations hold their location with its exact type. This way, the
+     * location is accessed with a direct call that can be inlined during host compilation, and the
+     * interpreter only needs one virtual call per access (to the accessor node).
+     */
+    private static final class ObjectInlineSlotLocationAccessorNode extends AbstractSlotLocationAccessorNode {
+        private final ObjectInlineSlotLocation location;
 
-        private GenericSlotLocationAccessorNode(final GenericLocation location) {
+        private ObjectInlineSlotLocationAccessorNode(final ObjectInlineSlotLocation location) {
             this.location = location;
         }
 
@@ -182,13 +187,26 @@ public abstract class SlotLocation {
         }
 
         @Override
-        public void executeWrite(final AbstractPointersObject object, final Object value) throws IllegalWriteException {
+        public void executeWrite(final AbstractPointersObject object, final Object value) {
             location.write(object, value);
+        }
+    }
+
+    private static final class ObjectExtensionSlotLocationAccessorNode extends AbstractSlotLocationAccessorNode {
+        private final ObjectExtensionSlotLocation location;
+
+        private ObjectExtensionSlotLocationAccessorNode(final ObjectExtensionSlotLocation location) {
+            this.location = location;
         }
 
         @Override
-        public boolean canStore(final Object value) {
-            return location.canStore(value);
+        public Object executeRead(final AbstractPointersObject object) {
+            return location.read(object);
+        }
+
+        @Override
+        public void executeWrite(final AbstractPointersObject object, final Object value) {
+            location.write(object, value);
         }
     }
 
@@ -207,11 +225,6 @@ public abstract class SlotLocation {
         @Override
         public void executeWrite(final AbstractPointersObject object, final Object value) throws IllegalWriteException {
             location.write(object, value);
-        }
-
-        @Override
-        public boolean canStore(final Object value) {
-            return location.canStore(value);
         }
     }
 
@@ -233,11 +246,6 @@ public abstract class SlotLocation {
         @Override
         public void executeWrite(final AbstractPointersObject object, final Object value) throws IllegalWriteException {
             location.writeProfiled(object, value, primitiveUsedMapProfile);
-        }
-
-        @Override
-        public boolean canStore(final Object value) {
-            return location.canStore(value);
         }
     }
 
