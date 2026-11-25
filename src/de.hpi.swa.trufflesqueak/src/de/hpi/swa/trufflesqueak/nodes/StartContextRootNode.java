@@ -79,7 +79,7 @@ public final class StartContextRootNode extends AbstractRootNode {
                      * still detected promptly: every compilation root performs the check, loops
                      * check on back-edges, and recursion always reaches a non-inlined call.
                      */
-                    interruptHandlerNode.execute(frame);
+                    interruptHandlerNode.execute(frame, image);
                 }
             }
             return interpreterNode.execute(frame, initialPC, initialSP);

@@ -59,7 +59,7 @@ public abstract class SqueakObjectClassNode extends AbstractNode {
         return getContext().smallFloatClass;
     }
 
-    @Specialization(guards = {"!isAbstractSqueakObject(value)", "!isUsedJavaPrimitive(value)"}, assumptions = "getContext().getForeignObjectClassStableAssumption()")
+    @Specialization(guards = {"!isAbstractSqueakObject(value)", "!isUsedJavaPrimitive(value)"}, assumptions = "getContext($node).getForeignObjectClassStableAssumption()")
     protected final ClassObject doForeignObject(@SuppressWarnings("unused") final Object value) {
         return getContext().getForeignObjectClass();
     }

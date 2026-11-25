@@ -72,7 +72,7 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
         return NativeObject.newNativeShorts(classObject, extraSize);
     }
 
-    @Specialization(guards = {"classObject.isWords()", "!getContext().isFloatClass(classObject)"})
+    @Specialization(guards = {"classObject.isWords()", "!getContext($node).isFloatClass(classObject)"})
     protected static final NativeObject doNativeInts(final ClassObject classObject, final int extraSize) {
         assert classObject.getBasicInstanceSize() == 0;
         return NativeObject.newNativeInts(classObject, extraSize);
@@ -100,7 +100,7 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
         return instantiatesPointersObject(classObject.getImage(), classObject) ? classObject.getLayout() : null;
     }
 
-    @Specialization(guards = {"instantiatesPointersObject(getContext(), classObject)"}, replaces = "doPointersCached")
+    @Specialization(guards = {"instantiatesPointersObject(getContext($node), classObject)"}, replaces = "doPointersCached")
     protected static final PointersObject doPointersUncached(final ClassObject classObject, final int extraSize) {
         assert extraSize == 0;
         return new PointersObject(classObject);
@@ -121,7 +121,7 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
         return instantiatesVariablePointersObject(classObject.getImage(), classObject) ? classObject.getLayout() : null;
     }
 
-    @Specialization(guards = {"instantiatesVariablePointersObject(getContext(), classObject)"}, replaces = "doVariablePointersCached")
+    @Specialization(guards = {"instantiatesVariablePointersObject(getContext($node), classObject)"}, replaces = "doVariablePointersCached")
     protected static final VariablePointersObject doVariablePointersUncached(final ClassObject classObject, final int extraSize) {
         return new VariablePointersObject(classObject, classObject.getLayout(), extraSize);
     }
@@ -165,7 +165,7 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
         return new BlockClosureObject(true, extraSize);
     }
 
-    @Specialization(guards = {"classObject.isIndexableWithInstVars()", "getContext().isMethodContextClass(classObject)"})
+    @Specialization(guards = {"classObject.isIndexableWithInstVars()", "getContext($node).isMethodContextClass(classObject)"})
     protected static final ContextObject doContext(final ClassObject classObject, final int extraSize) {
         assert classObject.getBasicInstanceSize() == CONTEXT.INST_SIZE;
         return new ContextObject(extraSize);
@@ -204,7 +204,7 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
         return new EphemeronObject(image, classObject, classObject.getLayout());
     }
 
-    @Specialization(guards = {"classObject.isWords()", "getContext().isFloatClass(classObject)"})
+    @Specialization(guards = {"classObject.isWords()", "getContext($node).isFloatClass(classObject)"})
     protected static final FloatObject doFloat(final ClassObject classObject, final int extraSize) {
         assert classObject.getBasicInstanceSize() + extraSize == 2;
         return new FloatObject();

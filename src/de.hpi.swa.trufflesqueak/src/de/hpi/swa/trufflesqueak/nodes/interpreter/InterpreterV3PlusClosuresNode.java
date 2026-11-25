@@ -725,8 +725,8 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                     counter = 0;
                                 }
                             }
-                            if (getData(currentPC) instanceof final CheckForInterruptsInLoopNode checkForInterruptsNode) {
-                                checkForInterruptsNode.execute(frame, pc, sp);
+                            if (getData(currentPC) instanceof CheckForInterruptsInLoopNode) {
+                                CheckForInterruptsInLoopNode.execute(frame, getContext(), pc, sp);
                             }
                         }
                         break;

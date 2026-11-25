@@ -2780,8 +2780,8 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     state.interpreterLoopCounter = 0;
                 }
             }
-            if (getData(pc) instanceof final CheckForInterruptsInLoopNode checkForInterruptsNode) {
-                checkForInterruptsNode.execute(frame, nextPC, vstate.sp);
+            if (getData(pc) instanceof CheckForInterruptsInLoopNode) {
+                CheckForInterruptsInLoopNode.execute(frame, getContext(), nextPC, vstate.sp);
             }
         }
         vstate.resetExtAB();

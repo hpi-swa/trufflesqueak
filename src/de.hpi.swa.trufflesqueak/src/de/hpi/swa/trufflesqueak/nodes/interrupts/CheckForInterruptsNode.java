@@ -134,8 +134,13 @@ public abstract class CheckForInterruptsNode extends AbstractNode {
             return SINGLETON;
         }
 
-        public void execute(final VirtualFrame frame, final int pc, final int sp) {
-            final SqueakImageContext image = getContext();
+        /*
+         * The image is passed in because this node is a non-adoptable singleton: it has no root
+         * node, so a context lookup via this node cannot be constant-folded and would read the
+         * context from a thread-local in compiled code. The node only marks loops that need a
+         * check, so this method is static.
+         */
+        public static void execute(final VirtualFrame frame, final SqueakImageContext image, final int pc, final int sp) {
             if (image.interrupt.shouldSkip()) {
                 return;
             }
@@ -188,14 +193,15 @@ public abstract class CheckForInterruptsNode extends AbstractNode {
             }
         }
 
-        public abstract void execute(VirtualFrame frame);
+        /* See CheckForInterruptsInLoopNode#execute for why the image is passed in. */
+        public abstract void execute(VirtualFrame frame, SqueakImageContext image);
 
         @DenyReplace
         private static final class NoCheckForInterruptsNode extends CheckForInterruptsQuickNode {
             private static final NoCheckForInterruptsNode SINGLETON = new NoCheckForInterruptsNode();
 
             @Override
-            public void execute(final VirtualFrame frame) {
+            public void execute(final VirtualFrame frame, final SqueakImageContext image) {
                 // nothing to do
             }
 
@@ -228,8 +234,7 @@ public abstract class CheckForInterruptsNode extends AbstractNode {
             }
 
             @Override
-            public void execute(final VirtualFrame frame) {
-                final SqueakImageContext image = getContext();
+            public void execute(final VirtualFrame frame, final SqueakImageContext image) {
                 final CheckForInterruptsState istate = image.interrupt;
                 if (istate.shouldSkip()) {
                     return;
