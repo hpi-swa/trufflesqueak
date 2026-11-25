@@ -126,9 +126,9 @@ public abstract class CheckForInterruptsNode extends AbstractNode {
         private CheckForInterruptsInLoopNode() {
         }
 
-        public static CheckForInterruptsInLoopNode createForLoop() {
+        public static CheckForInterruptsInLoopNode createForLoop(final SqueakImageContext image) {
             CompilerAsserts.neverPartOfCompilation();
-            if (SqueakImageContext.getSlow().interruptHandlerDisabled()) {
+            if (image.interruptHandlerDisabled()) {
                 return null;
             }
             return SINGLETON;

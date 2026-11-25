@@ -53,7 +53,7 @@ public final class StartContextRootNode extends AbstractRootNode {
         initialSP = original.initialSP;
         numArgs = original.numArgs;
         doesNotNeedThisContext = original.doesNotNeedThisContext;
-        interruptHandlerNode = CheckForInterruptsQuickNode.createForSend(getCode());
+        interruptHandlerNode = original.interruptHandlerNode; // Stateless singleton
     }
 
     @Override

@@ -95,13 +95,13 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         // reusable fields
         code = original.code;
         isBlock = original.isBlock;
+        modifiesContext = original.modifiesContext;
         // fresh fields
         final int startPC = code.getStartPCZeroBased();
         final int endPC = code.getMaxPCZeroBased();
         data = new Object[endPC];
         profiles = new byte[endPC];
-        final boolean hasPotentialContextIVStore = processBytecode(SqueakImageContext.get(original), startPC, endPC);
-        modifiesContext = couldMutateContextVariables(hasPotentialContextIVStore);
+        processBytecode(code.getSqueakClass().getImage(), startPC, endPC);
         osrMetadata = null;
     }
 
@@ -584,7 +584,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
 
     protected abstract boolean isFastPathedMessageSend(int bytecode);
 
-    protected final CheckForInterruptsInLoopNode createCheckForInterruptsInLoopNode(final int targetPC, final int jumpOpcodePC) {
+    protected final CheckForInterruptsInLoopNode createCheckForInterruptsInLoopNode(final SqueakImageContext image, final int targetPC, final int jumpOpcodePC) {
         // No need to check for interrupts if there is a message dispatch within the loop.
         final byte[] bc = code.getBytes();
         for (int i = targetPC; i < jumpOpcodePC; i++) {
@@ -597,7 +597,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
                 return null;
             }
         }
-        return CheckForInterruptsInLoopNode.createForLoop();
+        return CheckForInterruptsInLoopNode.createForLoop(image);
     }
 
     /**
