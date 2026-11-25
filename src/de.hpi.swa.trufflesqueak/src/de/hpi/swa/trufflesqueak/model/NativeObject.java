@@ -188,8 +188,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public byte getByte(final long index) {
-        assert isByteType();
-        return UnsafeUtils.getByte((byte[]) storage, (int) index);
+        return UnsafeUtils.getByte(getByteStorage(), (int) index);
     }
 
     public int getByteUnsigned(final long index) {
@@ -197,8 +196,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public void setByte(final long index, final byte value) {
-        assert isByteType();
-        UnsafeUtils.putByte((byte[]) storage, (int) index, value);
+        UnsafeUtils.putByte(getByteStorage(), (int) index, value);
     }
 
     public void setByte(final long index, final int value) {
@@ -212,17 +210,15 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
 
     public byte[] getByteStorage() {
         assert isByteType();
-        return (byte[]) storage;
+        return UnsafeUtils.uncheckedCast(storage, byte[].class);
     }
 
     public int getInt(final long index) {
-        assert isIntType();
-        return UnsafeUtils.getInt((int[]) storage, index);
+        return UnsafeUtils.getInt(getIntStorage(), index);
     }
 
     public void setInt(final long index, final int value) {
-        assert isIntType();
-        UnsafeUtils.putInt((int[]) storage, index, value);
+        UnsafeUtils.putInt(getIntStorage(), index, value);
     }
 
     public int getIntLength() {
@@ -231,17 +227,15 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
 
     public int[] getIntStorage() {
         assert isIntType();
-        return (int[]) storage;
+        return UnsafeUtils.uncheckedCast(storage, int[].class);
     }
 
     public long getLong(final long index) {
-        assert isLongType();
-        return UnsafeUtils.getLong((long[]) storage, index);
+        return UnsafeUtils.getLong(getLongStorage(), index);
     }
 
     public void setLong(final long index, final long value) {
-        assert isLongType();
-        UnsafeUtils.putLong((long[]) storage, index, value);
+        UnsafeUtils.putLong(getLongStorage(), index, value);
     }
 
     public int getLongLength() {
@@ -250,17 +244,15 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
 
     public long[] getLongStorage() {
         assert isLongType();
-        return (long[]) storage;
+        return UnsafeUtils.uncheckedCast(storage, long[].class);
     }
 
     public short getShort(final long index) {
-        assert isShortType();
-        return UnsafeUtils.getShort((short[]) storage, index);
+        return UnsafeUtils.getShort(getShortStorage(), index);
     }
 
     public void setShort(final long index, final short value) {
-        assert isShortType();
-        UnsafeUtils.putShort((short[]) storage, index, value);
+        UnsafeUtils.putShort(getShortStorage(), index, value);
     }
 
     public int getShortLength() {
@@ -269,7 +261,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
 
     public short[] getShortStorage() {
         assert isShortType();
-        return (short[]) storage;
+        return UnsafeUtils.uncheckedCast(storage, short[].class);
     }
 
     public boolean isByteType() {
@@ -295,7 +287,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
 
     @TruffleBoundary
     public String asStringUnsafe() {
-        return new String((byte[]) storage, StandardCharsets.UTF_8);
+        return new String(getByteStorage(), StandardCharsets.UTF_8);
     }
 
     @TruffleBoundary

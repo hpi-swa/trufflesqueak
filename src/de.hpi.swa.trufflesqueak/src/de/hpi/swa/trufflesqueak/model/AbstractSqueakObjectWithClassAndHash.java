@@ -7,13 +7,12 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import org.graalvm.collections.UnmodifiableEconomicMap;
-
 import com.oracle.truffle.api.CompilerDirectives;
-
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants.ObjectHeader;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
+import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSqueakObjectWithHash {
     /**
@@ -60,8 +59,8 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
 
     @Override
     public final ClassObject getSqueakClass() {
-        assert assertNotForwarded();
-        return (ClassObject) squeakClass;
+        assert assertNotForwarded() && squeakClass instanceof ClassObject;
+        return UnsafeUtils.uncheckedCast(squeakClass, ClassObject.class);
     }
 
     @Override
