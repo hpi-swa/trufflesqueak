@@ -39,6 +39,17 @@ public final class SqueakPrimitiveTest extends AbstractSqueakTestCaseWithDummyIm
     }
 
     @Test
+    public void testPrimBasicAtFailsForImmediates() {
+        for (final Object immediate : new Object[]{'+', 42L, 1.5, BooleanObject.TRUE, BooleanObject.FALSE}) {
+            assertThrows(PrimitiveFailed.class, () -> runPrimitive(60, immediate, 1L));
+            assertThrows(PrimitiveFailed.class, () -> runPrimitive(60, NilObject.SINGLETON, immediate, 1L));
+        }
+        final ArrayObject array = image.asArrayOfObjects(image.characterClass);
+        assertSame(image.characterClass, runPrimitive(60, array, 1L));
+        assertSame(image.characterClass, runPrimitive(60, NilObject.SINGLETON, array, 1L));
+    }
+
+    @Test
     public void testPrimGetNextEventDoesNotShareEmptyBuffers() {
         final ArrayObject first = ArrayObject.createEmptyStrategy(image.arrayClass, SqueakIOConstants.EVENT_SIZE);
         final ArrayObject second = ArrayObject.createEmptyStrategy(image.arrayClass, SqueakIOConstants.EVENT_SIZE);
