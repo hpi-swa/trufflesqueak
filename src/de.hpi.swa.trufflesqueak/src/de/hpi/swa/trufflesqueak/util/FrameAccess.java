@@ -111,8 +111,13 @@ public final class FrameAccess {
         return (CompiledCodeObject) frame.getFrameDescriptor().getInfo();
     }
 
-    public static AbstractSqueakObject getSender(final Frame frame) {
-        return (AbstractSqueakObject) frame.getArguments()[ArgumentIndices.SENDER];
+    public static Object getSender(final Frame frame) {
+        return ensureValidSender(frame.getArguments()[ArgumentIndices.SENDER]);
+    }
+
+    public static Object ensureValidSender(final Object sender) {
+        assert sender == NilObject.SINGLETON || sender instanceof ContextObject;
+        return sender;
     }
 
     public static ContextObject getSenderContext(final Frame frame) {

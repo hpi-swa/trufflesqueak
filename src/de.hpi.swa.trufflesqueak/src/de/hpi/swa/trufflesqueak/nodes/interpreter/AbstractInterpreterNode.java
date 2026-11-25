@@ -34,7 +34,6 @@ import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
-import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
@@ -392,9 +391,9 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         final byte profile = getProfile(currentPC);
         if (FrameAccess.hasModifiedSender(frame)) {
             enter(currentPC, profile, BRANCH1);
-            final AbstractSqueakObject sender = FrameAccess.getSender(frame);
-            if (sender instanceof ContextObject ctx && !ctx.isDead()) {
-                throw new NonVirtualReturn(result, sender);
+            final Object sender = FrameAccess.getSender(frame);
+            if (sender instanceof final ContextObject ctx && !ctx.isDead()) {
+                throw new NonVirtualReturn(result, ctx);
             } else {
                 throw cannotReturn(frame, pc, sp, result);
             }
@@ -429,8 +428,8 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
      * @return null if homeContext is not on sender chain; return first marked Context if found;
      * raise NLR otherwise
      */
-    private static ContextObject firstUnwindMarkedOrThrowNLR(final AbstractSqueakObject senderOrNil, final ContextObject homeContext, final Object returnValue) {
-        AbstractSqueakObject currentLink = senderOrNil;
+    private static ContextObject firstUnwindMarkedOrThrowNLR(final Object senderOrNil, final ContextObject homeContext, final Object returnValue) {
+        Object currentLink = senderOrNil;
         ContextObject firstMarkedContext = null;
 
         while (currentLink instanceof final ContextObject context) {

@@ -202,16 +202,16 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         return truffleFrame;
     }
 
-    public AbstractSqueakObject getFrameSender() {
+    public Object getFrameSender() {
         if (hasTruffleFrame()) {
             return FrameAccess.getSender(getTruffleFrame());
         } else {
-            return (AbstractSqueakObject) senderOrFrameOrSize;
+            return FrameAccess.ensureValidSender(senderOrFrameOrSize);
         }
     }
 
-    public AbstractSqueakObject getSender() {
-        final AbstractSqueakObject sender = getFrameSender();
+    public Object getSender() {
+        final Object sender = getFrameSender();
         if (sender instanceof final ContextObject senderContext && !senderContext.hasTruffleFrame()) {
             senderContext.materializeFromFrames();
         }
@@ -546,7 +546,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         if (isDead()) {
             return false;
         }
-        final AbstractSqueakObject sender = getFrameSender();
+        final Object sender = getFrameSender();
         if (sender instanceof ContextObject senderContext) {
             return !senderContext.hasTruffleFrame() || !senderContext.isDead();
         }
@@ -678,7 +678,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
             if (compiledCodeObject != null && fromToMap.get(compiledCodeObject) instanceof final CompiledCodeObject o) {
                 overwriteCodeObject(o);
             }
-            final AbstractSqueakObject sender = FrameAccess.getSender(frame);
+            final Object sender = FrameAccess.getSender(frame);
             if (sender != null && fromToMap.get(sender) instanceof final ContextObject o) {
                 setSender(o);
             }

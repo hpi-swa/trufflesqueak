@@ -15,7 +15,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.nodes.RootNode;
-
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.CannotReturnToTarget;
@@ -25,7 +24,6 @@ import de.hpi.swa.trufflesqueak.exceptions.Returns.TopLevelReturn;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.io.SqueakDisplay;
-import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
@@ -91,7 +89,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
             ensureCachedContextCanRunAgain(activeContext);
         }
         while (true) {
-            final AbstractSqueakObject sender = activeContext.getSender();
+            final Object sender = activeContext.getSender();
             assert sender == NilObject.SINGLETON || ((ContextObject) sender).hasTruffleFrame();
             try {
                 try {
@@ -126,7 +124,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     }
 
     @TruffleBoundary
-    private ContextObject returnTo(final ContextObject returningContext, final AbstractSqueakObject sender, final Object returnValue) {
+    private ContextObject returnTo(final ContextObject returningContext, final Object sender, final Object returnValue) {
         /* Normal returns end up here. */
         assert (sender instanceof ContextObject) || sender == NilObject.SINGLETON;
         if ((sender instanceof final ContextObject senderContext) && !senderContext.isDead()) {
@@ -156,7 +154,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     }
 
     @TruffleBoundary
-    private static ContextObject commonNLReturn(final AbstractSqueakObject sender, final NonLocalReturn nlr) {
+    private static ContextObject commonNLReturn(final Object sender, final NonLocalReturn nlr) {
         /*
          * Non-local returns with no intervening unwind-blocks end up here. The home Context has
          * already been validated.

@@ -58,7 +58,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
             if (receiver == previousContextOrNil) {
                 return NilObject.SINGLETON;
             }
-            AbstractSqueakObject currentLink = receiver.getFrameSender();
+            Object currentLink = receiver.getFrameSender();
 
             while (currentLink instanceof final ContextObject context) {
                 // Exit if we've found the previous Context.
@@ -105,7 +105,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
          */
         public static boolean hasSenderChainFromToAndTerminateIf(final ContextObject startContext, final AbstractSqueakObject endContext, final boolean terminate) {
             // Search starts with sender.
-            AbstractSqueakObject currentLink = startContext.getFrameSender();
+            Object currentLink = startContext.getFrameSender();
 
             while (currentLink instanceof final ContextObject context) {
                 // Exit if we've found endContext.
@@ -133,7 +133,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
             if (receiver.isExceptionHandlerMarked()) {
                 return receiver;
             }
-            AbstractSqueakObject currentLink = receiver.getFrameSender();
+            Object currentLink = receiver.getFrameSender();
 
             while (currentLink instanceof final ContextObject context) {
                 // Watch for exception handler marked ContextObjects.
