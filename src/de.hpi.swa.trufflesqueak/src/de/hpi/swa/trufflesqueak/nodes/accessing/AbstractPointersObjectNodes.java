@@ -85,11 +85,10 @@ public class AbstractPointersObjectNodes {
             return doReadGeneric(object, index);
         }
 
-        @TruffleBoundary
         @ReportPolymorphism.Megamorphic
         @Specialization(replaces = {"doReadCached", "doReadInvalid"})
         protected static final Object doReadGeneric(final AbstractPointersObject object, final long index) {
-            return object.getLayout().getLocation(index).read(object);
+            return object.getLayout().getLocation(index).readMegamorphic(object);
         }
     }
 
@@ -143,12 +142,11 @@ public class AbstractPointersObjectNodes {
             doWriteGeneric(object, index, value);
         }
 
-        @TruffleBoundary
         @ReportPolymorphism.Megamorphic
         @Specialization(replaces = {"doWriteCached", "doWriteInvalid"})
         protected static final void doWriteGeneric(final AbstractPointersObject object, final long index, final Object value) {
             try {
-                object.getLayout().getLocation(index).write(object, value);
+                object.getLayout().getLocation(index).writeMegamorphic(object, value);
             } catch (final IllegalWriteException e) {
                 /*
                  * Although the layout was valid, it is possible that the location cannot store the
