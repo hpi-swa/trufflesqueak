@@ -46,6 +46,7 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.io.SqueakDisplay;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
@@ -947,6 +948,27 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Bind final Node node,
                         @Cached final SqueakObjectIdentityNode identityNode) {
             return !identityNode.execute(node, a, b);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 183)
+    protected abstract static class PrimIsPinnedNode extends AbstractPrimitiveNode implements Primitive0WithFallback {
+        @Specialization
+        protected static final boolean doIsPinned(final AbstractSqueakObjectWithHash receiver) {
+            return BooleanObject.wrap(receiver.isPinned());
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 184)
+    protected abstract static class PrimPinNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
+        /* Answers whether the receiver was pinned before. */
+        @Specialization
+        protected static final boolean doPin(final AbstractSqueakObjectWithHash receiver, final boolean value) {
+            final boolean wasPinned = receiver.isPinned();
+            receiver.setPinned(value);
+            return BooleanObject.wrap(wasPinned);
         }
     }
 

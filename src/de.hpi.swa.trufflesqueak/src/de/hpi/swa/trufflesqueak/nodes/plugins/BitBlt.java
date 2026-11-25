@@ -143,7 +143,6 @@ public final class BitBlt {
     private long componentAlphaModeColor;
     private Object destBits;
     private int destBitsBaseOffset;
-    private int destBitsIndexScale;
     private int destDelta;
     private int destDepth;
     private PointersObject destForm;
@@ -196,7 +195,6 @@ public final class BitBlt {
     private long sourceAlpha;
     private Object sourceBits;
     private int sourceBitsBaseOffset;
-    private int sourceBitsIndexScale;
     private int sourceDelta;
     private int sourceDepth;
     private PointersObject sourceForm;
@@ -1678,7 +1676,7 @@ public final class BitBlt {
             destDepth = -destDepth;
         }
         final Object destBitsValue = fetchPointerofObject(FORM.BITS, destForm);
-        if (!(destBitsValue instanceof final NativeObject destBitsNative && (isWords(destBitsNative) || isBytes(destBitsNative)))) {
+        if (!(destBitsValue instanceof final NativeObject destBitsNative)) {
             if (destBitsValue instanceof Long) {
                 throw SqueakException.create("Not supported: Query for actual surface dimensions");
             } else {
@@ -1692,12 +1690,18 @@ public final class BitBlt {
             destBits = destBitsNative.getIntStorage();
             destBitsSize = destBitsNative.getIntLength() * Integer.BYTES;
             destBitsBaseOffset = Unsafe.ARRAY_INT_BASE_OFFSET;
-            destBitsIndexScale = Unsafe.ARRAY_INT_INDEX_SCALE;
-        } else {
+        } else if (isBytes(destBitsNative)) {
             destBits = destBitsNative.getByteStorage();
             destBitsSize = destBitsNative.getByteLength();
             destBitsBaseOffset = Unsafe.ARRAY_BYTE_BASE_OFFSET;
-            destBitsIndexScale = Unsafe.ARRAY_BYTE_INDEX_SCALE * Integer.BYTES;
+        } else if (destBitsNative.isLongType()) {
+            destBits = destBitsNative.getLongStorage();
+            destBitsSize = destBitsNative.getLongLength() * Long.BYTES;
+            destBitsBaseOffset = Unsafe.ARRAY_LONG_BASE_OFFSET;
+        } else {
+            destBits = destBitsNative.getShortStorage();
+            destBitsSize = destBitsNative.getShortLength() * Short.BYTES;
+            destBitsBaseOffset = Unsafe.ARRAY_SHORT_BASE_OFFSET;
         }
         return destBitsSize >= destPitch * destHeight;
     }
@@ -1804,7 +1808,7 @@ public final class BitBlt {
             sourceDepth = -sourceDepth;
         }
         final Object sourceBitsValue = fetchPointerofObject(FORM.BITS, sourceForm);
-        if (!(sourceBitsValue instanceof final NativeObject sourceBitsNative && (isWords(sourceBitsNative) || isBytes(sourceBitsNative)))) {
+        if (!(sourceBitsValue instanceof final NativeObject sourceBitsNative)) {
             if (sourceBitsValue instanceof Long) {
                 throw SqueakException.create("Not supported: Query for actual surface dimensions");
             } else {
@@ -1813,23 +1817,25 @@ public final class BitBlt {
         }
         sourcePPW = div(32, sourceDepth);
         sourcePitch = div(sourceWidth + sourcePPW - 1, sourcePPW) << 2;
+        final int sourceBitsSize;
         if (isWords(sourceBitsNative)) {
-            final int[] ints = sourceBitsNative.getIntStorage();
-            sourceBits = ints;
+            sourceBits = sourceBitsNative.getIntStorage();
+            sourceBitsSize = sourceBitsNative.getIntLength() * Integer.BYTES;
             sourceBitsBaseOffset = Unsafe.ARRAY_INT_BASE_OFFSET;
-            sourceBitsIndexScale = Unsafe.ARRAY_INT_INDEX_SCALE;
-            return ints.length * Integer.BYTES >= sourcePitch * sourceHeight;
+        } else if (isBytes(sourceBitsNative)) {
+            sourceBits = sourceBitsNative.getByteStorage();
+            sourceBitsSize = sourceBitsNative.getByteLength();
+            sourceBitsBaseOffset = Unsafe.ARRAY_BYTE_BASE_OFFSET;
+        } else if (sourceBitsNative.isLongType()) {
+            sourceBits = sourceBitsNative.getLongStorage();
+            sourceBitsSize = sourceBitsNative.getLongLength() * Long.BYTES;
+            sourceBitsBaseOffset = Unsafe.ARRAY_LONG_BASE_OFFSET;
         } else {
-            final byte[] bytes = sourceBitsNative.getByteStorage();
-            if (bytes.length >= sourcePitch * sourceHeight) {
-                sourceBits = bytes;
-                sourceBitsBaseOffset = Unsafe.ARRAY_BYTE_BASE_OFFSET;
-                sourceBitsIndexScale = Unsafe.ARRAY_BYTE_INDEX_SCALE * Integer.BYTES;
-                return true;
-            } else {
-                return false;
-            }
+            sourceBits = sourceBitsNative.getShortStorage();
+            sourceBitsSize = sourceBitsNative.getShortLength() * Short.BYTES;
+            sourceBitsBaseOffset = Unsafe.ARRAY_SHORT_BASE_OFFSET;
         }
+        return sourceBitsSize >= sourcePitch * sourceHeight;
     }
 
     /*
@@ -2166,38 +2172,36 @@ public final class BitBlt {
     }
 
     /*
-     * Multiply word1 with word2 as nParts partitions of nBits each. This is useful for packed
-     * pixels, or packed colors. Bug in loop version when non-white background
-     */
-    /*
-     * In C, integer multiplication might answer a wrong value if the unsigned values are declared
-     * as signed. This problem does not affect this method, because the most significant bit (i.e.
-     * the sign bit) will always be zero (jmv)
+     * Multiply word1 with word2 as partitions of nBits each, with correct rounding. This is useful
+     * for packed pixels, or packed colors. Channels are spread into two groups of a double word, so
+     * that each channel has 2 * nBits available for its product.
      */
 
-    /* BitBltSimulation>>#partitionedMul:with:nBits:nPartitions: */
-    private static long partitionedMulwithnBitsnPartitions(final long word1, final long word2, final int nBits, final int nParts) {
-        /* partition mask starts at the right */
-        final int sMask = MASK_TABLE[nBits];
-        final int dMask = shl(sMask, nBits);
-        /* optimized first step */
-        long result = shr(((word1 & sMask) + 1) * ((word2 & sMask) + 1) - 1 & dMask, nBits);
-        if (nParts == 1) {
-            return result;
+    /* BitBltSimulation>>#partitionedMul:with:nBits:wordBits: */
+    private static long partitionedMulwithnBitswordBits(final long word1, final long word2, final int nBits, final int wordBits) {
+        final int doubleNBits = 2 * nBits;
+        final long channelMask = (1L << nBits) - 1;
+        final int nGroups = (wordBits / nBits + 1) / 2;
+        /* groupMask selects every other channel */
+        long groupMask = channelMask;
+        for (int i = 2; i <= nGroups; i++) {
+            groupMask = (groupMask << doubleNBits) + channelMask;
         }
-        long product = ((shr(word1, nBits) & sMask) + 1) * ((shr(word2, nBits) & sMask) + 1) - 1 & dMask;
-        result = result | product;
-        if (nParts == 2) {
-            return result;
+        final int groupShift = nGroups * doubleNBits;
+        /* Spread the odd channels into the high group and the even channels into the low group */
+        final long doubleWord1 = ((word1 >>> nBits & groupMask) << groupShift) + (word1 & groupMask);
+        final long doubleWord2 = ((word2 >>> nBits & groupMask) << groupShift) + (word2 & groupMask);
+        final long half = (channelMask >>> 1) + 1;
+        long doubleWordMul = 0;
+        int shift = 0;
+        for (int i = 1; i <= wordBits / nBits; i++) {
+            doubleWordMul += (doubleWord1 >>> shift & channelMask) * (doubleWord2 >>> shift & channelMask) + half << shift;
+            shift += doubleNBits;
         }
-        product = ((shr(word1, 2 * nBits) & sMask) + 1) * ((shr(word2, 2 * nBits) & sMask) + 1) - 1 & dMask;
-        result = result | shl(product, nBits);
-        if (nParts == 3) {
-            return result;
-        }
-        product = ((shr(word1, 3 * nBits) & sMask) + 1) * ((shr(word2, 3 * nBits) & sMask) + 1) - 1 & dMask;
-        result = result | shl(product, 2 * nBits);
-        return result;
+        final long doubleGroupMask = (groupMask << groupShift) + groupMask;
+        /* Divide each channel by channelMask, i.e. (x + (x >> nBits)) >> nBits */
+        doubleWordMul = (doubleWordMul >>> nBits & doubleGroupMask) + doubleWordMul >>> nBits & doubleGroupMask;
+        return (doubleWordMul >>> groupShift - nBits) + (doubleWordMul & groupMask) & 0xFFFFFFFFL;
     }
 
     /* BitBltSimulation>>#partitionedRgbComponentAlpha:dest:nBits:nPartitions: */
@@ -3149,16 +3153,19 @@ public final class BitBlt {
     /* BitBltSimulation>>#rgbMul:with: */
     private long rgbMulwith(final long sourceWord, final long destinationWord) {
         if (destDepth < 16) {
+            if (destDepth == 1) {
+                return bitAndwith(sourceWord, destinationWord);
+            }
             /* Mul each pixel separately */
-            return partitionedMulwithnBitsnPartitions(sourceWord, destinationWord, destDepth, destPPW);
+            return partitionedMulwithnBitswordBits(sourceWord, destinationWord, destDepth, 32);
         }
         if (destDepth == 16) {
             /* Mul RGB components of each pixel separately */
-            return partitionedMulwithnBitsnPartitions(sourceWord, destinationWord, 5, 3) +
-                            (partitionedMulwithnBitsnPartitions(sourceWord >>> 16, destinationWord >>> 16, 5, 3) << 16);
+            return partitionedMulwithnBitswordBits(sourceWord & 0xFFFF, destinationWord & 0xFFFF, 5, 16) +
+                            (partitionedMulwithnBitswordBits(sourceWord >>> 16, destinationWord >>> 16, 5, 16) << 16);
         } else {
             /* Mul RGBA components of the pixel separately */
-            return partitionedMulwithnBitsnPartitions(sourceWord, destinationWord, 8, 4);
+            return partitionedMulwithnBitswordBits(sourceWord, destinationWord, 8, 32);
         }
     }
 
@@ -3913,7 +3920,7 @@ public final class BitBlt {
 
     private long dstLongAt(final long index) {
         assert index >>> 2 < endOfDestination;
-        return Integer.toUnsignedLong(UnsafeUtils.getIntAt(destBits, destBitsBaseOffset + (index >>> 2) * destBitsIndexScale));
+        return Integer.toUnsignedLong(UnsafeUtils.getIntAt(destBits, destBitsBaseOffset + (index >>> 2) * Integer.BYTES));
     }
 
     /*
@@ -3928,7 +3935,7 @@ public final class BitBlt {
     }
 
     private void dstLongAtput(final long index, final long value) {
-        UnsafeUtils.putIntAt(destBits, destBitsBaseOffset + (index >>> 2) * destBitsIndexScale, (int) value);
+        UnsafeUtils.putIntAt(destBits, destBitsBaseOffset + (index >>> 2) * Integer.BYTES, (int) value);
     }
 
     private long halftoneLongAt(final int index) {
@@ -3942,6 +3949,6 @@ public final class BitBlt {
          * `PolygonMorph arrowPrototype`.
          */
         assert 0 <= index && index <= endOfSource;
-        return Integer.toUnsignedLong(UnsafeUtils.getIntAt(sourceBits, sourceBitsBaseOffset + (index >>> 2) * sourceBitsIndexScale));
+        return Integer.toUnsignedLong(UnsafeUtils.getIntAt(sourceBits, sourceBitsBaseOffset + (index >>> 2) * Integer.BYTES));
     }
 }

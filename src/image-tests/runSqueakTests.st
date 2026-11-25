@@ -59,55 +59,45 @@
     ignoredTests := OrderedCollection new.
     {
         "slow tests"
-        CompiledMethodComparisonTest.
-        MCFileInTest.
+        CompiledMethodComparisonTest. "takes more than 30s"
 
         "ignored tests"
-        AioEventHandlerTestCase.
-        CogARMCompilerTests.
-        CogARMv8CompilerTests.
-        CogIA32CompilerTests.
-        CogMIPSELCompilerTests.
-        CogX64CompilerTests.
-        FFIAllocateExternalTests.
-        FFIAllocateTests.
-        FFIPluginConstructedTests.
-        FFIPluginLibraryTests.
-        FFIPluginTests.
-        FileSystemGitRepositoryRemoteTests.
-        FileSystemGitTests.
-        FloatMathPluginTests.
-        FullSimulationTest.
-        GitDumbHTTPProtocolTest.
-        GitProtocolTest.
-        GitSmartHTTPProtocolTest.
+        AioEventHandlerTestCase. "AioPlugin not available"
+        CogARMCompilerTests. "require processor simulators (e.g., BochsIA32Alien) that are missing in the image"
+        CogARMv8CompilerTests. "require processor simulators (e.g., BochsIA32Alien) that are missing in the image"
+        CogIA32CompilerTests. "require processor simulators (e.g., BochsIA32Alien) that are missing in the image"
+        CogMIPSELCompilerTests. "require processor simulators (e.g., BochsIA32Alien) that are missing in the image"
+        CogX64CompilerTests. "require processor simulators (e.g., BochsIA32Alien) that are missing in the image"
+        FFIAllocateExternalTests. "requires external memory (primitiveFFIAllocate)"
+        FFIPluginConstructedTests. "FFI callouts not supported"
+        FFIPluginLibraryTests. "FFI callouts not supported"
+        FFIPluginTests. "FFI callouts not supported"
+        FileSystemGitRepositoryRemoteTests. "requires internet access"
+        GitDumbHTTPProtocolTest. "requires internet access"
+        GitProtocolTest. "requires internet access"
+        GitSmartHTTPProtocolTest. "requires internet access"
         ImageSegmentTest. "image segments not supported"
-        InterpreterPrimitivesTest.
-        IslandVMTweaksTestCase.
-        LangEnvBugs.
-        ReleaseTest.
-        SlangBasicTypeInferenceTest. "many tests broken"
-        SlangTypeForArithmeticTest.
-        SlangTypeForDereferenceTest.
-        SoundTest.
-        SpurImageSegmentTests.
-        SpurPlanningCompactorTests.
-        StackInterpreterSimulatorTests.
-        UIManagerTest.
-        UnicodeTest. "Needs external resources"
-        UnixFileDirectoryTests.
-        UnixProcessAccessorTestCase.
-        UnixProcessFileLockTestCase.
-        UnixProcessTestCase.
-        UnixProcessUnixFileLockingTestCase.
-        UnixProcessWin32FileLockingTestCase.
-        WebClientServerTest. "some tests pass slowly"
-        WebMessageTest.
+        ReleaseTest. "slow, and #testUndeclared fails due to the packages loaded into the test image"
+        SlangBasicTypeInferenceTest. "inferred types differ from expectation in 18 of 71 tests (also on the OpenSmalltalk VM)"
+        SlangTypeForArithmeticTest. "inferred types differ from expectation (also on the OpenSmalltalk VM)"
+        SlangTypeForDereferenceTest. "inferred types differ from expectation in 2 of 5 tests (also on the OpenSmalltalk VM)"
+        SpurPlanningCompactorTests. "VMMaker simulator cannot be initialized, PrintfFormatDescriptor is missing in the image"
+        UIManagerTest. "fails due to the packages loaded into the test image"
+        UnixProcessTestCase. "requires forking the VM"
+        WebMessageTest. "#testStreamDirectlyFromToSizeProgressWhenSizeIsNotSpecified times out"
         WriteBarrierTest. "requires supportsReadOnlyObjects"
-        ZzzFileSystemGitAfterSuiteTest.
-        ZzzGitAfterSuiteTest.
     } collect: [:testCase |
         testCase allTestSelectors do: [:sel | ignoredTests add: (testCase selector: sel) ]].
+
+    isWin ifTrue: [
+        {
+            "ignored tests"
+            UnixProcessAccessorTestCase.
+            UnixProcessUnixFileLockingTestCase.
+            UnixProcessWin32FileLockingTestCase.
+        } collect: [:testCase |
+            testCase allTestSelectors do: [:sel | ignoredTests add: (testCase selector: sel) ]].
+    ].
 
     (isLinux or: [ isWin ]) ifTrue: [
         {
@@ -118,71 +108,81 @@
 
     {
         "ignored tests"
-        AllocationTest -> #(#testOutOfMemorySignal).
         BitmapStreamTests -> #(#testMatrixTransform2x3WithImageSegment #testShortIntegerArrayWithImageSegment #testShortPointArrayWithImageSegment #testShortRunArrayWithImageSegment #testWordArrayWithImageSegment). "image segments not supported"
-        BytecodeDecodingTests -> #(#testPCPreviousTo "fails with assertion error: Unexpected argument size, maybe dummy frame had wrong size?").
-        CompiledCodeInspectorTest -> #(#testDebugConstruction). "broken"
-        ContextInspectorTest -> #(#testDebugConstruction). "broken"
-        DebuggerTests -> #(#test01UserInterrupt #test17HandleBlockCannotReturn #test18HandleNestedBlockCannotReturn #test20TerminateProcess #test23TerminateDoubleErrorInEnsure #test24TerminateTripleErrorInEnsure). "fail, and can lock up or crash image sometimes"
-        HtmlReadWriterTest -> #(#test16ImgTag).
+        CompiledCodeInspectorTest -> #(#testDebugConstruction). "times out while inspecting a WeakSet (takes 4s on the OpenSmalltalk VM)"
+        DebuggerTests -> #(#test01UserInterrupt #test17HandleBlockCannotReturn #test18HandleNestedBlockCannotReturn #test20TerminateProcess #test23TerminateDoubleErrorInEnsure #test24TerminateTripleErrorInEnsure). "require a debugger UI, fail or lock up with CommandLineToolSet (also on the OpenSmalltalk VM)"
+        FFIAllocateTests -> #(#test22ArrayForVoidPointers). "requires external memory (primitiveFFIAllocate)"
+        FileSystemGitTests -> #(#testEntrySize). "opens a dialog and waits for user input"
+        HtmlReadWriterTest -> #(#test16ImgTag). "requires internet access to download an image"
         LocaleTest -> #(#test04InstallFont). "requires internet access to download a font"
-        MemoryTests -> #(#testFrameActivationLeak).
-        SlangTests -> #(#testSimpleMethod). "broken"
-        SlangTypePromotionTest -> #(#testFloatAndNil #testNilAndFloat). "broken"
-        SmalltalkImageTest -> #(#testForceChangesToDiskRobustness).
-        StackInterpreterTests -> #(#testImmediateFloats #testPointerTaggingDetagging). "broken"
+        SlangTests -> #(#testSimpleMethod). "generated code differs from expectation (also on the OpenSmalltalk VM)"
+        SlangTypePromotionTest -> #(#testFloatAndNil #testNilAndFloat). "inferred types differ from expectation (also on the OpenSmalltalk VM)"
         StringTest -> #(#testPercentEncodingJa). "slow, switches the locale six times and may exceed its timeout of 30s on CI"
+        UnixProcessAccessorTestCase -> #(#testIsExecutableForUserInGroup #testIsReadable #testIsReadableForUserInGroup #testIsWritable #testIsWritableForUserInGroup). "time out waiting for a command, requires forking the VM"
     } collect: [:assoc | | testCase |
         testCase := assoc key.
         assoc value do: [:sel | ignoredTests add: (testCase selector: sel) ]].
 
     failingTests := OrderedCollection new.
     {
-        CoInterpreterTests.
-        FormatNumberTests.
-        OSPipeTestCase.
-        RegisterAllocatingCogitTests.
-        ToolMenusTest.
-        VMMakerDecompilerTests.
+        CoInterpreterTests. "VMMaker simulator cannot be initialized, PrintfFormatDescriptor is missing in the image"
+        FormatNumberTests. "VMMaker simulator cannot be initialized, PrintfFormatDescriptor is missing in the image"
+        FullSimulationTest. "VMMaker simulator cannot be initialized, PrintfFormatDescriptor is missing in the image"
+        InterpreterPrimitivesTest. "64-bit values are SmallIntegers, which do not understand #minus64:"
+        RegisterAllocatingCogitTests. "VMMaker simulator cannot be initialized, PrintfFormatDescriptor is missing in the image"
+        SpurImageSegmentTests. "VMMaker simulator cannot be initialized, PrintfFormatDescriptor is missing in the image"
+        ToolMenusTest. "PolyglotNotebook>>#buildCodePaneWith: answers a spec without a menu"
+        VMMakerDecompilerTests. "some VMMaker methods do not decompile to equivalent code"
     } collect: [:testCase |
         testCase allTestSelectors do: [:sel | failingTests add: (testCase selector: sel) ]].
 
     isWin ifTrue: [
         {
+            OSPipeTestCase. "OS pipes not supported"
             Win32VMTest.
         } collect: [:testCase |
             testCase allTestSelectors do: [:sel | failingTests add: (testCase selector: sel) ]].
     ].
 
     {
-        BitBltSimulationTest -> #(#testRgbMulDepth16 #testRgbMulDepth1to8).
-        CompilerExceptionsTest -> #(#testUnknownSelector).
-        HelpBrowserTest -> #(#testRegistration).
-        ObjectTest -> #(#testEvaluateWheneverChangeIn #testEvaluateWheneverChangeInTransparent "become EmptyObject->PointersObject not yet supported" #testPinning "not yet supported").
-        PackageDependencyTest -> #(#testBalloon #testPreferenceBrowser #testSUnit).
-        SequenceableCollectionTest -> #(#testDoWithIndexDeprecation).
+        AllocationTest -> #(#testOutOfMemorySignal). "allocating huge empty Arrays does not signal OutOfMemory"
+        BitBltTest -> #(#testAllAlphasRgbMul). "expects the rounding of an outdated BitBltSimulation>>#rgbMul:with:, as implemented by the VM of the Squeak 6.0 release"
+        CompilerExceptionsTest -> #(#testUnknownSelector). "selects the wrong interval, flagged as flaky in the image"
+        HelpBrowserTest -> #(#testRegistration). "the Help Browser is not registered in the world menu of the test image"
+        IslandVMTweaksTestCase -> #(#testEmptyReplace #testForgivingPrims). "primitives that take their receiver as an argument are not supported"
+        ObjectTest -> #(#testEvaluateWheneverChangeIn #testEvaluateWheneverChangeInTransparent). "become EmptyObject->PointersObject not yet supported"
+        PackageDependencyTest -> #(#testBalloon #testPreferenceBrowser #testSUnit). "packages loaded into the test image add dependencies"
+        SequenceableCollectionTest -> #(#testDoWithIndexDeprecation). "packages loaded into the test image send #doWithIndex:"
         SmallIntegerTest -> #(#testMaxVal #testMinVal #testPrintString). "assume SmallIntegers are 31 or 61 bit rather than 64 bit (long)."
-        WorldStateTest -> #(#testActiveVariablesObsoletion #testWorldVariableObsoletion).
+        StackInterpreterSimulatorTests -> #(#testEmptySimulatorCanCloneSimulation #testEmptySimulatorCloneCanLoadImage #testPluginSimulators #testSimulatorCanReloadImage). "VMMaker simulator cannot be initialized, PrintfFormatDescriptor is missing in the image"
+        StackInterpreterTests -> #(#testImmediateFloats #testPointerTaggingDetagging). "VMMaker simulator cannot be initialized, PrintfFormatDescriptor is missing in the image"
+        WorldStateTest -> #(#testActiveVariablesObsoletion #testWorldVariableObsoletion). "packages loaded into the test image reference the variables"
     } collect: [:assoc | | testCase |
         testCase := assoc key.
         assoc value do: [:sel | failingTests add: (testCase selector: sel) ]].
+
+    isWin ifFalse: [
+        {
+            OSPipeTestCase -> #(#testIsAtEndOfFile). "also fails on the OpenSmalltalk VM"
+            UnixProcessAccessorTestCase -> #(#testArgsAsFlatArrayAndOffsets #testEnvAsFlatArrayAndOffsets). "require memory addresses of objects"
+            UnixProcessAccessorTestCase -> #(#testDupTo #testRedirectStdOutTo #testUnixFileNumber). "require file descriptors"
+            UnixProcessAccessorTestCase -> #(#testPrimForkAndExec #testPrimGetChildExitStatus). "require forking the VM"
+        } collect: [:assoc | | testCase |
+            testCase := assoc key.
+            assoc value do: [:sel | failingTests add: (testCase selector: sel) ]].
+    ].
 
     flakyTests := OrderedCollection new.
     {
         ArbitraryObjectSocketTestCase -> #(#testBasics). "delays too short, see https://github.com/squeak-smalltalk/squeak-object-memory/issues/179"
         BitBltSimulationTest -> #(#testAlphaCompositing2Simulated #testAlphaCompositingSimulated). "simulated primitive fails if the JVM collects garbage while loading BitBlt state (see BitBltSimulation>>#loadBitBltFrom:warping:)"
         DebuggerTests -> #(#test02UnhandledException). "fails on most CI jobs except on Linux aarch64, cause unknown"
-        DebuggerTests -> #(#test19Abandon). "fails sometimes on Windows native"
         FloatTest -> #(#testCompiledConstants). "recompiles all methods with float literals, may exceed the default timeout on slower CI runners"
         MorphicToolBuilderTests -> #(#testGetButtonColor). "fails if the hand is over 0@0, where tests create morphs (e.g., when headless or depending on mouse events)"
         ObjectTest -> #(#testIfNotNilDoDeprecation). "scans all methods three times, may exceed the default timeout on slower CI runners"
         SHParserST80Test -> #(#testNumbers). "fails rarely, cause unknown"
         StringSocketTestCase -> #(#testBogusInput1 #testBogusInput2). "delays too short, see https://github.com/squeak-smalltalk/squeak-object-memory/issues/179"
-        StringTest ->#(#testFindSelector). "fails rarely, cause unknown"
-        WeakSetInspectorTest -> #(#testSymbolTableM6812). "symbol table can shrink between garbage collections, fails sometimes on Windows native"
-
-        "failing on some platforms"
-        GIFReadWriterTest -> #(#testAnimatedColorsOutIn).
+        WeakSetInspectorTest -> #(#testSymbolTableM6812). "symbol table can shrink between garbage collections, fails on Windows native and often in the instrumented build"
     } collect: [:assoc | | testCase |
         testCase := assoc key.
         assoc value do: [:sel | flakyTests add: (testCase selector: sel) ]].
