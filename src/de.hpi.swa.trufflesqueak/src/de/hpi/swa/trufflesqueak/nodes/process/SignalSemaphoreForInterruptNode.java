@@ -41,7 +41,7 @@ public abstract class SignalSemaphoreForInterruptNode extends AbstractNode {
     }
 
     public static final PointersObject executeUncached(final SqueakImageContext image, final Object semaphoreOrNil, final PointersObject nextActiveProcess, final boolean nextActiveProcessYields) {
-        if (!(semaphoreOrNil instanceof final PointersObject semaphore) || !image.isSemaphoreClass(semaphore.getSqueakClass())) {
+        if (!(semaphoreOrNil instanceof final PointersObject semaphore) || !semaphore.hasSqueakClass(image.semaphoreClass)) {
             return nextActiveProcess;
         }
         final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();

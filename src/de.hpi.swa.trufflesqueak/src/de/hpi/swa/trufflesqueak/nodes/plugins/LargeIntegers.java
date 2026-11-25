@@ -1024,11 +1024,11 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     public static boolean isNegative(final SqueakImageContext image, final NativeObject value) {
-        return value.getSqueakClass() == image.largeNegativeIntegerClass;
+        return value.hasSqueakClass(image.largeNegativeIntegerClass);
     }
 
     public static boolean isPositive(final SqueakImageContext image, final NativeObject value) {
-        return value.getSqueakClass() == image.largePositiveIntegerClass;
+        return value.hasSqueakClass(image.largePositiveIntegerClass);
     }
 
     public static boolean isZero(final NativeObject value) {

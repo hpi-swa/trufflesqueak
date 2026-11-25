@@ -215,7 +215,7 @@ public abstract class LookupClassGuard {
 
         @Override
         public boolean check(final Object receiver) {
-            return receiver instanceof final AbstractSqueakObjectWithClassAndHash o && o.getSqueakClass() == expectedClass;
+            return receiver instanceof final AbstractSqueakObjectWithClassAndHash o && o.hasSqueakClass(expectedClass);
         }
 
         @Override

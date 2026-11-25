@@ -110,7 +110,7 @@ public final class SqueakGuards {
 
     public static boolean isFraction(final PointersObject object, final Node node) {
         CompilerAsserts.compilationConstant(node);
-        return object.getSqueakClass() == SqueakImageContext.get(node).getFractionClass();
+        return object.hasSqueakClass(SqueakImageContext.get(node).getFractionClass());
     }
 
     public static boolean isGreaterThanZero(final double value) {
