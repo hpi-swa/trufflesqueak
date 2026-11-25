@@ -27,6 +27,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive2;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive4;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
@@ -83,6 +84,10 @@ public abstract class AbstractSqueakTestCase {
 
     protected static final Object runPrimitive(final int primCode, final Object rcvr, final Object arg1) {
         return ((Primitive1) PrimitiveNodeFactory.getOrCreateIndexed(primCode, 2)).execute(null, rcvr, arg1);
+    }
+
+    protected static final Object runPrimitive(final int primCode, final Object rcvr, final Object arg1, final Object arg2) {
+        return ((Primitive2) PrimitiveNodeFactory.getOrCreateIndexed(primCode, 3)).execute(null, rcvr, arg1, arg2);
     }
 
     protected static final Object runPrimitive(final int primCode, final Object rcvr, final Object arg1, final Object arg2, final Object arg3, final Object arg4) {

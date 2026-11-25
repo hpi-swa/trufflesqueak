@@ -49,11 +49,11 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
     protected abstract static class AbstractBasicAtOrAtPutNode extends AbstractPrimitiveNode {
 
-        protected static final boolean inBoundsOfSqueakObject(final Object target, final int instSize, final long index, final SqueakObjectSizeNode sizeNode, final Node node) {
+        protected static final boolean inBoundsOfSqueakObject(final AbstractSqueakObject target, final int instSize, final long index, final SqueakObjectSizeNode sizeNode, final Node node) {
             return SqueakGuards.inBounds1(index, sizeNode.execute(node, target) - instSize);
         }
 
-        protected static final Object basicAt(final Object receiver, final long index, final SqueakObjectSizeNode sizeNode, final SqueakObjectInstSizeNode instSizeNode,
+        protected static final Object basicAt(final AbstractSqueakObject receiver, final long index, final SqueakObjectSizeNode sizeNode, final SqueakObjectInstSizeNode instSizeNode,
                         final SqueakObjectAt0Node at0Node, final InlinedBranchProfile outOfBounceProfile, final Node node) {
             final int instSize = instSizeNode.execute(node, receiver);
             if (inBoundsOfSqueakObject(receiver, instSize, index, sizeNode, node)) {
@@ -81,7 +81,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @SqueakPrimitive(indices = 60)
     protected abstract static class PrimBasicAt2Node extends AbstractBasicAtOrAtPutNode implements Primitive1WithFallback {
         @Specialization
-        protected static final Object doSqueakObject(final Object receiver, final long index,
+        protected static final Object doSqueakObject(final AbstractSqueakObject receiver, final long index,
                         @Bind final Node node,
                         @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached final SqueakObjectInstSizeNode instSizeNode,
@@ -95,7 +95,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @SqueakPrimitive(indices = 60)
     protected abstract static class PrimBasicAt3Node extends AbstractBasicAtOrAtPutNode implements Primitive2WithFallback {
         @Specialization
-        protected static final Object doSqueakObject(@SuppressWarnings("unused") final Object receiver, final Object target, final long index,
+        protected static final Object doSqueakObject(@SuppressWarnings("unused") final Object receiver, final AbstractSqueakObject target, final long index,
                         @Bind final Node node,
                         @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached final SqueakObjectInstSizeNode instSizeNode,
