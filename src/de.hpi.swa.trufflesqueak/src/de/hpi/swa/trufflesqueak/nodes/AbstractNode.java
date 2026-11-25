@@ -39,7 +39,7 @@ public abstract class AbstractNode extends Node {
     }
 
     protected final boolean isBitmap(final NativeObject object) {
-        return getContext().isBitmapClass(object.getSqueakClass());
+        return object.hasSqueakClass(getContext().bitmapClass);
     }
 
     protected final boolean isPoint(final PointersObject object) {
@@ -57,7 +57,7 @@ public abstract class AbstractNode extends Node {
     }
 
     protected final boolean isSemaphore(final PointersObject object) {
-        return getContext().isSemaphoreClass(object.getSqueakClass());
+        return object.hasSqueakClass(getContext().semaphoreClass);
     }
 
 }

@@ -35,7 +35,7 @@ public abstract class SignalSemaphoreNode extends AbstractNode {
     }
 
     public static final boolean executeUncached(final VirtualFrame frame, final SqueakImageContext image, final Object semaphoreOrNil) {
-        if (!(semaphoreOrNil instanceof final PointersObject semaphore) || !image.isSemaphoreClass(semaphore.getSqueakClass())) {
+        if (!(semaphoreOrNil instanceof final PointersObject semaphore) || !semaphore.hasSqueakClass(image.semaphoreClass)) {
             return false;
         }
         final AbstractPointersObjectWriteNode writeNode = AbstractPointersObjectWriteNode.getUncached();

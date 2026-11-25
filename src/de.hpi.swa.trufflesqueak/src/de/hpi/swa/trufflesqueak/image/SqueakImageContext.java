@@ -1146,7 +1146,7 @@ public final class SqueakImageContext {
     }
 
     public boolean isByteString(final NativeObject object) {
-        return isByteStringClass(object.getSqueakClass());
+        return object.hasSqueakClass(byteStringClass);
     }
 
     public boolean isByteStringClass(final ClassObject object) {
@@ -1154,7 +1154,7 @@ public final class SqueakImageContext {
     }
 
     public boolean isByteSymbol(final NativeObject object) {
-        return isByteSymbolClass(object.getSqueakClass());
+        return object.hasSqueakClass(getByteSymbolClass());
     }
 
     public boolean isByteSymbolClass(final ClassObject object) {
@@ -1174,15 +1174,15 @@ public final class SqueakImageContext {
     }
 
     public boolean isLargeInteger(final NativeObject object) {
-        return isLargeIntegerClass(object.getSqueakClass());
+        return object.hasSqueakClass(largePositiveIntegerClass) || object.hasSqueakClass(largeNegativeIntegerClass);
     }
 
     public boolean isLargePositiveInteger(final NativeObject object) {
-        return object.getSqueakClass() == largePositiveIntegerClass;
+        return object.hasSqueakClass(largePositiveIntegerClass);
     }
 
     public boolean isLargeNegativeInteger(final NativeObject object) {
-        return object.getSqueakClass() == largeNegativeIntegerClass;
+        return object.hasSqueakClass(largeNegativeIntegerClass);
     }
 
     public boolean isMetaClass(final ClassObject object) {
@@ -1198,7 +1198,7 @@ public final class SqueakImageContext {
     }
 
     public boolean isPoint(final AbstractPointersObject object) {
-        return object.getSqueakClass() == pointClass;
+        return object.hasSqueakClass(pointClass);
     }
 
     public boolean isSemaphoreClass(final ClassObject object) {

@@ -63,6 +63,17 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         return UnsafeUtils.uncheckedCast(squeakClass, ClassObject.class);
     }
 
+    /**
+     * Checks the class of this object by identity. Unlike {@code getSqueakClass() == klass}, this
+     * does not cast the class field (which also holds forwarding pointers) to {@link ClassObject},
+     * so compiled code needs no type check and no deoptimization path for a cast that cannot fail
+     * when the identity check succeeds.
+     */
+    public final boolean hasSqueakClass(final ClassObject klass) {
+        assert assertNotForwarded();
+        return squeakClass == klass;
+    }
+
     @Override
     public final ClassObject getSqueakClass(final SqueakImageContext image) {
         return getSqueakClass();
