@@ -209,8 +209,8 @@ public final class FrameAccess {
     }
 
     public static boolean hasModifiedSender(final VirtualFrame frame) {
-        final ContextObject context = getContext(frame);
-        return context != null && context.hasModifiedSender();
+        /* instanceof instead of a cast plus null check: no deopt path for the cast on every return. */
+        return frame.getObjectStatic(SlotIndices.THIS_CONTEXT) instanceof final ContextObject context && context.hasModifiedSender();
     }
 
     /**
