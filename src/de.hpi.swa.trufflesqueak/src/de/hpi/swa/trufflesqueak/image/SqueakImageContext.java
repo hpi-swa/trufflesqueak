@@ -75,6 +75,7 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.AbstractInterpreterNode;
 import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsState;
 import de.hpi.swa.trufflesqueak.nodes.plugins.B2D;
 import de.hpi.swa.trufflesqueak.nodes.plugins.BitBlt;
@@ -1065,7 +1066,8 @@ public final class SqueakImageContext {
 
         int probe = firstProbe;
         for (int i = 0; i < METHOD_CACHE_REPROBES; i++) {
-            final MethodCacheEntry entry = methodCache[probe];
+            /* Entries are never null (see initializeMethodCache()), avoid null checks. */
+            final MethodCacheEntry entry = AbstractInterpreterNode.ACCESS.uncheckedCast(methodCache[probe], MethodCacheEntry.class);
             if (entry.getClassObject() == classObject && entry.getSelector() == selector) {
                 return entry;
             }
@@ -1074,7 +1076,7 @@ public final class SqueakImageContext {
             }
             probe = probe + stride & METHOD_CACHE_MASK;
         }
-        return methodCache[firstProbe].reuseFor(classObject, selector);
+        return AbstractInterpreterNode.ACCESS.uncheckedCast(methodCache[firstProbe], MethodCacheEntry.class).reuseFor(classObject, selector);
     }
 
     public Object lookup(final ClassObject receiverClass, final NativeObject selector) {
