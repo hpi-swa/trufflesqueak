@@ -10,6 +10,7 @@ import java.lang.reflect.Field;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.AbstractInterpreterNode;
 import sun.misc.Unsafe;
 
 public final class UnsafeUtils {
@@ -459,5 +460,9 @@ public final class UnsafeUtils {
         final short[] shorts = new short[numBytes / Short.BYTES];
         UNSAFE.copyMemory(longs, Unsafe.ARRAY_LONG_BASE_OFFSET, shorts, Unsafe.ARRAY_SHORT_BASE_OFFSET, numBytes);
         return shorts;
+    }
+
+    public static <T> T uncheckedCast(final Object obj, final Class<T> clazz) {
+        return AbstractInterpreterNode.ACCESS.uncheckedCast(obj, clazz);
     }
 }
