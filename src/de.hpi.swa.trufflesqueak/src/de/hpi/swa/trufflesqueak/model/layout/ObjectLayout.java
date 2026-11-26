@@ -22,11 +22,11 @@ import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class ObjectLayout {
-    @CompilationFinal(dimensions = 1) private final SlotLocation[] locations;
+    @CompilationFinal(dimensions = 1) private SlotLocation[] locations;
     private final int numPrimitiveExtension;
     private final int numObjectExtension;
 
-    private final Assumption isValidAssumption = Truffle.getRuntime().createAssumption("Latest layout assumption");
+    @CompilationFinal private Assumption isValidAssumption = createValidAssumption();
 
     public ObjectLayout(final int instSize) {
         locations = new SlotLocation[instSize];
@@ -71,9 +71,26 @@ public final class ObjectLayout {
 
         assert !newLocations[index].isUninitialized();
         assert slotLocationsAreConsecutive(newLocations) : "Locations are not consecutive";
+        if (oldLocation.isUninitialized() && countPrimitiveExtension(newLocations) == numPrimitiveExtension && countObjectExtension(newLocations) == numObjectExtension) {
+            /*
+             * The slot gets a location that is unset in all objects with this layout (unused
+             * storage is always nil or not marked as used), so they remain valid instances.
+             * Evolve in place instead of making them obsolete, which would require migrating each
+             * of them (e.g., ~12,000 variables in DeltaBlue are created before `determinedBy`,
+             * initialized with nil, is assigned for the first time). All code that depends on the
+             * old locations was invalidated with the old assumption.
+             */
+            locations = newLocations;
+            isValidAssumption = createValidAssumption();
+            return this;
+        }
         final ObjectLayout newLayout = new ObjectLayout(newLocations);
         squeakClass.updateLayout(newLayout);
         return newLayout;
+    }
+
+    private static Assumption createValidAssumption() {
+        return Truffle.getRuntime().createAssumption("Latest layout assumption");
     }
 
     private static void assignGenericLocation(final SlotLocation[] newLocations, final int index) {
