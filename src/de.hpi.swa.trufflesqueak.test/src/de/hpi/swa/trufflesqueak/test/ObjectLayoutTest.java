@@ -68,13 +68,9 @@ public final class ObjectLayoutTest extends AbstractSqueakTestCaseWithDummyImage
 
         writeAndValidate(obj1, 1, dummyClass);
         assertTrue("Write produces valid layout", obj1.getLayout().isValid());
-        assertFalse("Write invalidates older layouts", obj2.getLayout().isValid());
-        assertNotSame("Layouts should be out of sync", obj1.getLayout(), obj2.getLayout());
+        assertSame("First location for a slot evolves the layout in place", obj1.getLayout(), obj2.getLayout());
         assertSame(obj1.object0, dummyClass);
-
-        assertSame(NilObject.SINGLETON, readNode.execute(obj2, 1));
-        assertFalse("Read does not update layout", obj2.getLayout().isValid());
-        assertNotSame("Layouts should still be out of sync after read", obj1.getLayout(), obj2.getLayout());
+        assertSame("Slot is still unset in other objects", NilObject.SINGLETON, readNode.execute(obj2, 1));
 
         writeAndValidate(obj2, 12, 1234L);
         assertEquals(1234L, obj2.primitive1);

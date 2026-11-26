@@ -148,7 +148,9 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         } else {
             assert !layout.isValid() && layout != latestLayout : "Layout must have changed";
         }
-        migrateToLayout(latestLayout);
+        if (layout != latestLayout) { // layout may have evolved in place
+            migrateToLayout(latestLayout);
+        }
     }
 
     @TruffleBoundary
