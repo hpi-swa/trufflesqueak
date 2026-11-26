@@ -506,6 +506,14 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         UnsafeUtils.putObject(literals, longIndex, obj);
     }
 
+    /** Literal write from the image: compiled code and interpreter caches may hold the old one. */
+    public void setLiteralAndInvalidate(final long longIndex, final Object obj) {
+        if (getLiteral(longIndex) != obj) {
+            setLiteral(longIndex, obj);
+            invalidateCallTarget("literal changed");
+        }
+    }
+
     /** See storeLiteralVariable:withValue:. */
     public Object getAndResolveLiteral(final long longIndex) {
         final Object litVar = getLiteral(longIndex);

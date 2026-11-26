@@ -102,7 +102,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"index > 1", "literalIndex < receiver.getNumLiterals()"})
         protected static final Object setLiteral(final CompiledCodeObject receiver, @SuppressWarnings("unused") final long index, final Object value,
                         @Bind("minus2(index)") final long literalIndex) {
-            receiver.setLiteral(literalIndex, value);
+            receiver.setLiteralAndInvalidate(literalIndex, value);
             return value;
         }
     }

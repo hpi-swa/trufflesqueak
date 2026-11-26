@@ -773,4 +773,15 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
             assertEquals((long) sp, FrameAccess.getStackValue(frame, sp));
         }
     }
+
+    @Test
+    public void testLiteralWriteInvalidatesCachedLiteralVariable() {
+        // 0 <40> pushLitVar: 0, 1 <7C> returnTop (the interpreter caches the read-only binding's value)
+        final CompiledCodeObject method = makeMethod(makeHeaderWord(0, 0, 3, false, false), new Object[]{nilClassBinding}, 0x40, 0x7C);
+        assertSame(image.nilClass, runMethod(method, NilObject.SINGLETON));
+        final PointersObject arrayClassBinding = new PointersObject(nilClassBinding.getSqueakClass());
+        arrayClassBinding.instVarAtPut0Slow(1, image.arrayClass);
+        runPrimitive(69, method, 2L, arrayClassBinding); // CompiledMethod>>#objectAt:put:
+        assertSame(image.arrayClass, runMethod(method, NilObject.SINGLETON));
+    }
 }
