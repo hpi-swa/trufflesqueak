@@ -10,6 +10,7 @@ import static de.hpi.swa.trufflesqueak.nodes.interpreter.AbstractDecoder.trailer
 
 import java.util.Arrays;
 
+import org.graalvm.collections.EconomicMap;
 import org.graalvm.collections.UnmodifiableEconomicMap;
 
 import com.oracle.truffle.api.Assumption;
@@ -81,6 +82,8 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         private FrameDescriptor frameDescriptor;
 
         private ShadowBlockMetadata shadowBlockMetadata;
+        /* Shadow blocks of this method by start pc, so that caches can rely on their identity. */
+        private EconomicMap<Integer, CompiledCodeObject> shadowBlocks;
 
         private Source source;
 
@@ -99,7 +102,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
      */
     static final class ShadowBlockMetadata {
         private final CompiledCodeObject outerMethod;
-        private int outerMethodStartPC;
+        private final int outerMethodStartPC;
 
         private final ShadowBlockParams params;
 
@@ -119,11 +122,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
         public int getOuterMethodStartPC() {
             return outerMethodStartPC;
-        }
-
-        public void setOuterMethodStartPC(final int pc) {
-            outerMethodStartPC = pc;
-            assert outerMethodStartPC > outerMethod.getInitialPC();
         }
 
         public int getOuterMethodStartPCZeroBased() {
@@ -198,12 +196,34 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     @TruffleBoundary
-    public CompiledCodeObject createShadowBlock(final int startPC) {
-        return new CompiledCodeObject(this, new ShadowBlockMetadata(this, startPC));
+    public CompiledCodeObject getOrCreateShadowBlock(final int startPC) {
+        final CompiledCodeObject outerMethod = getOuterMethod();
+        final CompiledCodeObject shadowBlock = outerMethod.getShadowBlockOrNull(startPC);
+        return shadowBlock != null ? shadowBlock : outerMethod.addShadowBlock(startPC, new ShadowBlockMetadata(outerMethod, startPC));
     }
 
-    public CompiledCodeObject createShadowBlock(final int startPC, final int numArgs, final int numCopied, final int blockSize) {
-        return new CompiledCodeObject(this, new ShadowBlockMetadata(this, startPC, numArgs, numCopied, blockSize));
+    @TruffleBoundary
+    public CompiledCodeObject getOrCreateShadowBlock(final int startPC, final int numArgs, final int numCopied, final int blockSize) {
+        final CompiledCodeObject outerMethod = getOuterMethod();
+        final CompiledCodeObject shadowBlock = outerMethod.getShadowBlockOrNull(startPC);
+        if (shadowBlock != null) {
+            assert shadowBlock.getShadowBlockNumArgs() == numArgs : "Inconsistent shadow block";
+            return shadowBlock;
+        }
+        return outerMethod.addShadowBlock(startPC, new ShadowBlockMetadata(outerMethod, startPC, numArgs, numCopied, blockSize));
+    }
+
+    private CompiledCodeObject getShadowBlockOrNull(final int startPC) {
+        return hasExecutionData() && executionData.shadowBlocks != null ? executionData.shadowBlocks.get(startPC) : null;
+    }
+
+    private CompiledCodeObject addShadowBlock(final int startPC, final ShadowBlockMetadata metadata) {
+        final CompiledCodeObject shadowBlock = new CompiledCodeObject(this, metadata);
+        if (getExecutionData().shadowBlocks == null) {
+            executionData.shadowBlocks = EconomicMap.create();
+        }
+        executionData.shadowBlocks.put(startPC, shadowBlock);
+        return shadowBlock;
     }
 
     public boolean isShadowBlock() {
@@ -225,11 +245,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     public int getOuterMethodStartPC() {
         return getShadowBlockMetadata().getOuterMethodStartPC();
-    }
-
-    public void setOuterMethodStartPC(final int pc) {
-        assert isShadowBlock();
-        getShadowBlockMetadata().setOuterMethodStartPC(pc);
     }
 
     public int getShadowBlockNumArgs() {
@@ -297,6 +312,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
             }
             executionData.callTarget = null;
             executionData.resumptionCallTarget = null;
+            executionData.shadowBlocks = null;
         }
     }
 

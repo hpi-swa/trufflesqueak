@@ -79,7 +79,7 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
     public void fillin(final SqueakImageChunk chunk) {
         assert chunk.getHash() == getSqueakHashInt();
         if (block == null && chunk.getPointer(BLOCK_CLOSURE.START_PC_OR_METHOD) instanceof final Long startPC) {
-            block = outerContext.getMethodFromChunk().createShadowBlock(startPC.intValue());
+            block = outerContext.getMethodFromChunk().getOrCreateShadowBlock(startPC.intValue());
         }
     }
 
@@ -155,11 +155,8 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
     }
 
     public void setStartPC(final int pc) {
-        if (block == null) {
-            block = outerContext.getCodeObject().createShadowBlock(pc);
-        } else {
-            block.setOuterMethodStartPC(pc);
-        }
+        /* Shadow blocks are shared, so switch to the one for the new start pc instead of changing it. */
+        block = (block == null ? outerContext.getCodeObject() : block).getOrCreateShadowBlock(pc);
     }
 
     public void setBlock(final CompiledCodeObject value) {
