@@ -45,7 +45,8 @@ public final class SqueakGuards {
     }
 
     public static boolean inBounds1(final long index, final int size) {
-        return 0 < index && index <= size;
+        assert size >= 0;
+        return Long.compareUnsigned(index - 1, size) < 0;
     }
 
     public static boolean inBounds1(final long index, final int size, final int scale) {
