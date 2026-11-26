@@ -149,7 +149,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     }
 
     static final class ReadLiteralVariableNode extends AbstractNode {
-        private final SqueakObjectAt0NodeGen at0Node = insert((SqueakObjectAt0NodeGen) SqueakObjectAt0NodeGen.create());
+        @Child private SqueakObjectAt0NodeGen at0Node = (SqueakObjectAt0NodeGen) SqueakObjectAt0NodeGen.create();
 
         Object execute(final Node node, final Object literal) {
             final Object value = at0Node.execute(node, literal, ASSOCIATION.VALUE);
@@ -287,13 +287,13 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
      * Literals
      */
 
-    protected static final Object getLiteralVariableOrCreateLiteralNode(final Object literal) {
+    protected final Object getLiteralVariableOrCreateLiteralNode(final Object literal) {
         if (literal instanceof final AbstractSqueakObjectWithClassAndHash l) {
             final String squeakClassName = l.getSqueakClassName();
             if (ArrayUtils.containsEqual(READONLY_CLASSES, squeakClassName)) {
                 return SqueakObjectAt0NodeGen.executeUncached(literal, ASSOCIATION.VALUE);
             } else {
-                return new ReadLiteralVariableNode();
+                return insert(new ReadLiteralVariableNode());
             }
         } else {
             throw SqueakException.create("Unexpected literal", literal);
