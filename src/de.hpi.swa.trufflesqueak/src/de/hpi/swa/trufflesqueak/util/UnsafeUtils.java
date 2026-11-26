@@ -240,7 +240,8 @@ public final class UnsafeUtils {
     }
 
     private static boolean inBounds(final long index, final long totalLength) {
-        return 0 <= index && index < totalLength;
+        assert totalLength >= 0;
+        return Long.compareUnsigned(index, totalLength) < 0;
     }
 
     private static boolean inBounds(final long start, final long length, final long totalLength) {
