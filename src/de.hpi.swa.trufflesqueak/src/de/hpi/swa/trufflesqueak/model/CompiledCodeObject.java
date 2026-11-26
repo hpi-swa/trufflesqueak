@@ -158,10 +158,10 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     public CompiledCodeObject(final CompiledCodeObject original) {
         super(original);
         setLiteralsAndBytes(original.internalHeader, original.literals.clone(), original.bytes.clone());
-        if (original.hasExecutionData()) {
-            getExecutionData().frameDescriptor = original.executionData.frameDescriptor;
-            executionData.primitiveNodeOrNull = original.executionData.primitiveNodeOrNull;
-        }
+        /*
+         * Do not share the original's execution data: its frame descriptor identifies the original
+         * as the frames' code object, and its primitive node must not be shared across methods.
+         */
     }
 
     private CompiledCodeObject(final CompiledCodeObject outerCode, final ShadowBlockMetadata shadowBlockMetadata) {

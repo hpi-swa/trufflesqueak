@@ -784,4 +784,12 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
         runPrimitive(69, method, 2L, arrayClassBinding); // CompiledMethod>>#objectAt:put:
         assertSame(image.arrayClass, runMethod(method, NilObject.SINGLETON));
     }
+
+    @Test
+    public void testCopiedMethodHasItsOwnFrameDescriptor() {
+        final CompiledCodeObject original = makeMethod(makeHeaderWord(0, 0, 2, false, false), new Object[0], 0x7C);
+        assertSame(original, original.getFrameDescriptor().getInfo());
+        final CompiledCodeObject copy = new CompiledCodeObject(original); // as by shallowCopy
+        assertSame(copy, copy.getFrameDescriptor().getInfo());
+    }
 }
