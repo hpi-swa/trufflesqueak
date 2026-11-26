@@ -43,6 +43,12 @@ public final class SqueakSafepointTest extends AbstractSqueakTestCaseWithDummyIm
         assertInterruptible(makeMethod(CompiledCodeHeaderUtils.makeHeaderWord(false, 0, 0, 2, false, false), new Object[0], 0xE1, 0xFF, 0xED, 0xFC));
     }
 
+    @Test
+    public void testInterruptLoopV3PlusClosures() throws Exception {
+        // 0 <A3 FE> jump: -2 (back to pc 0)
+        assertInterruptible(makeMethod(makeHeaderWord(0, 0, 2, false, false), new Object[0], 0xA3, 0xFE));
+    }
+
     private static void assertInterruptible(final CompiledCodeObject method) throws Exception {
         final AtomicReference<Throwable> result = new AtomicReference<>();
         final CountDownLatch entered = new CountDownLatch(1);

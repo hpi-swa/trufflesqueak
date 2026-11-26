@@ -11,6 +11,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.EarlyInline;
 import com.oracle.truffle.api.HostCompilerDirectives;
 import com.oracle.truffle.api.HostCompilerDirectives.BytecodeInterpreterSwitch;
+import com.oracle.truffle.api.TruffleSafepoint;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.BytecodeOSRNode;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
@@ -693,6 +694,8 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                         final int offset = ((b & 7) - 4 << 8) + getUnsignedInt(bc, pc++);
                         pc += offset;
                         if (offset < 0) {
+                            /* Poll on every back-edge, also without a next tier (pollOSRBackEdge does not poll). */
+                            TruffleSafepoint.poll(this);
                             if (CompilerDirectives.hasNextTier()) {
                                 if (CompilerDirectives.inCompiledCode()) {
                                     counter = ++loopCounter.value;
