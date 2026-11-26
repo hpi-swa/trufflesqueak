@@ -12,6 +12,7 @@ import static de.hpi.swa.trufflesqueak.nodes.SqueakGuards.isOverflowDivision;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.EarlyEscapeAnalysis;
 import com.oracle.truffle.api.CompilerDirectives.EarlyInline;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
@@ -76,6 +77,13 @@ import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
+    /**
+     * Temporaries that are dead at the target of each backward jump (see
+     * {@link DecoderSistaV1#deadTempsAtBackwardJumps}), or {@code null}. Assigned in
+     * {@link #processBytecode}, which runs during construction (no field initializer).
+     */
+    @CompilationFinal(dimensions = 1) private long[] deadTempsAtBackwardJumps;
+
     public InterpreterSistaV1Node(final SqueakImageContext image, final CompiledCodeObject code) {
         super(image, code);
     }
@@ -408,6 +416,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                 }
             }
         }
+        deadTempsAtBackwardJumps = DecoderSistaV1.deadTempsAtBackwardJumps(code, startPC, endPC, code.getNumArgs(), code.getNumTemps());
         return hasPotentialContextIVStore;
     }
 
@@ -2752,6 +2761,9 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final int jumpOffset = calculateLongExtendedOffset(getByte(state.bytecode, pc + 1), vstate.getExtB());
         final int nextPC = pc + 2 + jumpOffset;
         if (jumpOffset < 0) {
+            if (CompilerDirectives.inCompiledCode()) {
+                resetDeadTemps(frame, pc, vstate.sp);
+            }
             if (CompilerDirectives.hasNextTier()) {
                 final int counter = CompilerDirectives.inCompiledCode() ? ++state.loopCounter.value : ++state.interpreterLoopCounter;
                 if (CompilerDirectives.injectBranchProbability(LoopCounter.CHECK_LOOP_PROBABILITY, counter >= LoopCounter.CHECK_LOOP_STRIDE)) {
@@ -2780,6 +2792,26 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         }
         vstate.resetExtAB();
         return nextPC;
+    }
+
+    /**
+     * Resets temporaries that are dead at the loop header to nil before jumping back (compiled code
+     * only). Otherwise, all temporaries stay alive in frame states, and a temporary assigned in the
+     * loop body (e.g., a float intermediate) is nil on loop entry and a box on the back-edge. Partial
+     * escape analysis cannot merge the constant nil with a virtual box, so it would allocate the box
+     * on every iteration. Dead temporaries are never read again before being written, so this is
+     * only observable through reflection (e.g., in a debugger).
+     */
+    @ExplodeLoop
+    private void resetDeadTemps(final VirtualFrame frame, final int pc, final int sp) {
+        if (deadTempsAtBackwardJumps != null) {
+            final long deadTemps = deadTempsAtBackwardJumps[pc];
+            for (int i = 0; i < Long.SIZE; i++) {
+                if ((deadTemps & 1L << i) != 0 && i < sp) {
+                    FrameAccess.setStackValue(frame, i, NilObject.SINGLETON);
+                }
+            }
+        }
     }
 
     @EarlyInline
