@@ -388,7 +388,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
                 final long value = longValue(rhs);
                 return value == lhs ? 0L : value < lhs ? 1L : -1L;
             } else {
-                return isNegative(image, rhs) ? 1L : -1L;
+                return image.isLargeNegativeInteger(rhs) ? 1L : -1L;
             }
         }
 
@@ -401,7 +401,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
                 final long value = longValue(lhs);
                 return value == rhs ? 0L : value < rhs ? -1L : 1L;
             } else {
-                return isNegative(image, lhs) ? -1L : 1L;
+                return image.isLargeNegativeInteger(lhs) ? -1L : 1L;
             }
         }
     }
@@ -860,7 +860,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     public static long floorDivide(final SqueakImageContext image, final long lhs, final NativeObject rhs) {
         assert !fitsIntoLong(rhs) : "non-reduced large integer!";
-        if (lhs != 0 && lhs < 0 ^ isNegative(image, rhs)) {
+        if (lhs != 0 && lhs < 0 ^ image.isLargeNegativeInteger(rhs)) {
             return -1L;
         } else {
             return 0L;
@@ -1023,20 +1023,12 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         return bytesLength < Long.BYTES || (bytesLength == Long.BYTES && (bytes[7] & 128) == 0);
     }
 
-    public static boolean isNegative(final SqueakImageContext image, final NativeObject value) {
-        return value.hasSqueakClass(image.largeNegativeIntegerClass);
-    }
-
-    public static boolean isPositive(final SqueakImageContext image, final NativeObject value) {
-        return value.hasSqueakClass(image.largePositiveIntegerClass);
-    }
-
     public static boolean isZero(final NativeObject value) {
         return value.getByteLength() == 0;
     }
 
     public static boolean isZeroOrPositive(final SqueakImageContext image, final NativeObject value) {
-        return isZero(value) || isPositive(image, value);
+        return isZero(value) || image.isLargePositiveInteger(value);
     }
 
     /* Utilities */
@@ -1195,7 +1187,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     public static long toSignedLong(final SqueakImageContext image, final NativeObject value) {
-        assert isPositive(image, value) && highBitOfLargeInt(value) <= Long.SIZE;
+        assert image.isLargePositiveInteger(value) && highBitOfLargeInt(value) <= Long.SIZE;
         return longValue(value);
     }
 
