@@ -6,6 +6,10 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
+import java.util.ArrayList;
+
+import org.graalvm.collections.EconomicMap;
+import org.graalvm.collections.Equivalence;
 import org.graalvm.collections.UnmodifiableEconomicMap;
 
 import com.oracle.truffle.api.Assumption;
@@ -13,6 +17,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
@@ -51,6 +56,10 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     @CompilationFinal private ObjectLayout layout;
     /* Shared by all send sites that cache this class, created lazily. */
     private LookupClassGuard lookupClassGuard;
+    /* Combined assumptions for method lookups that start in this class, keyed by method (or target class). */
+    private EconomicMap<Object, Assumption> lookupAssumptions;
+    /* Combined lookup assumptions whose lookup chain includes this class. */
+    private ArrayList<Assumption> dependentLookupAssumptions;
 
     public ClassObject(final SqueakImageContext image) {
         super();
@@ -612,6 +621,56 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         if (classHierarchyAndMethodDictStable != null) {
             classHierarchyAndMethodDictStable.invalidate(reason);
         }
+        if (dependentLookupAssumptions != null) {
+            for (final Assumption assumption : dependentLookupAssumptions) {
+                assumption.invalidate(reason);
+            }
+            dependentLookupAssumptions = null;
+        }
+    }
+
+    /**
+     * Returns a single assumption for a method lookup from this class: it is valid as long as the
+     * class hierarchy and method dictionaries of all classes from this class up to (and including)
+     * {@code targetClass} are stable and, if given, the call target of {@code method} is stable.
+     * {@code targetClass == null} covers all superclasses (lookup failures). Send sites check this
+     * one assumption instead of one per class plus one for the method, which matters in the
+     * interpreter where each check is a volatile read.
+     */
+    @TruffleBoundary
+    public Assumption getLookupAssumption(final ClassObject targetClass, final CompiledCodeObject method) {
+        final Object key = method != null ? method : targetClass != null ? targetClass : NilObject.SINGLETON;
+        if (lookupAssumptions == null) {
+            lookupAssumptions = EconomicMap.create(Equivalence.IDENTITY);
+        }
+        final Assumption existing = lookupAssumptions.get(key);
+        if (existing != null && existing.isValid()) {
+            return existing;
+        }
+        final Assumption assumption = Truffle.getRuntime().createAssumption("Method lookup stability");
+        ClassObject currentClass = this;
+        while (currentClass != null) {
+            currentClass.addDependentLookupAssumption(assumption);
+            if (currentClass == targetClass) {
+                break;
+            }
+            currentClass = currentClass.getSuperclassOrNull();
+        }
+        if (method != null) {
+            method.addDependentLookupAssumption(assumption);
+        }
+        lookupAssumptions.put(key, assumption);
+        return assumption;
+    }
+
+    private void addDependentLookupAssumption(final Assumption assumption) {
+        if (dependentLookupAssumptions == null) {
+            dependentLookupAssumptions = new ArrayList<>();
+        } else if (dependentLookupAssumptions.size() >= 64 && Integer.bitCount(dependentLookupAssumptions.size()) == 1) {
+            /* Drop assumptions invalidated through other classes (amortized). */
+            dependentLookupAssumptions.removeIf(a -> !a.isValid());
+        }
+        dependentLookupAssumptions.add(assumption);
     }
 
     private CyclicAssumption classFormatStable() {

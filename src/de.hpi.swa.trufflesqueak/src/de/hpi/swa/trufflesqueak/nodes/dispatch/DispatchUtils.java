@@ -6,7 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
-import java.util.ArrayList;
 import java.util.logging.Level;
 
 import com.oracle.truffle.api.Assumption;
@@ -24,45 +23,12 @@ import de.hpi.swa.trufflesqueak.util.LogUtils;
 
 public final class DispatchUtils {
     static Assumption[] createAssumptions(final ClassObject startClass, final Object lookupResult) {
-        final ClassObject targetClass;
-        final Assumption callTargetStable;
-        if (lookupResult instanceof CompiledCodeObject method) {
+        if (lookupResult instanceof final CompiledCodeObject method) {
             assert method.isCompiledMethod();
-            targetClass = method.getMethodClassSlow();
-            callTargetStable = method.getCallTargetStable();
+            return new Assumption[]{startClass.getLookupAssumption(method.getMethodClassSlow(), method)};
         } else {
-            /* DNU or OAM, return assumptions for all superclasses. */
-            targetClass = null;
-            callTargetStable = null;
-        }
-        return createAssumptions(startClass, targetClass, callTargetStable);
-    }
-
-    static Assumption[] createAssumptions(final ClassObject startClass, final ClassObject targetClass, final Assumption callTargetStable) {
-        if (startClass == targetClass) {
-            if (callTargetStable == null) {
-                return new Assumption[]{startClass.getClassHierarchyAndMethodDictStable()};
-            } else {
-                return new Assumption[]{startClass.getClassHierarchyAndMethodDictStable(), callTargetStable};
-            }
-        } else {
-            final ArrayList<Assumption> list = new ArrayList<>();
-            if (callTargetStable != null) {
-                list.add(callTargetStable);
-            }
-            ClassObject currentClass = startClass;
-            while (currentClass != null) {
-                list.add(currentClass.getClassHierarchyAndMethodDictStable());
-                if (currentClass == targetClass) {
-                    break;
-                } else {
-                    currentClass = currentClass.getSuperclassOrNull();
-                }
-            }
-            // TODO: the receiverClass can be an outdated version of methodClass. In this case, a
-            // list of assumptions for the entire class hierarchy is returned. Maybe this can/should
-            // be avoided.
-            return list.toArray(new Assumption[0]);
+            /* DNU or OAM, depend on all superclasses. */
+            return new Assumption[]{startClass.getLookupAssumption(null, null)};
         }
     }
 

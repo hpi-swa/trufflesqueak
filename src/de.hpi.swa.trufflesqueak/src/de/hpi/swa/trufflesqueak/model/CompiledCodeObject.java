@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.model;
 
 import static de.hpi.swa.trufflesqueak.nodes.interpreter.AbstractDecoder.trailerPosition;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.graalvm.collections.UnmodifiableEconomicMap;
@@ -86,6 +87,8 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
         private RootCallTarget callTarget;
         private CyclicAssumption callTargetStable;
+        /* Combined lookup assumptions that must be invalidated with callTargetStable. */
+        private ArrayList<Assumption> dependentLookupAssumptions;
         private Assumption doesNotNeedThisContext;
         private RootCallTarget resumptionCallTarget;
     }
@@ -292,9 +295,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     private void invalidateCallTarget(final String reason) {
         if (hasExecutionData()) {
-            if (executionData.callTargetStable != null) {
-                executionData.callTargetStable.invalidate(reason);
-            }
+            invalidateCallTargetStable(reason);
             executionData.callTarget = null;
             executionData.resumptionCallTarget = null;
         }
@@ -331,9 +332,29 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     private void invalidateCallTargetStable(final String reason) {
-        if (hasExecutionData() && executionData.callTargetStable != null) {
-            executionData.callTargetStable.invalidate(reason);
+        if (hasExecutionData()) {
+            if (executionData.callTargetStable != null) {
+                executionData.callTargetStable.invalidate(reason);
+            }
+            if (executionData.dependentLookupAssumptions != null) {
+                for (final Assumption assumption : executionData.dependentLookupAssumptions) {
+                    assumption.invalidate(reason);
+                }
+                executionData.dependentLookupAssumptions = null;
+            }
         }
+    }
+
+    /** See {@link ClassObject#getLookupAssumption(ClassObject, CompiledCodeObject)}. */
+    public void addDependentLookupAssumption(final Assumption assumption) {
+        final ExecutionData data = getExecutionData();
+        if (data.dependentLookupAssumptions == null) {
+            data.dependentLookupAssumptions = new ArrayList<>(2);
+        } else if (data.dependentLookupAssumptions.size() >= 16 && Integer.bitCount(data.dependentLookupAssumptions.size()) == 1) {
+            /* Drop assumptions invalidated through classes (amortized). */
+            data.dependentLookupAssumptions.removeIf(a -> !a.isValid());
+        }
+        data.dependentLookupAssumptions.add(assumption);
     }
 
     public Assumption getCallTargetStable() {
