@@ -792,4 +792,13 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
         final CompiledCodeObject copy = new CompiledCodeObject(original); // as by shallowCopy
         assertSame(copy, copy.getFrameDescriptor().getInfo());
     }
+
+    @Test
+    public void testBytecodeWriteResetsFrameDescriptor() {
+        // 0 <70> self, 1 <87> pop, 2 <70> self, 3 <7C> returnTop
+        final CompiledCodeObject method = makeMethod(makeHeaderWord(0, 0, 2, false, false), new Object[0], 0x70, 0x87, 0x70, 0x7C);
+        final int oldNumSlots = method.getFrameDescriptor().getNumberOfSlots();
+        method.atput0(method.getBytecodeOffset() + 1, 0x70); // pop -> self needs more stack slots
+        assertTrue(method.getFrameDescriptor().getNumberOfSlots() > oldNumSlots);
+    }
 }

@@ -241,7 +241,15 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         this.literals = literals;
         this.bytes = bytes;
         invalidatePrimitiveNode();
+        invalidateFrameDescriptor();
         invalidateCallTargetStable("new literals and bytes");
+    }
+
+    /* The number of stack slots depends on header and bytecodes. */
+    private void invalidateFrameDescriptor() {
+        if (hasExecutionData()) {
+            executionData.frameDescriptor = null;
+        }
     }
 
     public Source getSource() {
@@ -480,6 +488,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
             if (canHavePrimitive && oldPrimitiveIndex != primitiveIndex()) {
                 invalidatePrimitiveNode();
             }
+            invalidateFrameDescriptor();
             invalidateCallTarget();
         }
     }
@@ -495,6 +504,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         if (canHavePrimitive && oldPrimitiveIndex != primitiveIndex()) {
             invalidatePrimitiveNode();
         }
+        invalidateFrameDescriptor();
         invalidateCallTarget();
     }
 
@@ -788,6 +798,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         if (oldHasPrimitive != hasPrimitive()) {
             invalidatePrimitiveNode();
         }
+        invalidateFrameDescriptor();
         invalidateCallTarget();
     }
 
