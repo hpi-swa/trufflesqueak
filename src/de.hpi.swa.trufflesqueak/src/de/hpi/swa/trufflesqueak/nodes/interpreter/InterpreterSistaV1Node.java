@@ -29,7 +29,6 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.CountingConditionProfile;
-
 import de.hpi.swa.trufflesqueak.exceptions.Returns.AbstractStandardSendReturn;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -57,7 +56,7 @@ import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.D
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchSuperNaryNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchValueNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchValueWithArgNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsNode.CheckForInterruptsInLoopNode;
+import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimBitAndNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimBitOrNode;
@@ -273,10 +272,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     break;
                 }
                 case BC.SHORT_UJUMP_0, BC.SHORT_UJUMP_1, BC.SHORT_UJUMP_2, BC.SHORT_UJUMP_3, BC.SHORT_UJUMP_4, BC.SHORT_UJUMP_5, BC.SHORT_UJUMP_6, BC.SHORT_UJUMP_7: {
-                    final int jumpOffset = calculateShortOffset(b);
-                    if (jumpOffset < 0) {
-                        setData(currentPC, insert(createCheckForInterruptsInLoopNode(image, pc + jumpOffset, currentPC)));
-                    }
+                    maybeEnabledCheckForInterruptsInLoop(image, currentPC, pc, calculateShortOffset(b));
                     break;
                 }
                 case BC.SHORT_CJUMP_TRUE_0, BC.SHORT_CJUMP_TRUE_1, BC.SHORT_CJUMP_TRUE_2, BC.SHORT_CJUMP_TRUE_3, BC.SHORT_CJUMP_TRUE_4, BC.SHORT_CJUMP_TRUE_5, BC.SHORT_CJUMP_TRUE_6, BC.SHORT_CJUMP_TRUE_7, //
@@ -351,9 +347,7 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                 }
                 case BC.EXT_UNCONDITIONAL_JUMP: {
                     final int jumpOffset = calculateLongExtendedOffset(getByte(bc, pc++), vstate.getExtB());
-                    if (jumpOffset < 0) {
-                        setData(currentPC, insert(createCheckForInterruptsInLoopNode(image, pc + jumpOffset, currentPC)));
-                    }
+                    maybeEnabledCheckForInterruptsInLoop(image, currentPC, pc, jumpOffset);
                     vstate.resetExtAB();
                     break;
                 }
@@ -2780,8 +2774,8 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
                     state.interpreterLoopCounter = 0;
                 }
             }
-            if (getData(pc) instanceof CheckForInterruptsInLoopNode) {
-                CheckForInterruptsInLoopNode.execute(frame, getContext(), nextPC, vstate.sp);
+            if (needsCheckForInterruptsInLoop(pc)) {
+                CheckForInterruptsNode.checkInLoop(frame, getContext(), nextPC, vstate.sp);
             }
         }
         vstate.resetExtAB();

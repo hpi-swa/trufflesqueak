@@ -17,7 +17,6 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.CountingConditionProfile;
-
 import de.hpi.swa.trufflesqueak.exceptions.Returns.AbstractStandardSendReturn;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
@@ -41,7 +40,7 @@ import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.D
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchSuperNaryNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchValueNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchValueWithArgNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsNode.CheckForInterruptsInLoopNode;
+import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimBitAndNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimBitOrNode;
@@ -240,10 +239,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                     break;
                 }
                 case BC.SHORT_UJUMP_0, BC.SHORT_UJUMP_1, BC.SHORT_UJUMP_2, BC.SHORT_UJUMP_3, BC.SHORT_UJUMP_4, BC.SHORT_UJUMP_5, BC.SHORT_UJUMP_6, BC.SHORT_UJUMP_7: {
-                    final int offset = calculateShortOffset(b);
-                    if (offset < 0) {
-                        setData(currentPC, insert(createCheckForInterruptsInLoopNode(image, pc + offset, currentPC)));
-                    }
+                    maybeEnabledCheckForInterruptsInLoop(image, currentPC, pc, calculateShortOffset(b));
                     break;
                 }
                 case BC.SHORT_CJUMP_FALSE_0, BC.SHORT_CJUMP_FALSE_1, BC.SHORT_CJUMP_FALSE_2, BC.SHORT_CJUMP_FALSE_3, BC.SHORT_CJUMP_FALSE_4, BC.SHORT_CJUMP_FALSE_5, BC.SHORT_CJUMP_FALSE_6, BC.SHORT_CJUMP_FALSE_7: {
@@ -252,10 +248,8 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                 }
 
                 case BC.LONG_UJUMP_0, BC.LONG_UJUMP_1, BC.LONG_UJUMP_2, BC.LONG_UJUMP_3, BC.LONG_UJUMP_4, BC.LONG_UJUMP_5, BC.LONG_UJUMP_6, BC.LONG_UJUMP_7: {
-                    final int offset = ((b & 7) - 4 << 8) + getUnsignedInt(bc, pc++);
-                    if (offset < 0) {
-                        setData(currentPC, insert(createCheckForInterruptsInLoopNode(image, pc + offset, currentPC)));
-                    }
+                    final int jumpOffset = ((b & 7) - 4 << 8) + getUnsignedInt(bc, pc++);
+                    maybeEnabledCheckForInterruptsInLoop(image, currentPC, pc, jumpOffset);
                     break;
                 }
                 case BC.LONG_CJUMP_TRUE_0, BC.LONG_CJUMP_TRUE_1, BC.LONG_CJUMP_TRUE_2, BC.LONG_CJUMP_TRUE_3, //
@@ -725,8 +719,8 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                     counter = 0;
                                 }
                             }
-                            if (getData(currentPC) instanceof CheckForInterruptsInLoopNode) {
-                                CheckForInterruptsInLoopNode.execute(frame, getContext(), pc, sp);
+                            if (needsCheckForInterruptsInLoop(currentPC)) {
+                                CheckForInterruptsNode.checkInLoop(frame, getContext(), pc, sp);
                             }
                         }
                         break;

@@ -53,7 +53,6 @@ import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelector2NodeFactory.Disp
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelectorNaryNodeFactory.DispatchNaryNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchValueNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchValueWithArgNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.interrupts.CheckForInterruptsNode.CheckForInterruptsInLoopNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
@@ -584,20 +583,28 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
 
     protected abstract boolean isFastPathedMessageSend(int bytecode);
 
-    protected final CheckForInterruptsInLoopNode createCheckForInterruptsInLoopNode(final SqueakImageContext image, final int targetPC, final int jumpOpcodePC) {
+    protected final void maybeEnabledCheckForInterruptsInLoop(final SqueakImageContext image, final int currentPC, final int nextPC, final int jumpOffset) {
+        if (jumpOffset >= 0 /* not a loop */ || image.interruptHandlerDisabled()) {
+            return;
+        }
         // No need to check for interrupts if there is a message dispatch within the loop.
         final byte[] bc = code.getBytes();
-        for (int i = targetPC; i < jumpOpcodePC; i++) {
+        for (int i = nextPC + jumpOffset; i < currentPC; i++) {
             if (data[i] instanceof AbstractDispatchNode) {
                 final int bytecode = getUnsignedInt(bc, i);
                 if (isFastPathedMessageSend(bytecode)) {
                     // The interpreter could handle this directly and might not check for interrupts.
                     continue;
                 }
-                return null;
+                return;
             }
         }
-        return CheckForInterruptsInLoopNode.createForLoop(image);
+        setActive(currentPC, BRANCH1);
+    }
+
+    @EarlyInline
+    protected final boolean needsCheckForInterruptsInLoop(final int currentPC) {
+        return isActive(currentPC, BRANCH1);
     }
 
     /**
@@ -635,15 +642,27 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
      * Profiling
      */
 
+    @EarlyInline
     protected final byte getProfile(final int pc) {
         return UnsafeUtils.getByte(ACCESS.uncheckedCast(profiles, byte[].class), pc);
     }
 
-    protected final void enter(final int currentPC, final byte profile, final byte stateBit) {
+    @EarlyInline
+    protected final void enter(final int pc, final byte profile, final byte stateBit) {
         if ((profile & stateBit) == 0) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            UnsafeUtils.putByte(profiles, currentPC, (byte) (profile | stateBit));
+            UnsafeUtils.putByte(profiles, pc, (byte) (profile | stateBit));
         }
+    }
+
+    @EarlyInline
+    protected final void setActive(final int pc, final byte stateBit) {
+        UnsafeUtils.putByte(profiles, pc, (byte) (getProfile(pc) | stateBit));
+    }
+
+    @EarlyInline
+    protected final boolean isActive(final int pc, final byte stateBit) {
+        return (getProfile(pc) & stateBit) != 0;
     }
 
     /*

@@ -6,13 +6,11 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.interrupts;
 
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DenyReplace;
 import com.oracle.truffle.api.nodes.Node;
-
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -119,58 +117,25 @@ public abstract class CheckForInterruptsNode extends AbstractNode {
         return nextActiveProcess;
     }
 
-    @DenyReplace
-    public static final class CheckForInterruptsInLoopNode extends CheckForInterruptsNode {
-        private static final CheckForInterruptsInLoopNode SINGLETON = new CheckForInterruptsInLoopNode();
-
-        private CheckForInterruptsInLoopNode() {
+    /*
+     * The interpreter passes its image context explicitly to avoid a thread-local context
+     * lookup in compiled code.
+     */
+    public static final void checkInLoop(final VirtualFrame frame, final SqueakImageContext image, final int pc, final int sp) {
+        if (image.interrupt.shouldSkip()) {
+            return;
         }
+        /* Exclude interrupts case from compilation. */
+        CompilerDirectives.transferToInterpreter();
+        FrameAccess.externalizePCAndSP(frame, pc, sp);
+        final Object[] specialObjects = image.specialObjectsArray.getObjectStorage();
 
-        public static CheckForInterruptsInLoopNode createForLoop(final SqueakImageContext image) {
-            CompilerAsserts.neverPartOfCompilation();
-            if (image.interruptHandlerDisabled()) {
-                return null;
-            }
-            return SINGLETON;
-        }
+        final PointersObject originalActiveProcess = image.getActiveProcessSlow();
+        final PointersObject nextActiveProcess = signalSemaphoresUncached(image, image.interrupt, specialObjects, originalActiveProcess, image.flags.preemptionYields());
 
-        /*
-         * The image is passed in because this node is a non-adoptable singleton: it has no root
-         * node, so a context lookup via this node cannot be constant-folded and would read the
-         * context from a thread-local in compiled code. The node only marks loops that need a
-         * check, so this method is static.
-         */
-        public static void execute(final VirtualFrame frame, final SqueakImageContext image, final int pc, final int sp) {
-            if (image.interrupt.shouldSkip()) {
-                return;
-            }
-            /* Exclude interrupts case from compilation. */
-            CompilerDirectives.transferToInterpreter();
-            FrameAccess.externalizePCAndSP(frame, pc, sp);
-            final Object[] specialObjects = image.specialObjectsArray.getObjectStorage();
-
-            final PointersObject originalActiveProcess = image.getActiveProcessSlow();
-            final PointersObject nextActiveProcess = signalSemaphoresUncached(image, image.interrupt, specialObjects, originalActiveProcess, image.flags.preemptionYields());
-
-            if (nextActiveProcess != originalActiveProcess) {
-                TransferToNode.executeUncached(frame, nextActiveProcess);
-                throw ProcessSwitch.SINGLETON;
-            }
-        }
-
-        @Override
-        public boolean isAdoptable() {
-            return false;
-        }
-
-        @Override
-        public Node copy() {
-            return SINGLETON;
-        }
-
-        @Override
-        public Node deepCopy() {
-            return copy();
+        if (nextActiveProcess != originalActiveProcess) {
+            TransferToNode.executeUncached(frame, nextActiveProcess);
+            throw ProcessSwitch.SINGLETON;
         }
     }
 
@@ -193,7 +158,7 @@ public abstract class CheckForInterruptsNode extends AbstractNode {
             }
         }
 
-        /* See CheckForInterruptsInLoopNode#execute for why the image is passed in. */
+        /* Callers pass the image context explicitly to avoid a thread-local lookup in compiled code. */
         public abstract void execute(VirtualFrame frame, SqueakImageContext image);
 
         @DenyReplace
