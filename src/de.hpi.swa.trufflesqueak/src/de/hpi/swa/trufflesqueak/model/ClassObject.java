@@ -97,12 +97,19 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
      */
     public ObjectLayout getLayout() {
         if (layout == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
+            /*
+             * Only invalidate code that folded this class. Uncached allocations see many classes,
+             * and the first instance of each must not invalidate them.
+             */
+            if (CompilerDirectives.isPartialEvaluationConstant(this)) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+            }
             initializeLayout();
         }
         return layout;
     }
 
+    @TruffleBoundary
     private void initializeLayout() {
         assert format >= 0 : this + " needs a format before it can have a layout";
         layout = new ObjectLayout(getBasicInstanceSize());
