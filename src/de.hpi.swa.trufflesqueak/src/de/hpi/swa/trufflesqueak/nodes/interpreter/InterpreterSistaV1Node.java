@@ -21,6 +21,7 @@ import com.oracle.truffle.api.HostCompilerDirectives.BytecodeInterpreterHandler;
 import com.oracle.truffle.api.HostCompilerDirectives.BytecodeInterpreterHandlerConfig;
 import com.oracle.truffle.api.HostCompilerDirectives.BytecodeInterpreterHandlerConfig.Argument;
 import com.oracle.truffle.api.HostCompilerDirectives.BytecodeInterpreterSwitch;
+import com.oracle.truffle.api.TruffleSafepoint;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.impl.FrameWithoutBoxing;
 import com.oracle.truffle.api.nodes.BytecodeOSRNode;
@@ -2752,6 +2753,8 @@ public final class InterpreterSistaV1Node extends AbstractInterpreterNode {
         final int jumpOffset = calculateLongExtendedOffset(getByte(state.bytecode, pc + 1), vstate.getExtB());
         final int nextPC = pc + 2 + jumpOffset;
         if (jumpOffset < 0) {
+            /* Poll on every back-edge, also without a next tier (pollOSRBackEdge does not poll). */
+            TruffleSafepoint.poll(this);
             if (CompilerDirectives.hasNextTier()) {
                 final int counter = CompilerDirectives.inCompiledCode() ? ++state.loopCounter.value : ++state.interpreterLoopCounter;
                 if (CompilerDirectives.injectBranchProbability(LoopCounter.CHECK_LOOP_PROBABILITY, counter >= LoopCounter.CHECK_LOOP_STRIDE)) {
