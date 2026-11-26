@@ -28,6 +28,8 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 
 @SuppressWarnings("static-method")
 public final class SqueakPrimitiveTest extends AbstractSqueakTestCaseWithDummyImage {
@@ -157,5 +159,31 @@ public final class SqueakPrimitiveTest extends AbstractSqueakTestCaseWithDummyIm
                 }
             }
         }
+    }
+
+    @Test
+    public void testMixedArithmeticFlagChangesAtRuntime() {
+        final long oldFlags = image.flags.getHeaderFlagsDecoded();
+        final Primitive1 add = (Primitive1) PrimitiveNodeFactory.getOrCreateIndexed(1, 2);
+        try {
+            setMixedArithmetic(true);
+            assertEquals(7.0, add.execute(null, 3L, 4.0));
+            setMixedArithmetic(false);
+            // The specialization activated above must no longer apply.
+            assertThrows(PrimitiveFailed.class, () -> add.execute(null, 3L, 4.0));
+        } finally {
+            setHeaderFlagsTwice(oldFlags);
+        }
+    }
+
+    private static void setMixedArithmetic(final boolean enabled) {
+        setHeaderFlagsTwice(enabled ? 0x100 >> 2 : 0); // NUMERIC_PRIMS_MIX_ARITHMETIC, decoded
+        assertEquals(enabled, image.flags.numericPrimsMixArithmetic());
+    }
+
+    /* Setting the same flags twice selects the new flag behavior (see SqueakImageFlags). */
+    private static void setHeaderFlagsTwice(final long decodedFlags) {
+        image.flags.setHeaderFlagsEncoded(decodedFlags);
+        image.flags.setHeaderFlagsEncoded(decodedFlags);
     }
 }
