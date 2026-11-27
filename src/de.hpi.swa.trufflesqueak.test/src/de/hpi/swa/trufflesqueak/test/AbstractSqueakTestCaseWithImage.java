@@ -104,7 +104,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         println("Image ready for testing...");
     }
 
-    private static String getPathToTestImage() {
+    protected static String getPathToTestImage() {
         Path currentDirectory = Paths.get(System.getProperty("user.dir")).toAbsolutePath();
         while (currentDirectory != null) {
             final File file = currentDirectory.resolve("images").resolve(TEST_IMAGE_FILE_NAME).toFile();
