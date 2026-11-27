@@ -39,11 +39,11 @@ public final class BecomeOneWayTest extends AbstractSqueakTestCaseWithImage {
         final AbstractSqueakObjectWithClassAndHash c = newDummyObject();
 
         // B -> C appears before A -> B; both must resolve directly to C in one hop.
-        assertTrue(image.objectGraphUtils.pointersBecomeOneWay(new Object[]{b, a}, new Object[]{c, b}, false));
+        image.objectGraphUtils.pointersBecomeOneWay(new Object[]{b, a}, new Object[]{c, b}, false);
         assertTrue(image.objectGraphUtils.isUnfollowNeeded());
         assertSame(c, a.resolveForwardingPointer());
         assertSame(c, b.resolveForwardingPointer());
-        assertTrue(c.assertNotForwarded());
+        assertTrue(c.isNotForwarded());
 
         image.objectGraphUtils.unfollow();
         assertFalse(image.objectGraphUtils.isUnfollowNeeded());
@@ -66,11 +66,11 @@ public final class BecomeOneWayTest extends AbstractSqueakTestCaseWithImage {
         final AbstractSqueakObjectWithClassAndHash b = newDummyObject();
         final AbstractSqueakObjectWithClassAndHash c = newDummyObject();
 
-        assertTrue(image.objectGraphUtils.pointersBecomeOneWay(new Object[]{a}, new Object[]{b}, false));
+        image.objectGraphUtils.pointersBecomeOneWay(new Object[]{a}, new Object[]{b}, false);
         assertSame(b, a.resolveForwardingPointer());
 
         // Extending B -> C must collapse A's forwarding pointer directly to C.
-        assertTrue(image.objectGraphUtils.pointersBecomeOneWay(new Object[]{b}, new Object[]{c}, false));
+        image.objectGraphUtils.pointersBecomeOneWay(new Object[]{b}, new Object[]{c}, false);
         assertSame(c, a.resolveForwardingPointer());
         assertSame(c, b.resolveForwardingPointer());
 
@@ -104,47 +104,104 @@ public final class BecomeOneWayTest extends AbstractSqueakTestCaseWithImage {
     }
 
     @Test
-    public void testRejectsCyclesAndDuplicateFromEntries() {
+    public void testForwardedObjectsInArrays() {
         final AbstractSqueakObjectWithClassAndHash a = newDummyObject();
         final AbstractSqueakObjectWithClassAndHash b = newDummyObject();
         final AbstractSqueakObjectWithClassAndHash c = newDummyObject();
-        final long originalHashB = b.getOrCreateSqueakHash();
 
-        // Direct two-element cycle (A -> B, B -> A)
-        assertFalse(image.objectGraphUtils.pointersBecomeOneWay(new Object[]{a, b}, new Object[]{b, a}, true));
-        // Non-starting cycle (A -> B -> C -> B)
-        assertFalse(image.objectGraphUtils.pointersBecomeOneWay(new Object[]{a, b, c}, new Object[]{b, c, b}, true));
-        // Duplicate `from` entries
-        assertFalse(image.objectGraphUtils.pointersBecomeOneWay(new Object[]{a, a}, new Object[]{b, c}, true));
-        assertFalse(image.objectGraphUtils.pointersBecomeOneWay(new Object[]{a, a}, new Object[]{a, b}, true));
+        image.objectGraphUtils.pointersBecomeOneWay(new Object[]{a}, new Object[]{b}, false);
 
-        // Failed calls must not mutate becomeMap, forwarding pointers, or target hashes.
-        assertFalse(image.objectGraphUtils.isUnfollowNeeded());
-        assertTrue(a.assertNotForwarded());
-        assertTrue(b.assertNotForwarded());
-        assertTrue(c.assertNotForwarded());
-        assertEquals(originalHashB, b.getOrCreateSqueakHash());
+        // Heap slots may still refer to the forwarded A. As `to`, it stands for B (B -> B).
+        image.objectGraphUtils.pointersBecomeOneWay(new Object[]{b}, new Object[]{a}, false);
+        assertSame(b, a.resolveForwardingPointer());
+        assertTrue(b.isNotForwarded());
+
+        // As `from`, it stands for B as well (B -> C).
+        image.objectGraphUtils.pointersBecomeOneWay(new Object[]{a}, new Object[]{c}, false);
+        assertSame(c, a.resolveForwardingPointer());
+        assertSame(c, b.resolveForwardingPointer());
+        assertTrue(c.isNotForwarded());
+
+        image.objectGraphUtils.unfollow();
+
+        assertEquals(BooleanObject.TRUE, evaluate("""
+                        | a b arr |
+                        a := Object new.
+                        b := Object new.
+                        arr := { a }.
+                        { a } elementsForwardIdentityTo: { b }.
+                        { b } elementsForwardIdentityTo: arr.
+                        (arr first == b) and: [ a == b ]
+                        """));
+        assertEquals(BooleanObject.TRUE, evaluate("""
+                        | a b c arr ref |
+                        a := Object new.
+                        b := Object new.
+                        c := Object new.
+                        arr := { a }.
+                        ref := { a }.
+                        { a } elementsForwardIdentityTo: { b }.
+                        arr elementsForwardIdentityTo: { c }.
+                        (ref first == c) and: [ b == c ]
+                        """));
     }
 
     @Test
-    public void testPrimitiveRejectsCyclesAndDuplicates() {
+    public void testCyclesAreProcessedInOrder() {
+        final AbstractSqueakObjectWithClassAndHash a = newDummyObject();
+        final AbstractSqueakObjectWithClassAndHash b = newDummyObject();
+        final AbstractSqueakObjectWithClassAndHash c = newDummyObject();
+        final AbstractSqueakObjectWithClassAndHash d = newDummyObject();
+        final AbstractSqueakObjectWithClassAndHash e = newDummyObject();
+
+        // A -> B, then B -> A stands for B -> B.
+        image.objectGraphUtils.pointersBecomeOneWay(new Object[]{a, b}, new Object[]{b, a}, true);
+        assertSame(b, a.resolveForwardingPointer());
+        assertTrue(b.isNotForwarded());
+
+        // C -> D, D -> E, then E -> D stands for E -> E.
+        image.objectGraphUtils.pointersBecomeOneWay(new Object[]{c, d, e}, new Object[]{d, e, d}, true);
+        assertSame(e, c.resolveForwardingPointer());
+        assertSame(e, d.resolveForwardingPointer());
+        assertTrue(e.isNotForwarded());
+
+        image.objectGraphUtils.unfollow();
+
         assertEquals(BooleanObject.TRUE, evaluate("""
-                        | a b c |
+                        | a b refA refB |
                         a := Object new.
                         b := Object new.
-                        c := Object new.
-                        [ { a. b. c } elementsForwardIdentityTo: { b. c. b }. false ]
-                            on: Error
-                            do: [ :ex | true ]
+                        refA := { a }.
+                        refB := { b }.
+                        { a. b } elementsForwardIdentityTo: { b. a }.
+                        (refA first == b) and: [ refB first == b ]
                         """));
+    }
+
+    @Test
+    public void testDuplicateFromEntries() {
+        final AbstractSqueakObjectWithClassAndHash a = newDummyObject();
+        final AbstractSqueakObjectWithClassAndHash b = newDummyObject();
+        final AbstractSqueakObjectWithClassAndHash c = newDummyObject();
+        final long originalHashC = c.getOrCreateSqueakHash();
+
+        // The first occurrence wins, the second one is ignored.
+        image.objectGraphUtils.pointersBecomeOneWay(new Object[]{a, a}, new Object[]{b, c}, true);
+        assertSame(b, a.resolveForwardingPointer());
+        assertTrue(b.isNotForwarded());
+        assertTrue(c.isNotForwarded());
+        assertEquals(originalHashC, c.getOrCreateSqueakHash());
+
+        image.objectGraphUtils.unfollow();
+
         assertEquals(BooleanObject.TRUE, evaluate("""
-                        | a b c |
+                        | a b c refA |
                         a := Object new.
                         b := Object new.
                         c := Object new.
-                        [ { a. a } elementsForwardIdentityTo: { b. c }. false ]
-                            on: Error
-                            do: [ :ex | true ]
+                        refA := { a }.
+                        { a. a } elementsForwardIdentityTo: { b. c }.
+                        (refA first == b) and: [ b ~~ c ]
                         """));
     }
 }

@@ -47,9 +47,6 @@ public final class ObjectGraphUtils {
     private static final int USABLE_THREAD_COUNT = Math.min(Runtime.getRuntime().availableProcessors(), 4);
     private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(USABLE_THREAD_COUNT, r -> new Thread(r, "TruffleSqueakObjectGraphUtils"));
 
-    private static final Object VISITING = new Object();
-    private static final Object VERIFIED = new Object();
-
     private final SqueakImageContext image;
     private final boolean trackOperations;
 
@@ -264,21 +261,33 @@ public final class ObjectGraphUtils {
      * rewritten immediately; heap references and {@link #becomeMap} are cleaned up on the next full
      * heap traversal. Otherwise, the entire object graph is rewritten eagerly.
      *
-     * @return {@code true} if the mapping was applied, or {@code false} if
-     *         {@code fromPointers}/{@code toPointers} contained duplicate {@code from} entries or a
-     *         forwarding cycle.
+     * <p>Like the OpenSmalltalk VM, this first follows elements of both arrays that were forwarded
+     * by an earlier call, and then processes the pairs in order: a {@code from} that already
+     * appeared earlier in {@code fromPointers} is skipped, and a {@code to} that already appeared
+     * as a {@code from} is replaced by its target. Consequently, {@link #becomeMap} never contains
+     * a cycle, not even for requests such as {@code [A, B] -> [B, A]}.
      */
     @TruffleBoundary
-    public boolean pointersBecomeOneWay(final Object[] fromPointers, final Object[] toPointers, final boolean copyHash) {
-        if (fromPointers.length > 1 && hasDuplicatesOrCycles(fromPointers, toPointers)) {
-            return false;
-        }
+    public void pointersBecomeOneWay(final Object[] fromPointers, final Object[] toPointers, final boolean copyHash) {
         final long startTime = System.nanoTime();
         boolean useForwardingPointers = true;
         for (int i = 0; i < fromPointers.length; i++) {
-            final Object from = fromPointers[i];
-            final Object to = toPointers[i];
+            /*
+             * Heap slots are only updated lazily, so both arrays may still contain objects that
+             * were forwarded by an earlier call. Follow them, so that keys of becomeMap are never
+             * used as `from` or `to` again.
+             */
+            final Object from = AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(fromPointers[i]);
+            if (becomeMap.containsKey(from)) {
+                continue; // Appeared earlier in fromPointers, the first occurrence wins.
+            }
+            Object to = AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(toPointers[i]);
+            Object next;
+            while ((next = becomeMap.get(to)) != null) {
+                to = next; // Appeared earlier in fromPointers, use its target instead.
+            }
             if (from != to) {
+                /* `from` is not a key and `to` has no successor, so becomeMap stays acyclic. */
                 becomeMap.put(from, to);
                 if (from instanceof final AbstractSqueakObjectWithClassAndHash f && to instanceof final AbstractSqueakObjectWithClassAndHash t) {
                     if (copyHash) {
@@ -312,59 +321,13 @@ public final class ObjectGraphUtils {
         if (trackOperations) {
             ObjectGraphOperations.POINTERS_BECOME_ONE_WAY.addNanos(System.nanoTime() - startTime);
         }
-        return true;
-    }
-
-    /**
-     * Checks in O(n) time whether {@code fromPointers -> toPointers} contains duplicate
-     * {@code from} entries or any cycle. Only performs the graph walk if at least one {@code to}
-     * target also appears as a {@code from} key, reusing {@code edges} to track traversal state.
-     */
-    private static boolean hasDuplicatesOrCycles(final Object[] fromPointers, final Object[] toPointers) {
-        final EconomicMap<Object, Object> edges = EconomicMap.create(Equivalence.IDENTITY, fromPointers.length);
-        boolean possibleCycle = false;
-        for (int i = 0; i < fromPointers.length; i++) {
-            final Object from = fromPointers[i];
-            final Object to = toPointers[i];
-            if (edges.put(from, to) != null) {
-                return true;
-            }
-            if (from != to && edges.containsKey(to)) {
-                possibleCycle = true;
-            }
-        }
-        return possibleCycle && hasCycles(edges);
-    }
-
-    private static boolean hasCycles(final EconomicMap<Object, Object> edges) {
-        final ArrayList<Object> path = new ArrayList<>();
-        final MapCursor<Object, Object> cursor = edges.getEntries();
-        while (cursor.advance()) {
-            Object curr = cursor.getKey();
-            while (curr != null) {
-                final Object next = edges.get(curr);
-                if (next == VISITING) {
-                    return true;
-                }
-                if (next == null || next == curr || next == VERIFIED) {
-                    break;
-                }
-                edges.put(curr, VISITING);
-                path.add(curr);
-                curr = next;
-            }
-            for (final Object node : path) {
-                edges.put(node, VERIFIED);
-            }
-            path.clear();
-        }
-        return false;
     }
 
     /**
      * Collapses multi-hop chains ({@code A -> B -> C}) in {@link #becomeMap} so every entry points
      * directly to its terminal target. Chains can arise within a single bulk batch or across
-     * consecutive lazy calls before {@link #becomeMap} is cleared by a full heap traversal.
+     * consecutive lazy calls before {@link #becomeMap} is cleared by a full heap traversal. Terminates
+     * because {@link #pointersBecomeOneWay} keeps {@link #becomeMap} acyclic.
      */
     private void flattenForwardPointers() {
         final MapCursor<Object, Object> cursor = becomeMap.getEntries();

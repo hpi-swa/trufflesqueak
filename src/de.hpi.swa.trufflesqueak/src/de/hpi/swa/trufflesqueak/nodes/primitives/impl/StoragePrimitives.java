@@ -69,10 +69,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             final Object[] fromPointers = fromArray.getObjectStorage().clone();
             final Object[] toPointers = toArray.getObjectStorage();
             final SqueakImageContext image = getContext();
-            if (!image.objectGraphUtils.pointersBecomeOneWay(fromPointers, toPointers, copyHash)) {
-                CompilerDirectives.transferToInterpreter();
-                throw PrimitiveFailed.BAD_ARGUMENT;
-            }
+            image.objectGraphUtils.pointersBecomeOneWay(fromPointers, toPointers, copyHash);
             image.flushMethodCacheAfterBecome();
             return fromArray;
         }
