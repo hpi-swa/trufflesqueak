@@ -85,12 +85,29 @@ public final class SqueakExceptions {
     @ExportLibrary(InteropLibrary.class)
     public static final class SqueakSyntaxError extends AbstractSqueakException {
         private static final long serialVersionUID = 1L;
+        private final String errorMessage;
         private final transient SourceSection sourceSection;
+        private final boolean incompleteSource;
 
+        /** Creates a syntax error at the 1-based position of the code the image compiled. */
         @TruffleBoundary
         public SqueakSyntaxError(final String message, final int position, final String source) {
-            super("Syntax Error: \"" + message + "\" at position " + position);
-            sourceSection = Source.newBuilder(SqueakLanguageConfig.ID, source, "<syntax error>").build().createSection(Math.max(position - 1, 0), 1);
+            this(message, Source.newBuilder(SqueakLanguageConfig.ID, source, "<syntax error>").build(), position - 1);
+        }
+
+        private SqueakSyntaxError(final String message, final Source source, final int charIndex) {
+            super("Syntax Error: \"" + message + "\" at position " + (charIndex + 1));
+            errorMessage = message;
+            final int length = source.getLength();
+            sourceSection = length == 0 ? source.createUnavailableSection() : source.createSection(Math.min(Math.max(charIndex, 0), length - 1), 1);
+            /* An error at or after the end of the code means that more code could complete it. */
+            incompleteSource = charIndex >= length;
+        }
+
+        /** Relocates this error to source, whose code started at the given offset of the compiled code. */
+        @TruffleBoundary
+        public SqueakSyntaxError relocateTo(final Source source, final int offset) {
+            return new SqueakSyntaxError(errorMessage, source, sourceSection.getCharIndex() - offset);
         }
 
         @ExportMessage
@@ -100,7 +117,7 @@ public final class SqueakExceptions {
 
         @ExportMessage
         protected boolean isExceptionIncompleteSource() {
-            return true;
+            return incompleteSource;
         }
 
         @ExportMessage
