@@ -10,6 +10,7 @@ import java.lang.foreign.SymbolLookup;
 import java.lang.ref.ReferenceQueue;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -231,6 +232,8 @@ public final class SqueakImageContext {
 
     /* Plugins */
     public final Map<String, SymbolLookup> loadedLibraries = new HashMap<>();
+    /* Objects referenced by the oops that the interpreter proxy hands to native plugins */
+    public final ArrayList<Object> interpreterProxyObjects = new ArrayList<>();
     public final B2D b2d = new B2D(this);
     public final BitBlt bitblt = new BitBlt(this);
     public String[] dropPluginFileList = ArrayUtils.EMPTY_STRINGS_ARRAY;
