@@ -57,6 +57,7 @@ public final class CheckForInterruptsState {
     private volatile boolean hasPendingFinalizations;
     @SuppressWarnings("unused") private boolean shouldTrigger;
 
+    private static final long SHUTDOWN_TIMEOUT_MILLIS = 1_000;
     private Thread thread;
     private volatile Thread vmThread;
 
@@ -106,6 +107,12 @@ public final class CheckForInterruptsState {
     public void shutdown() {
         if (thread != null) {
             thread.interrupt();
+            /* Wait for the thread, which polls in short intervals, before the context closes its sockets. */
+            try {
+                thread.join(SHUTDOWN_TIMEOUT_MILLIS);
+            } catch (final InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
             thread = null;
         }
     }
