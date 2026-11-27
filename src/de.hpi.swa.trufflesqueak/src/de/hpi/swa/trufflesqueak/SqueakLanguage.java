@@ -15,6 +15,7 @@ import com.oracle.truffle.api.instrumentation.ProvidedTags;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.source.Source;
 
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.interop.SqueakFileDetector;
 import de.hpi.swa.trufflesqueak.interop.SqueakLanguageView;
@@ -22,6 +23,7 @@ import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 
 @TruffleLanguage.Registration(//
+                byteMimeTypes = {SqueakLanguageConfig.IMAGE_MIME_TYPE}, //
                 characterMimeTypes = {SqueakLanguageConfig.MIME_TYPE, SqueakLanguageConfig.ST_MIME_TYPE}, //
                 defaultMimeType = SqueakLanguageConfig.ST_MIME_TYPE, //
                 fileTypeDetectors = SqueakFileDetector.class, //
@@ -57,6 +59,12 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
         final Source source = request.getSource();
         if (SqueakLanguageConfig.IMAGE_SOURCE_NAME.equals(source.getName())) {
             return SqueakImage.createLoadCallTarget(image, source.getCharacters().toString());
+        } else if (SqueakLanguageConfig.IMAGE_MIME_TYPE.equals(source.getMimeType())) {
+            /* Image files are binary sources; the image reader loads them from their path. */
+            if (source.getPath() == null) {
+                throw SqueakException.create("Image sources must be files:", source.getName());
+            }
+            return SqueakImage.createLoadCallTarget(image, source.getPath());
         } else {
             return image.getDoItContextNode(request).getCallTarget();
         }
