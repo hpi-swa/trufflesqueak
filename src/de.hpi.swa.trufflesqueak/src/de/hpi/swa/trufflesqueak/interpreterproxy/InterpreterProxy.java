@@ -319,6 +319,7 @@ public final class InterpreterProxy implements AutoCloseable {
 
     public InterpreterProxy newInvocation(final SqueakImageContext theContext, final Object[] theReceiverAndArguments) {
         context = theContext;
+        primFailCode = 0; // Each invocation starts out successful.
         numReceiverAndArguments = theReceiverAndArguments.length;
         receiverAndArguments = theReceiverAndArguments.clone();
         sp = numReceiverAndArguments;
