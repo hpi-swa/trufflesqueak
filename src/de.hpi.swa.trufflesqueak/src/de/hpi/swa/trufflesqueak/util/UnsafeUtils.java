@@ -245,7 +245,8 @@ public final class UnsafeUtils {
     }
 
     private static boolean inBounds(final long start, final long length, final long totalLength) {
-        return 0 <= start && start + length <= totalLength;
+        assert totalLength >= 0;
+        return start >= 0 && length >= 0 && length <= totalLength - start;
     }
 
     private static Unsafe initUnsafe() {
