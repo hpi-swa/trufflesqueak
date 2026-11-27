@@ -44,6 +44,11 @@ public final class SqueakGuards {
         return Integer.MIN_VALUE <= value && value <= Integer.MAX_VALUE;
     }
 
+    /** Whether value is representable in the given number of bits, as a signed or an unsigned integer. */
+    public static boolean fitsIntoBits(final long value, final int bits) {
+        return -(1L << bits - 1) <= value && value < 1L << bits;
+    }
+
     public static boolean inBounds1(final long index, final int size) {
         assert size >= 0;
         return Long.compareUnsigned(index - 1, size) < 0;

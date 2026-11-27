@@ -1253,7 +1253,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveWriteBufferByte")
     protected abstract static class PrimWriteBufferByteNode extends AbstractPrimitiveNode implements Primitive3WithFallback {
-        @Specialization(guards = "lib.hasBufferElements(object)", limit = "3")
+        @Specialization(guards = {"lib.hasBufferElements(object)", "fitsIntoBits(value, 8)"}, limit = "3")
         protected static final long doWriteBufferByte(@SuppressWarnings("unused") final Object receiver, final Object object, final long byteOffset, final long value,
                         @CachedLibrary("object") final InteropLibrary lib) {
             try {
@@ -1282,7 +1282,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveWriteBufferShort")
     protected abstract static class PrimWriteBufferShortNode extends AbstractPrimitiveNode implements Primitive3WithFallback {
-        @Specialization(guards = "lib.hasBufferElements(object)", limit = "3")
+        @Specialization(guards = {"lib.hasBufferElements(object)", "fitsIntoBits(value, 16)"}, limit = "3")
         protected static final long doWriteBufferShort(@SuppressWarnings("unused") final Object receiver, final Object object, final long byteOffset, final long value,
                         @CachedLibrary("object") final InteropLibrary lib) {
             try {
@@ -1311,7 +1311,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveWriteBufferInt")
     protected abstract static class PrimWriteBufferIntNode extends AbstractPrimitiveNode implements Primitive3WithFallback {
-        @Specialization(guards = "lib.hasBufferElements(object)", limit = "3")
+        @Specialization(guards = {"lib.hasBufferElements(object)", "fitsIntoBits(value, 32)"}, limit = "3")
         protected static final long doWriteBufferInt(@SuppressWarnings("unused") final Object receiver, final Object object, final long byteOffset, final long value,
                         @CachedLibrary("object") final InteropLibrary lib) {
             try {
