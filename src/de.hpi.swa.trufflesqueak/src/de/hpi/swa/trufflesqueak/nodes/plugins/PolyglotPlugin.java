@@ -2176,8 +2176,17 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveHostIdentityHashCode")
     protected abstract static class PrimHostIdentityHashCodeNode extends AbstractPrimitiveNode implements Primitive1 {
-        @Specialization
-        protected static final long identityHashCode(@SuppressWarnings("unused") final Object receiver, final Object object) {
+        /* Interop values such as host objects can be wrapped differently each time, so use interop identity. */
+        @Specialization(limit = "2")
+        protected static final long identityHashCode(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary("object") final InteropLibrary lib) {
+            if (lib.hasIdentity(object)) {
+                try {
+                    return lib.identityHashCode(object);
+                } catch (final UnsupportedMessageException e) {
+                    throw CompilerDirectives.shouldNotReachHere(e);
+                }
+            }
             return System.identityHashCode(object);
         }
     }
