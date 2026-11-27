@@ -229,4 +229,21 @@ public final class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDum
         assertEquals(0, params.numArgs());
         assertEquals(0, params.numCopied());
     }
+
+    @Test
+    public void testOnlyOneThreadCanEnterTheContext() throws Exception {
+        // The test context is entered on this thread, and Smalltalk state is not synchronized.
+        final Throwable[] failure = new Throwable[1];
+        final Thread thread = new Thread(() -> {
+            try {
+                context.enter();
+                context.leave();
+            } catch (final Throwable t) {
+                failure[0] = t;
+            }
+        });
+        thread.start();
+        thread.join();
+        assertTrue(String.valueOf(failure[0]), failure[0] instanceof IllegalStateException);
+    }
 }

@@ -70,22 +70,15 @@ public final class DebugUtils {
         for (final WeakReference<SqueakImageContext> ref : CONTEXTS) {
             final SqueakImageContext image = ref.get();
             if (image != null) {
-                // Temporarily bind the Truffle context to the watchdog thread
-                Object prevTruffleContext = null;
+                /*
+                 * Best effort: only read the state. Contexts allow only one thread at a time, and the
+                 * thread that is entered may be stuck, which is why the watchdog dumps state.
+                 */
+                println("\n== Squeak Context State (" + contextIndex++ + "/" + CONTEXTS.size() + ") =======================");
                 try {
-                    prevTruffleContext = image.env.getContext().enter(null);
-                } catch (final Throwable t) {
-                    println("-> Warning: Could not bind Truffle Context.");
-                }
-
-                try {
-                    println("\n== Squeak Context State (" + contextIndex++ + "/" + CONTEXTS.size() + ") =======================");
                     println(currentState(image));
-                } finally {
-                    // Always cleanly leave the context
-                    if (prevTruffleContext != null) {
-                        image.env.getContext().leave(null, prevTruffleContext);
-                    }
+                } catch (final RuntimeException e) {
+                    println("-> Failed to read state: " + e);
                 }
             }
         }

@@ -24,6 +24,8 @@ public final class SqueakTranscriptForwarder extends PrintStream {
     private static final String TRANSCRIPT_BLOCK_CODE_NAME = "<transcript forwarder>";
 
     private Value transcriptBlock;
+    /* The context allows only one thread at a time, so only forward output of the thread running it. */
+    private Thread contextThread;
 
     public SqueakTranscriptForwarder(final OutputStream out, final boolean autoFlush) {
         super(out, autoFlush);
@@ -31,12 +33,13 @@ public final class SqueakTranscriptForwarder extends PrintStream {
 
     public void setUp(final Context context) throws IOException {
         transcriptBlock = context.eval(Source.newBuilder(SqueakLanguageConfig.ID, TRANSCRIPT_BLOCK_CODE, TRANSCRIPT_BLOCK_CODE_NAME).build());
+        contextThread = Thread.currentThread();
     }
 
     @Override
     public void write(final byte[] b) throws IOException {
         try {
-            if (transcriptBlock != null) {
+            if (transcriptBlock != null && Thread.currentThread() == contextThread) {
                 transcriptBlock.execute(bytesToString(b));
             }
         } catch (final Exception e) {
@@ -49,7 +52,7 @@ public final class SqueakTranscriptForwarder extends PrintStream {
     @Override
     public void write(final byte[] b, final int off, final int len) {
         try {
-            if (transcriptBlock != null) {
+            if (transcriptBlock != null && Thread.currentThread() == contextThread) {
                 transcriptBlock.execute(bytesToString(Arrays.copyOfRange(b, off, off + len)));
             }
         } catch (final Exception e) {
