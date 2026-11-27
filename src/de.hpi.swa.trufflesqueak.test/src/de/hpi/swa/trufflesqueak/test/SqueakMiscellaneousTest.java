@@ -244,6 +244,8 @@ public final class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDum
     public void testImageFilesAreBinarySources() throws Exception {
         final Path path = Files.createTempFile("trufflesqueak", ".image");
         try {
+            final int format = de.hpi.swa.trufflesqueak.image.SqueakImageConstants.SUPPORTED_IMAGE_FORMATS[0];
+            Files.write(path, java.nio.ByteBuffer.allocate(8).order(java.nio.ByteOrder.LITTLE_ENDIAN).putInt(format).array());
             final org.graalvm.polyglot.Source source = org.graalvm.polyglot.Source.newBuilder(SqueakLanguageConfig.ID, path.toFile()).build();
             assertEquals(SqueakLanguageConfig.IMAGE_MIME_TYPE, source.getMimeType());
             assertTrue(source.hasBytes()); // Not decoded as text.
