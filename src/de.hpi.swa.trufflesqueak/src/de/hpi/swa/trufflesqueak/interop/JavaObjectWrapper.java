@@ -332,13 +332,26 @@ public final class JavaObjectWrapper implements TruffleObject {
     @ExportMessage
     boolean isNumber() {
         final Class<?> c = wrappedObject.getClass();
-        return c == Byte.class || c == Short.class || c == Integer.class || c == Long.class || c == Float.class || c == Double.class;
+        return c == Byte.class || c == Short.class || c == Integer.class || c == Long.class || c == Float.class || c == Double.class || c == BigInteger.class;
+    }
+
+    /*
+     * Raw BigIntegers have no interop exports. Those that fit into a long are answered like a long,
+     * others only through fitsInBigInteger/asBigInteger.
+     */
+    private Object getInteropNumber() {
+        return wrappedObject instanceof final BigInteger b ? longIfFits(b) : wrappedObject;
+    }
+
+    @TruffleBoundary
+    private static Object longIfFits(final BigInteger value) {
+        return value.bitLength() < Long.SIZE ? (Object) value.longValue() : value;
     }
 
     @ExportMessage
     boolean fitsInByte(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) {
         if (isNumber()) {
-            return lib.fitsInByte(wrappedObject);
+            return lib.fitsInByte(getInteropNumber());
         } else {
             return false;
         }
@@ -347,7 +360,7 @@ public final class JavaObjectWrapper implements TruffleObject {
     @ExportMessage
     boolean fitsInShort(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) {
         if (isNumber()) {
-            return lib.fitsInShort(wrappedObject);
+            return lib.fitsInShort(getInteropNumber());
         } else {
             return false;
         }
@@ -356,7 +369,7 @@ public final class JavaObjectWrapper implements TruffleObject {
     @ExportMessage
     boolean fitsInInt(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) {
         if (isNumber()) {
-            return lib.fitsInInt(wrappedObject);
+            return lib.fitsInInt(getInteropNumber());
         } else {
             return false;
         }
@@ -365,7 +378,7 @@ public final class JavaObjectWrapper implements TruffleObject {
     @ExportMessage
     boolean fitsInLong(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) {
         if (isNumber()) {
-            return lib.fitsInLong(wrappedObject);
+            return lib.fitsInLong(getInteropNumber());
         } else {
             return false;
         }
@@ -386,7 +399,7 @@ public final class JavaObjectWrapper implements TruffleObject {
     @ExportMessage
     boolean fitsInFloat(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) {
         if (isNumber()) {
-            return lib.fitsInFloat(wrappedObject);
+            return lib.fitsInFloat(getInteropNumber());
         } else {
             return false;
         }
@@ -395,7 +408,7 @@ public final class JavaObjectWrapper implements TruffleObject {
     @ExportMessage
     boolean fitsInDouble(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) {
         if (isNumber()) {
-            return lib.fitsInDouble(wrappedObject);
+            return lib.fitsInDouble(getInteropNumber());
         } else {
             return false;
         }
@@ -404,7 +417,7 @@ public final class JavaObjectWrapper implements TruffleObject {
     @ExportMessage
     byte asByte(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) throws UnsupportedMessageException {
         if (isNumber()) {
-            return lib.asByte(wrappedObject);
+            return lib.asByte(getInteropNumber());
         } else {
             throw MiscUtils.throwUnsupportedMessageException();
         }
@@ -413,7 +426,7 @@ public final class JavaObjectWrapper implements TruffleObject {
     @ExportMessage
     short asShort(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) throws UnsupportedMessageException {
         if (isNumber()) {
-            return lib.asShort(wrappedObject);
+            return lib.asShort(getInteropNumber());
         } else {
             throw MiscUtils.throwUnsupportedMessageException();
         }
@@ -422,7 +435,7 @@ public final class JavaObjectWrapper implements TruffleObject {
     @ExportMessage
     int asInt(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) throws UnsupportedMessageException {
         if (isNumber()) {
-            return lib.asInt(wrappedObject);
+            return lib.asInt(getInteropNumber());
         } else {
             throw MiscUtils.throwUnsupportedMessageException();
         }
@@ -431,7 +444,7 @@ public final class JavaObjectWrapper implements TruffleObject {
     @ExportMessage
     long asLong(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) throws UnsupportedMessageException {
         if (isNumber()) {
-            return lib.asLong(wrappedObject);
+            return lib.asLong(getInteropNumber());
         } else {
             throw MiscUtils.throwUnsupportedMessageException();
         }
@@ -451,7 +464,7 @@ public final class JavaObjectWrapper implements TruffleObject {
     @ExportMessage
     float asFloat(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) throws UnsupportedMessageException {
         if (isNumber()) {
-            return lib.asFloat(wrappedObject);
+            return lib.asFloat(getInteropNumber());
         } else {
             throw MiscUtils.throwUnsupportedMessageException();
         }
@@ -460,7 +473,7 @@ public final class JavaObjectWrapper implements TruffleObject {
     @ExportMessage
     double asDouble(@Shared("lib") @CachedLibrary(limit = "LIMIT") final InteropLibrary lib) throws UnsupportedMessageException {
         if (isNumber()) {
-            return lib.asDouble(wrappedObject);
+            return lib.asDouble(getInteropNumber());
         } else {
             throw MiscUtils.throwUnsupportedMessageException();
         }
