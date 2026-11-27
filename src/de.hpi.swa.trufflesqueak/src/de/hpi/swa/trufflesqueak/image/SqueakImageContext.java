@@ -45,6 +45,7 @@ import de.hpi.swa.trufflesqueak.SqueakOptions.SqueakContextOptions;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakSyntaxError;
 import de.hpi.swa.trufflesqueak.io.SqueakDisplay;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
@@ -439,10 +440,11 @@ public final class SqueakImageContext {
         } catch (final ProcessSwitch e) {
             /*
              * A ProcessSwitch exception is thrown in case of a syntax error to open the
-             * corresponding window. Fail with an appropriate exception here. This way, it is clear
-             * why code execution failed (e.g. when requested through the Polyglot API).
+             * corresponding window (images without a PolyglotRequestor report syntax errors this
+             * way). Report it as a guest parse error, so that it is clear why code execution failed
+             * (e.g. when requested through the Polyglot API).
              */
-            throw CompilerDirectives.shouldNotReachHere("Unexpected process switch detected during parse request", e);
+            throw new SqueakSyntaxError("Syntax error (details are not available without a PolyglotRequestor)", 1, source);
         }
         final CompiledCodeObject doItMethod = (CompiledCodeObject) methodNode.send(this, "generate");
 
