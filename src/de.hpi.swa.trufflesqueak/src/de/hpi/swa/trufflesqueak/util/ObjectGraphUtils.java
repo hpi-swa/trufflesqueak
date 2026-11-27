@@ -45,7 +45,12 @@ public final class ObjectGraphUtils {
     private static final int ADDITIONAL_SPACE = 10_000;
     private static int lastSeenObjects = 500_000;
     private static final int USABLE_THREAD_COUNT = Math.min(Runtime.getRuntime().availableProcessors(), 4);
-    private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(USABLE_THREAD_COUNT, r -> new Thread(r, "TruffleSqueakObjectGraphUtils"));
+    /* Daemon threads: the idle pool must not keep the JVM of an embedder alive. */
+    private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(USABLE_THREAD_COUNT, r -> {
+        final Thread thread = new Thread(r, "TruffleSqueakObjectGraphUtils");
+        thread.setDaemon(true);
+        return thread;
+    });
 
     private final SqueakImageContext image;
     private final boolean trackOperations;
