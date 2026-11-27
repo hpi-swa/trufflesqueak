@@ -165,7 +165,7 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
     }
 
     protected static final CompiledCodeObject createBlock(final CompiledCodeObject code, final int pc, final int numArgs, final int numCopied, final int blockSize) {
-        return code.createShadowBlock(code.getInitialPC() + pc, numArgs, numCopied, blockSize);
+        return code.getOrCreateShadowBlock(code.getInitialPC() + pc, numArgs, numCopied, blockSize);
     }
 
     protected static final BlockClosureObject createBlockClosure(final VirtualFrame frame, final CompiledCodeObject block, final Object[] copiedValues, final ContextObject outerContext) {

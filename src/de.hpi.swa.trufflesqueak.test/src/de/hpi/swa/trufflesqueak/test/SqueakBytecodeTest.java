@@ -755,4 +755,13 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
                         image.schedulerAssociation, image.smallIntegerClass, image.smalltalk,
                         image.specialObjectsArray);
     }
+
+    @Test
+    public void testShadowBlocksAreSharedPerStartPC() {
+        // ^ [ :arg1 :arg2 | arg1 + arg2 ]
+        final CompiledCodeObject method = makeMethod(2, new Object[]{NilObject.SINGLETON, NilObject.SINGLETON}, 0x8F, 0x02, 0x00, 0x04, 0x10, 0x11, 0xB0, 0x7D, 0x7C);
+        final CompiledCodeObject block = ((BlockClosureObject) runMethod(method, 1L)).getCompiledBlock();
+        // Closures loaded from an image or given a new start pc must use the same shadow block.
+        assertSame(block, method.getOrCreateShadowBlock(block.getOuterMethodStartPC()));
+    }
 }
