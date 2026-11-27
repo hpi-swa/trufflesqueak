@@ -7,14 +7,20 @@
 package de.hpi.swa.trufflesqueak.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
+import java.math.BigInteger;
+
 import org.junit.Test;
+
+import com.oracle.truffle.api.interop.InteropLibrary;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants.ObjectHeader;
 import de.hpi.swa.trufflesqueak.image.SqueakImageReader;
+import de.hpi.swa.trufflesqueak.interop.JavaObjectWrapper;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
@@ -228,5 +234,17 @@ public final class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDum
         assertEquals(8873258, params.blockSize());
         assertEquals(0, params.numArgs());
         assertEquals(0, params.numCopied());
+    }
+
+    @Test
+    public void testWrappedBigIntegerIsANumber() throws Exception {
+        final InteropLibrary lib = InteropLibrary.getUncached();
+        final Object small = JavaObjectWrapper.wrap(BigInteger.valueOf(42));
+        assertTrue(lib.isNumber(small) && lib.fitsInBigInteger(small) && lib.fitsInLong(small) && lib.fitsInByte(small));
+        assertEquals(42L, lib.asLong(small));
+        final Object large = JavaObjectWrapper.wrap(BigInteger.ONE.shiftLeft(100));
+        assertTrue(lib.isNumber(large) && lib.fitsInBigInteger(large));
+        assertFalse(lib.fitsInLong(large));
+        assertEquals(BigInteger.ONE.shiftLeft(100), lib.asBigInteger(large));
     }
 }
