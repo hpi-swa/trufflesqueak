@@ -71,6 +71,9 @@ public final class InterpreterProxySupport {
     @SuppressWarnings("restricted")
     private static SymbolLookup lookupModuleLibrary(final String moduleName) {
         final SqueakImageContext context = SqueakImageContext.getSlow();
+        if (!context.env.isNativeAccessAllowed()) {
+            return null; /* Native plugins are unavailable, so their named primitives fail. */
+        }
         final SymbolLookup moduleLibrary = context.loadedLibraries.computeIfAbsent(moduleName, (String _) -> {
             if (context.loadedLibraries.containsKey(moduleName)) {
                 return null; // if moduleName was associated with null

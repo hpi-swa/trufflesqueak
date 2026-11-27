@@ -502,8 +502,11 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         final Object[] args = frame.getArguments();
         if (FrameAccess.getArgumentStartIndex() + index < args.length) {
             return args[FrameAccess.getArgumentStartIndex() + index];
-        } else {
+        } else if (index < FrameAccess.getStackPointer(frame)) {
             return NilObject.nullToNil(FrameAccess.getStackValue(frame, index));
+        } else {
+            /* Slots above the stack pointer are nil (compiled code may have cleared their frame slots). */
+            return NilObject.SINGLETON;
         }
     }
 
@@ -750,10 +753,11 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         for (int i = 0; i < 1 + numArgs; i++) {
             writer.writeObject(args[FrameAccess.getReceiverStartIndex() + i]);
         }
-        // Write stack values from frame slots
+        // Write stack values from frame slots (slots above the stack pointer as nil, see #atTemp)
         final int numSlots = FrameAccess.getNumStackSlots(frame);
+        final int stackPointer = FrameAccess.getStackPointer(frame);
         for (int i = numArgs; i < numSlots; i++) {
-            final Object stackValue = FrameAccess.getStackValue(frame, i);
+            final Object stackValue = i < stackPointer ? FrameAccess.getStackValue(frame, i) : null;
             if (stackValue == null) {
                 writer.writeNil();
             } else {

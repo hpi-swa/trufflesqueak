@@ -9,8 +9,10 @@ package de.hpi.swa.trufflesqueak.image;
 import java.io.IOException;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
+import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -81,7 +83,13 @@ public final class SqueakImageReader {
         try (var channel = truffleFile.newByteChannel(EnumSet.of(StandardOpenOption.READ))) {
             final long fileSize = channel.size();
             try (var arena = Arena.ofConfined()) {
-                final MemorySegment segment = (MemorySegment) channel.map(FileChannel.MapMode.READ_ONLY, 0, fileSize, arena);
+                MemorySegment segment;
+                try {
+                    segment = (MemorySegment) channel.map(FileChannel.MapMode.READ_ONLY, 0, fileSize, arena);
+                } catch (final UnsupportedOperationException e) {
+                    /* The file system of an embedder may not support memory mapping. */
+                    segment = readFully(channel, fileSize);
+                }
                 readImage(new MemorySegmentReader(segment, ByteOrder.LITTLE_ENDIAN));
             }
         } catch (final IOException e) {
@@ -94,6 +102,17 @@ public final class SqueakImageReader {
         }
         image.setHiddenRoots((ArrayObject) hiddenRootsChunk.asObject());
         image.getSqueakImage();
+    }
+
+    private static MemorySegment readFully(final SeekableByteChannel channel, final long fileSize) throws IOException {
+        if (fileSize > Integer.MAX_VALUE - 8) {
+            throw new IOException("Image is too large to be read without memory mapping");
+        }
+        final ByteBuffer buffer = ByteBuffer.allocate((int) fileSize);
+        while (buffer.hasRemaining() && channel.read(buffer) >= 0) {
+            // read the remaining bytes
+        }
+        return MemorySegment.ofArray(buffer.array());
     }
 
     private void readImage(final MemorySegmentReader segmentReader) {

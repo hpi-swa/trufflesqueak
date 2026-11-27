@@ -292,6 +292,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     private void invalidateCallTarget(final String reason) {
         if (hasExecutionData()) {
+            executionData.source = null; // Decoded from the bytecodes, which may have changed.
             if (executionData.callTargetStable != null) {
                 executionData.callTargetStable.invalidate(reason);
             }

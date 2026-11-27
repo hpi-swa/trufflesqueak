@@ -26,7 +26,7 @@ public final class SqueakOptions {
     @Option(name = SqueakLanguageOptions.IMAGE_PATH, category = OptionCategory.USER, stability = OptionStability.STABLE, help = SqueakLanguageOptions.IMAGE_PATH_HELP, usageSyntax = "path/to/your.image")//
     public static final OptionKey<String> ImagePath = new OptionKey<>("");
 
-    @Option(name = SqueakLanguageOptions.IMAGE_ARGUMENTS, category = OptionCategory.USER, stability = OptionStability.EXPERIMENTAL, help = SqueakLanguageOptions.IMAGE_ARGUMENTS_HELP, usageSyntax = "'arg1 arg2 ...'")//
+    @Option(name = SqueakLanguageOptions.IMAGE_ARGUMENTS, category = OptionCategory.USER, stability = OptionStability.EXPERIMENTAL, help = SqueakLanguageOptions.IMAGE_ARGUMENTS_HELP, usageSyntax = "arg1,arg2,...")//
     public static final OptionKey<String> ImageArguments = new OptionKey<>("");
 
     @Option(name = SqueakLanguageOptions.HEADLESS, category = OptionCategory.USER, stability = OptionStability.STABLE, help = SqueakLanguageOptions.HEADLESS_HELP, usageSyntax = "true|false")//

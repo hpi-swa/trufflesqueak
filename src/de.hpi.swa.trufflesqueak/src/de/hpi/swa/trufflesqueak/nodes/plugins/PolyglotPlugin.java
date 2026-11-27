@@ -120,6 +120,30 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    /*
+     * Values of an inner context must not escape it: while it is entered, extract a host value that
+     * does not depend on it (as ConvertToSqueakNode would convert it), then convert that value in the
+     * outer context.
+     */
+    private static Object toHostValue(final Object value) {
+        final InteropLibrary lib = InteropLibrary.getUncached(value);
+        try {
+            if (lib.isBoolean(value)) {
+                return lib.asBoolean(value);
+            } else if (lib.isString(value)) {
+                return lib.asString(value);
+            } else if (lib.fitsInLong(value)) {
+                return lib.asLong(value);
+            } else if (lib.fitsInDouble(value)) {
+                return lib.asDouble(value);
+            } else {
+                return NilObject.SINGLETON;
+            }
+        } catch (final UnsupportedMessageException e) {
+            throw CompilerDirectives.shouldNotReachHere(e);
+        }
+    }
+
     protected abstract static class AbstractEvalStringPrimitiveNode extends AbstractPrimitiveNode {
         protected static final Object evalString(final Node node, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject) {
             return evalString(node, languageIdOrMimeTypeObj, sourceObject, ArrayUtils.EMPTY_STRINGS_ARRAY, ArrayUtils.EMPTY_ARRAY);
@@ -192,21 +216,23 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                         @Bind final Node node,
                         @Cached final ConvertToSqueakNode convertNode) {
             final TruffleContext innerContext = getContext().env.newInnerContextBuilder().initializeCreatorContext(true).inheritAllAccess(true).build();
+            final Object result;
             final Object p = innerContext.enter(this);
             try {
-                return convertNode.executeConvert(node, evalString(null, languageIdOrMimeTypeObj, sourceObject));
+                result = toHostValue(evalString(null, languageIdOrMimeTypeObj, sourceObject));
             } finally {
                 innerContext.leave(this, p);
                 innerContext.close();
             }
+            return convertNode.executeConvert(node, result);
         }
     }
 
     protected abstract static class AbstractEvalFilePrimitiveNode extends AbstractPrimitiveNode {
-        protected final Object evalFile(final NativeObject languageIdOrMimeTypeObj, final NativeObject path) {
+        protected static final Object evalFile(final Node node, final NativeObject languageIdOrMimeTypeObj, final NativeObject path) {
             final String languageIdOrMimeType = languageIdOrMimeTypeObj.asStringUnsafe();
             final String pathString = path.asStringUnsafe();
-            final TruffleLanguage.Env env = getContext().env;
+            final TruffleLanguage.Env env = getContext(node).env;
             try {
                 final boolean mimeType = isMimeType(languageIdOrMimeType);
                 final String lang = mimeType ? findLanguageByMimeType(env, languageIdOrMimeType) : languageIdOrMimeType;
@@ -229,7 +255,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         protected final Object doEval(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject path,
                         @Bind final Node node,
                         @Cached final WrapToSqueakNode wrapNode) {
-            return wrapNode.executeWrap(node, evalFile(languageIdOrMimeTypeObj, path));
+            return wrapNode.executeWrap(node, evalFile(node, languageIdOrMimeTypeObj, path));
         }
     }
 
@@ -242,13 +268,16 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                         @Bind final Node node,
                         @Cached final ConvertToSqueakNode convertNode) {
             final TruffleContext innerContext = getContext().env.newInnerContextBuilder().initializeCreatorContext(true).inheritAllAccess(true).build();
+            final Object result;
             final Object p = innerContext.enter(null);
             try {
-                return convertNode.executeConvert(node, evalFile(languageIdOrMimeTypeObj, path));
+                /* Look up the inner context, not the one of this node. */
+                result = toHostValue(evalFile(null, languageIdOrMimeTypeObj, path));
             } finally {
                 innerContext.leave(null, p);
                 innerContext.close();
             }
+            return convertNode.executeConvert(node, result);
         }
     }
 
@@ -1237,8 +1266,12 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"lib.hasBufferElements(object)", "destination.isByteType()"}, limit = "3")
         protected static final Object doReadBuffer(final Object receiver, final Object object, final long byteOffset, final NativeObject destination, final long destinationOffset, final long length,
                         @CachedLibrary("object") final InteropLibrary lib) {
+            if (destinationOffset < 0 || length < 0 || length > destination.getByteLength() - destinationOffset) {
+                CompilerDirectives.transferToInterpreter();
+                throw PrimitiveFailed.BAD_INDEX;
+            }
             try {
-                lib.readBuffer(object, byteOffset, destination.getByteStorage(), MiscUtils.toIntExact(destinationOffset), MiscUtils.toIntExact(length));
+                lib.readBuffer(object, byteOffset, destination.getByteStorage(), (int) destinationOffset, (int) length);
                 return receiver;
             } catch (final UnsupportedMessageException | InvalidBufferOffsetException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
@@ -1249,7 +1282,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveWriteBufferByte")
     protected abstract static class PrimWriteBufferByteNode extends AbstractPrimitiveNode implements Primitive3WithFallback {
-        @Specialization(guards = "lib.hasBufferElements(object)", limit = "3")
+        @Specialization(guards = {"lib.hasBufferElements(object)", "fitsIntoBits(value, 8)"}, limit = "3")
         protected static final long doWriteBufferByte(@SuppressWarnings("unused") final Object receiver, final Object object, final long byteOffset, final long value,
                         @CachedLibrary("object") final InteropLibrary lib) {
             try {
@@ -1278,7 +1311,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveWriteBufferShort")
     protected abstract static class PrimWriteBufferShortNode extends AbstractPrimitiveNode implements Primitive3WithFallback {
-        @Specialization(guards = "lib.hasBufferElements(object)", limit = "3")
+        @Specialization(guards = {"lib.hasBufferElements(object)", "fitsIntoBits(value, 16)"}, limit = "3")
         protected static final long doWriteBufferShort(@SuppressWarnings("unused") final Object receiver, final Object object, final long byteOffset, final long value,
                         @CachedLibrary("object") final InteropLibrary lib) {
             try {
@@ -1307,7 +1340,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveWriteBufferInt")
     protected abstract static class PrimWriteBufferIntNode extends AbstractPrimitiveNode implements Primitive3WithFallback {
-        @Specialization(guards = "lib.hasBufferElements(object)", limit = "3")
+        @Specialization(guards = {"lib.hasBufferElements(object)", "fitsIntoBits(value, 32)"}, limit = "3")
         protected static final long doWriteBufferInt(@SuppressWarnings("unused") final Object receiver, final Object object, final long byteOffset, final long value,
                         @CachedLibrary("object") final InteropLibrary lib) {
             try {
@@ -2176,8 +2209,17 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveHostIdentityHashCode")
     protected abstract static class PrimHostIdentityHashCodeNode extends AbstractPrimitiveNode implements Primitive1 {
-        @Specialization
-        protected static final long identityHashCode(@SuppressWarnings("unused") final Object receiver, final Object object) {
+        /* Interop values such as host objects can be wrapped differently each time, so use interop identity. */
+        @Specialization(limit = "2")
+        protected static final long identityHashCode(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary("object") final InteropLibrary lib) {
+            if (lib.hasIdentity(object)) {
+                try {
+                    return lib.identityHashCode(object);
+                } catch (final UnsupportedMessageException e) {
+                    throw CompilerDirectives.shouldNotReachHere(e);
+                }
+            }
             return System.identityHashCode(object);
         }
     }

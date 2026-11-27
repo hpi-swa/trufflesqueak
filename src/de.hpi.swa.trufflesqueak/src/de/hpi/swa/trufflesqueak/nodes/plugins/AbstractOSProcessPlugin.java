@@ -55,11 +55,17 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
         }
 
         protected final MethodHandle getHandle() {
+            if (handle == null) {
+                throw PrimitiveFailed.andTransferToInterpreter(); /* No native access. */
+            }
             return handle;
         }
 
         @SuppressWarnings("restricted")
         private MethodHandle findHandle() {
+            if (!SqueakImageContext.getSlow().env.isNativeAccessAllowed()) {
+                return null;
+            }
             final Linker linker = Linker.nativeLinker();
             final SymbolLookup stdlib = linker.defaultLookup();
             return stdlib.find(getFunctionName()).map(memorySegment -> linker.downcallHandle(memorySegment, getFunctionSignature())).orElseThrow(
@@ -68,8 +74,9 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
 
         @TruffleBoundary
         protected final long getValue() {
+            final MethodHandle h = getHandle();
             try {
-                return (int) handle.invokeExact();
+                return (int) h.invokeExact();
             } catch (final Throwable e) {
                 throw PrimitiveFailed.andTransferToInterpreterWithError(e);
             }
@@ -77,8 +84,9 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
 
         @TruffleBoundary
         protected final long getValue(final long id) {
+            final MethodHandle h = getHandle();
             try {
-                return (int) handle.invokeExact((int) id);
+                return (int) h.invokeExact((int) id);
             } catch (final Throwable e) {
                 throw PrimitiveFailed.andTransferToInterpreterWithError(e);
             }
@@ -86,8 +94,9 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
 
         @TruffleBoundary
         protected final long setValue(final long id, final long value) {
+            final MethodHandle h = getHandle();
             try {
-                return (int) handle.invokeExact((int) id, (int) value);
+                return (int) h.invokeExact((int) id, (int) value);
             } catch (final Throwable e) {
                 throw PrimitiveFailed.andTransferToInterpreterWithError(e);
             }

@@ -45,6 +45,7 @@ import de.hpi.swa.trufflesqueak.SqueakOptions.SqueakContextOptions;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakSyntaxError;
 import de.hpi.swa.trufflesqueak.io.SqueakDisplay;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
@@ -235,15 +236,17 @@ public final class SqueakImageContext {
     public final BitBlt bitblt = new BitBlt(this);
     public String[] dropPluginFileList = ArrayUtils.EMPTY_STRINGS_ARRAY;
     public final JPEGReader jpegReader = new JPEGReader();
-    public final SqueakSocketContext squeakSocketContext = new SqueakSocketContext();
+    public final SqueakSocketContext squeakSocketContext;
     public final Zip zip = new Zip();
 
     public SqueakImageContext(final SqueakLanguage squeakLanguage, final SqueakLanguage.Env environment) {
         language = squeakLanguage;
         options = SqueakContextOptions.create(environment.getOptions());
-        isHeadless = options.isHeadless();
+        /* The display uses SDL through native calls. */
+        isHeadless = options.isHeadless() || !environment.isNativeAccessAllowed();
         maxContextStackDepth = options.maxContextStackDepth();
         patch(environment);
+        squeakSocketContext = new SqueakSocketContext(env.isSocketIOAllowed());
         interrupt = new CheckForInterruptsState(this);
         objectGraphUtils = new ObjectGraphUtils(this);
         SqueakMessageInterceptor.enableIfRequested(environment);
@@ -437,10 +440,11 @@ public final class SqueakImageContext {
         } catch (final ProcessSwitch e) {
             /*
              * A ProcessSwitch exception is thrown in case of a syntax error to open the
-             * corresponding window. Fail with an appropriate exception here. This way, it is clear
-             * why code execution failed (e.g. when requested through the Polyglot API).
+             * corresponding window (images without a PolyglotRequestor report syntax errors this
+             * way). Report it as a guest parse error, so that it is clear why code execution failed
+             * (e.g. when requested through the Polyglot API).
              */
-            throw CompilerDirectives.shouldNotReachHere("Unexpected process switch detected during parse request", e);
+            throw new SqueakSyntaxError("Syntax error (details are not available without a PolyglotRequestor)", 1, source);
         }
         final CompiledCodeObject doItMethod = (CompiledCodeObject) methodNode.send(this, "generate");
 

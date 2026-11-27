@@ -56,6 +56,13 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             return getContext().squeakSocketContext;
         }
 
+        /* Sockets bypass Truffle's I/O policy, so honor the socket I/O permission of the context. */
+        protected final void checkSocketAccess() {
+            if (!getSocketContext().hasSocketAccess()) {
+                throw PrimitiveFailed.andTransferToInterpreter();
+            }
+        }
+
         /* Concatenates behind a boundary to keep string building out of compiled code. */
         @TruffleBoundary
         protected static final void logFiner(final String message, final Object value) {
@@ -77,6 +84,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimInitializeNetwork1Node extends AbstractNetworkPrimitiveNode implements Primitive1 {
         @Specialization
         protected final Object doWork(final Object receiver, final long resolverSemaIndex) {
+            checkSocketAccess();
             getResolver().initialize();
             if (resolverSemaIndex > 0) {
                 final int semaIndex = (int) resolverSemaIndex;
@@ -845,6 +853,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                         final long aWriteSemaphore,
                         @Bind final Node node,
                         @Cached final InlinedConditionProfile socketTypeProfile) {
+            checkSocketAccess();
 
             final SqueakSocket socket;
             try {
@@ -915,6 +924,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                         final long semaphoreIndex,
                         @Bind final Node node,
                         @Cached final InlinedConditionProfile socketTypeProfile) {
+            checkSocketAccess();
             final SqueakSocket socket;
             try {
                 if (socketTypeProfile.profile(node, socketType == 1)) {
@@ -966,6 +976,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
          */
         @Specialization(guards = "hostName.isByteType()")
         protected final Object doWork(final Object receiver, final NativeObject hostName) {
+            checkSocketAccess();
             if (LogUtils.SOCKET.isLoggable(Level.FINER)) {
                 logFiner("Starting lookup for host name ", hostName);
             }
@@ -984,6 +995,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
          */
         @Specialization(guards = "address.isByteType()")
         protected final Object doWork(final Object receiver, final NativeObject address) {
+            checkSocketAccess();
             if (LogUtils.SOCKET.isLoggable(Level.FINER)) {
                 logFiner("Starting lookup for address ", address);
             }

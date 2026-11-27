@@ -668,9 +668,15 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
      * Bytecode OSR support
      */
 
+    /* The pc gets 24 bits (more than 16 for very large methods), the sp the remaining 8. */
+    protected static final int encodeOSRTarget(final int pc, final int sp) {
+        assert 0 <= pc && pc <= 0xFFFFFF && 0 <= sp && sp <= 0xFF : "OSR target out of range";
+        return sp << 24 | pc;
+    }
+
     @Override
     public final Object executeOSR(final VirtualFrame osrFrame, final int targetPCAndSP, final Object interpreterState) {
-        return execute(osrFrame, targetPCAndSP & 0xFFFF, targetPCAndSP >>> 16);
+        return execute(osrFrame, targetPCAndSP & 0xFFFFFF, targetPCAndSP >>> 24);
     }
 
     @Override

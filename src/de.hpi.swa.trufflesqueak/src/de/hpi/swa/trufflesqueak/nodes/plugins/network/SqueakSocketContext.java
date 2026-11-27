@@ -51,7 +51,7 @@ public final class SqueakSocketContext implements Closeable {
     private final byte[] localHostName;
     private final boolean hasSocketAccess;
 
-    public SqueakSocketContext() {
+    public SqueakSocketContext(final boolean socketIOAllowed) {
         try {
             selector = Selector.open();
         } catch (final IOException e) {
@@ -60,11 +60,13 @@ public final class SqueakSocketContext implements Closeable {
 
         boolean socketAccess = false;
         String hostName = "unknown";
-        try {
-            hostName = InetAddress.getLocalHost().getHostName();
-            socketAccess = true;
-        } catch (final SecurityException | UnknownHostException e) {
-            LogUtils.MAIN.warning(e.toString());
+        if (socketIOAllowed) {
+            try {
+                hostName = InetAddress.getLocalHost().getHostName();
+                socketAccess = true;
+            } catch (final SecurityException | UnknownHostException e) {
+                LogUtils.MAIN.warning(e.toString());
+            }
         }
         localHostName = hostName.getBytes();
         hasSocketAccess = socketAccess;

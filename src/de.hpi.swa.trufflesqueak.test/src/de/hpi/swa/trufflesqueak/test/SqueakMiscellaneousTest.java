@@ -7,14 +7,28 @@
 package de.hpi.swa.trufflesqueak.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import org.junit.Test;
 
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.InvalidArrayIndexException;
+
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
+import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants.ObjectHeader;
 import de.hpi.swa.trufflesqueak.image.SqueakImageReader;
+import de.hpi.swa.trufflesqueak.interop.JavaObjectWrapper;
+import de.hpi.swa.trufflesqueak.interop.SqueakFileDetector;
+import de.hpi.swa.trufflesqueak.interop.SqueakLanguageView;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
@@ -22,6 +36,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.AbstractDecoder.ShadowBlockParams;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.DecoderSistaV1;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.DecoderV3PlusClosures;
+import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 @SuppressWarnings("static-method")
@@ -228,5 +243,40 @@ public final class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDum
         assertEquals(8873258, params.blockSize());
         assertEquals(0, params.numArgs());
         assertEquals(0, params.numCopied());
+    }
+
+    @Test
+    public void testLanguageViewOfValueFromOtherLanguage() {
+        // Truffle requests language views for primitives and values of other languages (here: host).
+        final Object hostObject = image.env.asGuestValue(new Object());
+        assertTrue(InteropLibrary.getUncached().hasLanguageId(SqueakLanguageView.create(hostObject)));
+    }
+
+    @Test
+    public void testLanguageViewDisplayStringWithoutSideEffects() {
+        assertEquals("42", InteropLibrary.getUncached().toDisplayString(SqueakLanguageView.create(42L), false));
+    }
+
+    @Test
+    public void testHostArrayIndexBeyondIntRange() throws Exception {
+        final InteropLibrary lib = InteropLibrary.getUncached();
+        final Object array = JavaObjectWrapper.wrap(new long[]{1, 2, 3});
+        assertEquals(2L, lib.readArrayElement(array, 1));
+        assertThrows(InvalidArrayIndexException.class, () -> lib.readArrayElement(array, 1L << 32));
+        assertThrows(InvalidArrayIndexException.class, () -> lib.writeArrayElement(array, (1L << 32) + 1, 4L));
+    }
+
+    @Test
+    public void testImageFileDetectionChecksFormat() throws Exception {
+        final Path path = Files.createTempFile("trufflesqueak-detector", ".image");
+        try {
+            final SqueakFileDetector detector = new SqueakFileDetector();
+            Files.write(path, ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putInt(SqueakImageConstants.SUPPORTED_IMAGE_FORMATS[0]).array());
+            assertEquals(SqueakLanguageConfig.MIME_TYPE, detector.findMimeType(image.env.getPublicTruffleFile(path.toString())));
+            Files.write(path, new byte[]{1, 2, 3, 4, 5}); // for example a disk image
+            assertNull(detector.findMimeType(image.env.getPublicTruffleFile(path.toString())));
+        } finally {
+            Files.delete(path);
+        }
     }
 }

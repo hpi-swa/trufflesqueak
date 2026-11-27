@@ -14,6 +14,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.Node;
@@ -57,8 +58,15 @@ public final class SqueakLanguageView implements TruffleObject {
 
     @ExportMessage
     protected abstract static class ToDisplayString {
+        /* Smalltalk's #asString can have side effects. */
+        @Specialization(guards = "!allowSideEffects")
+        protected static final Object toDisplayStringWithoutSideEffects(final SqueakLanguageView view, @SuppressWarnings("unused") final boolean allowSideEffects,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return lib.toDisplayString(view.delegate, false);
+        }
+
         @SuppressWarnings("unused")
-        @Specialization(guards = "guard.check(view.delegate)", assumptions = "dispatchNode.getAssumptions()", limit = "1")
+        @Specialization(guards = {"allowSideEffects", "guard.check(view.delegate)"}, assumptions = "dispatchNode.getAssumptions()", limit = "1")
         protected static final Object toDisplayString(final SqueakLanguageView view, final boolean allowSideEffects,
                         @Cached(value = "create(view.delegate)", allowUncached = true) final LookupClassGuard guard,
                         @Bind final Node node,
@@ -87,7 +95,7 @@ public final class SqueakLanguageView implements TruffleObject {
     private static boolean isPrimitiveOrFromOtherLanguage(final Object value) {
         final InteropLibrary interop = InteropLibrary.getFactory().getUncached(value);
         try {
-            return !interop.hasLanguageId(value) || interop.getLanguageId(value).equals(SqueakLanguageConfig.ID);
+            return !interop.hasLanguageId(value) || !interop.getLanguageId(value).equals(SqueakLanguageConfig.ID);
         } catch (final UnsupportedMessageException e) {
             throw shouldNotReachHere(e);
         }
