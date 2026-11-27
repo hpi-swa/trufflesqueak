@@ -17,6 +17,9 @@ import java.util.List;
 
 import org.junit.Test;
 
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
@@ -754,5 +757,17 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
         return image.asArrayOfObjects(NilObject.SINGLETON, BooleanObject.FALSE, BooleanObject.TRUE, image.characterClass, image.metaClass,
                         image.schedulerAssociation, image.smallIntegerClass, image.smalltalk,
                         image.specialObjectsArray);
+    }
+
+    @Test
+    public void testContextSlotsAboveStackPointerAreNil() {
+        final CompiledCodeObject method = makeMethod(makeHeaderWord(0, 4, 2, false, false), new Object[0], 0x7C);
+        final MaterializedFrame frame = Truffle.getRuntime().createMaterializedFrame(FrameAccess.newWith(NilObject.SINGLETON, null, NilObject.SINGLETON), method.getFrameDescriptor());
+        final ContextObject context = ContextObject.createMaterialized(frame);
+        FrameAccess.setStackValue(frame, 0, BooleanObject.TRUE);
+        FrameAccess.setStackValue(frame, 2, BooleanObject.TRUE); // stale value above the stack pointer
+        FrameAccess.setStackPointer(frame, 1);
+        assertSame(BooleanObject.TRUE, context.atTemp(0));
+        assertSame(NilObject.SINGLETON, context.atTemp(2));
     }
 }
