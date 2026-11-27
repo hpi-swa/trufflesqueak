@@ -8,6 +8,7 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.instrumentation.InstrumentableNode.WrapperNode;
 import com.oracle.truffle.api.nodes.NodeVisitor;
 import com.oracle.truffle.api.nodes.RootNode;
 
@@ -29,7 +30,7 @@ public abstract class AbstractRootNode extends RootNode {
 
     protected AbstractRootNode(final AbstractRootNode original) {
         super(original.getLanguage(SqueakLanguage.class), original.getFrameDescriptor());
-        interpreterNode = switch (original.interpreterNode) {
+        interpreterNode = switch (unwrap(original.interpreterNode)) {
             case InterpreterSistaV1Node n -> new InterpreterSistaV1Node(n);
             case InterpreterV3PlusClosuresNode n -> new InterpreterV3PlusClosuresNode(n);
             default -> throw CompilerDirectives.shouldNotReachHere("Unknown node " + original);
@@ -58,8 +59,13 @@ public abstract class AbstractRootNode extends RootNode {
     @Override
     protected final void visitCloneableNodes(final NodeVisitor visitor) {
         super.visitCloneableNodes(visitor);
-        if (interpreterNode instanceof final AbstractInterpreterNode n) {
+        if (unwrap(interpreterNode) instanceof final AbstractInterpreterNode n) {
             n.visitDataNodes(visitor);
         }
+    }
+
+    /* Instrumentation (e.g., RootTag listeners) can wrap the interpreter node. */
+    private static AbstractInterpreterInstrumentableNode unwrap(final AbstractInterpreterInstrumentableNode node) {
+        return node instanceof final WrapperNode wrapper ? (AbstractInterpreterInstrumentableNode) wrapper.getDelegateNode() : node;
     }
 }
