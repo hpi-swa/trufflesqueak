@@ -632,6 +632,9 @@ public final class JavaObjectWrapper implements TruffleObject {
 
     @ExportMessage
     Object readArrayElement(final long index, @Bind final Node node, @Cached final ReadArrayElementNode readNode) throws InvalidArrayIndexException, UnsupportedMessageException {
+        if (index != (int) index) { // Do not narrow out-of-range indices to valid ones.
+            throw InvalidArrayIndexException.create(index);
+        }
         try {
             return readNode.execute(node, wrappedObject, (int) index);
         } catch (final ArrayIndexOutOfBoundsException e) {
@@ -702,6 +705,9 @@ public final class JavaObjectWrapper implements TruffleObject {
     @ExportMessage
     void writeArrayElement(final long index, final Object value, @Bind final Node node, @Cached final WriteArrayElementNode writeNode)
                     throws InvalidArrayIndexException, UnsupportedMessageException, UnsupportedTypeException {
+        if (index != (int) index) { // Do not narrow out-of-range indices to valid ones.
+            throw InvalidArrayIndexException.create(index);
+        }
         try {
             writeNode.execute(node, wrappedObject, (int) index, value);
         } catch (final ArrayIndexOutOfBoundsException e) {
