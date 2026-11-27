@@ -235,7 +235,7 @@ public final class SqueakImageContext {
     public final BitBlt bitblt = new BitBlt(this);
     public String[] dropPluginFileList = ArrayUtils.EMPTY_STRINGS_ARRAY;
     public final JPEGReader jpegReader = new JPEGReader();
-    public final SqueakSocketContext squeakSocketContext = new SqueakSocketContext();
+    public final SqueakSocketContext squeakSocketContext;
     public final Zip zip = new Zip();
 
     public SqueakImageContext(final SqueakLanguage squeakLanguage, final SqueakLanguage.Env environment) {
@@ -244,6 +244,7 @@ public final class SqueakImageContext {
         isHeadless = options.isHeadless();
         maxContextStackDepth = options.maxContextStackDepth();
         patch(environment);
+        squeakSocketContext = new SqueakSocketContext(env.isSocketIOAllowed());
         interrupt = new CheckForInterruptsState(this);
         objectGraphUtils = new ObjectGraphUtils(this);
         SqueakMessageInterceptor.enableIfRequested(environment);
