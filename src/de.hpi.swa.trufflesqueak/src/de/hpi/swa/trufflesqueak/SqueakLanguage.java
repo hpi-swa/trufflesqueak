@@ -66,7 +66,8 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
 
     @Override
     protected boolean isThreadAccessAllowed(final Thread thread, final boolean singleThreaded) {
-        return true; // TODO: Experimental, make TruffleSqueak work in multiple threads.
+        /* Interpreter and image state are not synchronized, so allow only one thread at a time. */
+        return singleThreaded;
     }
 
     @Override
