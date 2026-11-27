@@ -120,6 +120,30 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    /*
+     * Values of an inner context must not escape it: while it is entered, extract a host value that
+     * does not depend on it (as ConvertToSqueakNode would convert it), then convert that value in the
+     * outer context.
+     */
+    private static Object toHostValue(final Object value) {
+        final InteropLibrary lib = InteropLibrary.getUncached(value);
+        try {
+            if (lib.isBoolean(value)) {
+                return lib.asBoolean(value);
+            } else if (lib.isString(value)) {
+                return lib.asString(value);
+            } else if (lib.fitsInLong(value)) {
+                return lib.asLong(value);
+            } else if (lib.fitsInDouble(value)) {
+                return lib.asDouble(value);
+            } else {
+                return NilObject.SINGLETON;
+            }
+        } catch (final UnsupportedMessageException e) {
+            throw CompilerDirectives.shouldNotReachHere(e);
+        }
+    }
+
     protected abstract static class AbstractEvalStringPrimitiveNode extends AbstractPrimitiveNode {
         protected static final Object evalString(final Node node, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject) {
             return evalString(node, languageIdOrMimeTypeObj, sourceObject, ArrayUtils.EMPTY_STRINGS_ARRAY, ArrayUtils.EMPTY_ARRAY);
@@ -192,21 +216,23 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                         @Bind final Node node,
                         @Cached final ConvertToSqueakNode convertNode) {
             final TruffleContext innerContext = getContext().env.newInnerContextBuilder().initializeCreatorContext(true).inheritAllAccess(true).build();
+            final Object result;
             final Object p = innerContext.enter(this);
             try {
-                return convertNode.executeConvert(node, evalString(null, languageIdOrMimeTypeObj, sourceObject));
+                result = toHostValue(evalString(null, languageIdOrMimeTypeObj, sourceObject));
             } finally {
                 innerContext.leave(this, p);
                 innerContext.close();
             }
+            return convertNode.executeConvert(node, result);
         }
     }
 
     protected abstract static class AbstractEvalFilePrimitiveNode extends AbstractPrimitiveNode {
-        protected final Object evalFile(final NativeObject languageIdOrMimeTypeObj, final NativeObject path) {
+        protected static final Object evalFile(final Node node, final NativeObject languageIdOrMimeTypeObj, final NativeObject path) {
             final String languageIdOrMimeType = languageIdOrMimeTypeObj.asStringUnsafe();
             final String pathString = path.asStringUnsafe();
-            final TruffleLanguage.Env env = getContext().env;
+            final TruffleLanguage.Env env = getContext(node).env;
             try {
                 final boolean mimeType = isMimeType(languageIdOrMimeType);
                 final String lang = mimeType ? findLanguageByMimeType(env, languageIdOrMimeType) : languageIdOrMimeType;
@@ -229,7 +255,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         protected final Object doEval(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject path,
                         @Bind final Node node,
                         @Cached final WrapToSqueakNode wrapNode) {
-            return wrapNode.executeWrap(node, evalFile(languageIdOrMimeTypeObj, path));
+            return wrapNode.executeWrap(node, evalFile(node, languageIdOrMimeTypeObj, path));
         }
     }
 
@@ -242,13 +268,16 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                         @Bind final Node node,
                         @Cached final ConvertToSqueakNode convertNode) {
             final TruffleContext innerContext = getContext().env.newInnerContextBuilder().initializeCreatorContext(true).inheritAllAccess(true).build();
+            final Object result;
             final Object p = innerContext.enter(null);
             try {
-                return convertNode.executeConvert(node, evalFile(languageIdOrMimeTypeObj, path));
+                /* Look up the inner context, not the one of this node. */
+                result = toHostValue(evalFile(null, languageIdOrMimeTypeObj, path));
             } finally {
                 innerContext.leave(null, p);
                 innerContext.close();
             }
+            return convertNode.executeConvert(node, result);
         }
     }
 
