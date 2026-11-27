@@ -399,7 +399,7 @@ public final class SqueakImageContext {
         }
 
         final String sourceCode = "[" + argsPrefix + " [ " + blockBody + " ] on: Error do: [ :e | Interop throwException: e ]]";
-        return DoItRootNode.create(this, language, (BlockClosureObject) evaluateUninterruptably(sourceCode));
+        return DoItRootNode.create(this, language, sourceCode);
     }
 
     private static boolean isFileInFormat(final Source source) {

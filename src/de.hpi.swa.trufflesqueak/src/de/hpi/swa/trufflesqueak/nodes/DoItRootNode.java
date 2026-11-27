@@ -9,6 +9,8 @@ package de.hpi.swa.trufflesqueak.nodes;
 import java.util.logging.Level;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
@@ -35,16 +37,32 @@ import de.hpi.swa.trufflesqueak.util.LogUtils;
 
 public abstract class DoItRootNode extends RootNode {
     private final SqueakImageContext image;
-    private final BlockClosureObject blockClosure;
+    private final String sourceCode;
+    @CompilationFinal private BlockClosureObject blockClosure;
 
-    protected DoItRootNode(final SqueakImageContext image, final TruffleLanguage<?> language, final BlockClosureObject closure) {
+    protected DoItRootNode(final SqueakImageContext image, final TruffleLanguage<?> language, final String sourceCode) {
         super(language);
         this.image = image;
-        blockClosure = closure;
+        this.sourceCode = sourceCode;
     }
 
-    public static DoItRootNode create(final SqueakImageContext image, final SqueakLanguage language, final BlockClosureObject closure) {
-        return DoItRootNodeGen.create(image, (TruffleLanguage<?>) language, closure);
+    public static DoItRootNode create(final SqueakImageContext image, final SqueakLanguage language, final String sourceCode) {
+        return DoItRootNodeGen.create(image, (TruffleLanguage<?>) language, sourceCode);
+    }
+
+    /* Parsing must not run Smalltalk code, so load the image and compile the DoIt when it first runs. */
+    private BlockClosureObject getBlockClosure() {
+        if (blockClosure == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            blockClosure = compileBlockClosure();
+        }
+        return blockClosure;
+    }
+
+    @TruffleBoundary
+    private BlockClosureObject compileBlockClosure() {
+        image.ensureLoaded();
+        return (BlockClosureObject) image.evaluateUninterruptably(sourceCode);
     }
 
     @SuppressWarnings("truffle-static-method")
@@ -53,12 +71,13 @@ public abstract class DoItRootNode extends RootNode {
                     @Bind final Node node,
                     @Cached final WrapToSqueakNode wrapNode,
                     @Cached final PrimClosureValueWithArgsNode primitiveNode) {
-        if (blockClosure.getNumArgs() != frame.getArguments().length) {
+        final BlockClosureObject closure = getBlockClosure();
+        if (closure.getNumArgs() != frame.getArguments().length) {
             throw SqueakException.create("Wrong number of arguments for DoItRootNode");
         }
         final var state = image.suspendNormalExecution();
         try {
-            return primitiveNode.execute(image.externalSenderFrame, blockClosure, wrapNode.executeWrap(node, frame.getArguments()));
+            return primitiveNode.execute(image.externalSenderFrame, closure, wrapNode.executeWrap(node, frame.getArguments()));
         } catch (final ProcessSwitch ps) {
             CompilerDirectives.transferToInterpreter();
             final var getNextActiveContextNode = GetNextActiveContextNode.getUncached();
