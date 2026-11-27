@@ -87,7 +87,7 @@ public final class SqueakLanguageView implements TruffleObject {
     private static boolean isPrimitiveOrFromOtherLanguage(final Object value) {
         final InteropLibrary interop = InteropLibrary.getFactory().getUncached(value);
         try {
-            return !interop.hasLanguageId(value) || interop.getLanguageId(value).equals(SqueakLanguageConfig.ID);
+            return !interop.hasLanguageId(value) || !interop.getLanguageId(value).equals(SqueakLanguageConfig.ID);
         } catch (final UnsupportedMessageException e) {
             throw shouldNotReachHere(e);
         }

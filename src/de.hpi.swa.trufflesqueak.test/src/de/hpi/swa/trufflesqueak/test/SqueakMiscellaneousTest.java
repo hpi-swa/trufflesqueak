@@ -12,9 +12,12 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
+import com.oracle.truffle.api.interop.InteropLibrary;
+
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants.ObjectHeader;
 import de.hpi.swa.trufflesqueak.image.SqueakImageReader;
+import de.hpi.swa.trufflesqueak.interop.SqueakLanguageView;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
@@ -228,5 +231,12 @@ public final class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDum
         assertEquals(8873258, params.blockSize());
         assertEquals(0, params.numArgs());
         assertEquals(0, params.numCopied());
+    }
+
+    @Test
+    public void testLanguageViewOfValueFromOtherLanguage() {
+        // Truffle requests language views for primitives and values of other languages (here: host).
+        final Object hostObject = image.env.asGuestValue(new Object());
+        assertTrue(InteropLibrary.getUncached().hasLanguageId(SqueakLanguageView.create(hostObject)));
     }
 }
