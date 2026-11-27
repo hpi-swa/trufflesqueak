@@ -12,6 +12,7 @@ import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -105,17 +106,20 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveEnvironmentAt")
     protected abstract static class PrimEnvironmentAtNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-        protected static final Object[] ENVIRONMENT_KEYS = System.getenv().keySet().toArray();
-
-        @Specialization(guards = "inBounds1(index, ENVIRONMENT_KEYS.length)")
+        /*
+         * Enumerate the environment the context grants (EnvironmentAccess), not the host process
+         * environment at class initialization (image build time in native images).
+         */
+        @Specialization
         @TruffleBoundary
         protected final NativeObject doAt(@SuppressWarnings("unused") final Object receiver, final long index) {
             final SqueakImageContext image = getContext();
-            final String key = ENVIRONMENT_KEYS[(int) index - 1].toString();
-            assert key != null : "key should not be null";
-            final String value = systemGetEnv(image.env, key);
-            assert value != null : "value should not be null";
-            return image.asByteString(key + "=" + value);
+            final Object[] entries = image.env.getEnvironment().entrySet().toArray();
+            if (index < 1 || index > entries.length) {
+                throw PrimitiveFailed.BAD_INDEX;
+            }
+            final Map.Entry<?, ?> entry = (Map.Entry<?, ?>) entries[(int) index - 1];
+            return image.asByteString(entry.getKey() + "=" + entry.getValue());
         }
     }
 
