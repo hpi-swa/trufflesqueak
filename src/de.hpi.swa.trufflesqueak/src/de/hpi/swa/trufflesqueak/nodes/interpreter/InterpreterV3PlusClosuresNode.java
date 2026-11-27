@@ -702,7 +702,7 @@ public final class InterpreterV3PlusClosuresNode extends AbstractInterpreterNode
                                 if (CompilerDirectives.injectBranchProbability(LoopCounter.CHECK_LOOP_PROBABILITY, counter >= LoopCounter.CHECK_LOOP_STRIDE)) {
                                     LoopNode.reportLoopCount(this, counter);
                                     if (CompilerDirectives.inInterpreter() && BytecodeOSRNode.pollOSRBackEdge(this, counter)) {
-                                        final Object osrReturnValue = BytecodeOSRNode.tryOSR(this, ((sp & 0xFF) << 16) | pc, null, null, frame);
+                                        final Object osrReturnValue = BytecodeOSRNode.tryOSR(this, encodeOSRTarget(pc, sp), null, null, frame);
                                         if (osrReturnValue != null) {
                                             assert !FrameAccess.hasModifiedSender(frame);
                                             FrameAccess.terminateFrame(frame);
