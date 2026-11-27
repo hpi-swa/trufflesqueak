@@ -48,7 +48,7 @@ public abstract class ConvertToSqueakNode extends AbstractNode {
                     @CachedLibrary("value") final InteropLibrary lib) {
         final SqueakImageContext image = getContext();
         try {
-            return image.asByteString(lib.asString(value));
+            return image.asString(lib.asString(value));
         } catch (final UnsupportedMessageException e) {
             CompilerDirectives.transferToInterpreter();
             LogUtils.INTEROP.warning(e.toString());

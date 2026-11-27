@@ -1296,8 +1296,16 @@ public final class SqueakImageContext {
         return NativeObject.newNativeInts(getWideStringClass(), MiscUtils.stringToCodePointsArray(value));
     }
 
+    /*
+     * Smalltalk strings hold characters: ByteStrings the character codes 0-255 and WideStrings code
+     * points. (asByteString(String) instead encodes UTF-8, as file and OS primitives expect.)
+     */
     public NativeObject asString(final String value, final InlinedConditionProfile wideStringProfile, final Node node) {
-        return wideStringProfile.profile(node, NativeObject.needsWideString(value)) ? asWideString(value) : asByteString(value);
+        return wideStringProfile.profile(node, NativeObject.needsWideString(value)) ? asWideString(value) : asByteString(MiscUtils.stringToLatin1Bytes(value));
+    }
+
+    public NativeObject asString(final String value) {
+        return NativeObject.needsWideString(value) ? asWideString(value) : asByteString(MiscUtils.stringToLatin1Bytes(value));
     }
 
     public PointersObject asPoint(final AbstractPointersObjectWriteNode writeNode, final Object xPos, final Object yPos) {

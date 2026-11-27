@@ -116,7 +116,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "languageId.isByteType()")
         protected final boolean doIsPolyglotEvalAllowed(@SuppressWarnings("unused") final Object receiver, final NativeObject languageId) {
             final TruffleLanguage.Env env = getContext().env;
-            return BooleanObject.wrap(env.isPolyglotEvalAllowed(env.getPublicLanguages().get(languageId.asStringUnsafe())));
+            return BooleanObject.wrap(env.isPolyglotEvalAllowed(env.getPublicLanguages().get(languageId.asStringFromByteString())));
         }
     }
 
@@ -127,8 +127,8 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
         protected static final Object evalString(final Node node, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject,
                         final String[] argumentNames, final Object[] argumentValues) {
-            final String languageIdOrMimeType = languageIdOrMimeTypeObj.asStringUnsafe();
-            final String sourceText = sourceObject.asStringUnsafe();
+            final String languageIdOrMimeType = languageIdOrMimeTypeObj.asStringFromByteString();
+            final String sourceText = sourceObject.asStringFromByteString();
             final TruffleLanguage.Env env = getContext(node).env;
             try {
                 final boolean mimeType = isMimeType(languageIdOrMimeType);
@@ -173,7 +173,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             for (int i = 0; i < namesObjects.length; i++) {
                 final Object name = namesObjects[i];
                 if (name instanceof final NativeObject o) {
-                    names[i] = o.asStringUnsafe();
+                    names[i] = o.asStringFromByteString();
                 } else {
                     throw PrimitiveFailed.andTransferToInterpreter();
                 }
@@ -204,8 +204,8 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
     protected abstract static class AbstractEvalFilePrimitiveNode extends AbstractPrimitiveNode {
         protected final Object evalFile(final NativeObject languageIdOrMimeTypeObj, final NativeObject path) {
-            final String languageIdOrMimeType = languageIdOrMimeTypeObj.asStringUnsafe();
-            final String pathString = path.asStringUnsafe();
+            final String languageIdOrMimeType = languageIdOrMimeTypeObj.asStringFromByteString();
+            final String pathString = path.asStringFromByteString();
             final TruffleLanguage.Env env = getContext().env;
             try {
                 final boolean mimeType = isMimeType(languageIdOrMimeType);
@@ -278,7 +278,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary
         @Specialization(guards = "languageId.isByteType()")
         protected final Object doGet(@SuppressWarnings("unused") final Object receiver, final NativeObject languageId) {
-            return JavaObjectWrapper.wrap(getContext().env.getPublicLanguages().get(languageId.asStringUnsafe()));
+            return JavaObjectWrapper.wrap(getContext().env.getPublicLanguages().get(languageId.asStringFromByteString()));
         }
     }
 
@@ -305,7 +305,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary
         @Specialization(guards = "languageId.isByteType()")
         protected final Object doGet(@SuppressWarnings("unused") final Object receiver, final NativeObject languageId) {
-            return JavaObjectWrapper.wrap(getContext().env.getInternalLanguages().get(languageId.asStringUnsafe()));
+            return JavaObjectWrapper.wrap(getContext().env.getInternalLanguages().get(languageId.asStringFromByteString()));
         }
     }
 
@@ -343,7 +343,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary
         public final Object importSymbol(@SuppressWarnings("unused") final Object receiver, final NativeObject name) {
             try {
-                return NilObject.nullToNil(getContext().env.importSymbol(name.asStringUnsafe()));
+                return NilObject.nullToNil(getContext().env.importSymbol(name.asStringFromByteString()));
             } catch (final SecurityException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
             }
@@ -357,7 +357,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary
         public final Object exportSymbol(@SuppressWarnings("unused") final Object receiver, final NativeObject name, final Object value) {
             try {
-                getContext().env.exportSymbol(name.asStringUnsafe(), value);
+                getContext().env.exportSymbol(name.asStringFromByteString(), value);
                 return value;
             } catch (final SecurityException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
@@ -472,7 +472,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         protected final NativeObject doAsString(@SuppressWarnings("unused") final Object receiver, final Object object,
                         @CachedLibrary("object") final InteropLibrary lib) {
             try {
-                return getContext().asByteString(lib.asString(object));
+                return getContext().asString(lib.asString(object));
             } catch (final UnsupportedMessageException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
             }
@@ -973,7 +973,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 final Object[] byteStrings = new Object[size];
                 for (int i = 0; i < size; i++) {
                     final Object memberName = membersLib.readArrayElement(members, i);
-                    byteStrings[i] = image.asByteString(memberNameLib.asString(memberName));
+                    byteStrings[i] = image.asString(memberNameLib.asString(memberName));
                 }
                 return image.asArrayOfObjects(byteStrings);
             } catch (final UnsupportedMessageException | InvalidArrayIndexException e) {
@@ -1013,7 +1013,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"member.isByteType()"}, limit = "3")
         protected static final boolean doHasMemberReadSideEffects(@SuppressWarnings("unused") final Object receiver, final Object object, final NativeObject member,
                         @CachedLibrary("object") final InteropLibrary lib) {
-            return BooleanObject.wrap(lib.hasMemberReadSideEffects(object, member.asStringUnsafe()));
+            return BooleanObject.wrap(lib.hasMemberReadSideEffects(object, member.asStringFromByteString()));
         }
     }
 
@@ -1023,7 +1023,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"member.isByteType()"}, limit = "3")
         protected static final boolean doHasMemberWriteSideEffects(@SuppressWarnings("unused") final Object receiver, final Object object, final NativeObject member,
                         @CachedLibrary("object") final InteropLibrary lib) {
-            return BooleanObject.wrap(lib.hasMemberWriteSideEffects(object, member.asStringUnsafe()));
+            return BooleanObject.wrap(lib.hasMemberWriteSideEffects(object, member.asStringFromByteString()));
         }
     }
 
@@ -1033,7 +1033,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"member.isByteType()"}, limit = "3")
         protected static final boolean doIsMemberExisting(@SuppressWarnings("unused") final Object receiver, final Object object, final NativeObject member,
                         @CachedLibrary("object") final InteropLibrary lib) {
-            return BooleanObject.wrap(lib.isMemberExisting(object, member.asStringUnsafe()));
+            return BooleanObject.wrap(lib.isMemberExisting(object, member.asStringFromByteString()));
         }
     }
 
@@ -1043,7 +1043,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"member.isByteType()"}, limit = "3")
         protected static final boolean doIsMemberInsertable(@SuppressWarnings("unused") final Object receiver, final Object object, final NativeObject member,
                         @CachedLibrary("object") final InteropLibrary lib) {
-            return BooleanObject.wrap(lib.isMemberInsertable(object, member.asStringUnsafe()));
+            return BooleanObject.wrap(lib.isMemberInsertable(object, member.asStringFromByteString()));
         }
     }
 
@@ -1053,7 +1053,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"member.isByteType()"}, limit = "3")
         protected static final boolean doIsMemberInternal(@SuppressWarnings("unused") final Object receiver, final Object object, final NativeObject member,
                         @CachedLibrary("object") final InteropLibrary lib) {
-            return BooleanObject.wrap(lib.isMemberInternal(object, member.asStringUnsafe()));
+            return BooleanObject.wrap(lib.isMemberInternal(object, member.asStringFromByteString()));
         }
     }
 
@@ -1063,7 +1063,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"member.isByteType()"}, limit = "3")
         protected static final boolean doIsMemberInvocable(@SuppressWarnings("unused") final Object receiver, final Object object, final NativeObject member,
                         @CachedLibrary("object") final InteropLibrary lib) {
-            return BooleanObject.wrap(lib.isMemberInvocable(object, member.asStringUnsafe()));
+            return BooleanObject.wrap(lib.isMemberInvocable(object, member.asStringFromByteString()));
         }
     }
 
@@ -1073,7 +1073,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"member.isByteType()"}, limit = "3")
         protected static final boolean doIsMemberModifiable(@SuppressWarnings("unused") final Object receiver, final Object object, final NativeObject member,
                         @CachedLibrary("object") final InteropLibrary lib) {
-            return BooleanObject.wrap(lib.isMemberModifiable(object, member.asStringUnsafe()));
+            return BooleanObject.wrap(lib.isMemberModifiable(object, member.asStringFromByteString()));
         }
     }
 
@@ -1083,7 +1083,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"member.isByteType()"}, limit = "3")
         protected static final boolean doIsMemberReadable(@SuppressWarnings("unused") final Object receiver, final Object object, final NativeObject member,
                         @CachedLibrary("object") final InteropLibrary lib) {
-            return BooleanObject.wrap(lib.isMemberReadable(object, member.asStringUnsafe()));
+            return BooleanObject.wrap(lib.isMemberReadable(object, member.asStringFromByteString()));
         }
     }
 
@@ -1093,7 +1093,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"member.isByteType()"}, limit = "3")
         protected static final boolean doIsMemberRemovable(@SuppressWarnings("unused") final Object receiver, final Object object, final NativeObject member,
                         @CachedLibrary("object") final InteropLibrary lib) {
-            return BooleanObject.wrap(lib.isMemberRemovable(object, member.asStringUnsafe()));
+            return BooleanObject.wrap(lib.isMemberRemovable(object, member.asStringFromByteString()));
         }
     }
 
@@ -1103,21 +1103,21 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"member.isByteType()"}, limit = "3")
         protected static final boolean doIsMemberWritable(@SuppressWarnings("unused") final Object receiver, final Object object, final NativeObject member,
                         @CachedLibrary("object") final InteropLibrary lib) {
-            return BooleanObject.wrap(lib.isMemberWritable(object, member.asStringUnsafe()));
+            return BooleanObject.wrap(lib.isMemberWritable(object, member.asStringFromByteString()));
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveInvokeMember")
     protected abstract static class PrimInvokeMemberNode extends AbstractPrimitiveNode implements Primitive3WithFallback {
-        @Specialization(guards = {"member.isByteType()", "lib.isMemberInvocable(object, member.asStringUnsafe())"}, limit = "3")
+        @Specialization(guards = {"member.isByteType()", "lib.isMemberInvocable(object, member.asStringFromByteString())"}, limit = "3")
         protected static final Object doInvokeMember(@SuppressWarnings("unused") final Object receiver, final Object object, final NativeObject member, final ArrayObject argumentArray,
                         @Bind final Node node,
                         @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
                         @Cached final WrapToSqueakNode wrapNode,
                         @CachedLibrary("object") final InteropLibrary lib) {
             try {
-                return wrapNode.executeWrap(node, lib.invokeMember(object, member.asStringUnsafe(), getObjectArrayNode.execute(node, argumentArray)));
+                return wrapNode.executeWrap(node, lib.invokeMember(object, member.asStringFromByteString(), getObjectArrayNode.execute(node, argumentArray)));
             } catch (final Exception e) {
                 /*
                  * Workaround: catch all exceptions raised by other languages to avoid crashes (see
@@ -1131,13 +1131,13 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveReadMember")
     protected abstract static class PrimReadMemberNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
-        @Specialization(guards = {"member.isByteType()", "lib.isMemberReadable(object, member.asStringUnsafe())"}, limit = "3")
+        @Specialization(guards = {"member.isByteType()", "lib.isMemberReadable(object, member.asStringFromByteString())"}, limit = "3")
         protected static final Object doReadMember(@SuppressWarnings("unused") final Object receiver, final Object object, final NativeObject member,
                         @Bind final Node node,
                         @Cached final WrapToSqueakNode wrapNode,
                         @CachedLibrary("object") final InteropLibrary lib) {
             try {
-                return wrapNode.executeWrap(node, lib.readMember(object, member.asStringUnsafe()));
+                return wrapNode.executeWrap(node, lib.readMember(object, member.asStringFromByteString()));
             } catch (UnknownIdentifierException | UnsupportedMessageException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
             }
@@ -1147,10 +1147,10 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveRemoveMember")
     protected abstract static class PrimRemoveMemberNode extends AbstractPrimitiveNode implements Primitive2WithFallback {
-        @Specialization(guards = {"member.isByteType()", "lib.isMemberRemovable(object, member.asStringUnsafe())"}, limit = "3")
+        @Specialization(guards = {"member.isByteType()", "lib.isMemberRemovable(object, member.asStringFromByteString())"}, limit = "3")
         protected static final Object doRemove(@SuppressWarnings("unused") final Object receiver, final Object object, final NativeObject member,
                         @CachedLibrary("object") final InteropLibrary lib) {
-            final String identifier = member.asStringUnsafe();
+            final String identifier = member.asStringFromByteString();
             try {
                 lib.removeMember(object, identifier);
                 return object;
@@ -1163,11 +1163,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveWriteMember")
     protected abstract static class PrimWriteMemberNode extends AbstractPrimitiveNode implements Primitive3WithFallback {
-        @Specialization(guards = {"member.isByteType()", "lib.isMemberWritable(object, member.asStringUnsafe())"}, limit = "3")
+        @Specialization(guards = {"member.isByteType()", "lib.isMemberWritable(object, member.asStringFromByteString())"}, limit = "3")
         protected static final Object doWrite(@SuppressWarnings("unused") final Object receiver, final Object object, final NativeObject member, final Object value,
                         @CachedLibrary("object") final InteropLibrary lib) {
             try {
-                lib.writeMember(object, member.asStringUnsafe(), value);
+                lib.writeMember(object, member.asStringFromByteString(), value);
                 return value;
             } catch (UnknownIdentifierException | UnsupportedMessageException | UnsupportedTypeException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
@@ -1980,8 +1980,8 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimThrowSyntaxErrorNode extends AbstractPrimitiveNode implements Primitive3WithFallback {
         @Specialization(guards = {"messageObject.isByteType()", "sourceObject.isByteType()"})
         protected static final Object doThrowSyntaxError(@SuppressWarnings("unused") final Object receiver, final NativeObject messageObject, final long position, final NativeObject sourceObject) {
-            final String message = messageObject.asStringUnsafe();
-            final String source = sourceObject.asStringUnsafe();
+            final String message = messageObject.asStringFromByteString();
+            final String source = sourceObject.asStringFromByteString();
             throw new SqueakSyntaxError(message, (int) position, source);
         }
     }
@@ -2062,7 +2062,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary
         @Specialization(guards = "languageId.isByteType()")
         protected final Object getLanguageView(@SuppressWarnings("unused") final Object receiver, final NativeObject languageId, final Object target) {
-            return NilObject.nullToNil(getInstrumentEnv().getLanguageView(getContext().env.getPublicLanguages().get(languageId.asStringUnsafe()), target));
+            return NilObject.nullToNil(getInstrumentEnv().getLanguageView(getContext().env.getPublicLanguages().get(languageId.asStringFromByteString()), target));
         }
     }
 
@@ -2072,7 +2072,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary
         @Specialization(guards = "languageId.isByteType()")
         protected final Object getScope(@SuppressWarnings("unused") final Object receiver, final NativeObject languageId) {
-            return NilObject.nullToNil(getInstrumentEnv().getScope(getContext().env.getPublicLanguages().get(languageId.asStringUnsafe())));
+            return NilObject.nullToNil(getInstrumentEnv().getScope(getContext().env.getPublicLanguages().get(languageId.asStringFromByteString())));
         }
     }
 
@@ -2085,7 +2085,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimAddToHostClassPathNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = {"value.isByteType()"})
         protected final Object doAddToHostClassPath(final Object receiver, final NativeObject value) {
-            final String path = value.asStringUnsafe();
+            final String path = value.asStringFromByteString();
             final TruffleLanguage.Env env = getContext().env;
             try {
                 env.addToHostClassPath(env.getPublicTruffleFile(path));
@@ -2110,7 +2110,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimLookupHostSymbolNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = {"getContext().env.isHostLookupAllowed()", "value.isByteType()"})
         protected final Object doLookupHostSymbol(@SuppressWarnings("unused") final Object receiver, final NativeObject value) {
-            final String symbolName = value.asStringUnsafe();
+            final String symbolName = value.asStringFromByteString();
             try {
                 return NilObject.nullToNil(getContext().env.lookupHostSymbol(symbolName));
             } catch (final RuntimeException e) {
@@ -2127,7 +2127,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary
         @Specialization(guards = {"value.isByteType()"})
         protected final Object doLoadLanguageClass(@SuppressWarnings("unused") final Object receiver, final NativeObject value) {
-            final String symbolName = value.asStringUnsafe();
+            final String symbolName = value.asStringFromByteString();
             try {
                 final Class<?> languageSymbol = (Class<?>) LOAD_LANGUAGE_CLASS.invoke(null, symbolName);
                 if (languageSymbol != null) {
@@ -2247,7 +2247,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimToJavaStringNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "target.isByteType()")
         protected static final String bytesToString(@SuppressWarnings("unused") final Object receiver, final NativeObject target) {
-            return target.asStringUnsafe();
+            return target.asStringFromByteString();
         }
 
         @Specialization(guards = "target.isIntType()")

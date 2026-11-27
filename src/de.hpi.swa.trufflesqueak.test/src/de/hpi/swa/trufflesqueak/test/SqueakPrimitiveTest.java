@@ -158,4 +158,12 @@ public final class SqueakPrimitiveTest extends AbstractSqueakTestCaseWithDummyIm
             }
         }
     }
+
+    @Test
+    public void testInteropStringsKeepTheirCharacters() {
+        // ByteStrings hold character codes 0-255, not UTF-8.
+        final NativeObject string = (NativeObject) WrapToSqueakNode.executeUncached("caf\u00e9");
+        assertArrayEquals(new byte[]{'c', 'a', 'f', (byte) 0xE9}, string.getByteStorage());
+        assertEquals("caf\u00e9", string.asStringFromByteString());
+    }
 }
