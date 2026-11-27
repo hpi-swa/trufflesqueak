@@ -7,6 +7,7 @@
 package de.hpi.swa.trufflesqueak.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -769,5 +770,14 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
         FrameAccess.setStackPointer(frame, 1);
         assertSame(BooleanObject.TRUE, context.atTemp(0));
         assertSame(NilObject.SINGLETON, context.atTemp(2));
+    }
+
+    @Test
+    public void testBytecodeWriteResetsSource() {
+        // 0 <70> self, 1 <7C> returnTop
+        final CompiledCodeObject method = makeMethod(makeHeaderWord(0, 0, 2, false, false), new Object[0], 0x70, 0x7C);
+        final String oldContents = method.getSource().getCharacters().toString();
+        method.atput0(method.getBytecodeOffset(), 0x71); // self -> true
+        assertNotEquals(oldContents, method.getSource().getCharacters().toString());
     }
 }
