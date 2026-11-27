@@ -510,7 +510,8 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     public Object getAndResolveLiteral(final long longIndex) {
         final Object litVar = getLiteral(longIndex);
         if (litVar instanceof final AbstractSqueakObjectWithClassAndHash obj && !obj.isNotForwarded()) {
-            CompilerDirectives.transferToInterpreter();
+            /* Literals are compilation final: invalidate code that folded the forwarded one. */
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             final AbstractSqueakObjectWithClassAndHash forwarded = obj.getForwardingPointer();
             setLiteral(longIndex, forwarded);
             return forwarded;

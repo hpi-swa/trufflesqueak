@@ -323,7 +323,8 @@ public abstract class AbstractInterpreterNode extends AbstractInterpreterInstrum
         if (litVar instanceof final AbstractSqueakObjectWithClassAndHash obj) {
             enter(currentPC, getProfile(currentPC), BRANCH1);
             if (!obj.isNotForwarded()) {
-                CompilerDirectives.transferToInterpreter();
+                /* Literals are compilation final: invalidate code that folded the forwarded one. */
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 final AbstractSqueakObjectWithClassAndHash forwarded = obj.getForwardingPointer();
                 code.setLiteral(longIndex, forwarded);
                 return forwarded;
