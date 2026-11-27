@@ -52,14 +52,12 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
 
     @Override
     protected CallTarget parse(final ParsingRequest request) {
+        /* Only build the targets: they load the image and compile Smalltalk code when executed. */
         final SqueakImageContext image = SqueakImageContext.getSlow();
         final Source source = request.getSource();
-        final String imageOrSourcePath = source.getCharacters().toString();
         if (SqueakLanguageConfig.IMAGE_SOURCE_NAME.equals(source.getName())) {
-            image.setImagePath(imageOrSourcePath);
-            return image.getSqueakImage().asCallTarget();
+            return SqueakImage.createLoadCallTarget(image, source.getCharacters().toString());
         } else {
-            image.ensureLoaded();
             return image.getDoItContextNode(request).getCallTarget();
         }
     }

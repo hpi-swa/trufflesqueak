@@ -22,6 +22,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.AbstractDecoder.ShadowBlockParams;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.DecoderSistaV1;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.DecoderV3PlusClosures;
+import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 @SuppressWarnings("static-method")
@@ -228,5 +229,11 @@ public final class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDum
         assertEquals(8873258, params.blockSize());
         assertEquals(0, params.numArgs());
         assertEquals(0, params.numCopied());
+    }
+
+    @Test
+    public void testParsingDoesNotRunSmalltalkCode() {
+        // The dummy image has no Smalltalk compiler, so this only works if parsing does not compile.
+        assertTrue(context.parse(SqueakLanguageConfig.ID, "3 + 4").canExecute());
     }
 }
