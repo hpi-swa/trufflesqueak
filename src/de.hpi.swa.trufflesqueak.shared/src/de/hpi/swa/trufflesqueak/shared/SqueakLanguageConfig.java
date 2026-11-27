@@ -13,6 +13,8 @@ public final class SqueakLanguageConfig {
     public static final String IMAGE_SOURCE_NAME = "<smalltalk image>";
     public static final String IMPLEMENTATION_NAME = "TruffleSqueak";
     public static final String MIME_TYPE = "application/x-smalltalk";
+    /* Binary image files (byte-based sources). */
+    public static final String IMAGE_MIME_TYPE = "application/x-smalltalk-image";
     public static final String NAME = "Squeak/Smalltalk";
     public static final String ST_MIME_TYPE = "text/x-smalltalk";
     public static final String VERSION = "25.6.5.1"; // sync with Truffle import

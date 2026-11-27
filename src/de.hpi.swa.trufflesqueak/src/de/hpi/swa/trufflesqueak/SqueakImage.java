@@ -27,23 +27,32 @@ public final class SqueakImage implements TruffleObject {
         this.image = image;
     }
 
-    private static class SqueakImageNode extends RootNode {
-        private final SqueakImage squeakImage;
+    private static final class SqueakImageNode extends RootNode {
+        private final SqueakImageContext image;
+        private final String imagePath;
 
-        protected SqueakImageNode(final SqueakImage squeakImage) {
-            super(squeakImage.image.getLanguage());
-            this.squeakImage = squeakImage;
+        private SqueakImageNode(final SqueakImageContext image, final String imagePath) {
+            super(image.getLanguage());
+            this.image = image;
+            this.imagePath = imagePath;
         }
 
         @Override
         public Object execute(final VirtualFrame frame) {
-            SqueakImageReader.load(squeakImage.image);
-            return squeakImage;
+            return load();
+        }
+
+        @TruffleBoundary
+        private SqueakImage load() {
+            image.setImagePath(imagePath);
+            SqueakImageReader.load(image);
+            return image.getSqueakImage();
         }
     }
 
-    public RootCallTarget asCallTarget() {
-        return new SqueakImageNode(this).getCallTarget();
+    /** Returns a target that sets the image path and loads the image when it is executed. */
+    public static RootCallTarget createLoadCallTarget(final SqueakImageContext image, final String imagePath) {
+        return new SqueakImageNode(image, imagePath).getCallTarget();
     }
 
     public String getName() {

@@ -20,7 +20,7 @@ public final class SqueakFileDetector implements TruffleFile.FileTypeDetector {
         if (fileName == null) {
             return null;
         } else if (fileName.endsWith(".image")) {
-            return SqueakLanguageConfig.MIME_TYPE;
+            return SqueakLanguageConfig.IMAGE_MIME_TYPE;
         } else if (fileName.endsWith(".st")) {
             return SqueakLanguageConfig.ST_MIME_TYPE;
         } else {

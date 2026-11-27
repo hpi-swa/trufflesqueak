@@ -10,6 +10,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import org.junit.Test;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
@@ -22,6 +25,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.AbstractDecoder.ShadowBlockParams;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.DecoderSistaV1;
 import de.hpi.swa.trufflesqueak.nodes.interpreter.DecoderV3PlusClosures;
+import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 @SuppressWarnings("static-method")
@@ -228,5 +232,26 @@ public final class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDum
         assertEquals(8873258, params.blockSize());
         assertEquals(0, params.numArgs());
         assertEquals(0, params.numCopied());
+    }
+
+    @Test
+    public void testParsingDoesNotRunSmalltalkCode() {
+        // The dummy image has no Smalltalk compiler, so this only works if parsing does not compile.
+        assertTrue(context.parse(SqueakLanguageConfig.ID, "3 + 4").canExecute());
+    }
+
+    @Test
+    public void testImageFilesAreBinarySources() throws Exception {
+        final Path path = Files.createTempFile("trufflesqueak", ".image");
+        try {
+            final int format = de.hpi.swa.trufflesqueak.image.SqueakImageConstants.SUPPORTED_IMAGE_FORMATS[0];
+            Files.write(path, java.nio.ByteBuffer.allocate(8).order(java.nio.ByteOrder.LITTLE_ENDIAN).putInt(format).array());
+            final org.graalvm.polyglot.Source source = org.graalvm.polyglot.Source.newBuilder(SqueakLanguageConfig.ID, path.toFile()).build();
+            assertEquals(SqueakLanguageConfig.IMAGE_MIME_TYPE, source.getMimeType());
+            assertTrue(source.hasBytes()); // Not decoded as text.
+            assertTrue(context.parse(source).canExecute()); // Loads the image when executed.
+        } finally {
+            Files.delete(path);
+        }
     }
 }
