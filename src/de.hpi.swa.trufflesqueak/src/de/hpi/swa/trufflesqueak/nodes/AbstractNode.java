@@ -6,8 +6,8 @@
  */
 package de.hpi.swa.trufflesqueak.nodes;
 
-import com.oracle.truffle.api.dsl.Idempotent;
 import com.oracle.truffle.api.dsl.ImportStatic;
+import com.oracle.truffle.api.dsl.NonIdempotent;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeInfo;
@@ -46,12 +46,13 @@ public abstract class AbstractNode extends Node {
         return getContext().isPoint(object);
     }
 
-    @Idempotent
+    /* Not idempotent: the image can change its header flags at runtime (vmParameterAt: 48 put:). */
+    @NonIdempotent
     protected final boolean numericPrimsMixArithmetic() {
         return getContext().flags.numericPrimsMixArithmetic();
     }
 
-    @Idempotent
+    @NonIdempotent
     protected final boolean numericPrimsMixComparison() {
         return getContext().flags.numericPrimsMixComparison();
     }

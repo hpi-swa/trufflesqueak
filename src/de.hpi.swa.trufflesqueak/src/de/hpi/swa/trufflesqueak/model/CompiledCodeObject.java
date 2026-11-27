@@ -158,10 +158,10 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     public CompiledCodeObject(final CompiledCodeObject original) {
         super(original);
         setLiteralsAndBytes(original.internalHeader, original.literals.clone(), original.bytes.clone());
-        if (original.hasExecutionData()) {
-            getExecutionData().frameDescriptor = original.executionData.frameDescriptor;
-            executionData.primitiveNodeOrNull = original.executionData.primitiveNodeOrNull;
-        }
+        /*
+         * Do not share the original's execution data: its frame descriptor identifies the original
+         * as the frames' code object, and its primitive node must not be shared across methods.
+         */
     }
 
     private CompiledCodeObject(final CompiledCodeObject outerCode, final ShadowBlockMetadata shadowBlockMetadata) {
@@ -241,7 +241,15 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         this.literals = literals;
         this.bytes = bytes;
         invalidatePrimitiveNode();
+        invalidateFrameDescriptor();
         invalidateCallTargetStable("new literals and bytes");
+    }
+
+    /* The number of stack slots depends on header and bytecodes. */
+    private void invalidateFrameDescriptor() {
+        if (hasExecutionData()) {
+            executionData.frameDescriptor = null;
+        }
     }
 
     public Source getSource() {
@@ -480,6 +488,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
             if (canHavePrimitive && oldPrimitiveIndex != primitiveIndex()) {
                 invalidatePrimitiveNode();
             }
+            invalidateFrameDescriptor();
             invalidateCallTarget();
         }
     }
@@ -495,6 +504,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         if (canHavePrimitive && oldPrimitiveIndex != primitiveIndex()) {
             invalidatePrimitiveNode();
         }
+        invalidateFrameDescriptor();
         invalidateCallTarget();
     }
 
@@ -506,11 +516,20 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         UnsafeUtils.putObject(literals, longIndex, obj);
     }
 
+    /** Literal write from the image: compiled code and interpreter caches may hold the old one. */
+    public void setLiteralAndInvalidate(final long longIndex, final Object obj) {
+        if (getLiteral(longIndex) != obj) {
+            setLiteral(longIndex, obj);
+            invalidateCallTarget("literal changed");
+        }
+    }
+
     /** See storeLiteralVariable:withValue:. */
     public Object getAndResolveLiteral(final long longIndex) {
         final Object litVar = getLiteral(longIndex);
         if (litVar instanceof final AbstractSqueakObjectWithClassAndHash obj && !obj.isNotForwarded()) {
-            CompilerDirectives.transferToInterpreter();
+            /* Literals are compilation final: invalidate code that folded the forwarded one. */
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             final AbstractSqueakObjectWithClassAndHash forwarded = obj.getForwardingPointer();
             setLiteral(longIndex, forwarded);
             return forwarded;
@@ -779,6 +798,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         if (oldHasPrimitive != hasPrimitive()) {
             invalidatePrimitiveNode();
         }
+        invalidateFrameDescriptor();
         invalidateCallTarget();
     }
 

@@ -223,6 +223,9 @@ public final class SqueakImageContext {
     @CompilationFinal private final int maxContextStackDepth;
     private int currentContextStackDepth;
 
+    /* Random bytes identifying this session (OSProcessPlugin>>#primitiveGetSession) */
+    private byte[] sessionId;
+
     @CompilationFinal private ClassObject fractionClass;
     private PointersObject parserSharedInstance;
     private AbstractSqueakObject requestorSharedInstanceOrNil;
@@ -1277,6 +1280,16 @@ public final class SqueakImageContext {
 
     public NativeObject asByteArray(final byte[] bytes) {
         return NativeObject.newNativeBytes(byteArrayClass, bytes);
+    }
+
+    /** Returns a copy of the random bytes that identify this session. */
+    @TruffleBoundary
+    public byte[] getSessionId() {
+        if (sessionId == null) {
+            sessionId = new byte[4];
+            ArrayUtils.fillRandomly(sessionId);
+        }
+        return sessionId.clone();
     }
 
     public NativeObject asByteString(final byte[] bytes) {

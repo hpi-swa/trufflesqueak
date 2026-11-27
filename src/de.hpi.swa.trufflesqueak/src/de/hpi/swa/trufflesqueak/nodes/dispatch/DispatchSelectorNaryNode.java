@@ -568,7 +568,7 @@ public final class DispatchSelectorNaryNode extends DispatchSelectorNode {
             protected static final Object doCached(final VirtualFrame frame, @SuppressWarnings("unused") final CompiledCodeObject method, final Object receiver, final Object[] arguments,
                             @Bind final Node node,
                             @SuppressWarnings("unused") @Cached("method") final CompiledCodeObject cachedMethod,
-                            @Cached(value = "createOrNull(cachedMethod)", adopt = false) final DispatchPrimitiveNode dispatchPrimitiveNode,
+                            @Cached("createOrNull(cachedMethod)") final DispatchPrimitiveNode dispatchPrimitiveNode,
                             @Cached final InlinedBranchProfile primitiveFailedProfile) {
                 try {
                     return dispatchPrimitiveNode.execute(frame, receiver, arguments);

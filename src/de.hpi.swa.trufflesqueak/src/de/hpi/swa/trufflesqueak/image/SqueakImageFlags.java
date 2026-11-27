@@ -11,7 +11,6 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Idempotent;
 
 /**
  * Squeak Image Header Flags.
@@ -131,7 +130,6 @@ public final class SqueakImageFlags {
         numericPrimsMixComparison = (headerFlags & NUMERIC_PRIMS_MIX_COMPARISON) != 0;
     }
 
-    @Idempotent
     public boolean numericPrimsMixArithmetic() {
         if (!headerFlagsAssumption.isValid()) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -139,7 +137,6 @@ public final class SqueakImageFlags {
         return numericPrimsMixArithmetic;
     }
 
-    @Idempotent
     public boolean numericPrimsMixComparison() {
         if (!headerFlagsAssumption.isValid()) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -147,7 +144,6 @@ public final class SqueakImageFlags {
         return numericPrimsMixComparison;
     }
 
-    @Idempotent
     public boolean preemptionYields() {
         if (!headerFlagsAssumption.isValid()) {
             CompilerDirectives.transferToInterpreterAndInvalidate();

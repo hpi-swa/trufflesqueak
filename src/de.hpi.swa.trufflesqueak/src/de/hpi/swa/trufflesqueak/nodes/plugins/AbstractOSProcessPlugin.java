@@ -12,8 +12,6 @@ import java.lang.foreign.SymbolLookup;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
@@ -32,7 +30,6 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive0;
 import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive1WithFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
-import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 
 public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHolder {
 
@@ -127,17 +124,10 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetSession")
     protected abstract static class PrimGetSessionNode extends AbstractPrimitiveNode implements Primitive0 {
-        @CompilationFinal private NativeObject sessionByteArray;
-
         @Specialization
         protected final NativeObject doSession(@SuppressWarnings("unused") final Object receiver) {
-            if (sessionByteArray == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                final byte[] bytes = new byte[4];
-                ArrayUtils.fillRandomly(bytes);
-                sessionByteArray = getContext().asByteArray(bytes);
-            }
-            return sessionByteArray;
+            final SqueakImageContext image = getContext();
+            return image.asByteArray(image.getSessionId());
         }
     }
 

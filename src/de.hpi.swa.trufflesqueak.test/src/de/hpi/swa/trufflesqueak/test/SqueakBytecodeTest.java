@@ -17,6 +17,9 @@ import java.util.List;
 
 import org.junit.Test;
 
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.frame.VirtualFrame;
+
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
@@ -36,6 +39,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.METHOD_DICT;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectSizeNode;
+import de.hpi.swa.trufflesqueak.nodes.interpreter.PushToStackNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
@@ -754,5 +758,47 @@ public final class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyIma
         return image.asArrayOfObjects(NilObject.SINGLETON, BooleanObject.FALSE, BooleanObject.TRUE, image.characterClass, image.metaClass,
                         image.schedulerAssociation, image.smallIntegerClass, image.smalltalk,
                         image.specialObjectsArray);
+    }
+
+    @Test
+    public void testPushToStackUsesCurrentStackPointer() {
+        // One node used with two frames of different stack depths, as by a shared primitive node.
+        final CompiledCodeObject code = makeMethod(makeHeaderWord(0, 5, 2, false, true), new Object[0], 0x7C);
+        final PushToStackNode pushNode = PushToStackNode.create();
+        for (final int sp : new int[]{1, 3}) {
+            final VirtualFrame frame = Truffle.getRuntime().createVirtualFrame(FrameAccess.newWith(NilObject.SINGLETON, null, NilObject.SINGLETON), code.getFrameDescriptor());
+            FrameAccess.setStackPointer(frame, sp);
+            pushNode.execute(frame, (long) sp);
+            assertEquals(sp + 1, FrameAccess.getStackPointer(frame));
+            assertEquals((long) sp, FrameAccess.getStackValue(frame, sp));
+        }
+    }
+
+    @Test
+    public void testLiteralWriteInvalidatesCachedLiteralVariable() {
+        // 0 <40> pushLitVar: 0, 1 <7C> returnTop (the interpreter caches the read-only binding's value)
+        final CompiledCodeObject method = makeMethod(makeHeaderWord(0, 0, 3, false, false), new Object[]{nilClassBinding}, 0x40, 0x7C);
+        assertSame(image.nilClass, runMethod(method, NilObject.SINGLETON));
+        final PointersObject arrayClassBinding = new PointersObject(nilClassBinding.getSqueakClass());
+        arrayClassBinding.instVarAtPut0Slow(1, image.arrayClass);
+        runPrimitive(69, method, 2L, arrayClassBinding); // CompiledMethod>>#objectAt:put:
+        assertSame(image.arrayClass, runMethod(method, NilObject.SINGLETON));
+    }
+
+    @Test
+    public void testCopiedMethodHasItsOwnFrameDescriptor() {
+        final CompiledCodeObject original = makeMethod(makeHeaderWord(0, 0, 2, false, false), new Object[0], 0x7C);
+        assertSame(original, original.getFrameDescriptor().getInfo());
+        final CompiledCodeObject copy = new CompiledCodeObject(original); // as by shallowCopy
+        assertSame(copy, copy.getFrameDescriptor().getInfo());
+    }
+
+    @Test
+    public void testBytecodeWriteResetsFrameDescriptor() {
+        // 0 <70> self, 1 <87> pop, 2 <70> self, 3 <7C> returnTop
+        final CompiledCodeObject method = makeMethod(makeHeaderWord(0, 0, 2, false, false), new Object[0], 0x70, 0x87, 0x70, 0x7C);
+        final int oldNumSlots = method.getFrameDescriptor().getNumberOfSlots();
+        method.atput0(method.getBytecodeOffset() + 1, 0x70); // pop -> self needs more stack slots
+        assertTrue(method.getFrameDescriptor().getNumberOfSlots() > oldNumSlots);
     }
 }

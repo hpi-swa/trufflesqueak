@@ -76,7 +76,7 @@ public final class JavaObjectWrapper implements TruffleObject {
                     }
                     final String name = field.getName();
                     if (name.indexOf('$') < 0) {
-                        result.put(field.getName(), field);
+                        result.putIfAbsent(name, field); // Fields of subclasses hide those of superclasses.
                     }
                 }
                 currentClass = currentClass.getSuperclass();
