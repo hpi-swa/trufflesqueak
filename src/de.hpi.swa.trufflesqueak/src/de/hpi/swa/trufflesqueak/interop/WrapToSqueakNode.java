@@ -95,7 +95,7 @@ public abstract class WrapToSqueakNode extends AbstractNode {
 
     @Specialization
     protected static final NativeObject doChar(final Node node, final char value) {
-        return getContext(node).asByteString(MiscUtils.stringValueOf(value));
+        return getContext(node).asString(MiscUtils.stringValueOf(value));
     }
 
     @Specialization

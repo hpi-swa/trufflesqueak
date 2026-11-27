@@ -311,6 +311,12 @@ public final class MiscUtils {
         return value.getBytes(StandardCharsets.UTF_8);
     }
 
+    /* Only for strings without characters above 255 (see NativeObject#needsWideString). */
+    @TruffleBoundary
+    public static byte[] stringToLatin1Bytes(final String value) {
+        return value.getBytes(StandardCharsets.ISO_8859_1);
+    }
+
     @TruffleBoundary
     public static int[] stringToCodePointsArray(final String value) {
         return value.codePoints().toArray();

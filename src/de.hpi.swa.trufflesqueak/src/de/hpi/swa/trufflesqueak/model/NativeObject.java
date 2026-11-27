@@ -290,6 +290,12 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         return new String(getByteStorage(), StandardCharsets.UTF_8);
     }
 
+    /** Returns the characters of a ByteString, which holds character codes 0-255 (not UTF-8). */
+    @TruffleBoundary
+    public String asStringFromByteString() {
+        return new String(getByteStorage(), StandardCharsets.ISO_8859_1);
+    }
+
     @TruffleBoundary
     public String asStringFromWideString() {
         final int[] ints = getIntStorage();
