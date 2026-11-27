@@ -24,10 +24,17 @@ import de.hpi.swa.trufflesqueak.io.SqueakIOConstants;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
+import de.hpi.swa.trufflesqueak.model.ClassObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.model.VariablePointersObject;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.METHOD_DICT;
 import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
+import de.hpi.swa.trufflesqueak.nodes.primitives.Primitive.Primitive3;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 
 @SuppressWarnings("static-method")
 public final class SqueakPrimitiveTest extends AbstractSqueakTestCaseWithDummyImage {
@@ -157,5 +164,27 @@ public final class SqueakPrimitiveTest extends AbstractSqueakTestCaseWithDummyIm
                 }
             }
         }
+    }
+
+    @Test
+    public void testPerformInSuperclassRechecksInheritance() {
+        final ClassObject classA = setupMeta(new ClassObject(image), null, 0L, "A");
+        final ClassObject classB = setupMeta(new ClassObject(image), classA, 0L, "B");
+        final NativeObject selector = asByteSymbol("answer");
+        // A>>#answer ^1 (0 <76> pushConstant: 1, 1 <7C> returnTop)
+        final CompiledCodeObject method = makeMethod(makeHeaderWord(0, 0, 2, false, true), new Object[0], 0x76, 0x7C);
+        final ClassObject methodDictClass = new ClassObject(image, image.metaClass, 0);
+        methodDictClass.setFormat(METHOD_DICT.NAMES);
+        final VariablePointersObject methodDict = new VariablePointersObject(methodDictClass, methodDictClass.getLayout(), 1);
+        methodDict.putIntoVariablePart(0, selector);
+        methodDict.instVarAtPut0Slow(METHOD_DICT.VALUES, image.asArrayOfObjects(method));
+        classA.setMethodDict(methodDict);
+
+        final PointersObject receiver = new PointersObject(classB);
+        final ArrayObject noArguments = image.asArrayOfObjects();
+        final Primitive3 perform = (Primitive3) PrimitiveNodeFactory.getOrCreateIndexed(100, 4); // perform:withArguments:inSuperclass:
+        assertEquals(1L, perform.execute(image.externalSenderFrame, receiver, selector, noArguments, classA));
+        classB.setSuperclass(null); // The receiver no longer inherits from A.
+        assertThrows(PrimitiveFailed.class, () -> perform.execute(image.externalSenderFrame, receiver, selector, noArguments, classA));
     }
 }

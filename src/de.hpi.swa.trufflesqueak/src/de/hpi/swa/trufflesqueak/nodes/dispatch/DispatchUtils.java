@@ -38,7 +38,7 @@ public final class DispatchUtils {
         return createAssumptions(startClass, targetClass, callTargetStable);
     }
 
-    static Assumption[] createAssumptions(final ClassObject startClass, final ClassObject targetClass, final Assumption callTargetStable) {
+    public static Assumption[] createAssumptions(final ClassObject startClass, final ClassObject targetClass, final Assumption callTargetStable) {
         if (startClass == targetClass) {
             if (callTargetStable == null) {
                 return new Assumption[]{startClass.getClassHierarchyAndMethodDictStable()};

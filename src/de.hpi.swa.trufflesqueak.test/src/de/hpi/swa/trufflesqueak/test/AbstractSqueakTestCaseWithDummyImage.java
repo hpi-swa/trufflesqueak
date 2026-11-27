@@ -49,7 +49,7 @@ public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSquea
         context.enter();
     }
 
-    private static ClassObject setupMeta(final ClassObject aClass, final ClassObject superclass, final long format, final String name) {
+    protected static ClassObject setupMeta(final ClassObject aClass, final ClassObject superclass, final long format, final String name) {
         aClass.setSuperclass(superclass);
         aClass.setMethodDict(null);
         aClass.setFormat(format);
@@ -133,7 +133,7 @@ public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSquea
         return dummySpecialSelectors;
     }
 
-    private static NativeObject asByteSymbol(final String value) {
+    protected static NativeObject asByteSymbol(final String value) {
         return NativeObject.newNativeBytes(image.getByteSymbolClass(), MiscUtils.stringToBytes(value));
     }
 
