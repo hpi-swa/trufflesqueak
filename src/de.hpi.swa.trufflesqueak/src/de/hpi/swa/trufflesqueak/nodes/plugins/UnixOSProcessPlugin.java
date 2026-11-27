@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
+import java.lang.invoke.MethodHandle;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
 import java.util.Map;
@@ -149,8 +150,9 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
         @TruffleBoundary
         private String getErrorMessage(final int errnum) {
+            final MethodHandle h = getHandle();
             try {
-                final MemorySegment cStringPtr = (MemorySegment) getHandle().invokeExact(errnum);
+                final MemorySegment cStringPtr = (MemorySegment) h.invokeExact(errnum);
                 return cStringPtr.getString(0);
             } catch (final Throwable e) {
                 throw PrimitiveFailed.andTransferToInterpreterWithError(e);

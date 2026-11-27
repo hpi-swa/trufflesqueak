@@ -241,7 +241,8 @@ public final class SqueakImageContext {
     public SqueakImageContext(final SqueakLanguage squeakLanguage, final SqueakLanguage.Env environment) {
         language = squeakLanguage;
         options = SqueakContextOptions.create(environment.getOptions());
-        isHeadless = options.isHeadless();
+        /* The display uses SDL through native calls. */
+        isHeadless = options.isHeadless() || !environment.isNativeAccessAllowed();
         maxContextStackDepth = options.maxContextStackDepth();
         patch(environment);
         squeakSocketContext = new SqueakSocketContext(env.isSocketIOAllowed());
