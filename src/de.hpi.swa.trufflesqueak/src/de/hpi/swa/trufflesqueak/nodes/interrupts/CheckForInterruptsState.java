@@ -16,6 +16,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
@@ -58,6 +59,7 @@ public final class CheckForInterruptsState {
     @SuppressWarnings("unused") private boolean shouldTrigger;
 
     private Thread thread;
+    private volatile Throwable failure;
     private volatile Thread vmThread;
 
     public CheckForInterruptsState(final SqueakImageContext image) {
@@ -95,9 +97,15 @@ public final class CheckForInterruptsState {
                     }
                     image.squeakSocketContext.pollEvents(interruptCheckNanos, CheckForInterruptsState.this);
                 }
-            } catch (Throwable t) {
-                LogUtils.severe("CheckForInterruptsThread FATAL CRASH", t);
-                System.exit(1);
+            } catch (final Throwable t) {
+                /*
+                 * Do not exit the JVM, which may belong to an embedder. Only the creator of a context
+                 * can cancel it, so let the VM thread fail with this error at its next interrupt check.
+                 */
+                LogUtils.severe("CheckForInterruptsThread failed", t);
+                failure = t;
+                SHOULD_TRIGGER.setOpaque(CheckForInterruptsState.this, true);
+                wakeupVM();
             }
         }
     }
@@ -150,6 +158,9 @@ public final class CheckForInterruptsState {
     @TruffleBoundary
     private void clearShouldTrigger() {
         SHOULD_TRIGGER.setOpaque(this, false);
+        if (failure != null) {
+            throw SqueakException.create("The thread that polls timers and sockets failed:", failure);
+        }
     }
 
     /* Enable / disable interrupts */
