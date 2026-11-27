@@ -239,4 +239,9 @@ public final class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDum
         final Object hostObject = image.env.asGuestValue(new Object());
         assertTrue(InteropLibrary.getUncached().hasLanguageId(SqueakLanguageView.create(hostObject)));
     }
+
+    @Test
+    public void testLanguageViewDisplayStringWithoutSideEffects() {
+        assertEquals("42", InteropLibrary.getUncached().toDisplayString(SqueakLanguageView.create(42L), false));
+    }
 }
