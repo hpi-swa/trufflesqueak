@@ -50,7 +50,9 @@ public final class SqueakGuards {
     }
 
     public static boolean inBounds1(final long index, final int size, final int scale) {
-        return 0 < index && (index - 1) / scale < size;
+        assert size >= 0;
+        assert scale > 0;
+        return Long.compareUnsigned(index - 1, (long) size * scale) < 0;
     }
 
     public static boolean isAbstractPointersObject(final Object object) {
