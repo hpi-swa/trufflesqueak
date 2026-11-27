@@ -7,11 +7,16 @@
 package de.hpi.swa.trufflesqueak.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.source.Source;
+
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakSyntaxError;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants.ObjectHeader;
 import de.hpi.swa.trufflesqueak.image.SqueakImageReader;
@@ -235,5 +240,22 @@ public final class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDum
     public void testParsingDoesNotRunSmalltalkCode() {
         // The dummy image has no Smalltalk compiler, so this only works if parsing does not compile.
         assertTrue(context.parse(SqueakLanguageConfig.ID, "3 + 4").canExecute());
+    }
+
+    @Test
+    public void testSyntaxErrorLocationInRequestSource() throws Exception {
+        final String prefix = "[ [ ";
+        final String body = "3 +";
+        final String compiled = prefix + body + " ] on: Error do: [ :e | e ]]";
+        final Source source = Source.newBuilder(SqueakLanguageConfig.ID, body, "request").build();
+        final InteropLibrary lib = InteropLibrary.getUncached();
+        // An error at "+" (1-based position in the compiled code) is located in the request source.
+        final Object atPlus = new SqueakSyntaxError("Argument expected", prefix.length() + 3, compiled).relocateTo(source, prefix.length());
+        assertSame(source, lib.getSourceLocation(atPlus).getSource());
+        assertEquals(2, lib.getSourceLocation(atPlus).getCharIndex());
+        assertFalse(lib.isExceptionIncompleteSource(atPlus));
+        // An error after the end of the request source means that more input could complete it.
+        final Object atEnd = new SqueakSyntaxError("Argument expected", prefix.length() + body.length() + 2, compiled).relocateTo(source, prefix.length());
+        assertTrue(lib.isExceptionIncompleteSource(atEnd));
     }
 }

@@ -391,15 +391,19 @@ public final class SqueakImageContext {
             argsPrefix = " :" + String.join(" :", request.getArgumentNames()) + " |";
         }
 
+        final String prefix = "[" + argsPrefix + " [ ";
         final String blockBody;
+        final int bodyOffset;
         if (isFileInFormat(source)) {
             blockBody = "(FileStream readOnlyFileNamed: '" + source.getPath() + "') fileIn. true";
+            bodyOffset = -1; // The compiled code does not contain the source.
         } else {
             blockBody = source.getCharacters().toString();
+            bodyOffset = prefix.length();
         }
 
-        final String sourceCode = "[" + argsPrefix + " [ " + blockBody + " ] on: Error do: [ :e | Interop throwException: e ]]";
-        return DoItRootNode.create(this, language, sourceCode);
+        final String sourceCode = prefix + blockBody + " ] on: Error do: [ :e | Interop throwException: e ]]";
+        return DoItRootNode.create(this, language, sourceCode, source, bodyOffset);
     }
 
     private static boolean isFileInFormat(final Source source) {
