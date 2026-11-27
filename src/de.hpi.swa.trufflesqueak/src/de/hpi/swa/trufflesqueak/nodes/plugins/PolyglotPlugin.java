@@ -1237,8 +1237,12 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"lib.hasBufferElements(object)", "destination.isByteType()"}, limit = "3")
         protected static final Object doReadBuffer(final Object receiver, final Object object, final long byteOffset, final NativeObject destination, final long destinationOffset, final long length,
                         @CachedLibrary("object") final InteropLibrary lib) {
+            if (destinationOffset < 0 || length < 0 || length > destination.getByteLength() - destinationOffset) {
+                CompilerDirectives.transferToInterpreter();
+                throw PrimitiveFailed.BAD_INDEX;
+            }
             try {
-                lib.readBuffer(object, byteOffset, destination.getByteStorage(), MiscUtils.toIntExact(destinationOffset), MiscUtils.toIntExact(length));
+                lib.readBuffer(object, byteOffset, destination.getByteStorage(), (int) destinationOffset, (int) length);
                 return receiver;
             } catch (final UnsupportedMessageException | InvalidBufferOffsetException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
