@@ -33,6 +33,7 @@ import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.interop.WrapToSqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
@@ -76,7 +77,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
             CompilerDirectives.transferToInterpreter();
             if (image.options.isHeadless()) {
                 LogUtils.IMAGE.log(Level.WARNING, "Unexpected ProcessSwitch in headless mode", ps);
-                throw new IllegalArgumentException();
+                throw SqueakException.create("Smalltalk code switched processes (for example, it waited or opened a debugger) during interop message", message.getSimpleName());
             } else {
                 throw ps; // open debugger in interactive mode
             }
