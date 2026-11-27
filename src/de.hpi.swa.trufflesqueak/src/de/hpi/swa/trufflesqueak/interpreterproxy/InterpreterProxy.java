@@ -51,7 +51,6 @@ public final class InterpreterProxy implements AutoCloseable {
     private final MemorySegment interpreterProxy = VirtualMachine.allocate(Arena.global());
 
     /* INTERPRETER VARIABLES */
-    private final ArrayList<Object> objectRegistry = new ArrayList<>();
     private long primFailCode;
 
     /**
@@ -319,6 +318,7 @@ public final class InterpreterProxy implements AutoCloseable {
 
     public InterpreterProxy newInvocation(final SqueakImageContext theContext, final Object[] theReceiverAndArguments) {
         context = theContext;
+        primFailCode = 0; // Each invocation starts out successful.
         numReceiverAndArguments = theReceiverAndArguments.length;
         receiverAndArguments = theReceiverAndArguments.clone();
         sp = numReceiverAndArguments;
@@ -357,17 +357,27 @@ public final class InterpreterProxy implements AutoCloseable {
 
     /* OBJECT REGISTRY HELPERS */
 
+    /*
+     * The oops handed to native plugins index a registry owned by the context of the current
+     * invocation, so guest objects do not outlive their context or leak into other contexts.
+     */
+    private ArrayList<Object> objectRegistry() {
+        return context.interpreterProxyObjects;
+    }
+
     private Object objectRegistryGet(final long oop) {
-        return objectRegistry.get((int) oop);
+        return objectRegistry().get((int) oop);
     }
 
     private int addObjectToRegistry(final Object object) {
+        final ArrayList<Object> objectRegistry = objectRegistry();
         final int oop = objectRegistry.size();
         objectRegistry.add(object);
         return oop;
     }
 
     private int oopFor(final Object object) {
+        final ArrayList<Object> objectRegistry = objectRegistry();
         for (int oop = 0; oop < objectRegistry.size(); oop++) {
             if (objectRegistry.get(oop) == object) {
                 return oop;
@@ -500,7 +510,7 @@ public final class InterpreterProxy implements AutoCloseable {
     }
 
     private long byteSizeOf(final long oop) {
-        if (oop < objectRegistry.size()) {
+        if (oop < objectRegistry().size()) {
             if (objectRegistryGet(oop) instanceof final NativeObject nativeObject) {
                 return nativeObject.byteSize();
             }
