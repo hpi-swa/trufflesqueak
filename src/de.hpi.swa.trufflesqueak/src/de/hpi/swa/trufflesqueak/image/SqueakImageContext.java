@@ -31,6 +31,7 @@ import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.TruffleLanguage.ParsingRequest;
 import com.oracle.truffle.api.dsl.Bind.DefaultExpression;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.TruffleInstrument;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.Message;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
@@ -231,6 +232,8 @@ public final class SqueakImageContext {
 
     /* Plugins */
     public final Map<String, SymbolLookup> loadedLibraries = new HashMap<>();
+    public Exception polyglotLastError = new Exception("No exception");
+    @CompilationFinal public TruffleInstrument.Env polyglotInstrumentEnv;
     public final B2D b2d = new B2D(this);
     public final BitBlt bitblt = new BitBlt(this);
     public String[] dropPluginFileList = ArrayUtils.EMPTY_STRINGS_ARRAY;

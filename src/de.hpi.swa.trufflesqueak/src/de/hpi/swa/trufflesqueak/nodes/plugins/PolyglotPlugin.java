@@ -18,7 +18,6 @@ import java.util.logging.Level;
 import org.graalvm.polyglot.Engine;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleContext;
 import com.oracle.truffle.api.TruffleLanguage;
@@ -85,7 +84,6 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     private static final String EVAL_SOURCE_NAME = "<eval>";
     private static final String INSTRUMENT_ID = "trufflesqueak-polyglot-instrument";
     private static final String INSTRUMENT_NAME = "TruffleSqueak Polyglot Instrument";
-    @CompilationFinal private static TruffleInstrument.Env instrumentEnv;
 
     @Override
     public List<? extends NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
@@ -259,16 +257,12 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetPublicLanguages")
     protected abstract static class PrimGetPublicLanguagesNode extends AbstractPrimitiveNode implements Primitive0 {
-        @CompilationFinal(dimensions = 1) private static Object[] cachedList;
-
+        /* Not cached: the languages depend on the context. */
         @Specialization
+        @TruffleBoundary
         protected final ArrayObject doGet(@SuppressWarnings("unused") final Object receiver) {
             final SqueakImageContext image = getContext();
-            if (cachedList == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                cachedList = image.env.getPublicLanguages().values().stream().map(JavaObjectWrapper::wrap).toArray();
-            }
-            return image.asArrayOfObjects(cachedList.clone());
+            return image.asArrayOfObjects(image.env.getPublicLanguages().values().stream().map(JavaObjectWrapper::wrap).toArray());
         }
     }
 
@@ -285,17 +279,12 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetInternalLanguages")
     protected abstract static class PrimGetLanguagesNode extends AbstractPrimitiveNode implements Primitive0 {
-        @CompilationFinal(dimensions = 1) private static Object[] cachedList;
-
+        /* Not cached: the languages depend on the context. */
         @Specialization
         @TruffleBoundary
         protected final ArrayObject doGet(@SuppressWarnings("unused") final Object receiver) {
             final SqueakImageContext image = getContext();
-            if (cachedList == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                cachedList = image.env.getInternalLanguages().values().stream().map(JavaObjectWrapper::wrap).toArray();
-            }
-            return image.asArrayOfObjects(cachedList.clone());
+            return image.asArrayOfObjects(image.env.getInternalLanguages().values().stream().map(JavaObjectWrapper::wrap).toArray());
         }
     }
 
@@ -1561,10 +1550,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimGetLanguageInfoNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
         @Specialization(guards = "lib.hasLanguageId(object)", limit = "3")
         protected static final Object getLanguageInfo(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @Bind final SqueakImageContext image,
                         @CachedLibrary("object") final InteropLibrary lib) {
             try {
                 final String languageId = lib.getLanguageId(object);
-                final var env = getInstrumentEnv();
+                final var env = getInstrumentEnv(image);
                 final var languageInfo = MiscUtils.equals("host", languageId) ? env.getHostLanguage() : MiscUtils.get(env.getLanguages(), lib.getLanguageId(object));
                 return JavaObjectWrapper.wrap(languageInfo);
             } catch (final UnsupportedMessageException e) {
@@ -2062,7 +2052,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary
         @Specialization(guards = "languageId.isByteType()")
         protected final Object getLanguageView(@SuppressWarnings("unused") final Object receiver, final NativeObject languageId, final Object target) {
-            return NilObject.nullToNil(getInstrumentEnv().getLanguageView(getContext().env.getPublicLanguages().get(languageId.asStringUnsafe()), target));
+            return NilObject.nullToNil(getInstrumentEnv(getContext()).getLanguageView(getContext().env.getPublicLanguages().get(languageId.asStringUnsafe()), target));
         }
     }
 
@@ -2072,7 +2062,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary
         @Specialization(guards = "languageId.isByteType()")
         protected final Object getScope(@SuppressWarnings("unused") final Object receiver, final NativeObject languageId) {
-            return NilObject.nullToNil(getInstrumentEnv().getScope(getContext().env.getPublicLanguages().get(languageId.asStringUnsafe())));
+            return NilObject.nullToNil(getInstrumentEnv(getContext()).getScope(getContext().env.getPublicLanguages().get(languageId.asStringUnsafe())));
         }
     }
 
@@ -2189,18 +2179,18 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetLastError")
     protected abstract static class PrimGetLastErrorNode extends AbstractPrimitiveNode implements Primitive0 {
-        private static Exception lastError = new Exception("No exception");
-
         @Specialization
         @TruffleBoundary
         protected final Object doGetLastError(@SuppressWarnings("unused") final Object receiver) {
-            return getContext().env.asGuestValue(lastError);
+            final SqueakImageContext image = getContext();
+            return image.env.asGuestValue(image.polyglotLastError);
         }
 
+        /* Errors are kept per context: they can be values of the context's languages. */
         protected static final void setLastError(final Exception e) {
-            lastError = e;
+            SqueakImageContext.getSlow().polyglotLastError = e;
             if (LogUtils.INTEROP.isLoggable(Level.FINE)) {
-                LogUtils.INTEROP.fine(MiscUtils.toString(lastError));
+                LogUtils.INTEROP.fine(MiscUtils.toString(e));
             }
         }
     }
@@ -2336,13 +2326,13 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         return lang.contains("/");
     }
 
-    private static TruffleInstrument.Env getInstrumentEnv() {
-        if (instrumentEnv == null) {
+    /* Instruments belong to an engine, so cache their env per context, not across engines. */
+    private static TruffleInstrument.Env getInstrumentEnv(final SqueakImageContext image) {
+        if (image.polyglotInstrumentEnv == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            final TruffleLanguage.Env env = SqueakImageContext.getSlow().env;
-            instrumentEnv = env.lookup(env.getInstruments().get(INSTRUMENT_ID), PolyglotInstrument.class).getInstrumentEnv();
+            image.polyglotInstrumentEnv = image.env.lookup(image.env.getInstruments().get(INSTRUMENT_ID), PolyglotInstrument.class).getInstrumentEnv();
         }
-        return instrumentEnv;
+        return image.polyglotInstrumentEnv;
     }
 
     @TruffleInstrument.Registration(id = INSTRUMENT_ID, name = INSTRUMENT_NAME, services = PolyglotInstrument.class)
