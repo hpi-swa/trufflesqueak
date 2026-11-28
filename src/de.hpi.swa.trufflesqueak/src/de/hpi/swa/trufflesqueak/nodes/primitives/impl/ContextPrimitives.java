@@ -51,14 +51,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"0 <= newStackPointerLong", "receiver.isValidStackPointer(newStackPointerLong)", "receiver.hasNonExecutableState()"})
         protected static final ContextObject storeRaw(final ContextObject receiver, final long newStackPointerLong) {
-            final int oldStackPointer = receiver.getStackPointerOrZero();
-            final int newStackPointer = (int) newStackPointerLong;
-
-            for (int i = oldStackPointer; i < newStackPointer; i++) {
-                receiver.setRawTemp(i, NilObject.SINGLETON);
-            }
-
-            receiver.setRawStackPointer((long) newStackPointer);
+            receiver.rawStackPointerPut((int) newStackPointerLong);
             return receiver;
         }
     }

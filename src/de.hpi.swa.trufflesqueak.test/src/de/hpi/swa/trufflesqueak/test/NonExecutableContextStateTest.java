@@ -18,6 +18,7 @@ import org.junit.Test;
 
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 
 @SuppressWarnings("static-method")
 public final class NonExecutableContextStateTest extends AbstractSqueakTestCaseWithImage {
@@ -60,11 +61,11 @@ public final class NonExecutableContextStateTest extends AbstractSqueakTestCaseW
                         """);
         assertTrue(dematerialized.hasNonExecutableState());
         assertFalse(dematerialized.hasTruffleFrame());
-        assertSame(NilObject.SINGLETON, dematerialized.getRawSender());
-        assertEquals(1L, dematerialized.getRawStackPointer());
-        assertEquals("'not a method'", dematerialized.getRawMethod().toString());
-        assertEquals("#myReceiver", dematerialized.getRawReceiver().toString());
-        assertEquals("#myTemp", dematerialized.getRawTemp(0).toString());
+        assertSame(NilObject.SINGLETON, dematerialized.rawAt(CONTEXT.SENDER_OR_NIL));
+        assertEquals(1L, dematerialized.rawAt(CONTEXT.STACKPOINTER));
+        assertEquals("'not a method'", dematerialized.rawAt(CONTEXT.METHOD).toString());
+        assertEquals("#myReceiver", dematerialized.rawAt(CONTEXT.RECEIVER).toString());
+        assertEquals("#myTemp", dematerialized.rawAt(CONTEXT.TEMP_FRAME_START).toString());
 
         final ContextObject rematerialized = (ContextObject) evaluate("""
                         | ctx method |

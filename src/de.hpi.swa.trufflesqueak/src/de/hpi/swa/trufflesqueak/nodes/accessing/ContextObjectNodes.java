@@ -48,21 +48,11 @@ public final class ContextObjectNodes {
             return context.getSender();
         }
 
-        @Specialization(guards = {"index == SENDER_OR_NIL", "context.hasNonExecutableState()"})
-        protected static final Object doRawSender(final ContextObject context, @SuppressWarnings("unused") final long index) {
-            return context.getRawSender();
-        }
-
         // --- Instruction Pointer ---
         @Specialization(guards = {"index == INSTRUCTION_POINTER", "context.hasTruffleFrame()"})
         protected static final Object doInstructionPointer(final Node node, final ContextObject context, @SuppressWarnings("unused") final long index,
                         @Exclusive @Cached final InlinedConditionProfile nilProfile) {
             return context.getInstructionPointer(nilProfile, node);
-        }
-
-        @Specialization(guards = {"index == INSTRUCTION_POINTER", "context.hasNonExecutableState()"})
-        protected static final Object doRawInstructionPointer(final ContextObject context, @SuppressWarnings("unused") final long index) {
-            return context.getRawInstructionPointer();
         }
 
         // --- Stack Pointer ---
@@ -71,20 +61,10 @@ public final class ContextObjectNodes {
             return context.getStackPointer();
         }
 
-        @Specialization(guards = {"index == STACKPOINTER", "context.hasNonExecutableState()"})
-        protected static final Object doRawStackPointer(final ContextObject context, @SuppressWarnings("unused") final long index) {
-            return context.getRawStackPointer();
-        }
-
         // --- Method ---
         @Specialization(guards = {"index == METHOD", "context.hasTruffleFrame()"})
         protected static final CompiledCodeObject doMethod(final ContextObject context, @SuppressWarnings("unused") final long index) {
             return context.getCodeObject();
-        }
-
-        @Specialization(guards = {"index == METHOD", "context.hasNonExecutableState()"})
-        protected static final Object doRawMethod(final ContextObject context, @SuppressWarnings("unused") final long index) {
-            return context.getRawMethod();
         }
 
         // --- Closure ---
@@ -94,20 +74,10 @@ public final class ContextObjectNodes {
             return NilObject.nullToNil(context.getClosure(), nilProfile, node);
         }
 
-        @Specialization(guards = {"index == CLOSURE_OR_NIL", "context.hasNonExecutableState()"})
-        protected static final Object doRawClosure(final ContextObject context, @SuppressWarnings("unused") final long index) {
-            return context.getRawClosureOrNil();
-        }
-
         // --- Receiver ---
         @Specialization(guards = {"index == RECEIVER", "context.hasTruffleFrame()"})
         protected static final Object doReceiver(final ContextObject context, @SuppressWarnings("unused") final long index) {
             return context.getReceiver();
-        }
-
-        @Specialization(guards = {"index == RECEIVER", "context.hasNonExecutableState()"})
-        protected static final Object doRawReceiver(final ContextObject context, @SuppressWarnings("unused") final long index) {
-            return context.getRawReceiver();
         }
 
         // --- Temp / Stack ---
@@ -116,14 +86,15 @@ public final class ContextObjectNodes {
             return context.atTemp((int) (index - CONTEXT.TEMP_FRAME_START));
         }
 
-        @Specialization(guards = {"index >= TEMP_FRAME_START", "context.hasNonExecutableState()", "isValidTempIndex(context, index)"})
-        protected static final Object doRawTemp(final ContextObject context, final long index) {
-            return context.getRawTemp((int) (index - CONTEXT.TEMP_FRAME_START));
-        }
-
-        @Specialization(guards = {"index >= TEMP_FRAME_START", "!isValidTempIndex(context, index)"})
+        @Specialization(guards = {"index >= TEMP_FRAME_START", "context.hasTruffleFrame()", "!isValidTempIndex(context, index)"})
         protected static final Object doTempOutOfBounds(@SuppressWarnings("unused") final ContextObject context, @SuppressWarnings("unused") final long index) {
             return NilObject.SINGLETON;
+        }
+
+        /* Slow path: all slots of a context that cannot be executed as it stands. */
+        @Specialization(guards = "context.hasNonExecutableState()")
+        protected static final Object doNonExecutable(final ContextObject context, final long index) {
+            return context.rawAt(index);
         }
 
         protected static boolean isValidTempIndex(final ContextObject context, final long index) {
@@ -152,11 +123,6 @@ public final class ContextObjectNodes {
             context.setSender(value);
         }
 
-        @Specialization(guards = {"index == SENDER_OR_NIL", "context.hasNonExecutableState()"})
-        protected static final void doRawSender(final ContextObject context, @SuppressWarnings("unused") final long index, final Object value) {
-            context.setRawSender(value);
-        }
-
         // --- Instruction Pointer ---
         @Specialization(guards = {"index == INSTRUCTION_POINTER", "context.hasTruffleFrame()", "context.isValidInstructionPointer(value)"})
         protected static final void doInstructionPointerFrame(final ContextObject context, @SuppressWarnings("unused") final long index, final long value) {
@@ -170,14 +136,9 @@ public final class ContextObjectNodes {
         }
 
         @Specialization(guards = {"index == INSTRUCTION_POINTER", "context.hasTruffleFrame()", "!isValidInstructionPointerOrNil(context, value)"})
-        protected static final void doInstructionPointerDematerialize(final ContextObject context, @SuppressWarnings("unused") final long index, final Object value) {
+        protected static final void doInstructionPointerUnbind(final ContextObject context, @SuppressWarnings("unused") final long index, final Object value) {
             context.unbindFromFrame();
-            context.setRawInstructionPointer(value);
-        }
-
-        @Specialization(guards = {"index == INSTRUCTION_POINTER", "context.hasNonExecutableState()"})
-        protected static final void doRawInstructionPointer(final ContextObject context, @SuppressWarnings("unused") final long index, final Object value) {
-            context.setRawInstructionPointer(value);
+            context.rawAtPut(CONTEXT.INSTRUCTION_POINTER, value);
         }
 
         protected static boolean isValidInstructionPointerOrNil(final ContextObject context, final Object value) {
@@ -190,12 +151,7 @@ public final class ContextObjectNodes {
             context.setStackPointer((int) value);
         }
 
-        @Specialization(guards = {"index == STACKPOINTER", "context.hasNonExecutableState()", "isValidStackPointer(context, value)"})
-        protected static final void doRawStackPointer(final ContextObject context, @SuppressWarnings("unused") final long index, final long value) {
-            context.setRawStackPointer(value);
-        }
-
-        @Specialization(guards = {"index == STACKPOINTER", "!isValidStackPointer(context, value)"})
+        @Specialization(guards = {"index == STACKPOINTER", "context.hasTruffleFrame()", "!isValidStackPointer(context, value)"})
         protected static final void doInvalidStackPointer(@SuppressWarnings("unused") final ContextObject context, @SuppressWarnings("unused") final long index,
                         @SuppressWarnings("unused") final Object value) {
             CompilerDirectives.transferToInterpreter();
@@ -213,14 +169,9 @@ public final class ContextObjectNodes {
         }
 
         @Specialization(guards = {"index == METHOD", "context.hasTruffleFrame()", "!isCompiledCodeObject(value)"})
-        protected static final void doMethodDematerialize(final ContextObject context, @SuppressWarnings("unused") final long index, final Object value) {
+        protected static final void doMethodUnbind(final ContextObject context, @SuppressWarnings("unused") final long index, final Object value) {
             context.unbindFromFrame();
-            context.setRawMethod(value);
-        }
-
-        @Specialization(guards = {"index == METHOD", "context.hasNonExecutableState()"})
-        protected static final void doRawMethod(final ContextObject context, @SuppressWarnings("unused") final long index, final Object value) {
-            context.setRawMethod(value);
+            context.rawAtPut(CONTEXT.METHOD, value);
         }
 
         // --- Closure ---
@@ -236,25 +187,15 @@ public final class ContextObjectNodes {
         }
 
         @Specialization(guards = {"index == CLOSURE_OR_NIL", "context.hasTruffleFrame()", "!isBlockClosureObject(value)", "!isNil(value)"})
-        protected static final void doClosureDematerialize(final ContextObject context, @SuppressWarnings("unused") final long index, final Object value) {
+        protected static final void doClosureUnbind(final ContextObject context, @SuppressWarnings("unused") final long index, final Object value) {
             context.unbindFromFrame();
-            context.setRawClosureOrNil(value);
+            context.rawAtPut(CONTEXT.CLOSURE_OR_NIL, value);
         }
 
-        @Specialization(guards = {"index == CLOSURE_OR_NIL", "context.hasNonExecutableState()"})
-        protected static final void doRawClosure(final ContextObject context, @SuppressWarnings("unused") final long index, final Object value) {
-            context.setRawClosureOrNil(value);
-        }
-
-        // --- Receiver & Temps (Naturally polymorphic arrays, no dematerialization needed) ---
+        // --- Receiver & Temps (any value fits into a frame) ---
         @Specialization(guards = {"index == RECEIVER", "context.hasTruffleFrame()"})
         protected static final void doReceiverFrame(final ContextObject context, @SuppressWarnings("unused") final long index, final Object value) {
             context.setReceiver(value);
-        }
-
-        @Specialization(guards = {"index == RECEIVER", "context.hasNonExecutableState()"})
-        protected static final void doRawReceiver(final ContextObject context, @SuppressWarnings("unused") final long index, final Object value) {
-            context.setRawReceiver(value);
         }
 
         // --- Temps ---
@@ -263,12 +204,7 @@ public final class ContextObjectNodes {
             context.atTempPut((int) (index - CONTEXT.TEMP_FRAME_START), value);
         }
 
-        @Specialization(guards = {"index >= TEMP_FRAME_START", "context.hasNonExecutableState()", "isValidTempIndex(context, index)"})
-        protected static final void doRawTemp(final ContextObject context, final long index, final Object value) {
-            context.setRawTemp((int) (index - CONTEXT.TEMP_FRAME_START), value);
-        }
-
-        @Specialization(guards = {"index >= TEMP_FRAME_START", "!isValidTempIndex(context, index)"})
+        @Specialization(guards = {"index >= TEMP_FRAME_START", "context.hasTruffleFrame()", "!isValidTempIndex(context, index)"})
         protected static final void doTempOutOfBounds(@SuppressWarnings("unused") final ContextObject context, @SuppressWarnings("unused") final long index,
                         @SuppressWarnings("unused") final Object value) {
             /*
@@ -276,6 +212,12 @@ public final class ContextObjectNodes {
              * bounded by getNumStackSlots(frame) rather than size(), so writes to [numStackSlots,
              * size) are silently discarded and subsequent reads return nil.
              */
+        }
+
+        /* Slow path: all slots of a context that cannot be executed as it stands. */
+        @Specialization(guards = "context.hasNonExecutableState()")
+        protected static final void doNonExecutable(final ContextObject context, final long index, final Object value) {
+            context.rawAtPut(index, value);
         }
 
         protected static boolean isValidTempIndex(final ContextObject context, final long index) {

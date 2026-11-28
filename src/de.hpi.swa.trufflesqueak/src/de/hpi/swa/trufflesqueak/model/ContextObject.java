@@ -24,6 +24,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
+import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.ActiveContextUnbindException;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
@@ -490,7 +491,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         if (hasTruffleFrame()) {
             return FrameAccess.getStackPointer(getTruffleFrame());
         } else if (hasNonExecutableState()) {
-            final Object sp = getRawStackPointer();
+            final Object sp = resolveRawValue(getNonExecutableState().stackPointer);
             return sp instanceof Long l && 0 <= l && l <= Integer.MAX_VALUE ? (int) (long) l : 0;
         } else {
             return 0;
@@ -720,8 +721,8 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         CompilerAsserts.neverPartOfCompilation();
         if (hasMethod()) {
             return formatContext("CTX", getCodeObject(), hasClosure());
-        } else if (hasNonExecutableState() && getRawMethod() instanceof CompiledCodeObject code) {
-            final boolean hasClosure = getRawClosureOrNil() instanceof BlockClosureObject;
+        } else if (hasNonExecutableState() && rawAt(CONTEXT.METHOD) instanceof final CompiledCodeObject code) {
+            final boolean hasClosure = rawAt(CONTEXT.CLOSURE_OR_NIL) instanceof BlockClosureObject;
             return formatContext("CTX (non-executable)", code, hasClosure);
         } else {
             return "CTX without method @" + Integer.toHexString(hashCode());
@@ -979,89 +980,87 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         return value == null ? NilObject.SINGLETON : AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(value);
     }
 
-    public Object getRawSender() {
-        return resolveRawValue(getNonExecutableState().sender);
-    }
-
-    public Object getRawInstructionPointer() {
-        return resolveRawValue(getNonExecutableState().instructionPointer);
-    }
-
-    public Object getRawStackPointer() {
-        return resolveRawValue(getNonExecutableState().stackPointer);
-    }
-
-    public Object getRawMethod() {
-        return resolveRawValue(getNonExecutableState().method);
-    }
-
-    public Object getRawClosureOrNil() {
-        return resolveRawValue(getNonExecutableState().closureOrNil);
-    }
-
-    public Object getRawReceiver() {
-        return resolveRawValue(getNonExecutableState().receiver);
-    }
-
-    public Object getRawTemp(final int index) {
-        assert index >= 0 : "Temp index cannot be negative: " + index;
-        return getNonExecutableState().getStackValueOrNil(index);
-    }
-
-    public void setRawSender(final Object value) {
-        getNonExecutableState().sender = value;
-        tryBindToFrame(false);
-    }
-
-    public void setRawInstructionPointer(final Object value) {
-        getNonExecutableState().instructionPointer = value;
-        tryBindToFrame(false);
-    }
-
-    public void setRawStackPointer(final Object value) {
-        getNonExecutableState().stackPointer = value;
-        tryBindToFrame(false);
-    }
-
-    public void setRawMethod(final Object value) {
-        getNonExecutableState().method = value;
-        tryBindToFrame(false);
-    }
-
-    public void setRawClosureOrNil(final Object value) {
-        getNonExecutableState().closureOrNil = value;
-        tryBindToFrame(false);
-    }
-
-    public void setRawReceiver(final Object value) {
-        /* Setting the receiver cannot make a non-executable context executable. */
-        getNonExecutableState().receiver = value;
-    }
-
-    public void setRawTemp(final int index, final Object value) {
-        /* Setting a value on the stack cannot make a non-executable context executable. */
-        assert index >= 0 : "Temp index cannot be negative: " + index;
-        final Object[] stack = getNonExecutableState().getOrCreateStack();
-        if (index < stack.length) {
-            stack[index] = value;
+    /**
+     * Reads the slot at the given 0-based index from the non-executable state. Slots at or above
+     * the stack pointer read as {@code nil}.
+     */
+    @TruffleBoundary
+    public Object rawAt(final long index) {
+        final NonExecutableContextState state = getNonExecutableState();
+        if (index == CONTEXT.SENDER_OR_NIL) {
+            return resolveRawValue(state.sender);
+        } else if (index == CONTEXT.INSTRUCTION_POINTER) {
+            return resolveRawValue(state.instructionPointer);
+        } else if (index == CONTEXT.STACKPOINTER) {
+            return resolveRawValue(state.stackPointer);
+        } else if (index == CONTEXT.METHOD) {
+            return resolveRawValue(state.method);
+        } else if (index == CONTEXT.CLOSURE_OR_NIL) {
+            return resolveRawValue(state.closureOrNil);
+        } else if (index == CONTEXT.RECEIVER) {
+            return resolveRawValue(state.receiver);
+        } else {
+            final int tempIndex = (int) (index - CONTEXT.TEMP_FRAME_START);
+            return isValidTempIndex(tempIndex) ? state.getStackValueOrNil(tempIndex) : NilObject.SINGLETON;
         }
+    }
+
+    /**
+     * Writes the slot at the given 0-based index of the non-executable state. Writes to slots at or
+     * above the stack pointer are ignored. Afterwards, the context is bound to a frame again if a
+     * structural slot changed and all slots are valid now.
+     */
+    @TruffleBoundary
+    public void rawAtPut(final long index, final Object value) {
+        final NonExecutableContextState state = getNonExecutableState();
+        if (index == CONTEXT.SENDER_OR_NIL) {
+            state.sender = value;
+        } else if (index == CONTEXT.INSTRUCTION_POINTER) {
+            state.instructionPointer = value;
+        } else if (index == CONTEXT.STACKPOINTER) {
+            if (!(value instanceof final Long sp && isValidStackPointer(sp))) {
+                throw PrimitiveFailed.GENERIC_ERROR;
+            }
+            state.stackPointer = value;
+        } else if (index == CONTEXT.METHOD) {
+            state.method = value;
+        } else if (index == CONTEXT.CLOSURE_OR_NIL) {
+            state.closureOrNil = value;
+        } else if (index == CONTEXT.RECEIVER) {
+            state.receiver = value;
+            return; // Cannot make the context executable.
+        } else {
+            final int tempIndex = (int) (index - CONTEXT.TEMP_FRAME_START);
+            if (isValidTempIndex(tempIndex)) {
+                state.getOrCreateStack()[tempIndex] = value;
+            }
+            return; // Cannot make the context executable.
+        }
+        tryBindToFrame(false);
+    }
+
+    /**
+     * Implements {@code Context>>#stackp:} for the non-executable state: slots that become
+     * accessible are set to {@code nil}.
+     */
+    @TruffleBoundary
+    public void rawStackPointerPut(final int newStackPointer) {
+        final NonExecutableContextState state = getNonExecutableState();
+        final Object[] stack = state.getOrCreateStack();
+        for (int i = getStackPointerOrZero(); i < newStackPointer; i++) {
+            stack[i] = NilObject.SINGLETON;
+        }
+        state.stackPointer = (long) newStackPointer;
+        tryBindToFrame(false);
     }
 
     @TruffleBoundary
     public boolean pointsTo(final Object thang) {
         if (hasNonExecutableState()) {
             final int stackPointer = getStackPointerOrZero();
-            if (getRawSender() == thang ||
-                            thang.equals(getRawInstructionPointer()) ||
-                            thang.equals(getRawStackPointer()) ||
-                            getRawMethod() == thang ||
-                            getRawClosureOrNil() == thang ||
-                            getRawReceiver() == thang) {
-                return true;
-            }
-            final NonExecutableContextState state = getNonExecutableState();
-            for (int i = 0; i < stackPointer; i++) {
-                if (state.getStackValueOrNil(i) == thang) {
+            for (int i = CONTEXT.SENDER_OR_NIL; i < CONTEXT.TEMP_FRAME_START + stackPointer; i++) {
+                final Object value = rawAt(i);
+                if (value == thang || (value instanceof Long && thang.equals(value))) {
                     return true;
                 }
             }
