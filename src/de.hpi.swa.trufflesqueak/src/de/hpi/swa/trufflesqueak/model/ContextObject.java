@@ -24,7 +24,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
-import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.ActiveContextUnbindException;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
@@ -492,7 +491,8 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
             return FrameAccess.getStackPointer(getTruffleFrame());
         } else if (hasNonExecutableState()) {
             final Object sp = resolveRawValue(getNonExecutableState().stackPointer);
-            return sp instanceof Long l && 0 <= l && l <= Integer.MAX_VALUE ? (int) (long) l : 0;
+            /* Like OSVM, treat anything but a valid stack pointer as zero. */
+            return sp instanceof final Long l && 0 <= l && l <= getNonExecutableState().getSize() ? (int) (long) l : 0;
         } else {
             return 0;
         }
@@ -1018,9 +1018,6 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         } else if (index == CONTEXT.INSTRUCTION_POINTER) {
             state.instructionPointer = value;
         } else if (index == CONTEXT.STACKPOINTER) {
-            if (!(value instanceof final Long sp && isValidStackPointer(sp))) {
-                throw PrimitiveFailed.GENERIC_ERROR;
-            }
             state.stackPointer = value;
         } else if (index == CONTEXT.METHOD) {
             state.method = value;

@@ -6,7 +6,6 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.GenerateCached;
@@ -17,7 +16,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
-import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -152,10 +150,13 @@ public final class ContextObjectNodes {
         }
 
         @Specialization(guards = {"index == STACKPOINTER", "context.hasTruffleFrame()", "!isValidStackPointer(context, value)"})
-        protected static final void doInvalidStackPointer(@SuppressWarnings("unused") final ContextObject context, @SuppressWarnings("unused") final long index,
-                        @SuppressWarnings("unused") final Object value) {
-            CompilerDirectives.transferToInterpreter();
-            throw PrimitiveFailed.GENERIC_ERROR;
+        protected static final void doStackPointerUnbind(final ContextObject context, @SuppressWarnings("unused") final long index, final Object value) {
+            /*
+             * The value does not fit into the frame. Keep it like any other invalid value instead of
+             * failing: this node also serves store bytecodes, which have no primitive to fail.
+             */
+            context.unbindFromFrame();
+            context.rawAtPut(CONTEXT.STACKPOINTER, value);
         }
 
         protected static boolean isValidStackPointer(final ContextObject context, final Object value) {
