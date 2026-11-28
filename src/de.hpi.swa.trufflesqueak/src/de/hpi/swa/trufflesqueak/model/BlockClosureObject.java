@@ -229,7 +229,8 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
 
     public ContextObject getHomeContext() {
         ContextObject currentContext = outerContext;
-        while (currentContext.hasClosure()) {
+        /* A non-executable outer context is the end of the chain; it cannot be returned from. */
+        while (currentContext.canBeExecuted() && currentContext.hasClosure()) {
             currentContext = currentContext.getClosure().getOuterContextOrNull();
         }
         return currentContext;

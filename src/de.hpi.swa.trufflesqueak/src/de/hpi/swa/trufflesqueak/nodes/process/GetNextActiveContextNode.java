@@ -49,7 +49,6 @@ public abstract class GetNextActiveContextNode extends AbstractNode {
         }
         writeSuspendedContextNode.executeNil(activeProcess, PROCESS.SUSPENDED_CONTEXT);
         writeListNode.executeNil(activeProcess, PROCESS.LIST);
-        assert !newActiveContext.isDead() : "Cannot switch to terminated context";
         return newActiveContext;
     }
 }

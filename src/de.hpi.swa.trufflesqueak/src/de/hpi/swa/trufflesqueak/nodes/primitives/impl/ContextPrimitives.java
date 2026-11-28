@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
 import java.util.List;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
@@ -16,6 +17,8 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.ActiveContextUnbindException;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
@@ -35,8 +38,9 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 76)
     protected abstract static class PrimStoreStackPointerNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
-        @Specialization(guards = {"0 <= newStackPointerLong", "newStackPointerLong <= receiver.size()"})
-        protected static final ContextObject store(final ContextObject receiver, final long newStackPointerLong) {
+
+        @Specialization(guards = {"0 <= newStackPointerLong", "receiver.isValidStackPointer(newStackPointerLong)", "!receiver.hasNonExecutableState()"})
+        protected static final ContextObject storeTruffle(final ContextObject receiver, final long newStackPointerLong) {
             final int oldStackPointer = receiver.getStackPointerOrZero();
             final int newStackPointer = (int) newStackPointerLong;
 
@@ -45,6 +49,28 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
             }
 
             receiver.setStackPointer(newStackPointer);
+            return receiver;
+        }
+
+        @Specialization(guards = {"0 <= newStackPointerLong", "receiver.isValidStackPointer(newStackPointerLong)", "receiver.hasNonExecutableState()"})
+        protected static final ContextObject storeRaw(final ContextObject receiver, final long newStackPointerLong) {
+            receiver.rawStackPointerPut((int) newStackPointerLong);
+            return receiver;
+        }
+
+        /*
+         * The frame is trimmed to the stack depth the method needs, but a context can use its full
+         * Squeak size. Give up the frame in that case, it is bound again once the stack pointer fits.
+         */
+        @Specialization(guards = {"0 <= newStackPointerLong", "receiver.hasTruffleFrame()", "!receiver.isValidStackPointer(newStackPointerLong)", "newStackPointerLong <= receiver.size()"})
+        protected static final ContextObject storeBeyondFrame(final ContextObject receiver, final long newStackPointerLong) {
+            try {
+                receiver.unbindFromFrame();
+            } catch (final ActiveContextUnbindException e) {
+                CompilerDirectives.transferToInterpreter();
+                throw PrimitiveFailed.GENERIC_ERROR;
+            }
+            receiver.rawStackPointerPut((int) newStackPointerLong);
             return receiver;
         }
     }
@@ -181,14 +207,9 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
          * truly invisible even (and especially!) to the garbage collector. Any store into stackp
          * other than by the primitive method stackp: is potentially fatal."
          */
-        @Specialization(guards = "receiver.hasTruffleFrame()")
+        @Specialization
         protected static final long doSize(final ContextObject receiver) {
-            return receiver.getStackPointer();
-        }
-
-        @Specialization(guards = "!receiver.hasTruffleFrame()")
-        protected static final long doSizeWithoutFrame(@SuppressWarnings("unused") final ContextObject receiver) {
-            return 0;
+            return receiver.getStackPointerOrZero();
         }
     }
 

@@ -7,6 +7,7 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import java.util.Arrays;
+import java.util.function.Consumer;
 
 import org.graalvm.collections.UnmodifiableEconomicMap;
 
@@ -23,11 +24,13 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.ActiveContextUnbindException;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
+import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
@@ -36,8 +39,29 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     public static final int NIL_PC_THRESHOLD = 0;
     public static final int NIL_PC_STACK_NOT_NIL_VALUE = -1;
     public static final int NIL_PC_STACK_NIL_VALUE = -2;
+    private static final int INVALID_PC = Integer.MIN_VALUE;
 
     private static final Class<?> CONCRETE_MATERIALIZED_FRAME_CLASS = Truffle.getRuntime().createMaterializedFrame(new Object[0]).getClass();
+
+    /**
+     * To maximize GraalVM performance, this field acts as a union type transitioning between four
+     * distinct states:
+     * <p>
+     * 1. Sender (any other object): The lightweight wrapper state. When a context is actively
+     *    executing in a {@link VirtualFrame}, we avoid allocating a MaterializedFrame. Instead, we
+     *    simply store its sender here until materialization is forced.
+     * <p>
+     * 2. {@link MaterializedFrame}: The fast-path execution state. Used for valid, suspended
+     *    contexts on the heap. This allows GraalVM to execute and resume them. Note that stack
+     *    slots above {@code stackPointer} are not retained.
+     * <p>
+     * 3. {@link NonExecutableContextState}: The slow-path fallback state. Used for newly allocated empty
+     *    contexts or contexts that have been reflectively mutated with incompatible values,
+     *    making them invalid Truffle frames.
+     * <p>
+     * 4. {@link SqueakImageChunk}: A transient bootstrap state used exclusively during image load.
+     */
+    private Object senderOrFrameOrState;
 
     public enum FrameHandling {
         /** Enumerate live objects in Truffle frames (Read-Only). */
@@ -46,44 +70,135 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         SCRUB
     }
 
-    private Object senderOrFrameOrSize;
+    /**
+     * Fallback representation for {@link ContextObject}s whose state cannot be stored in a Truffle
+     * {@link MaterializedFrame}, specifically newly allocated empty contexts ({@code Context basicNew:}
+     * / {@code Context newForMethod:}) and contexts reflectively mutated with structurally
+     * incompatible values (such as a non-{@link CompiledCodeObject} method or an out-of-range
+     * instruction/stack pointer). The sender is not one of them: a frame can hold any object as
+     * its sender, and returning to anything but a live context ends in {@code cannotReturn:}.
+     * <p>
+     * Any {@code null} field (or unallocated stack slot) represents an unset Squeak slot and is
+     * treated as {@link NilObject#SINGLETON} on access. {@link #stackOrSize} initially stores the
+     * context's variable slot count as a boxed {@link Integer} to avoid allocating an
+     * {@code Object[]} on read-only operations, expanding lazily on the first stack write. Setters
+     * for structural slots automatically re-materialize the context into a
+     * {@link MaterializedFrame} once all invariants are satisfied.
+     */
+    private static final class NonExecutableContextState {
+        private Object sender;
+        private Object instructionPointer;
+        private Object stackPointer;
+        private Object method;
+        private Object closureOrNil;
+        private Object receiver;
+        private Object stackOrSize;
+
+        private NonExecutableContextState(final int size) {
+            stackOrSize = size;
+        }
+
+        private NonExecutableContextState(final NonExecutableContextState original) {
+            sender = original.sender;
+            instructionPointer = original.instructionPointer;
+            stackPointer = original.stackPointer;
+            method = original.method;
+            closureOrNil = original.closureOrNil;
+            receiver = original.receiver;
+            if (original.stackOrSize instanceof Object[] stack) {
+                stackOrSize = stack.clone();
+            } else {
+                stackOrSize = original.stackOrSize;
+            }
+        }
+
+        private int getSize() {
+            if (stackOrSize instanceof Integer size) {
+                return size;
+            } else {
+                return ((Object[]) stackOrSize).length;
+            }
+        }
+
+        private Object[] getOrCreateStack() {
+            if (stackOrSize instanceof Integer size) {
+                final Object[] stack = ArrayUtils.withAll(size, NilObject.SINGLETON);
+                stackOrSize = stack;
+                return stack;
+            }
+            return (Object[]) stackOrSize;
+        }
+
+        private Object getStackValueOrNil(final int index) {
+            if (stackOrSize instanceof Object[] stack && index < stack.length) {
+                return resolveRawValue(stack[index]);
+            }
+            return NilObject.SINGLETON;
+        }
+
+        private void tracePointers(final Consumer<Object> action, final int sp) {
+            action.accept(sender);
+            action.accept(instructionPointer);
+            action.accept(method);
+            action.accept(closureOrNil);
+            action.accept(receiver);
+            if (stackOrSize instanceof Object[] stack) {
+                final int limit = Math.min(sp, stack.length);
+                for (int i = 0; i < limit; i++) {
+                    action.accept(stack[i]);
+                }
+            }
+        }
+    }
 
     public ContextObject(final SqueakImageChunk chunk) {
         super(chunk);
-        senderOrFrameOrSize = chunk;
+        senderOrFrameOrState = chunk;
     }
 
     public ContextObject(final int size) {
         super();
-        senderOrFrameOrSize = size;
+        senderOrFrameOrState = new NonExecutableContextState(size);
         assert size == CONTEXT.SMALL_FRAMESIZE || size == CONTEXT.LARGE_FRAMESIZE || size == CONTEXT.HUGE_FRAMESIZE;
     }
 
     private ContextObject(final VirtualFrame frame) {
         super();
         FrameAccess.assertSenderNotNull(frame);
-        this.senderOrFrameOrSize = FrameAccess.getSender(frame);
+        senderOrFrameOrState = FrameAccess.getSender(frame);
         FrameAccess.setContext(frame, this);
     }
 
     private ContextObject(final MaterializedFrame frame) {
         super();
         FrameAccess.assertSenderNotNull(frame);
-        this.senderOrFrameOrSize = frame;
-        this.setMarkedCodeFlags();
+        senderOrFrameOrState = frame;
+        setMarkedCodeFlags();
         FrameAccess.setContext(frame, this);
     }
 
     @TruffleBoundary
     private ContextObject(final ContextObject original) {
         super(original);
-        // Copy modified sender flag and the marked code flags.
-        setAllBooleanBits(original.getAllBooleanBits());
-        // Create shallow copy of Truffle frame
-        final FrameDescriptor frameDescriptor = original.getTruffleFrame().getFrameDescriptor();
-        senderOrFrameOrSize = Truffle.getRuntime().createMaterializedFrame(original.getTruffleFrame().getArguments().clone(), frameDescriptor);
-        FrameAccess.copySlotsExceptContext(original.getTruffleFrame(), getTruffleFrame());
-        FrameAccess.setContext(getTruffleFrame(), this);
+        if (original.hasNonExecutableState()) {
+            setAllBooleanBits(original.getAllBooleanBits());
+            senderOrFrameOrState = new NonExecutableContextState(original.getNonExecutableState());
+        } else {
+            if (!original.hasTruffleFrame()) {
+                original.materializeFromFrames();
+            }
+            // Copy modified sender flag and the marked code flags after ensuring original is materialized.
+            setAllBooleanBits(original.getAllBooleanBits());
+            // Create shallow copy of Truffle frame.
+            final MaterializedFrame originalFrame = original.getTruffleFrame();
+            final FrameDescriptor frameDescriptor = originalFrame.getFrameDescriptor();
+            final MaterializedFrame copyFrame = Truffle.getRuntime().createMaterializedFrame(originalFrame.getArguments().clone(), frameDescriptor);
+            senderOrFrameOrState = copyFrame;
+            FrameAccess.copySlotsExceptContext(originalFrame, copyFrame);
+            FrameAccess.setContext(copyFrame, this);
+        }
+        // A newly created copy lives on the heap and is not active on the Truffle stack.
+        markAsInactiveOnTruffleStack();
     }
 
     public static ContextObject createVirtual(final VirtualFrame frame) {
@@ -101,53 +216,47 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     @Override
     public void fillin(final SqueakImageChunk chunk) {
         assert chunk.getWordSize() > CONTEXT.TEMP_FRAME_START;
-        final CompiledCodeObject code = (CompiledCodeObject) chunk.getPointer(CONTEXT.METHOD);
-        final AbstractSqueakObject sender = (AbstractSqueakObject) chunk.getPointer(CONTEXT.SENDER_OR_NIL);
-        assert sender != null : "sender should not be null";
-        final Object closureOrNil = chunk.getPointer(CONTEXT.CLOSURE_OR_NIL);
-        final BlockClosureObject closure;
-        final int numArgs;
-        final CompiledCodeObject methodOrBlock;
-        if (closureOrNil == NilObject.SINGLETON) {
-            closure = null;
-            methodOrBlock = code;
-            numArgs = code.getNumArgs();
-        } else {
-            closure = (BlockClosureObject) closureOrNil;
-            numArgs = closure.getNumArgs() + closure.getNumCopied();
-            if (code.isCompiledMethod()) {
-                closure.fillin(chunk.getChunk(CONTEXT.CLOSURE_OR_NIL));
-                methodOrBlock = closure.getCompiledBlock();
-            } else {
-                assert closure.isAFullBlockClosure();
-                methodOrBlock = code;
-            }
+        fillinAsNonExecutableState(chunk);
+
+        // During image load, the closure shell must be explicitly filled in
+        // before materialization so we can access its CompiledBlock.
+        final NonExecutableContextState state = getNonExecutableState();
+        if (state.closureOrNil instanceof BlockClosureObject closure &&
+                        state.method instanceof CompiledCodeObject code &&
+                        code.isCompiledMethod()) {
+            closure.fillin(chunk.getChunk(CONTEXT.CLOSURE_OR_NIL));
         }
-        final int endArguments = CONTEXT.TEMP_FRAME_START + numArgs;
-        final Object[] arguments = chunk.getPointers(CONTEXT.RECEIVER, endArguments);
-        final Object[] frameArguments = FrameAccess.newWith(sender, closure, arguments);
+
+        // ToDo: A Context that was non-executable because its stack pointer was not an integer,
+        // but was legal in all other ways, will lose the stack pointer value here.
+        tryBindToFrame(true);
+    }
+
+    private void fillinAsNonExecutableState(final SqueakImageChunk chunk) {
+        final int stackSize = chunk.getWordSize() - CONTEXT.TEMP_FRAME_START;
+        final NonExecutableContextState state = new NonExecutableContextState(stackSize);
+
+        // Read the exact object pointers directly from the chunk without casting
+        state.sender = chunk.getPointer(CONTEXT.SENDER_OR_NIL);
+        state.instructionPointer = chunk.getPointer(CONTEXT.INSTRUCTION_POINTER);
+        state.stackPointer = chunk.getPointer(CONTEXT.STACKPOINTER);
+        state.method = chunk.getPointer(CONTEXT.METHOD);
+        state.closureOrNil = chunk.getPointer(CONTEXT.CLOSURE_OR_NIL);
+        state.receiver = chunk.getPointer(CONTEXT.RECEIVER);
+
+        // Map every variable-length stack slot from the chunk into the stack array
+        final Object[] stack = state.getOrCreateStack();
+        for (int i = 0; i < stackSize; i++) {
+            stack[i] = chunk.getPointer(CONTEXT.TEMP_FRAME_START + i);
+        }
+
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        assert senderOrFrameOrSize == chunk;
-        senderOrFrameOrSize = Truffle.getRuntime().createMaterializedFrame(frameArguments, methodOrBlock.getFrameDescriptor());
-        setMarkedCodeFlags();
-        FrameAccess.setContext(getTruffleFrame(), this);
-        final Object pc = chunk.getPointer(CONTEXT.INSTRUCTION_POINTER);
-        if (pc == NilObject.SINGLETON) {
-            removeInstructionPointer();
-        } else {
-            setInstructionPointer(MiscUtils.toIntExact((long) pc) - methodOrBlock.getInitialPC());
-        }
-        // OSVM interprets non-integers as zero: see Interpreter>>fetchStackPointerOf:
-        final Object sp = chunk.getPointer(CONTEXT.STACKPOINTER);
-        final int stackPointer = sp instanceof Long spLong ? MiscUtils.toIntExact(spLong) : 0;
-        setStackPointer(stackPointer);
-        for (int i = 0; i < stackPointer; i++) {
-            atTempPut(i, chunk.getPointer(CONTEXT.TEMP_FRAME_START + i));
-        }
+        assert senderOrFrameOrState == chunk;
+        senderOrFrameOrState = state;
     }
 
     public CompiledCodeObject getMethodFromChunk() {
-        if (senderOrFrameOrSize instanceof final SqueakImageChunk chunk) {
+        if (senderOrFrameOrState instanceof final SqueakImageChunk chunk) {
             return (CompiledCodeObject) chunk.getPointer(CONTEXT.METHOD);
         } else {
             return getCodeObject();
@@ -184,35 +293,56 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
 
     private MaterializedFrame getOrCreateTruffleFrame() {
         if (!hasTruffleFrame()) {
-            senderOrFrameOrSize = createTruffleFrame(this);
-            setMarkedCodeFlags();
+            if (hasNonExecutableState()) {
+                if (tryBindToFrame(true)) {
+                    return getTruffleFrame();
+                } else {
+                    CompilerDirectives.transferToInterpreter();
+                    throw SqueakException.create("Cannot create a frame for a non-executable context:", this);
+                }
+            }
+            // Fallback for the lightweight sender state.
+            return createDummyTruffleFrame();
         }
         return getTruffleFrame();
     }
 
     @TruffleBoundary
-    private static MaterializedFrame createTruffleFrame(final ContextObject context) {
+    private MaterializedFrame createDummyTruffleFrame() {
         // Method is unknown, use dummy frame instead
         final Object[] dummyArguments = FrameAccess.newWith(1);
         final CompiledCodeObject dummyMethod = SqueakImageContext.getSlow().dummyMethod;
-        final MaterializedFrame truffleFrame = Truffle.getRuntime().createMaterializedFrame(dummyArguments, dummyMethod.getFrameDescriptor());
-        FrameAccess.setContext(truffleFrame, context);
-        FrameAccess.setInstructionPointer(truffleFrame, 0);
-        FrameAccess.setStackPointer(truffleFrame, 0);
-        return truffleFrame;
+        return installTruffleFrame(dummyArguments, dummyMethod.getFrameDescriptor(), 0, 0);
+    }
+
+    private MaterializedFrame installTruffleFrame(final Object[] frameArguments, final FrameDescriptor descriptor, final int pc, final int sp) {
+        final MaterializedFrame frame = Truffle.getRuntime().createMaterializedFrame(frameArguments, descriptor);
+        senderOrFrameOrState = frame;
+        setMarkedCodeFlags();
+        FrameAccess.setContext(frame, this);
+        FrameAccess.setInstructionPointer(frame, pc);
+        FrameAccess.setStackPointer(frame, sp);
+        return frame;
     }
 
     public Object getFrameSender() {
         if (hasTruffleFrame()) {
             return FrameAccess.getSender(getTruffleFrame());
+        } else if (hasNonExecutableState()) {
+            return getRawFrameSender();
         } else {
-            return FrameAccess.ensureValidSender(senderOrFrameOrSize);
+            return FrameAccess.ensureValidSender(senderOrFrameOrState);
         }
+    }
+
+    @TruffleBoundary
+    private Object getRawFrameSender() {
+        return resolveRawValue(getNonExecutableState().sender);
     }
 
     public Object getSender() {
         final Object sender = getFrameSender();
-        if (sender instanceof final ContextObject senderContext && !senderContext.hasTruffleFrame()) {
+        if (sender instanceof final ContextObject senderContext && !senderContext.hasTruffleFrame() && !senderContext.hasNonExecutableState()) {
             senderContext.materializeFromFrames();
         }
         return sender;
@@ -220,7 +350,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
 
     @TruffleBoundary
     public void materializeFromFrames() {
-        senderOrFrameOrSize = FrameAccess.findFrameForContext(this);
+        senderOrFrameOrState = FrameAccess.findFrameForContext(this);
         setMarkedCodeFlags();
         getCodeObject().getDoesNotNeedThisContextAssumption().invalidate();
     }
@@ -240,6 +370,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
 
     /* Marked code flags (implemented in object header flags). */
     private void setMarkedCodeFlags() {
+        resetMarkedCodeFlags();
         if (getCodeObject().isUnwindMarked() && !hasClosure()) {
             setUnwindMarked();
         } else if (getCodeObject().isExceptionHandlerMarked()) {
@@ -316,15 +447,19 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     /**
      * Sets the sender of a ContextObject.
      */
-    public void setSender(final AbstractSqueakObject value) {
+    public void setSender(final Object value) {
         if (!hasModifiedSender() && hasTruffleFrame() && FrameAccess.getSender(getTruffleFrame()) != value) {
             setModifiedSender();
         }
         setSenderUnsafe(value);
     }
 
-    public void setSenderUnsafe(final AbstractSqueakObject value) {
-        FrameAccess.setSender(getOrCreateTruffleFrame(), value);
+    public void setSenderUnsafe(final Object value) {
+        if (hasNonExecutableState()) {
+            rawAtPut(CONTEXT.SENDER_OR_NIL, value);
+        } else {
+            FrameAccess.setSender(getOrCreateTruffleFrame(), value);
+        }
     }
 
     public void removeSender() {
@@ -356,7 +491,15 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     }
 
     public int getStackPointerOrZero() {
-        return hasTruffleFrame() ? FrameAccess.getStackPointer(getTruffleFrame()) : 0;
+        if (hasTruffleFrame()) {
+            return FrameAccess.getStackPointer(getTruffleFrame());
+        } else if (hasNonExecutableState()) {
+            final Object sp = resolveRawValue(getNonExecutableState().stackPointer);
+            /* Like OSVM, treat anything but a valid stack pointer as zero. */
+            return sp instanceof final Long l && 0 <= l && l <= getNonExecutableState().getSize() ? (int) (long) l : 0;
+        } else {
+            return 0;
+        }
     }
 
     public int getStackPointer() {
@@ -364,7 +507,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     }
 
     public void setStackPointer(final int value) {
-        assert 0 <= value && value <= size() : value + " not between 0 and " + getCodeObject().getSqueakContextSize() + " in " + this;
+        assert 0 <= value && value <= size() : value + " not between 0 and " + size() + " in " + this;
         FrameAccess.setStackPointer(getOrCreateTruffleFrame(), value);
     }
 
@@ -382,12 +525,11 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     }
 
     public void setCodeObject(final CompiledCodeObject value) {
-        senderOrFrameOrSize = createTruffleFrame(value);
-        setMarkedCodeFlags();
+        createAndInstallTruffleFrame(value);
     }
 
     @TruffleBoundary
-    private MaterializedFrame createTruffleFrame(final CompiledCodeObject method) {
+    private void createAndInstallTruffleFrame(final CompiledCodeObject method) {
         final Object[] frameArguments;
         final int instructionPointer;
         final int stackPointer;
@@ -412,11 +554,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
             instructionPointer = 0;
             stackPointer = method.getNumTemps();
         }
-        final MaterializedFrame truffleFrame = Truffle.getRuntime().createMaterializedFrame(frameArguments, method.getFrameDescriptor());
-        FrameAccess.setContext(truffleFrame, this);
-        FrameAccess.setInstructionPointer(truffleFrame, instructionPointer);
-        FrameAccess.setStackPointer(truffleFrame, stackPointer);
-        return truffleFrame;
+        installTruffleFrame(frameArguments, method.getFrameDescriptor(), instructionPointer, stackPointer);
     }
 
     public boolean isActuallyActiveOnTruffleStack() {
@@ -441,9 +579,15 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         return FrameAccess.hasClosure(getTruffleFrame());
     }
 
+    /**
+     * Turns a block context into a method context. The frame of a block context has its own shape
+     * (arguments include the copied values), so rebuild it from the slots.
+     */
+    @TruffleBoundary
     public void removeClosure() {
         if (hasClosure()) {
-            throw SqueakException.create("Not yet implemented/support");
+            unbindFromFrame();
+            rawAtPut(CONTEXT.CLOSURE_OR_NIL, NilObject.SINGLETON);
         }
     }
 
@@ -456,18 +600,26 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         final int numArgs = value.getNumArgs();
         final int numCopied = value.getNumCopied();
         final int expectedFrameArgumentSize = FrameAccess.expectedArgumentSize(numArgs);
+        final int oldArgsLength = oldFrame.getArguments().length;
         final Object[] arguments = Arrays.copyOf(oldFrame.getArguments(), expectedFrameArgumentSize + numCopied);
+        if (oldArgsLength < expectedFrameArgumentSize) {
+            /*
+             * If the context was materialized for its home method before the closure was set and
+             * the closure takes more arguments, Arrays.copyOf pads the new argument slots with
+             * null. Migrate any live values already written to the corresponding stack slots and
+             * initialize the remaining argument slots to nil so atTemp() never sees Java null.
+             */
+            for (int i = oldArgsLength; i < expectedFrameArgumentSize; i++) {
+                final int tempIndex = i - FrameAccess.getArgumentStartIndex();
+                arguments[i] = tempIndex < sp ? NilObject.nullToNil(FrameAccess.getStackValue(oldFrame, tempIndex)) : NilObject.SINGLETON;
+            }
+        }
         System.arraycopy(value.getCopiedValues(), 0, arguments, expectedFrameArgumentSize, numCopied);
         final FrameDescriptor frameDescriptor = value.getCompiledBlock().getFrameDescriptor();
         // Create and initialize new frame
-        final MaterializedFrame frame = Truffle.getRuntime().createMaterializedFrame(arguments, frameDescriptor);
-        senderOrFrameOrSize = frame;
-        setMarkedCodeFlags();
+        final MaterializedFrame frame = installTruffleFrame(arguments, frameDescriptor, pc, sp);
         FrameAccess.assertSenderNotNull(frame);
         FrameAccess.assertReceiverNotNull(frame);
-        FrameAccess.setContext(frame, this);
-        FrameAccess.setInstructionPointer(frame, pc);
-        FrameAccess.setStackPointer(frame, sp);
         FrameAccess.setClosure(frame, value);
         // Cannot use copyTo here as frame descriptors may be different
         // ToDo: This does not handle any stack slots held in auxiliarySlots.
@@ -534,7 +686,19 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
 
     /* Context>>#isDead */
     public boolean isDead() {
+        if (hasNonExecutableState()) {
+            return !canBeExecuted() || FrameAccess.isDead(getTruffleFrame());
+        }
         return FrameAccess.isDead(getTruffleFrame());
+    }
+
+    /**
+     * Returns false if this Context is non-executable and cannot be bound to a frame either. Such a
+     * Context can neither be resumed nor returned to. Like OSVM, this accepts a stack pointer that
+     * is not an integer and treats it as zero.
+     */
+    public boolean canBeExecuted() {
+        return !hasNonExecutableState() || tryBindToFrame(true);
     }
 
     /**
@@ -548,6 +712,9 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         }
         final Object sender = getFrameSender();
         if (sender instanceof ContextObject senderContext) {
+            if (senderContext.hasNonExecutableState()) {
+                return !senderContext.isDead();
+            }
             return !senderContext.hasTruffleFrame() || !senderContext.isDead();
         }
         return false;
@@ -575,19 +742,22 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
         if (hasMethod()) {
-            if (hasClosure()) {
-                return "CTX [] in " + getCodeObject() + " @" + Integer.toHexString(hashCode());
-            } else {
-                return "CTX " + getCodeObject() + " @" + Integer.toHexString(hashCode());
-            }
+            return formatContext("CTX", getCodeObject(), hasClosure());
+        } else if (hasNonExecutableState() && rawAt(CONTEXT.METHOD) instanceof final CompiledCodeObject code) {
+            final boolean hasClosure = rawAt(CONTEXT.CLOSURE_OR_NIL) instanceof BlockClosureObject;
+            return formatContext("CTX (non-executable)", code, hasClosure);
         } else {
             return "CTX without method @" + Integer.toHexString(hashCode());
         }
     }
 
+    private String formatContext(final String prefix, final CompiledCodeObject code, final boolean isClosure) {
+        return prefix + (isClosure ? " [] in " : " ") + code + " @" + Integer.toHexString(hashCode());
+    }
+
     @Override
     public int getNumSlots() {
-        return CONTEXT.INST_SIZE + getCodeObject().getSqueakContextSize();
+        return CONTEXT.INST_SIZE + size();
     }
 
     @Override
@@ -597,23 +767,49 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
 
     @Override
     public int size() {
-        if (senderOrFrameOrSize instanceof final Integer size) {
-            return size;
+        if (senderOrFrameOrState instanceof final NonExecutableContextState state) {
+            return state.getSize();
         } else {
+            if (!hasTruffleFrame()) {
+                materializeFromFrames();
+            }
             return getCodeObject().getSqueakContextSize();
         }
     }
 
+    public boolean isValidInstructionPointer(final long pc) {
+        final long offset = pc - getCodeObject().getInitialPC();
+        return offset >= NIL_PC_THRESHOLD && offset <= Integer.MAX_VALUE;
+    }
+
+    public boolean isValidStackPointer(final long sp) {
+        if (hasTruffleFrame()) {
+            return sp >= 0 && sp <= FrameAccess.getNumStackSlots(getTruffleFrame());
+        }
+        // Without a frame, the Squeak size of the context is the limit.
+        return sp >= 0 && sp <= size();
+    }
+
+    public boolean isValidTempIndex(final int tempIndex) {
+        if (tempIndex < 0 || tempIndex >= getStackPointerOrZero()) {
+            return false;
+        }
+        if (hasTruffleFrame()) {
+            return tempIndex < FrameAccess.getNumStackSlots(getTruffleFrame());
+        }
+        return tempIndex < size();
+    }
+
     public void become(final ContextObject other) {
-        final Object otherSenderOrFrame = other.senderOrFrameOrSize;
+        final Object otherSenderOrFrame = other.senderOrFrameOrState;
         final int otherBooleans = other.getAllBooleanBits();
-        other.setFields(senderOrFrameOrSize, getAllBooleanBits());
+        other.setFields(senderOrFrameOrState, getAllBooleanBits());
         setFields(otherSenderOrFrame, otherBooleans);
     }
 
     private void setFields(final Object otherSenderOrFrame, final int otherBooleanBits) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        senderOrFrameOrSize = otherSenderOrFrame;
+        senderOrFrameOrState = otherSenderOrFrame;
         setAllBooleanBits(otherBooleanBits);
     }
 
@@ -639,70 +835,358 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
      * {@link CompilerDirectives#castExact(Object, Class)}.
      */
     public MaterializedFrame getTruffleFrame() {
-        return (MaterializedFrame) CompilerDirectives.castExact(senderOrFrameOrSize, CONCRETE_MATERIALIZED_FRAME_CLASS);
+        return (MaterializedFrame) CompilerDirectives.castExact(senderOrFrameOrState, CONCRETE_MATERIALIZED_FRAME_CLASS);
     }
 
     public boolean hasTruffleFrame() {
-        return senderOrFrameOrSize instanceof MaterializedFrame;
+        return senderOrFrameOrState instanceof MaterializedFrame;
     }
 
     public void setTruffleFrame(final MaterializedFrame frame) {
         assert !hasTruffleFrame();
-        senderOrFrameOrSize = frame;
+        senderOrFrameOrState = frame;
+    }
+
+    /**
+     * Accessing the non-executable state.
+     */
+
+    public boolean hasNonExecutableState() {
+        return senderOrFrameOrState instanceof NonExecutableContextState;
+    }
+
+    private NonExecutableContextState getNonExecutableState() {
+        assert hasNonExecutableState();
+        return (NonExecutableContextState) senderOrFrameOrState;
+    }
+
+    @TruffleBoundary
+    private boolean tryBindToFrame(final boolean forced) {
+        final NonExecutableContextState state = (NonExecutableContextState) senderOrFrameOrState;
+
+        final Object methodObj = resolveRawValue(state.method);
+        final Object closureOrNil = resolveRawValue(state.closureOrNil);
+        final Object senderObj = resolveRawValue(state.sender);
+
+        if (!hasBindableStructure(methodObj, closureOrNil)) {
+            return false;
+        }
+
+        final CompiledCodeObject code = (CompiledCodeObject) methodObj;
+
+        // Resolve method and closure
+        final BlockClosureObject closure;
+        final CompiledCodeObject methodOrBlock;
+        final int numArgs;
+
+        if (closureOrNil == NilObject.SINGLETON) {
+            closure = null;
+            methodOrBlock = code;
+            numArgs = code.getNumArgs();
+        } else {
+            closure = (BlockClosureObject) closureOrNil;
+            methodOrBlock = closure.isAFullBlockClosure() ? code : closure.getCompiledBlock();
+            numArgs = closure.getNumArgs() + closure.getNumCopied();
+        }
+
+        // Validate instruction pointer bounds before allocating frame objects
+        final int relativePC = determineInstructionPointer(resolveRawValue(state.instructionPointer), methodOrBlock);
+        if (relativePC == INVALID_PC) {
+            return false;
+        }
+
+        // Evaluate stack pointer bounds before allocating or installing the frame
+        final int numStackSlots = methodOrBlock.getFrameDescriptor().getNumberOfSlots() - FrameAccess.getStackStart();
+        final int sp = determineStackPointer(resolveRawValue(state.stackPointer), forced, numStackSlots);
+        if (sp < 0) {
+            return false;
+        }
+
+        // Allocate and apply state
+        final Object[] receiverAndArgs = gatherReceiverAndArgs(state, numArgs);
+        final Object[] frameArguments = FrameAccess.newWith(senderObj, closure, receiverAndArgs);
+        installTruffleFrame(frameArguments, methodOrBlock.getFrameDescriptor(), relativePC, sp);
+        restoreStack(state, sp);
+
+        return true;
+    }
+
+    private static boolean hasBindableStructure(final Object method, final Object closureOrNil) {
+        if (!(method instanceof CompiledCodeObject)) {
+            return false; // Cannot materialize without a structurally valid method
+        }
+        return closureOrNil == NilObject.SINGLETON || closureOrNil instanceof BlockClosureObject; // Structurally invalid closure otherwise
+    }
+
+    private static Object[] gatherReceiverAndArgs(final NonExecutableContextState state, final int numArgs) {
+        final Object[] receiverAndArgs = new Object[1 + numArgs];
+        receiverAndArgs[0] = resolveRawValue(state.receiver);
+        for (int i = 0; i < numArgs; i++) {
+            receiverAndArgs[1 + i] = state.getStackValueOrNil(i);
+        }
+        return receiverAndArgs;
+    }
+
+    private static int determineInstructionPointer(final Object pc, final CompiledCodeObject methodOrBlock) {
+        if (pc == NilObject.SINGLETON) {
+            return NIL_PC_STACK_NOT_NIL_VALUE;
+        } else if (pc instanceof Long l) {
+            final long offset = l - methodOrBlock.getInitialPC();
+            if (offset < NIL_PC_THRESHOLD || offset > Integer.MAX_VALUE) {
+                return INVALID_PC; // Stay non-executable if PC cannot be represented in a Truffle frame
+            }
+            return (int) offset;
+        }
+        return INVALID_PC;
+    }
+
+    private static int determineStackPointer(final Object stackPointer, final boolean forced, final int numStackSlots) {
+        if (stackPointer instanceof Long l) {
+            if (l < 0 || l > numStackSlots) {
+                // ToDo: Alternatively, we could force SP to zero when forced
+                return -1; // Refuse to materialize if SP out of bounds
+            }
+            return MiscUtils.toIntExact(l);
+        } else if (forced) {
+            return 0; // OSVM interprets non-integers as zero for execution/loading
+        }
+        return -1; // Stay non-executable
+    }
+
+    private void restoreStack(final NonExecutableContextState state, final int sp) {
+        /*
+         * Only live stack slots in [0, sp) are copied; any values written above sp while non-executable
+         * form are discarded upon materialization (Context>>#stackp: nils those slots anyway).
+         */
+        for (int i = 0; i < sp; i++) {
+            atTempPut(i, state.getStackValueOrNil(i));
+        }
+    }
+
+    /**
+     * Gracefully degrades a MaterializedFrame into a NonExecutableContextState.
+     * This is triggered when Squeak reflection attempts to write structurally
+     * invalid types (e.g., Strings instead of CompiledCodeObjects) into critical slots.
+     */
+    public void unbindFromFrame() {
+        assert hasTruffleFrame();
+
+        // ToDo: Ensure primitives only operate on heap-based Contexts.
+        if (isPotentiallyActiveOnTruffleStack() && isActuallyActiveOnTruffleStack()) {
+            CompilerDirectives.transferToInterpreter();
+            throw new ActiveContextUnbindException();
+        }
+
+        // Extract all state from the Truffle frame using the existing slow-path getters
+        final int sp = getStackPointer();
+        final NonExecutableContextState state = new NonExecutableContextState(getCodeObject().getSqueakContextSize());
+        state.sender = getSender();
+        state.instructionPointer = getInstructionPointer(InlinedConditionProfile.getUncached(), null);
+        state.stackPointer = (long) sp;
+        state.method = getCodeObject();
+        state.closureOrNil = NilObject.nullToNil(getClosure());
+        state.receiver = getReceiver();
+
+        // Populate the stack array with the Truffle frame's stack
+        final Object[] stack = state.getOrCreateStack();
+        for (int i = 0; i < sp; i++) {
+            stack[i] = atTemp(i);
+        }
+
+        // Sever the connection to the Truffle frame
+        senderOrFrameOrState = state;
+        resetMarkedCodeFlags();
+    }
+
+    private static Object resolveRawValue(final Object value) {
+        return value == null ? NilObject.SINGLETON : AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(value);
+    }
+
+    /**
+     * Reads the slot at the given 0-based index from the non-executable state. Slots at or above
+     * the stack pointer read as {@code nil}.
+     */
+    @TruffleBoundary
+    public Object rawAt(final long index) {
+        final NonExecutableContextState state = getNonExecutableState();
+        if (index == CONTEXT.SENDER_OR_NIL) {
+            return resolveRawValue(state.sender);
+        } else if (index == CONTEXT.INSTRUCTION_POINTER) {
+            return resolveRawValue(state.instructionPointer);
+        } else if (index == CONTEXT.STACKPOINTER) {
+            return resolveRawValue(state.stackPointer);
+        } else if (index == CONTEXT.METHOD) {
+            return resolveRawValue(state.method);
+        } else if (index == CONTEXT.CLOSURE_OR_NIL) {
+            return resolveRawValue(state.closureOrNil);
+        } else if (index == CONTEXT.RECEIVER) {
+            return resolveRawValue(state.receiver);
+        } else {
+            final int tempIndex = (int) (index - CONTEXT.TEMP_FRAME_START);
+            return isValidTempIndex(tempIndex) ? state.getStackValueOrNil(tempIndex) : NilObject.SINGLETON;
+        }
+    }
+
+    /**
+     * Writes the slot at the given 0-based index of the non-executable state. Writes to slots at or
+     * above the stack pointer are ignored. Afterwards, the context is bound to a frame again if a
+     * structural slot changed and all slots are valid now.
+     */
+    @TruffleBoundary
+    public void rawAtPut(final long index, final Object value) {
+        final NonExecutableContextState state = getNonExecutableState();
+        if (index == CONTEXT.SENDER_OR_NIL) {
+            state.sender = value;
+        } else if (index == CONTEXT.INSTRUCTION_POINTER) {
+            state.instructionPointer = value;
+        } else if (index == CONTEXT.STACKPOINTER) {
+            state.stackPointer = value;
+        } else if (index == CONTEXT.METHOD) {
+            state.method = value;
+        } else if (index == CONTEXT.CLOSURE_OR_NIL) {
+            state.closureOrNil = value;
+        } else if (index == CONTEXT.RECEIVER) {
+            state.receiver = value;
+            return; // Cannot make the context executable.
+        } else {
+            final int tempIndex = (int) (index - CONTEXT.TEMP_FRAME_START);
+            if (isValidTempIndex(tempIndex)) {
+                state.getOrCreateStack()[tempIndex] = value;
+            }
+            return; // Cannot make the context executable.
+        }
+        tryBindToFrame(false);
+    }
+
+    /**
+     * Implements {@code Context>>#stackp:} for the non-executable state: slots that become
+     * accessible are set to {@code nil}.
+     */
+    @TruffleBoundary
+    public void rawStackPointerPut(final int newStackPointer) {
+        final NonExecutableContextState state = getNonExecutableState();
+        final Object[] stack = state.getOrCreateStack();
+        for (int i = getStackPointerOrZero(); i < newStackPointer; i++) {
+            stack[i] = NilObject.SINGLETON;
+        }
+        state.stackPointer = (long) newStackPointer;
+        tryBindToFrame(false);
     }
 
     @TruffleBoundary
     public boolean pointsTo(final Object thang) {
-        // TODO: make sure this works correctly
-        if (hasTruffleFrame()) {
-            final int stackPointer = getStackPointer();
-            if (getSender() == thang || thang.equals(getInstructionPointer(InlinedConditionProfile.getUncached(), null)) || thang.equals(stackPointer) || getCodeObject() == thang ||
-                            getClosure() == thang ||
-                            getReceiver() == thang) {
-                return true;
-            }
-            for (int i = 0; i < stackPointer; i++) {
-                if (atTemp(i) == thang) {
+        if (hasNonExecutableState()) {
+            final int stackPointer = getStackPointerOrZero();
+            for (int i = CONTEXT.SENDER_OR_NIL; i < CONTEXT.TEMP_FRAME_START + stackPointer; i++) {
+                final Object value = rawAt(i);
+                if (value == thang || (value instanceof Long && thang.equals(value))) {
                     return true;
                 }
+            }
+            return false;
+        }
+        if (!hasTruffleFrame()) {
+            materializeFromFrames();
+        }
+        final int stackPointer = getStackPointer();
+        if (getFrameSender() == thang ||
+                        thang.equals(getInstructionPointer(InlinedConditionProfile.getUncached(), null)) ||
+                        thang.equals((long) stackPointer) ||
+                        getCodeObject() == thang ||
+                        (hasClosure() ? getClosure() : NilObject.SINGLETON) == thang ||
+                        getReceiver() == thang) {
+            return true;
+        }
+        for (int i = 0; i < stackPointer; i++) {
+            if (atTemp(i) == thang) {
+                return true;
             }
         }
         return false;
     }
 
+    private static Object migrate(final UnmodifiableEconomicMap<Object, Object> fromToMap, final Object value) {
+        return value != null ? fromToMap.get(value) : null;
+    }
+
     @Override
     public void pointersBecomeOneWay(final UnmodifiableEconomicMap<Object, Object> fromToMap) {
         if (hasTruffleFrame()) {
-            final MaterializedFrame frame = getTruffleFrame();
-            final CompiledCodeObject compiledCodeObject = FrameAccess.getCodeObject(frame);
-            if (compiledCodeObject != null && fromToMap.get(compiledCodeObject) instanceof final CompiledCodeObject o) {
+            /*
+             * Migrate arguments, stack slots, and sender in place on initialFrame BEFORE
+             * overwriteCodeObject() or setClosure(), because both allocate and install a new
+             * MaterializedFrame (copying state from the current frame). Resolve migratedCode and
+             * migratedClosure from initialFrame upfront so both are read before any frame
+             * replacement occurs.
+             */
+            final MaterializedFrame initialFrame = getTruffleFrame();
+            final Object[] arguments = initialFrame.getArguments();
+            for (int i = FrameAccess.getReceiverStartIndex(); i < arguments.length; i++) {
+                final Object migratedValue = migrate(fromToMap, arguments[i]);
+                if (migratedValue != null) {
+                    arguments[i] = migratedValue;
+                }
+            }
+            FrameAccess.iterateStackObjectsWithReplacement(initialFrame, true, stackValue -> migrate(fromToMap, stackValue));
+            final Object migratedSender = migrate(fromToMap, FrameAccess.getSender(initialFrame));
+            if (migratedSender != null) {
+                setSender(migratedSender);
+            }
+            final Object migratedCode = migrate(fromToMap, FrameAccess.getCodeObject(initialFrame));
+            final Object migratedClosure = migrate(fromToMap, FrameAccess.getClosure(initialFrame));
+            if (migratedCode instanceof final CompiledCodeObject o) {
                 overwriteCodeObject(o);
             }
-            final Object sender = FrameAccess.getSender(frame);
-            if (sender != null && fromToMap.get(sender) instanceof final ContextObject o) {
-                setSender(o);
-            }
-            final Object closure = FrameAccess.getClosure(frame);
-            if (closure != null && fromToMap.get(closure) instanceof final BlockClosureObject o) {
+            if (migratedClosure instanceof final BlockClosureObject o) {
                 setClosure(o);
             }
-            final Object[] arguments = frame.getArguments();
-            for (int i = FrameAccess.getReceiverStartIndex(); i < arguments.length; i++) {
-                final Object argument = arguments[i];
-                if (argument != null) {
-                    final Object migratedValue = fromToMap.get(argument);
-                    if (migratedValue != null) {
-                        arguments[i] = migratedValue;
+        } else if (hasNonExecutableState()) {
+            /* Intentionally skips stack pointer since it can only be nil or a non-negative integer. */
+            final NonExecutableContextState state = getNonExecutableState();
+            boolean structuralSlotChanged = false;
+            final Object migratedSender = migrate(fromToMap, state.sender);
+            if (migratedSender != null) {
+                state.sender = migratedSender;
+                structuralSlotChanged = true;
+            }
+            final Object migratedInstructionPointer = migrate(fromToMap, state.instructionPointer);
+            if (migratedInstructionPointer != null) {
+                state.instructionPointer = migratedInstructionPointer;
+                structuralSlotChanged = true;
+            }
+            final Object migratedMethod = migrate(fromToMap, state.method);
+            if (migratedMethod != null) {
+                state.method = migratedMethod;
+                structuralSlotChanged = true;
+            }
+            final Object migratedClosureOrNil = migrate(fromToMap, state.closureOrNil);
+            if (migratedClosureOrNil != null) {
+                state.closureOrNil = migratedClosureOrNil;
+                structuralSlotChanged = true;
+            }
+            final Object migratedReceiver = migrate(fromToMap, state.receiver);
+            if (migratedReceiver != null) {
+                state.receiver = migratedReceiver;
+            }
+            if (state.stackOrSize instanceof Object[] stack) {
+                final int limit = Math.min(getStackPointerOrZero(), stack.length);
+                for (int i = 0; i < limit; i++) {
+                    final Object migratedStackValue = migrate(fromToMap, stack[i]);
+                    if (migratedStackValue != null) {
+                        stack[i] = migratedStackValue;
                     }
                 }
+                Arrays.fill(stack, limit, stack.length, null);
             }
-            FrameAccess.iterateStackObjectsWithReplacement(frame, true, stackValue -> {
-                if (stackValue != null) {
-                    return fromToMap.get(stackValue);
-                } else {
-                    return null;
-                }
-            });
+            if (structuralSlotChanged) {
+                tryBindToFrame(false);
+            }
+        } else if (senderOrFrameOrState != null) {
+            // Migrate the lightweight sender state
+            final Object migratedSender = migrate(fromToMap, senderOrFrameOrState);
+            if (migratedSender != null) {
+                senderOrFrameOrState = migratedSender;
+            }
         }
     }
 
@@ -714,22 +1198,27 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
             tracer.addIfUnmarked(FrameAccess.getCodeObject(frame));
             tracer.addAllIfUnmarked(frame.getArguments());
             FrameAccess.iterateStackObjects(frame, tracer.frameHandling, tracer::addIfUnmarked);
+        } else if (hasNonExecutableState()) {
+            getNonExecutableState().tracePointers(tracer::addIfUnmarked, getStackPointerOrZero());
         } else {
-            tracer.addIfUnmarked(senderOrFrameOrSize);
+            tracer.addIfUnmarked(senderOrFrameOrState);
         }
     }
 
     @Override
     public void trace(final SqueakImageWriter writer) {
         super.trace(writer);
-        if (hasTruffleFrame()) {
+        if (hasNonExecutableState()) {
+            getNonExecutableState().tracePointers(writer::traceIfNecessary, getStackPointerOrZero());
+        } else {
+            if (!hasTruffleFrame()) {
+                materializeFromFrames();
+            }
             final MaterializedFrame frame = getTruffleFrame();
             getSender(); /* May materialize sender. */
             writer.traceIfNecessary(FrameAccess.getCodeObject(frame));
             writer.traceAllIfNecessary(frame.getArguments());
             FrameAccess.iterateStackObjects(frame, FrameHandling.SCRUB, writer::traceIfNecessary);
-        } else if (senderOrFrameOrSize instanceof AbstractSqueakObject o) {
-            writer.traceIfNecessary(o);
         }
     }
 
@@ -738,32 +1227,51 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         if (!writeHeader(writer)) {
             throw SqueakException.create("ContextObject must have slots:", this);
         }
-        writer.writeObject(getSender());
-        writer.writeObject(getInstructionPointer(InlinedConditionProfile.getUncached(), null));
-        writer.writeSmallInteger(getStackPointer());
-        writer.writeObject(getCodeObject());
-        writer.writeObject(NilObject.nullToNil(getClosure()));
-        final MaterializedFrame frame = getTruffleFrame();
-        final Object[] args = frame.getArguments();
-        final int numArgs = FrameAccess.getNumArguments(frame);
-        // Write receiver and arguments
-        for (int i = 0; i < 1 + numArgs; i++) {
-            writer.writeObject(args[FrameAccess.getReceiverStartIndex() + i]);
-        }
-        // Write stack values from frame slots
-        final int numSlots = FrameAccess.getNumStackSlots(frame);
-        for (int i = numArgs; i < numSlots; i++) {
-            final Object stackValue = FrameAccess.getStackValue(frame, i);
-            if (stackValue == null) {
-                writer.writeNil();
-            } else {
-                writer.writeObject(stackValue);
+
+        if (hasNonExecutableState()) {
+            final NonExecutableContextState state = getNonExecutableState();
+            writer.writeObject(resolveRawValue(state.sender));
+            writer.writeObject(resolveRawValue(state.instructionPointer));
+            writer.writeObject(resolveRawValue(state.stackPointer));
+            writer.writeObject(resolveRawValue(state.method));
+            writer.writeObject(resolveRawValue(state.closureOrNil));
+            writer.writeObject(resolveRawValue(state.receiver));
+
+            final int contextSize = state.getSize();
+            final int sp = getStackPointerOrZero();
+            for (int i = 0; i < contextSize; i++) {
+                writer.writeObject(i < sp ? state.getStackValueOrNil(i) : NilObject.SINGLETON);
             }
-        }
-        // Write nil values for remaining stack values
-        final int contextSize = getCodeObject().getSqueakContextSize();
-        for (int i = numSlots; i < contextSize; i++) {
-            writer.writeNil();
+        } else {
+            if (!hasTruffleFrame()) {
+                materializeFromFrames();
+            }
+            writer.writeObject(getSender());
+            writer.writeObject(getInstructionPointer(InlinedConditionProfile.getUncached(), null));
+            writer.writeSmallInteger(getStackPointer());
+            writer.writeObject(getCodeObject());
+            writer.writeObject(NilObject.nullToNil(getClosure()));
+            final MaterializedFrame frame = getTruffleFrame();
+            final Object[] args = frame.getArguments();
+            final int numArgs = FrameAccess.getNumArguments(frame);
+            // Write receiver and arguments
+            for (int i = 0; i < 1 + numArgs; i++) {
+                writer.writeObject(args[FrameAccess.getReceiverStartIndex() + i]);
+            }
+            // Write stack values from frame slots
+            final int numSlots = FrameAccess.getNumStackSlots(frame);
+            for (int i = numArgs; i < numSlots; i++) {
+                final Object stackValue = FrameAccess.getStackValue(frame, i);
+                if (stackValue == null) {
+                    writer.writeNil();
+                } else {
+                    writer.writeObject(stackValue);
+                }
+            }
+            final int contextSize = getCodeObject().getSqueakContextSize();
+            for (int i = numSlots; i < contextSize; i++) {
+                writer.writeNil();
+            }
         }
     }
 }
