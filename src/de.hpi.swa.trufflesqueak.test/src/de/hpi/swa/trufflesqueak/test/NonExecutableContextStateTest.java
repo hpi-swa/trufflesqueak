@@ -225,6 +225,24 @@ public final class NonExecutableContextStateTest extends AbstractSqueakTestCaseW
     }
 
     @Test
+    public void testRemoveClosure() {
+        final ContextObject ctx = (ContextObject) evaluate("""
+                        | ctx |
+                        ctx := Context sender: nil receiver: 3 method: Object >> #yourself arguments: #().
+                        ctx instVarAt: 5 put: [ :x | x ].
+                        ctx closure isNil ifTrue: [ self error: 'expected a closure' ].
+                        ctx instVarAt: 5 put: nil.
+                        ctx closure isNil ifFalse: [ self error: 'expected no closure' ].
+                        ctx receiver = 3 ifFalse: [ self error: 'expected receiver 3' ].
+                        ctx
+                        """);
+        assertTrue(ctx.hasTruffleFrame());
+        assertFalse(ctx.hasClosure());
+        /* A context that is running cannot give up its frame; the primitive fails instead. */
+        assertEquals(true, evaluate("[ [ thisContext instVarAt: 5 put: nil. false ] on: Error do: [ :ex | true ] ] value"));
+    }
+
+    @Test
     public void testOutOfBoundsWritesAndStackPointerValidation() {
         final ContextObject ctx = (ContextObject) evaluate("""
                         | ctx method |

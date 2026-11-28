@@ -579,9 +579,15 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         return FrameAccess.hasClosure(getTruffleFrame());
     }
 
+    /**
+     * Turns a block context into a method context. The frame of a block context has its own shape
+     * (arguments include the copied values), so rebuild it from the slots.
+     */
+    @TruffleBoundary
     public void removeClosure() {
         if (hasClosure()) {
-            throw SqueakException.create("Not yet implemented/support");
+            unbindFromFrame();
+            rawAtPut(CONTEXT.CLOSURE_OR_NIL, NilObject.SINGLETON);
         }
     }
 
