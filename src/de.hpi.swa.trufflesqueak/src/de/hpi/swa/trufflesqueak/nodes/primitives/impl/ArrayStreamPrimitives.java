@@ -20,8 +20,10 @@ import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.ActiveContextDematerializationException;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
@@ -68,8 +70,12 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
                         final SqueakObjectInstSizeNode instSizeNode, final SqueakObjectAtPut0Node atput0Node, final InlinedBranchProfile outOfBounceProfile, final Node node) {
             final int instSize = instSizeNode.execute(node, receiver);
             if (inBoundsOfSqueakObject(receiver, instSize, index, sizeNode, node)) {
-                atput0Node.execute(node, receiver, index - 1 + instSize, value);
-                return value;
+                try {
+                    atput0Node.execute(node, receiver, index - 1 + instSize, value);
+                    return value;
+                } catch (final ActiveContextDematerializationException e) {
+                    throw PrimitiveFailed.BAD_ARGUMENT;
+                }
             } else {
                 outOfBounceProfile.enter(node);
                 throw PrimitiveFailed.BAD_INDEX;
@@ -136,6 +142,11 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 62)
     protected abstract static class PrimSize1Node extends AbstractPrimitiveNode implements Primitive0WithFallback {
+        @Specialization
+        protected static final long doContext(final ContextObject receiver) {
+            return Math.min(receiver.size(), receiver.getStackPointerOrZero());
+        }
+
         @Specialization(guards = "isIndexable(receiver)")
         protected static final long doSqueakObject(final AbstractSqueakObject receiver,
                         @Bind final Node node,
@@ -148,6 +159,11 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 62)
     protected abstract static class PrimSize2Node extends AbstractPrimitiveNode implements Primitive1WithFallback {
+        @Specialization
+        protected static final long doContext(@SuppressWarnings("unused") final Object receiver, final ContextObject target) {
+            return Math.min(target.size(), target.getStackPointerOrZero());
+        }
+
         @Specialization(guards = "isIndexable(target)")
         protected static final long doSqueakObject(@SuppressWarnings("unused") final Object receiver, final AbstractSqueakObject target,
                         @Bind final Node node,
