@@ -60,7 +60,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     protected abstract static class AbstractArrayBecomeOneWayPrimitiveNode extends AbstractPrimitiveNode {
 
-        protected final ArrayObject performPointersBecomeOneWay(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash) {
+        protected final Object performPointersBecomeOneWay(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash) {
             if (!fromArray.isObjectType() || !toArray.isObjectType() || fromArray.getObjectLength() != toArray.getObjectLength()) {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.BAD_ARGUMENT;
@@ -69,9 +69,9 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             final Object[] fromPointers = fromArray.getObjectStorage().clone();
             final Object[] toPointers = toArray.getObjectStorage();
             final SqueakImageContext image = getContext();
-            image.objectGraphUtils.pointersBecomeOneWay(fromPointers, toPointers, copyHash);
+            final Object result = image.objectGraphUtils.pointersBecomeOneWay(fromArray, fromPointers, toPointers, copyHash);
             image.flushMethodCacheAfterBecome();
-            return fromArray;
+            return result;
         }
     }
 
@@ -185,19 +185,19 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimArrayBecomeOneWayNode extends AbstractArrayBecomeOneWayPrimitiveNode implements Primitive1WithFallback {
 
         @Specialization
-        protected final ArrayObject doForward(final ArrayObject fromArray, final ArrayObject toArray) {
+        protected final Object doForward(final ArrayObject fromArray, final ArrayObject toArray) {
             return performPointersBecomeOneWay(fromArray, toArray, true);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"!isArrayObject(receiver)"})
-        protected static final ArrayObject doBadReceiver(final Object receiver, final ArrayObject argument) {
+        protected static final Object doBadReceiver(final Object receiver, final ArrayObject argument) {
             throw PrimitiveFailed.BAD_RECEIVER;
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"!isArrayObject(argument)"})
-        protected static final ArrayObject doBadArgument(final ArrayObject receiver, final Object argument) {
+        protected static final Object doBadArgument(final ArrayObject receiver, final Object argument) {
             throw PrimitiveFailed.BAD_ARGUMENT;
         }
     }
@@ -567,19 +567,19 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimArrayBecomeOneWayNoCopyHashNode extends AbstractArrayBecomeOneWayPrimitiveNode implements Primitive1WithFallback {
 
         @Specialization
-        protected final ArrayObject doForward(final ArrayObject fromArray, final ArrayObject toArray) {
+        protected final Object doForward(final ArrayObject fromArray, final ArrayObject toArray) {
             return performPointersBecomeOneWay(fromArray, toArray, false);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"!isArrayObject(receiver)"})
-        protected static final ArrayObject doBadReceiver(final Object receiver, final ArrayObject argument) {
+        protected static final Object doBadReceiver(final Object receiver, final ArrayObject argument) {
             throw PrimitiveFailed.BAD_RECEIVER;
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"!isArrayObject(argument)"})
-        protected static final ArrayObject doBadArgument(final ArrayObject receiver, final Object argument) {
+        protected static final Object doBadArgument(final ArrayObject receiver, final Object argument) {
             throw PrimitiveFailed.BAD_ARGUMENT;
         }
     }
@@ -589,7 +589,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimArrayBecomeOneWayCopyHashArgNode extends AbstractArrayBecomeOneWayPrimitiveNode implements Primitive2WithFallback {
 
         @Specialization
-        protected final ArrayObject doForward(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash,
+        protected final Object doForward(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash,
                         @Bind final Node node,
                         @Cached final InlinedConditionProfile copyHashProfile) {
             return performPointersBecomeOneWay(fromArray, toArray, copyHashProfile.profile(node, copyHash));
@@ -597,13 +597,13 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"!isArrayObject(receiver)"})
-        protected static final ArrayObject doBadReceiver(final Object receiver, final ArrayObject argument, final boolean copyHash) {
+        protected static final Object doBadReceiver(final Object receiver, final ArrayObject argument, final boolean copyHash) {
             throw PrimitiveFailed.BAD_RECEIVER;
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"!isArrayObject(argument)"})
-        protected static final ArrayObject doBadArgument(final ArrayObject receiver, final Object argument, final boolean copyHash) {
+        protected static final Object doBadArgument(final ArrayObject receiver, final Object argument, final boolean copyHash) {
             throw PrimitiveFailed.BAD_ARGUMENT;
         }
     }

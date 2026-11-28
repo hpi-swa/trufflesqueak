@@ -251,28 +251,86 @@ public final class ObjectGraphUtils {
         return result;
     }
 
+    /**
+     * Convenience overload of {@link #pointersBecomeOneWay(Object, Object[], Object[], boolean)}
+     * for callers that do not need a tracked receiver object resolved.
+     */
     @TruffleBoundary
     public void pointersBecomeOneWay(final Object[] fromPointers, final Object[] toPointers, final boolean copyHash) {
+        pointersBecomeOneWay(null, fromPointers, toPointers, copyHash);
+    }
+
+    /**
+     * Replaces all references to each object in {@code fromPointers} with the corresponding object
+     * in {@code toPointers} (Squeak's {@code #elementsForwardIdentityTo:} primitive).
+     *
+     * <p>When every {@code from} and {@code to} is an {@link AbstractSqueakObjectWithClassAndHash},
+     * forwarding pointers are installed lazily in each object's class slot ({@link
+     * AbstractSqueakObjectWithClassAndHash#forwardTo}) and only active Truffle stack frames are
+     * rewritten immediately; heap references and {@link #becomeMap} are cleaned up on the next full
+     * heap traversal. Otherwise, the entire object graph is rewritten eagerly.
+     *
+     * <p>Like the OpenSmalltalk VM, this first follows elements of both arrays that were forwarded
+     * by an earlier call, and then processes the pairs in order: a {@code from} that already
+     * appeared earlier in {@code fromPointers} is skipped, and a {@code to} that already appeared
+     * as a {@code from} is replaced by its target. Consequently, {@link #becomeMap} never contains
+     * a cycle, not even for requests such as {@code [A, B] -> [B, A]}.
+     *
+     * @param receiver optional object (such as the primitive's {@code fromArray} receiver) whose
+     *            post-become identity should be returned, or {@code null}
+     * @param fromPointers source objects whose identity is being forwarded
+     * @param toPointers target objects receiving the forwarded references
+     * @param copyHash {@code true} if each target heap object should adopt its source's Squeak hash
+     * @return the resolved target of {@code receiver} if it was forwarded or replaced, {@code null}
+     *         if {@code receiver} was {@code null}, or {@code receiver} unchanged otherwise
+     */
+    @TruffleBoundary
+    public Object pointersBecomeOneWay(final Object receiver, final Object[] fromPointers, final Object[] toPointers, final boolean copyHash) {
         final long startTime = System.nanoTime();
-        boolean allAbstractSqueakObjectWithHash = true;
+        boolean useForwardingPointers = true;
         for (int i = 0; i < fromPointers.length; i++) {
-            final Object from = fromPointers[i];
-            final Object to = toPointers[i];
+            /*
+             * Heap slots are only updated lazily, so both arrays may still contain objects that
+             * were forwarded by an earlier call. Follow them, so that keys of becomeMap are never
+             * used as `from` or `to` again.
+             */
+            final Object from = AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(fromPointers[i]);
+            if (becomeMap.containsKey(from)) {
+                continue; // Appeared earlier in fromPointers, the first occurrence wins.
+            }
+            Object to = AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(toPointers[i]);
+            Object next;
+            while ((next = becomeMap.get(to)) != null) {
+                to = next; // Appeared earlier in fromPointers, use its target instead.
+            }
             if (from != to) {
+                /* `from` is not a key and `to` has no successor, so becomeMap stays acyclic. */
                 becomeMap.put(from, to);
                 if (from instanceof final AbstractSqueakObjectWithClassAndHash f && to instanceof final AbstractSqueakObjectWithClassAndHash t) {
                     if (copyHash) {
                         t.setSqueakHash(MiscUtils.toIntExact(f.getOrCreateSqueakHash()));
                     }
-                    f.forwardTo(t);
                 } else {
-                    allAbstractSqueakObjectWithHash = false;
+                    useForwardingPointers = false;
                 }
             }
         }
+        Object result = AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(receiver);
         if (!becomeMap.isEmpty()) {
             flattenForwardPointers();
-            if (allAbstractSqueakObjectWithHash) {
+            if (result != null) {
+                result = becomeMap.get(result, result);
+            }
+            if (useForwardingPointers) {
+                final MapCursor<Object, Object> cursor = becomeMap.getEntries();
+                while (cursor.advance()) {
+                    final AbstractSqueakObjectWithClassAndHash from = (AbstractSqueakObjectWithClassAndHash) cursor.getKey();
+                    final AbstractSqueakObjectWithClassAndHash to = (AbstractSqueakObjectWithClassAndHash) cursor.getValue();
+                    /* Entries from earlier lazy calls may already forward to `to`; avoid redundant invalidations. */
+                    if (from.isNotForwarded() || from.getForwardingPointer() != to) {
+                        from.forwardTo(to);
+                    }
+                }
                 pointersBecomeOneWayFrames(_ -> {
                 }, becomeMap);
             } else {
@@ -284,18 +342,24 @@ public final class ObjectGraphUtils {
         if (trackOperations) {
             ObjectGraphOperations.POINTERS_BECOME_ONE_WAY.addNanos(System.nanoTime() - startTime);
         }
+        return result;
     }
 
-    /* Ensure forward pointers are never recursive. */
+    /**
+     * Collapses multi-hop chains ({@code A -> B -> C}) in {@link #becomeMap} so every entry points
+     * directly to its terminal target. Chains can arise within a single bulk batch or across
+     * consecutive lazy calls before {@link #becomeMap} is cleared by a full heap traversal. Terminates
+     * because {@link #pointersBecomeOneWay} keeps {@link #becomeMap} acyclic.
+     */
     private void flattenForwardPointers() {
         final MapCursor<Object, Object> cursor = becomeMap.getEntries();
         while (cursor.advance()) {
-            final Object toPointer = becomeMap.get(cursor.getValue());
-            if (toPointer instanceof final AbstractSqueakObjectWithClassAndHash to) {
-                /* Current value is also key, so update forward object of value's key. */
-                ((AbstractSqueakObjectWithClassAndHash) cursor.getKey()).forwardTo(to);
-                cursor.setValue(to);
+            Object target = cursor.getValue();
+            Object next;
+            while ((next = becomeMap.get(target)) != null) {
+                target = next;
             }
+            cursor.setValue(target);
         }
     }
 
