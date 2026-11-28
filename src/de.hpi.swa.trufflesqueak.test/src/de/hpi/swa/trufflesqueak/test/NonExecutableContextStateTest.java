@@ -188,6 +188,30 @@ public final class NonExecutableContextStateTest extends AbstractSqueakTestCaseW
     }
 
     @Test
+    public void testNonExecutableContextsCannotBeReturnedTo() {
+        final ContextObject fresh = (ContextObject) evaluate("Context newForMethod: CompiledMethod toReturnSelf");
+        assertFalse(fresh.canBeExecuted());
+        assertTrue(fresh.isDead());
+
+        final ContextObject withNonExecutableSender = (ContextObject) evaluate("""
+                        | ctx |
+                        ctx := Context sender: nil receiver: 3 method: Object >> #yourself arguments: #().
+                        ctx privSender: (Context newForMethod: CompiledMethod toReturnSelf).
+                        ctx
+                        """);
+        assertFalse(withNonExecutableSender.isDead());
+        assertFalse(withNonExecutableSender.canReturnToSender());
+
+        /* A non-local return whose home context is non-executable ends in BlockCannotReturn. */
+        assertEquals("#BlockCannotReturn", evaluate("""
+                        [ | block |
+                            block := [ ^ 3 ].
+                            block instVarNamed: 'outerContext' put: (Context newForMethod: CompiledMethod toReturnSelf).
+                            block value ] on: Error do: [ :ex | ex class name ]
+                        """).toString());
+    }
+
+    @Test
     public void testOutOfBoundsWritesAndStackPointerValidation() {
         final ContextObject ctx = (ContextObject) evaluate("""
                         | ctx method |

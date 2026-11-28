@@ -676,7 +676,19 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
 
     /* Context>>#isDead */
     public boolean isDead() {
+        if (hasNonExecutableState()) {
+            return !canBeExecuted() || FrameAccess.isDead(getTruffleFrame());
+        }
         return FrameAccess.isDead(getTruffleFrame());
+    }
+
+    /**
+     * Returns false if this Context is non-executable and cannot be bound to a frame either. Such a
+     * Context can neither be resumed nor returned to. Like OSVM, this accepts a stack pointer that
+     * is not an integer and treats it as zero.
+     */
+    public boolean canBeExecuted() {
+        return !hasNonExecutableState() || tryBindToFrame(true);
     }
 
     /**
@@ -691,7 +703,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         final Object sender = getFrameSender();
         if (sender instanceof ContextObject senderContext) {
             if (senderContext.hasNonExecutableState()) {
-                return false;
+                return !senderContext.isDead();
             }
             return !senderContext.hasTruffleFrame() || !senderContext.isDead();
         }

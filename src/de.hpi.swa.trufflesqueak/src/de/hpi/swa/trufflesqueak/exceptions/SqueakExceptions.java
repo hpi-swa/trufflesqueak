@@ -82,10 +82,11 @@ public final class SqueakExceptions {
     }
 
     /**
-     * Thrown when reflection attempts to dematerialize a {@code ContextObject} that is currently
-     * active on the Truffle execution stack. Reflection primitives catch this and fail with
-     * {@code PrimitiveFailed}; raw store-into-receiver-variable bytecodes on an active
-     * {@code Context} have no primitive fallback and will propagate this exception.
+     * Thrown when a reflection primitive writes a value that does not fit into a frame to a
+     * {@code ContextObject} that is currently active on the Truffle execution stack. The primitives
+     * catch this and fail with {@code PrimitiveFailed}. Store bytecodes never see it: they force
+     * their receiver to the heap before they write
+     * ({@code AbstractInterpreterNode#ensureContextReceiverIsNotActive}).
      */
     public static final class ActiveContextUnbindException extends AbstractSqueakException {
         private static final long serialVersionUID = 1L;

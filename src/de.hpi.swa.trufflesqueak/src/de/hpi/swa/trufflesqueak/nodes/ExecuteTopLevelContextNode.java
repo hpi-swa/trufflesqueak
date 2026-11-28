@@ -89,8 +89,12 @@ public final class ExecuteTopLevelContextNode extends RootNode {
             ensureCachedContextCanRunAgain(activeContext);
         }
         while (true) {
+            if (activeContext.isDead()) {
+                /* A terminated or non-executable context cannot be resumed. */
+                activeContext = createCannotReturnContextNode.execute(activeContext, NilObject.SINGLETON);
+            }
             final Object sender = activeContext.getSender();
-            assert !(sender instanceof final ContextObject senderContext) || senderContext.hasTruffleFrame();
+            assert !(sender instanceof final ContextObject senderContext) || senderContext.hasTruffleFrame() || senderContext.hasNonExecutableState();
             try {
                 try {
                     image.resetContextStackDepth();
