@@ -87,10 +87,10 @@ public final class SqueakExceptions {
      * {@code PrimitiveFailed}; raw store-into-receiver-variable bytecodes on an active
      * {@code Context} have no primitive fallback and will propagate this exception.
      */
-    public static final class ActiveContextDematerializationException extends AbstractSqueakException {
+    public static final class ActiveContextUnbindException extends AbstractSqueakException {
         private static final long serialVersionUID = 1L;
 
-        public ActiveContextDematerializationException() {
+        public ActiveContextUnbindException() {
             super("Cannot structurally degrade a Context that is currently active on the Truffle execution stack.");
         }
     }

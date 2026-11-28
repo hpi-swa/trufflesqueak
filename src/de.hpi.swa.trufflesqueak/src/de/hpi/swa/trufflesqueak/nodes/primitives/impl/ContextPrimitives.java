@@ -36,7 +36,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 76)
     protected abstract static class PrimStoreStackPointerNode extends AbstractPrimitiveNode implements Primitive1WithFallback {
 
-        @Specialization(guards = {"0 <= newStackPointerLong", "receiver.isValidStackPointer(newStackPointerLong)", "!receiver.hasContextProxy()"})
+        @Specialization(guards = {"0 <= newStackPointerLong", "receiver.isValidStackPointer(newStackPointerLong)", "!receiver.hasNonExecutableState()"})
         protected static final ContextObject storeTruffle(final ContextObject receiver, final long newStackPointerLong) {
             final int oldStackPointer = receiver.getStackPointerOrZero();
             final int newStackPointer = (int) newStackPointerLong;
@@ -49,16 +49,16 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
             return receiver;
         }
 
-        @Specialization(guards = {"0 <= newStackPointerLong", "receiver.isValidStackPointer(newStackPointerLong)", "receiver.hasContextProxy()"})
-        protected static final ContextObject storeProxy(final ContextObject receiver, final long newStackPointerLong) {
+        @Specialization(guards = {"0 <= newStackPointerLong", "receiver.isValidStackPointer(newStackPointerLong)", "receiver.hasNonExecutableState()"})
+        protected static final ContextObject storeRaw(final ContextObject receiver, final long newStackPointerLong) {
             final int oldStackPointer = receiver.getStackPointerOrZero();
             final int newStackPointer = (int) newStackPointerLong;
 
             for (int i = oldStackPointer; i < newStackPointer; i++) {
-                receiver.setProxyTemp(i, NilObject.SINGLETON);
+                receiver.setRawTemp(i, NilObject.SINGLETON);
             }
 
-            receiver.setProxyStackPointer((long) newStackPointer);
+            receiver.setRawStackPointer((long) newStackPointer);
             return receiver;
         }
     }

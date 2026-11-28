@@ -28,7 +28,7 @@ import com.oracle.truffle.api.profiles.InlinedIntValueProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
-import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.ActiveContextDematerializationException;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.ActiveContextUnbindException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
@@ -239,7 +239,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             try {
                 atPut0Node.execute(node, receiver, index - 1, value);
                 return value;
-            } catch (final ActiveContextDematerializationException e) {
+            } catch (final ActiveContextUnbindException e) {
                 throw PrimitiveFailed.BAD_ARGUMENT;
             }
         }
@@ -257,7 +257,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             try {
                 atPut0Node.execute(node, target, index - 1, value);
                 return value;
-            } catch (final ActiveContextDematerializationException e) {
+            } catch (final ActiveContextUnbindException e) {
                 throw PrimitiveFailed.BAD_ARGUMENT;
             }
         }
@@ -480,7 +480,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             try {
                 atPut0Node.execute(node, receiver, index - 1, value);
                 return value;
-            } catch (final ActiveContextDematerializationException e) {
+            } catch (final ActiveContextUnbindException e) {
                 throw PrimitiveFailed.BAD_ARGUMENT;
             }
         }
@@ -497,7 +497,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             try {
                 atPut0Node.execute(node, target, index - 1, value);
                 return value;
-            } catch (final ActiveContextDematerializationException e) {
+            } catch (final ActiveContextUnbindException e) {
                 throw PrimitiveFailed.BAD_ARGUMENT;
             }
         }

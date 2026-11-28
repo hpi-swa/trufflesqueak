@@ -36,21 +36,21 @@ public final class ContextObjectNodes {
 
         public final Object execute(final Node node, final ContextObject context, final long index) {
             /* Bare-sender contexts are always materialized before reaching node dispatch. */
-            assert context.hasTruffleFrame() || context.hasContextProxy();
+            assert context.hasTruffleFrame() || context.hasNonExecutableState();
             return executeSpecialized(node, context, index);
         }
 
         protected abstract Object executeSpecialized(Node node, ContextObject context, long index);
 
         // --- Sender ---
-        @Specialization(guards = {"index == SENDER_OR_NIL", "!context.hasContextProxy()"})
+        @Specialization(guards = {"index == SENDER_OR_NIL", "!context.hasNonExecutableState()"})
         protected static final Object doSender(final ContextObject context, @SuppressWarnings("unused") final long index) {
             return context.getSender();
         }
 
-        @Specialization(guards = {"index == SENDER_OR_NIL", "context.hasContextProxy()"})
-        protected static final Object doProxySender(final ContextObject context, @SuppressWarnings("unused") final long index) {
-            return context.getProxySender();
+        @Specialization(guards = {"index == SENDER_OR_NIL", "context.hasNonExecutableState()"})
+        protected static final Object doRawSender(final ContextObject context, @SuppressWarnings("unused") final long index) {
+            return context.getRawSender();
         }
 
         // --- Instruction Pointer ---
@@ -60,9 +60,9 @@ public final class ContextObjectNodes {
             return context.getInstructionPointer(nilProfile, node);
         }
 
-        @Specialization(guards = {"index == INSTRUCTION_POINTER", "context.hasContextProxy()"})
-        protected static final Object doProxyInstructionPointer(final ContextObject context, @SuppressWarnings("unused") final long index) {
-            return context.getProxyInstructionPointer();
+        @Specialization(guards = {"index == INSTRUCTION_POINTER", "context.hasNonExecutableState()"})
+        protected static final Object doRawInstructionPointer(final ContextObject context, @SuppressWarnings("unused") final long index) {
+            return context.getRawInstructionPointer();
         }
 
         // --- Stack Pointer ---
@@ -71,9 +71,9 @@ public final class ContextObjectNodes {
             return context.getStackPointer();
         }
 
-        @Specialization(guards = {"index == STACKPOINTER", "context.hasContextProxy()"})
-        protected static final Object doProxyStackPointer(final ContextObject context, @SuppressWarnings("unused") final long index) {
-            return context.getProxyStackPointer();
+        @Specialization(guards = {"index == STACKPOINTER", "context.hasNonExecutableState()"})
+        protected static final Object doRawStackPointer(final ContextObject context, @SuppressWarnings("unused") final long index) {
+            return context.getRawStackPointer();
         }
 
         // --- Method ---
@@ -82,9 +82,9 @@ public final class ContextObjectNodes {
             return context.getCodeObject();
         }
 
-        @Specialization(guards = {"index == METHOD", "context.hasContextProxy()"})
-        protected static final Object doProxyMethod(final ContextObject context, @SuppressWarnings("unused") final long index) {
-            return context.getProxyMethod();
+        @Specialization(guards = {"index == METHOD", "context.hasNonExecutableState()"})
+        protected static final Object doRawMethod(final ContextObject context, @SuppressWarnings("unused") final long index) {
+            return context.getRawMethod();
         }
 
         // --- Closure ---
@@ -94,9 +94,9 @@ public final class ContextObjectNodes {
             return NilObject.nullToNil(context.getClosure(), nilProfile, node);
         }
 
-        @Specialization(guards = {"index == CLOSURE_OR_NIL", "context.hasContextProxy()"})
-        protected static final Object doProxyClosure(final ContextObject context, @SuppressWarnings("unused") final long index) {
-            return context.getProxyClosureOrNil();
+        @Specialization(guards = {"index == CLOSURE_OR_NIL", "context.hasNonExecutableState()"})
+        protected static final Object doRawClosure(final ContextObject context, @SuppressWarnings("unused") final long index) {
+            return context.getRawClosureOrNil();
         }
 
         // --- Receiver ---
@@ -105,9 +105,9 @@ public final class ContextObjectNodes {
             return context.getReceiver();
         }
 
-        @Specialization(guards = {"index == RECEIVER", "context.hasContextProxy()"})
-        protected static final Object doProxyReceiver(final ContextObject context, @SuppressWarnings("unused") final long index) {
-            return context.getProxyReceiver();
+        @Specialization(guards = {"index == RECEIVER", "context.hasNonExecutableState()"})
+        protected static final Object doRawReceiver(final ContextObject context, @SuppressWarnings("unused") final long index) {
+            return context.getRawReceiver();
         }
 
         // --- Temp / Stack ---
@@ -116,9 +116,9 @@ public final class ContextObjectNodes {
             return context.atTemp((int) (index - CONTEXT.TEMP_FRAME_START));
         }
 
-        @Specialization(guards = {"index >= TEMP_FRAME_START", "context.hasContextProxy()", "isValidTempIndex(context, index)"})
-        protected static final Object doProxyTemp(final ContextObject context, final long index) {
-            return context.getProxyTemp((int) (index - CONTEXT.TEMP_FRAME_START));
+        @Specialization(guards = {"index >= TEMP_FRAME_START", "context.hasNonExecutableState()", "isValidTempIndex(context, index)"})
+        protected static final Object doRawTemp(final ContextObject context, final long index) {
+            return context.getRawTemp((int) (index - CONTEXT.TEMP_FRAME_START));
         }
 
         @Specialization(guards = {"index >= TEMP_FRAME_START", "!isValidTempIndex(context, index)"})
@@ -139,7 +139,7 @@ public final class ContextObjectNodes {
 
         public final void execute(final Node node, final ContextObject context, final long index, final Object value) {
             /* Bare-sender contexts are always materialized before reaching node dispatch. */
-            assert context.hasTruffleFrame() || context.hasContextProxy();
+            assert context.hasTruffleFrame() || context.hasNonExecutableState();
             executeSpecialized(node, context, index, value);
         }
 
@@ -153,13 +153,13 @@ public final class ContextObjectNodes {
 
         @Specialization(guards = {"index == SENDER_OR_NIL", "context.hasTruffleFrame()", "!isAbstractSqueakObject(value)"})
         protected static final void doSenderDematerialize(final ContextObject context, @SuppressWarnings("unused") final long index, final Object value) {
-            context.dematerializeToProxy();
-            context.setProxySender(value);
+            context.unbindFromFrame();
+            context.setRawSender(value);
         }
 
-        @Specialization(guards = {"index == SENDER_OR_NIL", "context.hasContextProxy()"})
-        protected static final void doProxySender(final ContextObject context, @SuppressWarnings("unused") final long index, final Object value) {
-            context.setProxySender(value);
+        @Specialization(guards = {"index == SENDER_OR_NIL", "context.hasNonExecutableState()"})
+        protected static final void doRawSender(final ContextObject context, @SuppressWarnings("unused") final long index, final Object value) {
+            context.setRawSender(value);
         }
 
         // --- Instruction Pointer ---
@@ -176,13 +176,13 @@ public final class ContextObjectNodes {
 
         @Specialization(guards = {"index == INSTRUCTION_POINTER", "context.hasTruffleFrame()", "!isValidInstructionPointerOrNil(context, value)"})
         protected static final void doInstructionPointerDematerialize(final ContextObject context, @SuppressWarnings("unused") final long index, final Object value) {
-            context.dematerializeToProxy();
-            context.setProxyInstructionPointer(value);
+            context.unbindFromFrame();
+            context.setRawInstructionPointer(value);
         }
 
-        @Specialization(guards = {"index == INSTRUCTION_POINTER", "context.hasContextProxy()"})
-        protected static final void doProxyInstructionPointer(final ContextObject context, @SuppressWarnings("unused") final long index, final Object value) {
-            context.setProxyInstructionPointer(value);
+        @Specialization(guards = {"index == INSTRUCTION_POINTER", "context.hasNonExecutableState()"})
+        protected static final void doRawInstructionPointer(final ContextObject context, @SuppressWarnings("unused") final long index, final Object value) {
+            context.setRawInstructionPointer(value);
         }
 
         protected static boolean isValidInstructionPointerOrNil(final ContextObject context, final Object value) {
@@ -195,9 +195,9 @@ public final class ContextObjectNodes {
             context.setStackPointer((int) value);
         }
 
-        @Specialization(guards = {"index == STACKPOINTER", "context.hasContextProxy()", "isValidStackPointer(context, value)"})
-        protected static final void doProxyStackPointer(final ContextObject context, @SuppressWarnings("unused") final long index, final long value) {
-            context.setProxyStackPointer(value);
+        @Specialization(guards = {"index == STACKPOINTER", "context.hasNonExecutableState()", "isValidStackPointer(context, value)"})
+        protected static final void doRawStackPointer(final ContextObject context, @SuppressWarnings("unused") final long index, final long value) {
+            context.setRawStackPointer(value);
         }
 
         @Specialization(guards = {"index == STACKPOINTER", "!isValidStackPointer(context, value)"})
@@ -219,13 +219,13 @@ public final class ContextObjectNodes {
 
         @Specialization(guards = {"index == METHOD", "context.hasTruffleFrame()", "!isCompiledCodeObject(value)"})
         protected static final void doMethodDematerialize(final ContextObject context, @SuppressWarnings("unused") final long index, final Object value) {
-            context.dematerializeToProxy();
-            context.setProxyMethod(value);
+            context.unbindFromFrame();
+            context.setRawMethod(value);
         }
 
-        @Specialization(guards = {"index == METHOD", "context.hasContextProxy()"})
-        protected static final void doProxyMethod(final ContextObject context, @SuppressWarnings("unused") final long index, final Object value) {
-            context.setProxyMethod(value);
+        @Specialization(guards = {"index == METHOD", "context.hasNonExecutableState()"})
+        protected static final void doRawMethod(final ContextObject context, @SuppressWarnings("unused") final long index, final Object value) {
+            context.setRawMethod(value);
         }
 
         // --- Closure ---
@@ -242,13 +242,13 @@ public final class ContextObjectNodes {
 
         @Specialization(guards = {"index == CLOSURE_OR_NIL", "context.hasTruffleFrame()", "!isBlockClosureObject(value)", "!isNil(value)"})
         protected static final void doClosureDematerialize(final ContextObject context, @SuppressWarnings("unused") final long index, final Object value) {
-            context.dematerializeToProxy();
-            context.setProxyClosureOrNil(value);
+            context.unbindFromFrame();
+            context.setRawClosureOrNil(value);
         }
 
-        @Specialization(guards = {"index == CLOSURE_OR_NIL", "context.hasContextProxy()"})
-        protected static final void doProxyClosure(final ContextObject context, @SuppressWarnings("unused") final long index, final Object value) {
-            context.setProxyClosureOrNil(value);
+        @Specialization(guards = {"index == CLOSURE_OR_NIL", "context.hasNonExecutableState()"})
+        protected static final void doRawClosure(final ContextObject context, @SuppressWarnings("unused") final long index, final Object value) {
+            context.setRawClosureOrNil(value);
         }
 
         // --- Receiver & Temps (Naturally polymorphic arrays, no dematerialization needed) ---
@@ -257,9 +257,9 @@ public final class ContextObjectNodes {
             context.setReceiver(value);
         }
 
-        @Specialization(guards = {"index == RECEIVER", "context.hasContextProxy()"})
-        protected static final void doProxyReceiver(final ContextObject context, @SuppressWarnings("unused") final long index, final Object value) {
-            context.setProxyReceiver(value);
+        @Specialization(guards = {"index == RECEIVER", "context.hasNonExecutableState()"})
+        protected static final void doRawReceiver(final ContextObject context, @SuppressWarnings("unused") final long index, final Object value) {
+            context.setRawReceiver(value);
         }
 
         // --- Temps ---
@@ -268,9 +268,9 @@ public final class ContextObjectNodes {
             context.atTempPut((int) (index - CONTEXT.TEMP_FRAME_START), value);
         }
 
-        @Specialization(guards = {"index >= TEMP_FRAME_START", "context.hasContextProxy()", "isValidTempIndex(context, index)"})
-        protected static final void doProxyTemp(final ContextObject context, final long index, final Object value) {
-            context.setProxyTemp((int) (index - CONTEXT.TEMP_FRAME_START), value);
+        @Specialization(guards = {"index >= TEMP_FRAME_START", "context.hasNonExecutableState()", "isValidTempIndex(context, index)"})
+        protected static final void doRawTemp(final ContextObject context, final long index, final Object value) {
+            context.setRawTemp((int) (index - CONTEXT.TEMP_FRAME_START), value);
         }
 
         @Specialization(guards = {"index >= TEMP_FRAME_START", "!isValidTempIndex(context, index)"})

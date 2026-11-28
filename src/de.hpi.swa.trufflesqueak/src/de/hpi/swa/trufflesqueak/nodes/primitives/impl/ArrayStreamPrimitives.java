@@ -20,7 +20,7 @@ import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
-import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.ActiveContextDematerializationException;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.ActiveContextUnbindException;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
@@ -73,7 +73,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
                 try {
                     atput0Node.execute(node, receiver, index - 1 + instSize, value);
                     return value;
-                } catch (final ActiveContextDematerializationException e) {
+                } catch (final ActiveContextUnbindException e) {
                     throw PrimitiveFailed.BAD_ARGUMENT;
                 }
             } else {

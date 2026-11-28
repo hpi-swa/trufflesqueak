@@ -24,7 +24,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedConditionProfile;
 
-import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.ActiveContextDematerializationException;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.ActiveContextUnbindException;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -55,13 +55,13 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
      *    contexts on the heap. This allows GraalVM to execute and resume them. Note that stack
      *    slots above {@code stackPointer} are not retained.
      * <p>
-     * 3. {@link ContextProxy}: The slow-path fallback state. Used for newly allocated empty
+     * 3. {@link NonExecutableContextState}: The slow-path fallback state. Used for newly allocated empty
      *    contexts or contexts that have been reflectively mutated with incompatible values,
      *    making them invalid Truffle frames.
      * <p>
      * 4. {@link SqueakImageChunk}: A transient bootstrap state used exclusively during image load.
      */
-    private Object senderOrFrameOrProxy;
+    private Object senderOrFrameOrState;
 
     public enum FrameHandling {
         /** Enumerate live objects in Truffle frames (Read-Only). */
@@ -84,7 +84,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
      * for structural slots automatically re-materialize the context into a
      * {@link MaterializedFrame} once all invariants are satisfied.
      */
-    private static final class ContextProxy {
+    private static final class NonExecutableContextState {
         private Object sender;
         private Object instructionPointer;
         private Object stackPointer;
@@ -93,11 +93,11 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         private Object receiver;
         private Object stackOrSize;
 
-        private ContextProxy(final int size) {
+        private NonExecutableContextState(final int size) {
             stackOrSize = size;
         }
 
-        private ContextProxy(final ContextProxy original) {
+        private NonExecutableContextState(final NonExecutableContextState original) {
             sender = original.sender;
             instructionPointer = original.instructionPointer;
             stackPointer = original.stackPointer;
@@ -130,7 +130,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
 
         private Object getStackValueOrNil(final int index) {
             if (stackOrSize instanceof Object[] stack && index < stack.length) {
-                return resolveProxyValue(stack[index]);
+                return resolveRawValue(stack[index]);
             }
             return NilObject.SINGLETON;
         }
@@ -152,26 +152,26 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
 
     public ContextObject(final SqueakImageChunk chunk) {
         super(chunk);
-        senderOrFrameOrProxy = chunk;
+        senderOrFrameOrState = chunk;
     }
 
     public ContextObject(final int size) {
         super();
-        senderOrFrameOrProxy = new ContextProxy(size);
+        senderOrFrameOrState = new NonExecutableContextState(size);
         assert size == CONTEXT.SMALL_FRAMESIZE || size == CONTEXT.LARGE_FRAMESIZE || size == CONTEXT.HUGE_FRAMESIZE;
     }
 
     private ContextObject(final VirtualFrame frame) {
         super();
         FrameAccess.assertSenderNotNull(frame);
-        senderOrFrameOrProxy = FrameAccess.getSender(frame);
+        senderOrFrameOrState = FrameAccess.getSender(frame);
         FrameAccess.setContext(frame, this);
     }
 
     private ContextObject(final MaterializedFrame frame) {
         super();
         FrameAccess.assertSenderNotNull(frame);
-        senderOrFrameOrProxy = frame;
+        senderOrFrameOrState = frame;
         setMarkedCodeFlags();
         FrameAccess.setContext(frame, this);
     }
@@ -179,12 +179,12 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     @TruffleBoundary
     private ContextObject(final ContextObject original) {
         super(original);
-        if (original.hasContextProxy()) {
+        if (original.hasNonExecutableState()) {
             setAllBooleanBits(original.getAllBooleanBits());
-            senderOrFrameOrProxy = new ContextProxy(original.getProxy());
+            senderOrFrameOrState = new NonExecutableContextState(original.getNonExecutableState());
         } else {
             if (!original.hasTruffleFrame()) {
-                assert original.senderOrFrameOrProxy instanceof AbstractSqueakObject;
+                assert original.senderOrFrameOrState instanceof AbstractSqueakObject;
                 original.materializeFromFrames();
             }
             // Copy modified sender flag and the marked code flags after ensuring original is materialized.
@@ -193,7 +193,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
             final MaterializedFrame originalFrame = original.getTruffleFrame();
             final FrameDescriptor frameDescriptor = originalFrame.getFrameDescriptor();
             final MaterializedFrame copyFrame = Truffle.getRuntime().createMaterializedFrame(originalFrame.getArguments().clone(), frameDescriptor);
-            senderOrFrameOrProxy = copyFrame;
+            senderOrFrameOrState = copyFrame;
             FrameAccess.copySlotsExceptContext(originalFrame, copyFrame);
             FrameAccess.setContext(copyFrame, this);
         }
@@ -216,47 +216,47 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     @Override
     public void fillin(final SqueakImageChunk chunk) {
         assert chunk.getWordSize() > CONTEXT.TEMP_FRAME_START;
-        fillinAsProxy(chunk);
+        fillinAsNonExecutableState(chunk);
 
         // During image load, the closure shell must be explicitly filled in
         // before materialization so we can access its CompiledBlock.
-        final ContextProxy proxy = getProxy();
-        if (proxy.closureOrNil instanceof BlockClosureObject closure &&
-                        proxy.method instanceof CompiledCodeObject code &&
+        final NonExecutableContextState state = getNonExecutableState();
+        if (state.closureOrNil instanceof BlockClosureObject closure &&
+                        state.method instanceof CompiledCodeObject code &&
                         code.isCompiledMethod()) {
             closure.fillin(chunk.getChunk(CONTEXT.CLOSURE_OR_NIL));
         }
 
-        // ToDo: A Context that was a proxy because its stack pointer was not an integer,
+        // ToDo: A Context that was non-executable because its stack pointer was not an integer,
         // but was legal in all other ways, will lose the stack pointer value here.
-        materializeFromProxy(true);
+        tryBindToFrame(true);
     }
 
-    private void fillinAsProxy(final SqueakImageChunk chunk) {
+    private void fillinAsNonExecutableState(final SqueakImageChunk chunk) {
         final int stackSize = chunk.getWordSize() - CONTEXT.TEMP_FRAME_START;
-        final ContextProxy proxy = new ContextProxy(stackSize);
+        final NonExecutableContextState state = new NonExecutableContextState(stackSize);
 
         // Read the exact object pointers directly from the chunk without casting
-        proxy.sender = chunk.getPointer(CONTEXT.SENDER_OR_NIL);
-        proxy.instructionPointer = chunk.getPointer(CONTEXT.INSTRUCTION_POINTER);
-        proxy.stackPointer = chunk.getPointer(CONTEXT.STACKPOINTER);
-        proxy.method = chunk.getPointer(CONTEXT.METHOD);
-        proxy.closureOrNil = chunk.getPointer(CONTEXT.CLOSURE_OR_NIL);
-        proxy.receiver = chunk.getPointer(CONTEXT.RECEIVER);
+        state.sender = chunk.getPointer(CONTEXT.SENDER_OR_NIL);
+        state.instructionPointer = chunk.getPointer(CONTEXT.INSTRUCTION_POINTER);
+        state.stackPointer = chunk.getPointer(CONTEXT.STACKPOINTER);
+        state.method = chunk.getPointer(CONTEXT.METHOD);
+        state.closureOrNil = chunk.getPointer(CONTEXT.CLOSURE_OR_NIL);
+        state.receiver = chunk.getPointer(CONTEXT.RECEIVER);
 
-        // Map every variable-length stack slot from the chunk into the proxy array
-        final Object[] stack = proxy.getOrCreateStack();
+        // Map every variable-length stack slot from the chunk into the stack array
+        final Object[] stack = state.getOrCreateStack();
         for (int i = 0; i < stackSize; i++) {
             stack[i] = chunk.getPointer(CONTEXT.TEMP_FRAME_START + i);
         }
 
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        assert senderOrFrameOrProxy == chunk;
-        senderOrFrameOrProxy = proxy;
+        assert senderOrFrameOrState == chunk;
+        senderOrFrameOrState = state;
     }
 
     public CompiledCodeObject getMethodFromChunk() {
-        if (senderOrFrameOrProxy instanceof final SqueakImageChunk chunk) {
+        if (senderOrFrameOrState instanceof final SqueakImageChunk chunk) {
             return (CompiledCodeObject) chunk.getPointer(CONTEXT.METHOD);
         } else {
             return getCodeObject();
@@ -293,12 +293,12 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
 
     private MaterializedFrame getOrCreateTruffleFrame() {
         if (!hasTruffleFrame()) {
-            if (hasContextProxy()) {
-                if (materializeFromProxy(true)) {
+            if (hasNonExecutableState()) {
+                if (tryBindToFrame(true)) {
                     return getTruffleFrame();
                 } else {
                     CompilerDirectives.transferToInterpreter();
-                    throw SqueakException.create("Cannot materialize a structurally invalid ContextProxy!");
+                    throw SqueakException.create("Cannot create a frame for a non-executable context:", this);
                 }
             }
             // Fallback for the lightweight sender state.
@@ -317,7 +317,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
 
     private MaterializedFrame installTruffleFrame(final Object[] frameArguments, final FrameDescriptor descriptor, final int pc, final int sp) {
         final MaterializedFrame frame = Truffle.getRuntime().createMaterializedFrame(frameArguments, descriptor);
-        senderOrFrameOrProxy = frame;
+        senderOrFrameOrState = frame;
         setMarkedCodeFlags();
         FrameAccess.setContext(frame, this);
         FrameAccess.setInstructionPointer(frame, pc);
@@ -328,21 +328,21 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     public Object getFrameSender() {
         if (hasTruffleFrame()) {
             return FrameAccess.getSender(getTruffleFrame());
-        } else if (hasContextProxy()) {
-            return getProxyFrameSender();
+        } else if (hasNonExecutableState()) {
+            return getRawFrameSender();
         } else {
-            return FrameAccess.ensureValidSender(senderOrFrameOrProxy);
+            return FrameAccess.ensureValidSender(senderOrFrameOrState);
         }
     }
 
     @TruffleBoundary
-    private Object getProxyFrameSender() {
-        return resolveProxyValue(getProxy().sender) instanceof final AbstractSqueakObject o ? o : NilObject.SINGLETON;
+    private Object getRawFrameSender() {
+        return resolveRawValue(getNonExecutableState().sender) instanceof final AbstractSqueakObject o ? o : NilObject.SINGLETON;
     }
 
     public Object getSender() {
         final Object sender = getFrameSender();
-        if (sender instanceof final ContextObject senderContext && !senderContext.hasTruffleFrame() && !senderContext.hasContextProxy()) {
+        if (sender instanceof final ContextObject senderContext && !senderContext.hasTruffleFrame() && !senderContext.hasNonExecutableState()) {
             senderContext.materializeFromFrames();
         }
         return sender;
@@ -350,7 +350,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
 
     @TruffleBoundary
     public void materializeFromFrames() {
-        senderOrFrameOrProxy = FrameAccess.findFrameForContext(this);
+        senderOrFrameOrState = FrameAccess.findFrameForContext(this);
         setMarkedCodeFlags();
         getCodeObject().getDoesNotNeedThisContextAssumption().invalidate();
     }
@@ -489,8 +489,8 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     public int getStackPointerOrZero() {
         if (hasTruffleFrame()) {
             return FrameAccess.getStackPointer(getTruffleFrame());
-        } else if (hasContextProxy()) {
-            final Object sp = getProxyStackPointer();
+        } else if (hasNonExecutableState()) {
+            final Object sp = getRawStackPointer();
             return sp instanceof Long l && 0 <= l && l <= Integer.MAX_VALUE ? (int) (long) l : 0;
         } else {
             return 0;
@@ -689,7 +689,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         }
         final Object sender = getFrameSender();
         if (sender instanceof ContextObject senderContext) {
-            if (senderContext.hasContextProxy()) {
+            if (senderContext.hasNonExecutableState()) {
                 return false;
             }
             return !senderContext.hasTruffleFrame() || !senderContext.isDead();
@@ -720,9 +720,9 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         CompilerAsserts.neverPartOfCompilation();
         if (hasMethod()) {
             return formatContext("CTX", getCodeObject(), hasClosure());
-        } else if (hasContextProxy() && getProxyMethod() instanceof CompiledCodeObject code) {
-            final boolean hasClosure = getProxyClosureOrNil() instanceof BlockClosureObject;
-            return formatContext("CTX (proxy)", code, hasClosure);
+        } else if (hasNonExecutableState() && getRawMethod() instanceof CompiledCodeObject code) {
+            final boolean hasClosure = getRawClosureOrNil() instanceof BlockClosureObject;
+            return formatContext("CTX (non-executable)", code, hasClosure);
         } else {
             return "CTX without method @" + Integer.toHexString(hashCode());
         }
@@ -744,8 +744,8 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
 
     @Override
     public int size() {
-        if (senderOrFrameOrProxy instanceof final ContextProxy proxy) {
-            return proxy.getSize();
+        if (senderOrFrameOrState instanceof final NonExecutableContextState state) {
+            return state.getSize();
         } else {
             if (!hasTruffleFrame()) {
                 materializeFromFrames();
@@ -763,7 +763,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         if (hasTruffleFrame()) {
             return sp >= 0 && sp <= FrameAccess.getNumStackSlots(getTruffleFrame());
         }
-        // If it is a proxy, physical size limits apply.
+        // Without a frame, the Squeak size of the context is the limit.
         return sp >= 0 && sp <= size();
     }
 
@@ -778,15 +778,15 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     }
 
     public void become(final ContextObject other) {
-        final Object otherSenderOrFrame = other.senderOrFrameOrProxy;
+        final Object otherSenderOrFrame = other.senderOrFrameOrState;
         final int otherBooleans = other.getAllBooleanBits();
-        other.setFields(senderOrFrameOrProxy, getAllBooleanBits());
+        other.setFields(senderOrFrameOrState, getAllBooleanBits());
         setFields(otherSenderOrFrame, otherBooleans);
     }
 
     private void setFields(final Object otherSenderOrFrame, final int otherBooleanBits) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        senderOrFrameOrProxy = otherSenderOrFrame;
+        senderOrFrameOrState = otherSenderOrFrame;
         setAllBooleanBits(otherBooleanBits);
     }
 
@@ -812,40 +812,40 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
      * {@link CompilerDirectives#castExact(Object, Class)}.
      */
     public MaterializedFrame getTruffleFrame() {
-        return (MaterializedFrame) CompilerDirectives.castExact(senderOrFrameOrProxy, CONCRETE_MATERIALIZED_FRAME_CLASS);
+        return (MaterializedFrame) CompilerDirectives.castExact(senderOrFrameOrState, CONCRETE_MATERIALIZED_FRAME_CLASS);
     }
 
     public boolean hasTruffleFrame() {
-        return senderOrFrameOrProxy instanceof MaterializedFrame;
+        return senderOrFrameOrState instanceof MaterializedFrame;
     }
 
     public void setTruffleFrame(final MaterializedFrame frame) {
         assert !hasTruffleFrame();
-        senderOrFrameOrProxy = frame;
+        senderOrFrameOrState = frame;
     }
 
     /**
-     *  Proxy Accessing.
+     * Accessing the non-executable state.
      */
 
-    public boolean hasContextProxy() {
-        return senderOrFrameOrProxy instanceof ContextProxy;
+    public boolean hasNonExecutableState() {
+        return senderOrFrameOrState instanceof NonExecutableContextState;
     }
 
-    private ContextProxy getProxy() {
-        assert hasContextProxy();
-        return (ContextProxy) senderOrFrameOrProxy;
+    private NonExecutableContextState getNonExecutableState() {
+        assert hasNonExecutableState();
+        return (NonExecutableContextState) senderOrFrameOrState;
     }
 
     @TruffleBoundary
-    private boolean materializeFromProxy(final boolean forced) {
-        final ContextProxy proxy = (ContextProxy) senderOrFrameOrProxy;
+    private boolean tryBindToFrame(final boolean forced) {
+        final NonExecutableContextState state = (NonExecutableContextState) senderOrFrameOrState;
 
-        final Object methodObj = resolveProxyValue(proxy.method);
-        final Object closureOrNil = resolveProxyValue(proxy.closureOrNil);
-        final Object senderObj = resolveProxyValue(proxy.sender);
+        final Object methodObj = resolveRawValue(state.method);
+        final Object closureOrNil = resolveRawValue(state.closureOrNil);
+        final Object senderObj = resolveRawValue(state.sender);
 
-        if (!hasValidProxyStructure(methodObj, closureOrNil, senderObj)) {
+        if (!hasBindableStructure(methodObj, closureOrNil, senderObj)) {
             return false;
         }
 
@@ -867,28 +867,28 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         }
 
         // Validate instruction pointer bounds before allocating frame objects
-        final int relativePC = determineInstructionPointer(resolveProxyValue(proxy.instructionPointer), methodOrBlock);
+        final int relativePC = determineInstructionPointer(resolveRawValue(state.instructionPointer), methodOrBlock);
         if (relativePC == INVALID_PC) {
             return false;
         }
 
         // Evaluate stack pointer bounds before allocating or installing the frame
         final int numStackSlots = methodOrBlock.getFrameDescriptor().getNumberOfSlots() - FrameAccess.getStackStart();
-        final int sp = determineStackPointer(resolveProxyValue(proxy.stackPointer), forced, numStackSlots);
+        final int sp = determineStackPointer(resolveRawValue(state.stackPointer), forced, numStackSlots);
         if (sp < 0) {
             return false;
         }
 
         // Allocate and apply state
-        final Object[] receiverAndArgs = gatherReceiverAndArgs(proxy, numArgs);
+        final Object[] receiverAndArgs = gatherReceiverAndArgs(state, numArgs);
         final Object[] frameArguments = FrameAccess.newWith((AbstractSqueakObject) senderObj, closure, receiverAndArgs);
         installTruffleFrame(frameArguments, methodOrBlock.getFrameDescriptor(), relativePC, sp);
-        restoreStack(proxy, sp);
+        restoreStack(state, sp);
 
         return true;
     }
 
-    private static boolean hasValidProxyStructure(final Object method, final Object closureOrNil, final Object sender) {
+    private static boolean hasBindableStructure(final Object method, final Object closureOrNil, final Object sender) {
         if (!(method instanceof CompiledCodeObject)) {
             return false; // Cannot materialize without a structurally valid method
         }
@@ -898,11 +898,11 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         return sender instanceof AbstractSqueakObject; // Structurally invalid sender (e.g., primitive Long)
     }
 
-    private static Object[] gatherReceiverAndArgs(final ContextProxy proxy, final int numArgs) {
+    private static Object[] gatherReceiverAndArgs(final NonExecutableContextState state, final int numArgs) {
         final Object[] receiverAndArgs = new Object[1 + numArgs];
-        receiverAndArgs[0] = resolveProxyValue(proxy.receiver);
+        receiverAndArgs[0] = resolveRawValue(state.receiver);
         for (int i = 0; i < numArgs; i++) {
-            receiverAndArgs[1 + i] = proxy.getStackValueOrNil(i);
+            receiverAndArgs[1 + i] = state.getStackValueOrNil(i);
         }
         return receiverAndArgs;
     }
@@ -913,7 +913,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         } else if (pc instanceof Long l) {
             final long offset = l - methodOrBlock.getInitialPC();
             if (offset < NIL_PC_THRESHOLD || offset > Integer.MAX_VALUE) {
-                return INVALID_PC; // Keep as proxy if PC cannot be represented in a Truffle frame
+                return INVALID_PC; // Stay non-executable if PC cannot be represented in a Truffle frame
             }
             return (int) offset;
         }
@@ -930,121 +930,121 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         } else if (forced) {
             return 0; // OSVM interprets non-integers as zero for execution/loading
         }
-        return -1; // Stay a proxy
+        return -1; // Stay non-executable
     }
 
-    private void restoreStack(final ContextProxy proxy, final int sp) {
+    private void restoreStack(final NonExecutableContextState state, final int sp) {
         /*
-         * Only live stack slots in [0, sp) are copied; any values written above sp while in proxy
+         * Only live stack slots in [0, sp) are copied; any values written above sp while non-executable
          * form are discarded upon materialization (Context>>#stackp: nils those slots anyway).
          */
         for (int i = 0; i < sp; i++) {
-            atTempPut(i, proxy.getStackValueOrNil(i));
+            atTempPut(i, state.getStackValueOrNil(i));
         }
     }
 
     /**
-     * Gracefully degrades a MaterializedFrame into a ContextProxy.
+     * Gracefully degrades a MaterializedFrame into a NonExecutableContextState.
      * This is triggered when Squeak reflection attempts to write structurally
      * invalid types (e.g., Strings instead of CompiledCodeObjects) into critical slots.
      */
-    public void dematerializeToProxy() {
+    public void unbindFromFrame() {
         assert hasTruffleFrame();
 
         // ToDo: Ensure primitives only operate on heap-based Contexts.
         if (isPotentiallyActiveOnTruffleStack() && isActuallyActiveOnTruffleStack()) {
             CompilerDirectives.transferToInterpreter();
-            throw new ActiveContextDematerializationException();
+            throw new ActiveContextUnbindException();
         }
 
         // Extract all state from the Truffle frame using the existing slow-path getters
         final int sp = getStackPointer();
-        final ContextProxy proxy = new ContextProxy(getCodeObject().getSqueakContextSize());
-        proxy.sender = getSender();
-        proxy.instructionPointer = getInstructionPointer(InlinedConditionProfile.getUncached(), null);
-        proxy.stackPointer = (long) sp;
-        proxy.method = getCodeObject();
-        proxy.closureOrNil = NilObject.nullToNil(getClosure());
-        proxy.receiver = getReceiver();
+        final NonExecutableContextState state = new NonExecutableContextState(getCodeObject().getSqueakContextSize());
+        state.sender = getSender();
+        state.instructionPointer = getInstructionPointer(InlinedConditionProfile.getUncached(), null);
+        state.stackPointer = (long) sp;
+        state.method = getCodeObject();
+        state.closureOrNil = NilObject.nullToNil(getClosure());
+        state.receiver = getReceiver();
 
-        // Populate the proxy's array with the Truffle frame's stack
-        final Object[] stack = proxy.getOrCreateStack();
+        // Populate the stack array with the Truffle frame's stack
+        final Object[] stack = state.getOrCreateStack();
         for (int i = 0; i < sp; i++) {
             stack[i] = atTemp(i);
         }
 
         // Sever the connection to the Truffle frame
-        senderOrFrameOrProxy = proxy;
+        senderOrFrameOrState = state;
         resetMarkedCodeFlags();
     }
 
-    private static Object resolveProxyValue(final Object value) {
+    private static Object resolveRawValue(final Object value) {
         return value == null ? NilObject.SINGLETON : AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(value);
     }
 
-    public Object getProxySender() {
-        return resolveProxyValue(getProxy().sender);
+    public Object getRawSender() {
+        return resolveRawValue(getNonExecutableState().sender);
     }
 
-    public Object getProxyInstructionPointer() {
-        return resolveProxyValue(getProxy().instructionPointer);
+    public Object getRawInstructionPointer() {
+        return resolveRawValue(getNonExecutableState().instructionPointer);
     }
 
-    public Object getProxyStackPointer() {
-        return resolveProxyValue(getProxy().stackPointer);
+    public Object getRawStackPointer() {
+        return resolveRawValue(getNonExecutableState().stackPointer);
     }
 
-    public Object getProxyMethod() {
-        return resolveProxyValue(getProxy().method);
+    public Object getRawMethod() {
+        return resolveRawValue(getNonExecutableState().method);
     }
 
-    public Object getProxyClosureOrNil() {
-        return resolveProxyValue(getProxy().closureOrNil);
+    public Object getRawClosureOrNil() {
+        return resolveRawValue(getNonExecutableState().closureOrNil);
     }
 
-    public Object getProxyReceiver() {
-        return resolveProxyValue(getProxy().receiver);
+    public Object getRawReceiver() {
+        return resolveRawValue(getNonExecutableState().receiver);
     }
 
-    public Object getProxyTemp(final int index) {
+    public Object getRawTemp(final int index) {
         assert index >= 0 : "Temp index cannot be negative: " + index;
-        return getProxy().getStackValueOrNil(index);
+        return getNonExecutableState().getStackValueOrNil(index);
     }
 
-    public void setProxySender(final Object value) {
-        getProxy().sender = value;
-        materializeFromProxy(false);
+    public void setRawSender(final Object value) {
+        getNonExecutableState().sender = value;
+        tryBindToFrame(false);
     }
 
-    public void setProxyInstructionPointer(final Object value) {
-        getProxy().instructionPointer = value;
-        materializeFromProxy(false);
+    public void setRawInstructionPointer(final Object value) {
+        getNonExecutableState().instructionPointer = value;
+        tryBindToFrame(false);
     }
 
-    public void setProxyStackPointer(final Object value) {
-        getProxy().stackPointer = value;
-        materializeFromProxy(false);
+    public void setRawStackPointer(final Object value) {
+        getNonExecutableState().stackPointer = value;
+        tryBindToFrame(false);
     }
 
-    public void setProxyMethod(final Object value) {
-        getProxy().method = value;
-        materializeFromProxy(false);
+    public void setRawMethod(final Object value) {
+        getNonExecutableState().method = value;
+        tryBindToFrame(false);
     }
 
-    public void setProxyClosureOrNil(final Object value) {
-        getProxy().closureOrNil = value;
-        materializeFromProxy(false);
+    public void setRawClosureOrNil(final Object value) {
+        getNonExecutableState().closureOrNil = value;
+        tryBindToFrame(false);
     }
 
-    public void setProxyReceiver(final Object value) {
-        /* Setting the receiver cannot result in a proxy becoming materializable. */
-        getProxy().receiver = value;
+    public void setRawReceiver(final Object value) {
+        /* Setting the receiver cannot make a non-executable context executable. */
+        getNonExecutableState().receiver = value;
     }
 
-    public void setProxyTemp(final int index, final Object value) {
-        /* Setting a value on the stack cannot result in a proxy becoming materializable. */
+    public void setRawTemp(final int index, final Object value) {
+        /* Setting a value on the stack cannot make a non-executable context executable. */
         assert index >= 0 : "Temp index cannot be negative: " + index;
-        final Object[] stack = getProxy().getOrCreateStack();
+        final Object[] stack = getNonExecutableState().getOrCreateStack();
         if (index < stack.length) {
             stack[index] = value;
         }
@@ -1052,19 +1052,19 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
 
     @TruffleBoundary
     public boolean pointsTo(final Object thang) {
-        if (hasContextProxy()) {
+        if (hasNonExecutableState()) {
             final int stackPointer = getStackPointerOrZero();
-            if (getProxySender() == thang ||
-                            thang.equals(getProxyInstructionPointer()) ||
-                            thang.equals(getProxyStackPointer()) ||
-                            getProxyMethod() == thang ||
-                            getProxyClosureOrNil() == thang ||
-                            getProxyReceiver() == thang) {
+            if (getRawSender() == thang ||
+                            thang.equals(getRawInstructionPointer()) ||
+                            thang.equals(getRawStackPointer()) ||
+                            getRawMethod() == thang ||
+                            getRawClosureOrNil() == thang ||
+                            getRawReceiver() == thang) {
                 return true;
             }
-            final ContextProxy proxy = getProxy();
+            final NonExecutableContextState state = getNonExecutableState();
             for (int i = 0; i < stackPointer; i++) {
-                if (proxy.getStackValueOrNil(i) == thang) {
+                if (state.getStackValueOrNil(i) == thang) {
                     return true;
                 }
             }
@@ -1124,35 +1124,35 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
             if (migratedClosure instanceof final BlockClosureObject o) {
                 setClosure(o);
             }
-        } else if (hasContextProxy()) {
+        } else if (hasNonExecutableState()) {
             /* Intentionally skips stack pointer since it can only be nil or a non-negative integer. */
-            final ContextProxy proxy = getProxy();
+            final NonExecutableContextState state = getNonExecutableState();
             boolean structuralSlotChanged = false;
-            final Object migratedSender = migrate(fromToMap, proxy.sender);
+            final Object migratedSender = migrate(fromToMap, state.sender);
             if (migratedSender != null) {
-                proxy.sender = migratedSender;
+                state.sender = migratedSender;
                 structuralSlotChanged = true;
             }
-            final Object migratedInstructionPointer = migrate(fromToMap, proxy.instructionPointer);
+            final Object migratedInstructionPointer = migrate(fromToMap, state.instructionPointer);
             if (migratedInstructionPointer != null) {
-                proxy.instructionPointer = migratedInstructionPointer;
+                state.instructionPointer = migratedInstructionPointer;
                 structuralSlotChanged = true;
             }
-            final Object migratedMethod = migrate(fromToMap, proxy.method);
+            final Object migratedMethod = migrate(fromToMap, state.method);
             if (migratedMethod != null) {
-                proxy.method = migratedMethod;
+                state.method = migratedMethod;
                 structuralSlotChanged = true;
             }
-            final Object migratedClosureOrNil = migrate(fromToMap, proxy.closureOrNil);
+            final Object migratedClosureOrNil = migrate(fromToMap, state.closureOrNil);
             if (migratedClosureOrNil != null) {
-                proxy.closureOrNil = migratedClosureOrNil;
+                state.closureOrNil = migratedClosureOrNil;
                 structuralSlotChanged = true;
             }
-            final Object migratedReceiver = migrate(fromToMap, proxy.receiver);
+            final Object migratedReceiver = migrate(fromToMap, state.receiver);
             if (migratedReceiver != null) {
-                proxy.receiver = migratedReceiver;
+                state.receiver = migratedReceiver;
             }
-            if (proxy.stackOrSize instanceof Object[] stack) {
+            if (state.stackOrSize instanceof Object[] stack) {
                 final int limit = Math.min(getStackPointerOrZero(), stack.length);
                 for (int i = 0; i < limit; i++) {
                     final Object migratedStackValue = migrate(fromToMap, stack[i]);
@@ -1163,12 +1163,12 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
                 Arrays.fill(stack, limit, stack.length, null);
             }
             if (structuralSlotChanged) {
-                materializeFromProxy(false);
+                tryBindToFrame(false);
             }
-        } else if (senderOrFrameOrProxy != null) {
+        } else if (senderOrFrameOrState != null) {
             // Migrate the lightweight sender state
-            if (migrate(fromToMap, senderOrFrameOrProxy) instanceof final AbstractSqueakObject o) {
-                senderOrFrameOrProxy = o;
+            if (migrate(fromToMap, senderOrFrameOrState) instanceof final AbstractSqueakObject o) {
+                senderOrFrameOrState = o;
             }
         }
     }
@@ -1181,18 +1181,18 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
             tracer.addIfUnmarked(FrameAccess.getCodeObject(frame));
             tracer.addAllIfUnmarked(frame.getArguments());
             FrameAccess.iterateStackObjects(frame, tracer.frameHandling, tracer::addIfUnmarked);
-        } else if (hasContextProxy()) {
-            getProxy().tracePointers(tracer::addIfUnmarked, getStackPointerOrZero());
+        } else if (hasNonExecutableState()) {
+            getNonExecutableState().tracePointers(tracer::addIfUnmarked, getStackPointerOrZero());
         } else {
-            tracer.addIfUnmarked(senderOrFrameOrProxy);
+            tracer.addIfUnmarked(senderOrFrameOrState);
         }
     }
 
     @Override
     public void trace(final SqueakImageWriter writer) {
         super.trace(writer);
-        if (hasContextProxy()) {
-            getProxy().tracePointers(writer::traceIfNecessary, getStackPointerOrZero());
+        if (hasNonExecutableState()) {
+            getNonExecutableState().tracePointers(writer::traceIfNecessary, getStackPointerOrZero());
         } else {
             if (!hasTruffleFrame()) {
                 materializeFromFrames();
@@ -1211,19 +1211,19 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
             throw SqueakException.create("ContextObject must have slots:", this);
         }
 
-        if (hasContextProxy()) {
-            final ContextProxy proxy = getProxy();
-            writer.writeObject(resolveProxyValue(proxy.sender));
-            writer.writeObject(resolveProxyValue(proxy.instructionPointer));
-            writer.writeObject(resolveProxyValue(proxy.stackPointer));
-            writer.writeObject(resolveProxyValue(proxy.method));
-            writer.writeObject(resolveProxyValue(proxy.closureOrNil));
-            writer.writeObject(resolveProxyValue(proxy.receiver));
+        if (hasNonExecutableState()) {
+            final NonExecutableContextState state = getNonExecutableState();
+            writer.writeObject(resolveRawValue(state.sender));
+            writer.writeObject(resolveRawValue(state.instructionPointer));
+            writer.writeObject(resolveRawValue(state.stackPointer));
+            writer.writeObject(resolveRawValue(state.method));
+            writer.writeObject(resolveRawValue(state.closureOrNil));
+            writer.writeObject(resolveRawValue(state.receiver));
 
-            final int contextSize = proxy.getSize();
+            final int contextSize = state.getSize();
             final int sp = getStackPointerOrZero();
             for (int i = 0; i < contextSize; i++) {
-                writer.writeObject(i < sp ? proxy.getStackValueOrNil(i) : NilObject.SINGLETON);
+                writer.writeObject(i < sp ? state.getStackValueOrNil(i) : NilObject.SINGLETON);
             }
         } else {
             if (!hasTruffleFrame()) {

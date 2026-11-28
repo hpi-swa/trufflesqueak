@@ -20,12 +20,12 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 
 @SuppressWarnings("static-method")
-public final class ContextProxyTest extends AbstractSqueakTestCaseWithImage {
+public final class NonExecutableContextStateTest extends AbstractSqueakTestCaseWithImage {
 
     @Test
-    public void testProxyToFrameToProxyRoundTrip() {
+    public void testNonExecutableToFrameRoundTrip() {
         final ContextObject fresh = (ContextObject) evaluate("Context newForMethod: CompiledMethod toReturnSelf");
-        assertTrue(fresh.hasContextProxy());
+        assertTrue(fresh.hasNonExecutableState());
         assertFalse(fresh.hasTruffleFrame());
 
         final ContextObject materialized = (ContextObject) evaluate("""
@@ -41,7 +41,7 @@ public final class ContextProxyTest extends AbstractSqueakTestCaseWithImage {
                         ctx
                         """);
         assertTrue(materialized.hasTruffleFrame());
-        assertFalse(materialized.hasContextProxy());
+        assertFalse(materialized.hasNonExecutableState());
         assertEquals(1, materialized.getStackPointer());
         assertEquals("#myTemp", materialized.atTemp(0).toString());
 
@@ -58,13 +58,13 @@ public final class ContextProxyTest extends AbstractSqueakTestCaseWithImage {
                         ctx instVarAt: 4 put: 'not a method'.
                         ctx
                         """);
-        assertTrue(dematerialized.hasContextProxy());
+        assertTrue(dematerialized.hasNonExecutableState());
         assertFalse(dematerialized.hasTruffleFrame());
-        assertSame(NilObject.SINGLETON, dematerialized.getProxySender());
-        assertEquals(1L, dematerialized.getProxyStackPointer());
-        assertEquals("'not a method'", dematerialized.getProxyMethod().toString());
-        assertEquals("#myReceiver", dematerialized.getProxyReceiver().toString());
-        assertEquals("#myTemp", dematerialized.getProxyTemp(0).toString());
+        assertSame(NilObject.SINGLETON, dematerialized.getRawSender());
+        assertEquals(1L, dematerialized.getRawStackPointer());
+        assertEquals("'not a method'", dematerialized.getRawMethod().toString());
+        assertEquals("#myReceiver", dematerialized.getRawReceiver().toString());
+        assertEquals("#myTemp", dematerialized.getRawTemp(0).toString());
 
         final ContextObject rematerialized = (ContextObject) evaluate("""
                         | ctx method |
@@ -79,7 +79,7 @@ public final class ContextProxyTest extends AbstractSqueakTestCaseWithImage {
                         ctx
                         """);
         assertTrue(rematerialized.hasTruffleFrame());
-        assertFalse(rematerialized.hasContextProxy());
+        assertFalse(rematerialized.hasNonExecutableState());
     }
 
     @Test
@@ -98,32 +98,32 @@ public final class ContextProxyTest extends AbstractSqueakTestCaseWithImage {
                         ctx
                         """);
         assertTrue(ctx.hasTruffleFrame());
-        assertFalse(ctx.hasContextProxy());
+        assertFalse(ctx.hasNonExecutableState());
         assertTrue(ctx.hasClosure());
         assertEquals(41L, ctx.atTemp(0));
     }
 
     @Test
-    public void testSenderChainWithProxyContext() {
+    public void testSenderChainWithNonExecutableContext() {
         final ContextObject top = (ContextObject) evaluate("""
-                        | bottom proxy top method |
+                        | bottom nonExecutable top method |
                         method := Object >> #yourself.
                         bottom := Context newForMethod: CompiledMethod toReturnSelf.
-                        proxy := Context newForMethod: CompiledMethod toReturnSelf.
-                        proxy instVarAt: 1 put: bottom.
+                        nonExecutable := Context newForMethod: CompiledMethod toReturnSelf.
+                        nonExecutable instVarAt: 1 put: bottom.
                         top := Context newForMethod: CompiledMethod toReturnSelf.
-                        top instVarAt: 1 put: proxy.
+                        top instVarAt: 1 put: nonExecutable.
                         top instVarAt: 2 put: method initialPC.
                         top instVarAt: 4 put: method.
                         top instVarAt: 3 put: 0.
                         top
                         """);
         assertTrue(top.hasTruffleFrame());
-        final ContextObject proxy = (ContextObject) top.getSender();
-        assertTrue(proxy.hasContextProxy());
-        assertFalse(proxy.hasTruffleFrame());
-        final ContextObject bottom = (ContextObject) proxy.getSender();
-        assertTrue(bottom.hasContextProxy());
+        final ContextObject nonExecutable = (ContextObject) top.getSender();
+        assertTrue(nonExecutable.hasNonExecutableState());
+        assertFalse(nonExecutable.hasTruffleFrame());
+        final ContextObject bottom = (ContextObject) nonExecutable.getSender();
+        assertTrue(bottom.hasNonExecutableState());
     }
 
     @Test
@@ -158,7 +158,7 @@ public final class ContextProxyTest extends AbstractSqueakTestCaseWithImage {
                         (ctx tempAt: 1) isNil ifFalse: [ self error: 'expected temp 1 nil' ].
                         (ctx tempAt: 2) isNil ifFalse: [ self error: 'expected temp 2 nil' ].
 
-                        "Reading back a non-object sender from a proxy returns the raw stored value"
+                        "Reading back a non-object sender from a non-executable context returns the raw stored value"
                         ctx instVarAt: 1 put: 42.
                         (ctx instVarAt: 1) = 42 ifFalse: [ self error: 'expected raw sender 42' ].
 
@@ -185,7 +185,7 @@ public final class ContextProxyTest extends AbstractSqueakTestCaseWithImage {
                         ctx
                         """);
         assertTrue(ctx.hasTruffleFrame());
-        assertFalse(ctx.hasContextProxy());
+        assertFalse(ctx.hasNonExecutableState());
     }
 
     @Test
@@ -202,25 +202,25 @@ public final class ContextProxyTest extends AbstractSqueakTestCaseWithImage {
     }
 
     @Test
-    public void testProxyAndBareSenderImageSerialization() throws Exception {
-        final Path tempImage = Files.createTempFile("trufflesqueak-proxy-test", ".image");
+    public void testNonExecutableAndBareSenderImageSerialization() throws Exception {
+        final Path tempImage = Files.createTempFile("trufflesqueak-context-test", ".image");
         final String originalImagePath = image.getImagePath();
         try {
             image.setImagePath(tempImage.toAbsolutePath().toString());
             final Object result = evaluate("""
-                            | proxy err snapResult |
-                            proxy := Context newForMethod: CompiledMethod toReturnSelf.
-                            proxy instVarAt: 3 put: 1.
-                            proxy instVarAt: 4 put: 'unmaterializable'.
-                            proxy instVarAt: 6 put: #receiverMarker.
-                            proxy tempAt: 1 put: #tempMarker.
+                            | nonExecutable err snapResult |
+                            nonExecutable := Context newForMethod: CompiledMethod toReturnSelf.
+                            nonExecutable instVarAt: 3 put: 1.
+                            nonExecutable instVarAt: 4 put: 'unmaterializable'.
+                            nonExecutable instVarAt: 6 put: #receiverMarker.
+                            nonExecutable tempAt: 1 put: #tempMarker.
                             [ snapResult := Smalltalk snapshotPrimitive ] on: Exception do: [ :ex | err := ex printString ].
                             err ifNotNil: [ ^ err ].
                             snapResult == false ifFalse: [ ^ 'snapshotPrimitive returned: ', snapResult printString ].
-                            proxy
+                            nonExecutable
                             """);
             assertTrue("Snapshot failed: " + result, result instanceof ContextObject);
-            assertTrue(((ContextObject) result).hasContextProxy());
+            assertTrue(((ContextObject) result).hasNonExecutableState());
             assertTrue(Files.size(tempImage) > 0);
         } finally {
             image.setImagePath(originalImagePath);
