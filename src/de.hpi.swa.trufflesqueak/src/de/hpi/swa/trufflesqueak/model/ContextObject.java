@@ -455,7 +455,11 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     }
 
     public void setSenderUnsafe(final Object value) {
-        FrameAccess.setSender(getOrCreateTruffleFrame(), value);
+        if (hasNonExecutableState()) {
+            rawAtPut(CONTEXT.SENDER_OR_NIL, value);
+        } else {
+            FrameAccess.setSender(getOrCreateTruffleFrame(), value);
+        }
     }
 
     public void removeSender() {

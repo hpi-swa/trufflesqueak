@@ -212,6 +212,19 @@ public final class NonExecutableContextStateTest extends AbstractSqueakTestCaseW
     }
 
     @Test
+    public void testTerminateToOnNonExecutableContext() {
+        assertEquals(true, evaluate("""
+                        | ctx target |
+                        ctx := Context newForMethod: CompiledMethod toReturnSelf.
+                        ctx terminateTo: nil.
+                        ctx sender isNil ifFalse: [ self error: 'expected nil sender' ].
+                        target := Context sender: nil receiver: 3 method: Object >> #yourself arguments: #().
+                        ctx terminateTo: target.
+                        ctx sender == target
+                        """));
+    }
+
+    @Test
     public void testOutOfBoundsWritesAndStackPointerValidation() {
         final ContextObject ctx = (ContextObject) evaluate("""
                         | ctx method |
