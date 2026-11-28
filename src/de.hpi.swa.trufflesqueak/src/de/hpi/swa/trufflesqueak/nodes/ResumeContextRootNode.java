@@ -9,6 +9,7 @@ package de.hpi.swa.trufflesqueak.nodes;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.profiles.IntValueProfile;
@@ -17,6 +18,8 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
+
+import static de.hpi.swa.trufflesqueak.nodes.AbstractNode.getContext;
 
 /**
  * Resumes a {@link ContextObject} at its current instruction pointer. The context to resume is
@@ -55,16 +58,21 @@ public final class ResumeContextRootNode extends AbstractRootNode {
         context.clearModifiedSender();
         final int pc = instructionPointerProfile.profile(context.getInstructionPointerForBytecodeLoop());
         final int sp = stackPointerProfile.profile(context.getStackPointer());
+        final MaterializedFrame truffleFrame = context.getTruffleFrame();
+        /* Resolve any forwarding pointers installed while this Context was suspended off the stack. */
+        if (getContext(this).objectGraphUtils.isUnfollowNeeded()) {
+            FrameAccess.resolveForwardingPointers(truffleFrame, sp);
+        }
         if (CompilerDirectives.isPartialEvaluationConstant(pc) && CompilerDirectives.isPartialEvaluationConstant(sp)) {
-            return interpreterNode.execute(context.getTruffleFrame(), pc, sp);
+            return interpreterNode.execute(truffleFrame, pc, sp);
         } else {
-            return interpretBytecodeWithBoundary(context, pc, sp);
+            return interpretBytecodeWithBoundary(truffleFrame, pc, sp);
         }
     }
 
     @TruffleBoundary
-    private Object interpretBytecodeWithBoundary(final ContextObject context, final int pc, final int sp) {
-        return interpreterNode.execute(context.getTruffleFrame(), pc, sp);
+    private Object interpretBytecodeWithBoundary(final MaterializedFrame truffleFrame, final int pc, final int sp) {
+        return interpreterNode.execute(truffleFrame, pc, sp);
     }
 
     @Override

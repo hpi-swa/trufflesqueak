@@ -26,6 +26,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -398,6 +399,31 @@ public final class FrameAccess {
                 if (replacement != null) {
                     frame.setObjectStatic(slotIndex, replacement);
                 }
+            }
+        }
+    }
+
+    /**
+     * Resolves any forwarding pointers stored in a resumed frame's arguments and active operand
+     * stack slots up to {@code sp}.
+     *
+     * @param frame the materialized frame to update (must be writable)
+     * @param sp the current stack pointer defining the upper boundary
+     */
+    @TruffleBoundary
+    public static void resolveForwardingPointers(final MaterializedFrame frame, final int sp) {
+        assert getContext(frame) == null || getContext(frame).isNotForwarded();
+        final Object[] arguments = frame.getArguments();
+        for (int i = 0; i < arguments.length; i++) {
+            if (arguments[i] instanceof final AbstractSqueakObjectWithClassAndHash obj && !obj.isNotForwarded()) {
+                arguments[i] = obj.resolveForwardingPointer();
+            }
+        }
+        final int slotLimit = Integer.min(SlotIndices.STACK_START + sp, frame.getFrameDescriptor().getNumberOfSlots());
+        for (int slotIndex = SlotIndices.STACK_START; slotIndex < slotLimit; slotIndex++) {
+            final Object stackValue = frame.getObjectStatic(slotIndex);
+            if (stackValue instanceof final AbstractSqueakObjectWithClassAndHash obj && !obj.isNotForwarded()) {
+                frame.setObjectStatic(slotIndex, obj.resolveForwardingPointer());
             }
         }
     }
