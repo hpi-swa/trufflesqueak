@@ -127,6 +127,23 @@ public final class NonExecutableContextStateTest extends AbstractSqueakTestCaseW
     }
 
     @Test
+    public void testNonContextSenderStaysInFrame() {
+        final ContextObject ctx = (ContextObject) evaluate("""
+                        | ctx |
+                        ctx := Context sender: nil receiver: 3 method: Object >> #yourself arguments: #().
+                        ctx instVarAt: 1 put: 42.
+                        (ctx instVarAt: 1) = 42 ifFalse: [ self error: 'expected sender 42' ].
+                        ctx sender = 42 ifFalse: [ self error: 'expected sender 42 via accessor' ].
+                        ctx privSender: #notAContext.
+                        ctx
+                        """);
+        assertTrue(ctx.hasTruffleFrame());
+        assertFalse(ctx.hasNonExecutableState());
+        assertEquals("#notAContext", ctx.getSender().toString());
+        assertEquals("#notAContext", ctx.getFrameSender().toString());
+    }
+
+    @Test
     public void testOutOfBoundsWritesAndStackPointerValidation() {
         final ContextObject ctx = (ContextObject) evaluate("""
                         | ctx method |

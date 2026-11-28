@@ -47,9 +47,9 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
      * To maximize GraalVM performance, this field acts as a union type transitioning between four
      * distinct states:
      * <p>
-     * 1. {@link AbstractSqueakObject} (Sender): The lightweight wrapper state. When a context is
-     *    actively executing in a {@link VirtualFrame}, we avoid allocating a MaterializedFrame.
-     *    Instead, we simply store its sender here until materialization is forced.
+     * 1. Sender (any other object): The lightweight wrapper state. When a context is actively
+     *    executing in a {@link VirtualFrame}, we avoid allocating a MaterializedFrame. Instead, we
+     *    simply store its sender here until materialization is forced.
      * <p>
      * 2. {@link MaterializedFrame}: The fast-path execution state. Used for valid, suspended
      *    contexts on the heap. This allows GraalVM to execute and resume them. Note that stack
@@ -74,8 +74,9 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
      * Fallback representation for {@link ContextObject}s whose state cannot be stored in a Truffle
      * {@link MaterializedFrame}, specifically newly allocated empty contexts ({@code Context basicNew:}
      * / {@code Context newForMethod:}) and contexts reflectively mutated with structurally
-     * incompatible values (such as a non-{@link CompiledCodeObject} method, an out-of-range
-     * instruction/stack pointer, or an immediate/non-{@link AbstractSqueakObject} sender).
+     * incompatible values (such as a non-{@link CompiledCodeObject} method or an out-of-range
+     * instruction/stack pointer). The sender is not one of them: a frame can hold any object as
+     * its sender, and returning to anything but a live context ends in {@code cannotReturn:}.
      * <p>
      * Any {@code null} field (or unallocated stack slot) represents an unset Squeak slot and is
      * treated as {@link NilObject#SINGLETON} on access. {@link #stackOrSize} initially stores the
@@ -184,7 +185,6 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
             senderOrFrameOrState = new NonExecutableContextState(original.getNonExecutableState());
         } else {
             if (!original.hasTruffleFrame()) {
-                assert original.senderOrFrameOrState instanceof AbstractSqueakObject;
                 original.materializeFromFrames();
             }
             // Copy modified sender flag and the marked code flags after ensuring original is materialized.
@@ -337,7 +337,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
 
     @TruffleBoundary
     private Object getRawFrameSender() {
-        return resolveRawValue(getNonExecutableState().sender) instanceof final AbstractSqueakObject o ? o : NilObject.SINGLETON;
+        return resolveRawValue(getNonExecutableState().sender);
     }
 
     public Object getSender() {
@@ -447,14 +447,14 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     /**
      * Sets the sender of a ContextObject.
      */
-    public void setSender(final AbstractSqueakObject value) {
+    public void setSender(final Object value) {
         if (!hasModifiedSender() && hasTruffleFrame() && FrameAccess.getSender(getTruffleFrame()) != value) {
             setModifiedSender();
         }
         setSenderUnsafe(value);
     }
 
-    public void setSenderUnsafe(final AbstractSqueakObject value) {
+    public void setSenderUnsafe(final Object value) {
         FrameAccess.setSender(getOrCreateTruffleFrame(), value);
     }
 
@@ -845,7 +845,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         final Object closureOrNil = resolveRawValue(state.closureOrNil);
         final Object senderObj = resolveRawValue(state.sender);
 
-        if (!hasBindableStructure(methodObj, closureOrNil, senderObj)) {
+        if (!hasBindableStructure(methodObj, closureOrNil)) {
             return false;
         }
 
@@ -881,21 +881,18 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
 
         // Allocate and apply state
         final Object[] receiverAndArgs = gatherReceiverAndArgs(state, numArgs);
-        final Object[] frameArguments = FrameAccess.newWith((AbstractSqueakObject) senderObj, closure, receiverAndArgs);
+        final Object[] frameArguments = FrameAccess.newWith(senderObj, closure, receiverAndArgs);
         installTruffleFrame(frameArguments, methodOrBlock.getFrameDescriptor(), relativePC, sp);
         restoreStack(state, sp);
 
         return true;
     }
 
-    private static boolean hasBindableStructure(final Object method, final Object closureOrNil, final Object sender) {
+    private static boolean hasBindableStructure(final Object method, final Object closureOrNil) {
         if (!(method instanceof CompiledCodeObject)) {
             return false; // Cannot materialize without a structurally valid method
         }
-        if (closureOrNil != NilObject.SINGLETON && !(closureOrNil instanceof BlockClosureObject)) {
-            return false; // Structurally invalid closure
-        }
-        return sender instanceof AbstractSqueakObject; // Structurally invalid sender (e.g., primitive Long)
+        return closureOrNil == NilObject.SINGLETON || closureOrNil instanceof BlockClosureObject; // Structurally invalid closure otherwise
     }
 
     private static Object[] gatherReceiverAndArgs(final NonExecutableContextState state, final int numArgs) {
@@ -1113,8 +1110,9 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
                 }
             }
             FrameAccess.iterateStackObjectsWithReplacement(initialFrame, true, stackValue -> migrate(fromToMap, stackValue));
-            if (migrate(fromToMap, FrameAccess.getSender(initialFrame)) instanceof final AbstractSqueakObject o) {
-                setSender(o);
+            final Object migratedSender = migrate(fromToMap, FrameAccess.getSender(initialFrame));
+            if (migratedSender != null) {
+                setSender(migratedSender);
             }
             final Object migratedCode = migrate(fromToMap, FrameAccess.getCodeObject(initialFrame));
             final Object migratedClosure = migrate(fromToMap, FrameAccess.getClosure(initialFrame));
@@ -1167,8 +1165,9 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
             }
         } else if (senderOrFrameOrState != null) {
             // Migrate the lightweight sender state
-            if (migrate(fromToMap, senderOrFrameOrState) instanceof final AbstractSqueakObject o) {
-                senderOrFrameOrState = o;
+            final Object migratedSender = migrate(fromToMap, senderOrFrameOrState);
+            if (migratedSender != null) {
+                senderOrFrameOrState = migratedSender;
             }
         }
     }

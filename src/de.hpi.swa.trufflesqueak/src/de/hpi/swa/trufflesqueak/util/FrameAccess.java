@@ -116,7 +116,7 @@ public final class FrameAccess {
     }
 
     public static Object ensureValidSender(final Object sender) {
-        assert sender == NilObject.SINGLETON || sender instanceof ContextObject;
+        assert sender != null : "Sender should never be null";
         return sender;
     }
 
@@ -124,7 +124,7 @@ public final class FrameAccess {
         return (ContextObject) getSender(frame);
     }
 
-    public static void setSender(final Frame frame, final AbstractSqueakObject value) {
+    public static void setSender(final Frame frame, final Object value) {
         frame.getArguments()[ArgumentIndices.SENDER] = value;
     }
 
@@ -423,7 +423,7 @@ public final class FrameAccess {
         return frame.getFrameDescriptor().getInfo() instanceof CompiledCodeObject;
     }
 
-    public static Object[] newWith(final AbstractSqueakObject sender, final BlockClosureObject closure, final Object[] receiverAndArguments) {
+    public static Object[] newWith(final Object sender, final BlockClosureObject closure, final Object[] receiverAndArguments) {
         final int receiverAndArgumentsLength = receiverAndArguments.length;
         final Object[] frameArguments = new Object[ArgumentIndices.RECEIVER + receiverAndArgumentsLength];
         assert sender != null : "Sender should never be null";

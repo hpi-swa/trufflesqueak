@@ -147,14 +147,9 @@ public final class ContextObjectNodes {
 
         // --- Sender ---
         @Specialization(guards = {"index == SENDER_OR_NIL", "context.hasTruffleFrame()"})
-        protected static final void doSenderFrame(final ContextObject context, @SuppressWarnings("unused") final long index, final AbstractSqueakObject value) {
+        protected static final void doSenderFrame(final ContextObject context, @SuppressWarnings("unused") final long index, final Object value) {
+            /* A frame can hold any object as sender; returning to a non-context ends in cannotReturn:. */
             context.setSender(value);
-        }
-
-        @Specialization(guards = {"index == SENDER_OR_NIL", "context.hasTruffleFrame()", "!isAbstractSqueakObject(value)"})
-        protected static final void doSenderDematerialize(final ContextObject context, @SuppressWarnings("unused") final long index, final Object value) {
-            context.unbindFromFrame();
-            context.setRawSender(value);
         }
 
         @Specialization(guards = {"index == SENDER_OR_NIL", "context.hasNonExecutableState()"})

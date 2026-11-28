@@ -90,7 +90,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         }
         while (true) {
             final Object sender = activeContext.getSender();
-            assert sender == NilObject.SINGLETON || ((ContextObject) sender).hasTruffleFrame();
+            assert !(sender instanceof final ContextObject senderContext) || senderContext.hasTruffleFrame();
             try {
                 try {
                     image.resetContextStackDepth();
@@ -126,7 +126,6 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     @TruffleBoundary
     private ContextObject returnTo(final ContextObject returningContext, final Object sender, final Object returnValue) {
         /* Normal returns end up here. */
-        assert (sender instanceof ContextObject) || sender == NilObject.SINGLETON;
         if ((sender instanceof final ContextObject senderContext) && !senderContext.isDead()) {
             senderContext.push(returnValue);
             return senderContext;
