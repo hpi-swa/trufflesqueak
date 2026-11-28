@@ -252,6 +252,15 @@ public final class ObjectGraphUtils {
     }
 
     /**
+     * Convenience overload of {@link #pointersBecomeOneWay(Object, Object[], Object[], boolean)}
+     * for callers that do not need a tracked receiver object resolved.
+     */
+    @TruffleBoundary
+    public void pointersBecomeOneWay(final Object[] fromPointers, final Object[] toPointers, final boolean copyHash) {
+        pointersBecomeOneWay(null, fromPointers, toPointers, copyHash);
+    }
+
+    /**
      * Replaces all references to each object in {@code fromPointers} with the corresponding object
      * in {@code toPointers} (Squeak's {@code #elementsForwardIdentityTo:} primitive).
      *
@@ -266,9 +275,17 @@ public final class ObjectGraphUtils {
      * appeared earlier in {@code fromPointers} is skipped, and a {@code to} that already appeared
      * as a {@code from} is replaced by its target. Consequently, {@link #becomeMap} never contains
      * a cycle, not even for requests such as {@code [A, B] -> [B, A]}.
+     *
+     * @param receiver optional object (such as the primitive's {@code fromArray} receiver) whose
+     *            post-become identity should be returned, or {@code null}
+     * @param fromPointers source objects whose identity is being forwarded
+     * @param toPointers target objects receiving the forwarded references
+     * @param copyHash {@code true} if each target heap object should adopt its source's Squeak hash
+     * @return the resolved target of {@code receiver} if it was forwarded or replaced, {@code null}
+     *         if {@code receiver} was {@code null}, or {@code receiver} unchanged otherwise
      */
     @TruffleBoundary
-    public void pointersBecomeOneWay(final Object[] fromPointers, final Object[] toPointers, final boolean copyHash) {
+    public Object pointersBecomeOneWay(final Object receiver, final Object[] fromPointers, final Object[] toPointers, final boolean copyHash) {
         final long startTime = System.nanoTime();
         boolean useForwardingPointers = true;
         for (int i = 0; i < fromPointers.length; i++) {
@@ -298,8 +315,12 @@ public final class ObjectGraphUtils {
                 }
             }
         }
+        Object result = AbstractSqueakObjectWithClassAndHash.resolveForwardingPointer(receiver);
         if (!becomeMap.isEmpty()) {
             flattenForwardPointers();
+            if (result != null) {
+                result = becomeMap.get(result, result);
+            }
             if (useForwardingPointers) {
                 final MapCursor<Object, Object> cursor = becomeMap.getEntries();
                 while (cursor.advance()) {
@@ -321,6 +342,7 @@ public final class ObjectGraphUtils {
         if (trackOperations) {
             ObjectGraphOperations.POINTERS_BECOME_ONE_WAY.addNanos(System.nanoTime() - startTime);
         }
+        return result;
     }
 
     /**

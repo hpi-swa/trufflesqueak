@@ -183,6 +183,10 @@ public final class BecomeOneWayTest extends AbstractSqueakTestCaseWithImage {
         final AbstractSqueakObjectWithClassAndHash a = newDummyObject();
         final AbstractSqueakObjectWithClassAndHash b = newDummyObject();
         final AbstractSqueakObjectWithClassAndHash c = newDummyObject();
+        final AbstractSqueakObjectWithClassAndHash d = newDummyObject();
+        final AbstractSqueakObjectWithClassAndHash e = newDummyObject();
+        final AbstractSqueakObjectWithClassAndHash f = newDummyObject();
+        final AbstractSqueakObjectWithClassAndHash g = newDummyObject();
         final long originalHashC = c.getOrCreateSqueakHash();
 
         // The first occurrence wins, the second one is ignored.
@@ -191,6 +195,16 @@ public final class BecomeOneWayTest extends AbstractSqueakTestCaseWithImage {
         assertTrue(b.isNotForwarded());
         assertTrue(c.isNotForwarded());
         assertEquals(originalHashC, c.getOrCreateSqueakHash());
+
+        // Identical duplicate pairs (D -> E, D -> E) forward D to E.
+        image.objectGraphUtils.pointersBecomeOneWay(new Object[]{d, d}, new Object[]{e, e}, true);
+        assertSame(e, d.resolveForwardingPointer());
+        assertTrue(e.isNotForwarded());
+
+        // A self-pair (F -> F) is a no-op and does not block a later occurrence (F -> G).
+        image.objectGraphUtils.pointersBecomeOneWay(new Object[]{f, f}, new Object[]{f, g}, true);
+        assertSame(g, f.resolveForwardingPointer());
+        assertTrue(g.isNotForwarded());
 
         image.objectGraphUtils.unfollow();
 
@@ -202,6 +216,48 @@ public final class BecomeOneWayTest extends AbstractSqueakTestCaseWithImage {
                         refA := { a }.
                         { a. a } elementsForwardIdentityTo: { b. c }.
                         (refA first == b) and: [ b ~~ c ]
+                        """));
+        assertEquals(BooleanObject.TRUE, evaluate("""
+                        | a b refA |
+                        a := Object new.
+                        b := Object new.
+                        refA := { a }.
+                        { a. a } elementsForwardIdentityTo: { b. b }.
+                        refA first == b
+                        """));
+        assertEquals(BooleanObject.TRUE, evaluate("""
+                        | a b refA |
+                        a := Object new.
+                        b := Object new.
+                        refA := { a }.
+                        { a. a } elementsForwardIdentityTo: { a. b }.
+                        refA first == b
+                        """));
+    }
+
+    @Test
+    public void testSelfReferentialReceiverArray() {
+        // Lazy path: `arr` forwards itself to a non-array heap object; return value must not be a forwarded pointer.
+        assertEquals(BooleanObject.TRUE, evaluate("""
+                        | arr target result |
+                        arr := Array new: 1.
+                        arr at: 1 put: arr.
+                        target := Object new.
+                        result := arr elementsForwardIdentityTo: { target }.
+                        (result == target) and: [ result identityHash = target identityHash ]
+                        """));
+        image.objectGraphUtils.unfollow();
+
+        // Eager path: `arr` forwards itself to an immediate/singleton (`nil` and SmallInteger).
+        assertEquals(BooleanObject.TRUE, evaluate("""
+                        | arr1 arr2 res1 res2 |
+                        arr1 := Array new: 1.
+                        arr1 at: 1 put: arr1.
+                        res1 := arr1 elementsForwardIdentityTo: { nil }.
+                        arr2 := Array new: 1.
+                        arr2 at: 1 put: arr2.
+                        res2 := arr2 elementsForwardIdentityTo: { 42 }.
+                        (res1 == nil) and: [ res2 == 42 ]
                         """));
     }
 }
