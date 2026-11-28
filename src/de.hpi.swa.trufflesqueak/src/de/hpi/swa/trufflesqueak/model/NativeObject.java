@@ -354,7 +354,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
             if (result != null) {
                 return result;
             } else {
-                return IndirectCallNode.getUncached().call(method.getCallTarget(), FrameAccess.newWith(frame, null, receiver, arguments));
+                return IndirectCallNode.getUncached().call(method.getStartContextRootNode(), -1, FrameAccess.newWith(frame, null, receiver, arguments));
             }
         } else {
             throw SqueakException.create("Illegal uncached message send");

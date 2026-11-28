@@ -287,7 +287,7 @@ public abstract class AbstractSqueakObjectWithHash extends AbstractSqueakObject 
                 if (result != null) {
                     return result;
                 } else {
-                    return IndirectCallNode.getUncached().call(method.getCallTarget(), FrameAccess.newWith(NilObject.SINGLETON, null, this, arguments));
+                    return IndirectCallNode.getUncached().call(method.getStartContextRootNode(), -1, FrameAccess.newWith(NilObject.SINGLETON, null, this, arguments));
                 }
             } finally {
                 state.close();

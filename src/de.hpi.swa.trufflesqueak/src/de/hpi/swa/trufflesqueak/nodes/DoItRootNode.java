@@ -66,7 +66,7 @@ public abstract class DoItRootNode extends RootNode {
             LogUtils.SCHEDULING.log(Level.FINE, "Process Switch in DoIt: {0}", activeContext);
             while (true) {
                 try {
-                    return IndirectCallNode.getUncached().call(activeContext.getResumptionCallTarget(), FrameAccess.newResumeArguments(activeContext));
+                    return IndirectCallNode.getUncached().call(activeContext.getResumeContextRootNode(), -1, FrameAccess.newResumeArguments(activeContext));
                 } catch (final NonLocalReturn | NonVirtualReturn | CannotReturnToTarget ret) {
                     throw SqueakException.create("Return exception in DoIt", ret);
                 } catch (final ProcessSwitch anotherPs) {

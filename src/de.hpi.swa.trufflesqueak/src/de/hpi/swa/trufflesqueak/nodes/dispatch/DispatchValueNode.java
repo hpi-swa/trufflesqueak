@@ -20,6 +20,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_SELECTOR;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
+import de.hpi.swa.trufflesqueak.nodes.StartContextRootNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 @GenerateInline(false)
@@ -42,7 +43,7 @@ public abstract class DispatchValueNode extends AbstractNode {
                     @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
 
         final Object[] args = FrameAccess.newClosureArgumentsTemplateUnrolled(closure, FrameAccess.getOrCreateContextWithoutFrame(frame), 0, cachedNumCopied);
-        return directCallNode.call(args);
+        return directCallNode.call(StartContextRootNode.class, -1, args);
     }
 
     @ReportPolymorphism.Megamorphic
@@ -51,7 +52,7 @@ public abstract class DispatchValueNode extends AbstractNode {
                     @Cached final IndirectCallNode indirectCallNode) {
         final CompiledCodeObject block = closure.getCompiledBlock();
         final Object[] args = FrameAccess.newClosureArgumentsTemplate(closure, FrameAccess.getOrCreateContextWithoutFrame(frame), 0);
-        return indirectCallNode.call(block.getCallTarget(), args);
+        return indirectCallNode.call(block.getStartContextRootNode(), -1, args);
     }
 
     // --- Non-Block Receivers (Associations, MessageSends, etc.) ---

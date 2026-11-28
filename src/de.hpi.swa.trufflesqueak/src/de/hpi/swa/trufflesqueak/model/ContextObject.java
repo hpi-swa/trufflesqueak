@@ -10,7 +10,6 @@ import java.util.Arrays;
 
 import org.graalvm.collections.UnmodifiableEconomicMap;
 
-import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -28,6 +27,7 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
+import de.hpi.swa.trufflesqueak.nodes.ResumeContextRootNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
@@ -178,8 +178,8 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         return hasClosure() ? getClosure().getCompiledBlock() : getCodeObject();
     }
 
-    public CallTarget getResumptionCallTarget() {
-        return getMethodOrBlock().getResumptionCallTarget();
+    public ResumeContextRootNode getResumeContextRootNode() {
+        return getMethodOrBlock().getResumeContextRootNode();
     }
 
     private MaterializedFrame getOrCreateTruffleFrame() {
